@@ -468,8 +468,7 @@ Scheduler startet nur wenn `not app.config['TESTING']`.
 - Neue Branch anlegen: `feat/xyz`, `fix/abc`, `chore/xyz`
 - Conventional Commits auf Deutsch: `feat:`, `fix:`, `refactor:`, `chore:`
 - Nach Merge: Branch lokal und remote löschen
-- Bei jeder Änderung: `CHANGELOG.md` und ggf. Versions-Bump aktualisieren
-- Beta-Versionierung: `3.0.0-beta.1`, `3.0.0-beta.2`, …
+- Nach Merge: Release mit Tag erstellen
 
 ---
 
