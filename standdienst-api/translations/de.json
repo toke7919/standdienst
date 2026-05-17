@@ -1,0 +1,33 @@
+{
+  "auth": {
+    "invalid_credentials": "Ungültige Anmeldedaten",
+    "2fa_required": "Zwei-Faktor-Authentifizierung erforderlich",
+    "2fa_invalid": "Ungültiger Code",
+    "password_reset_sent": "Falls die E-Mail-Adresse bekannt ist, wurde eine E-Mail gesendet",
+    "password_reset_invalid": "Ungültiger oder abgelaufener Reset-Link",
+    "password_too_weak": "Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)",
+    "registration_closed": "Anmeldung ist gesperrt",
+    "registration_deadline": "Anmeldeschluss ist überschritten",
+    "email_taken": "E-Mail-Adresse bereits vergeben",
+    "consent_required": "Datenschutzzustimmung erforderlich"
+  },
+  "common": {
+    "not_found": "Nicht gefunden",
+    "forbidden": "Zugriff verweigert",
+    "validation_error": "Validierungsfehler",
+    "server_error": "Interner Serverfehler",
+    "rate_limited": "Zu viele Anfragen – bitte warten"
+  },
+  "volunteer": {
+    "shift_full": "Schicht ist bereits voll",
+    "shift_already_registered": "Bereits in dieser Schicht eingetragen",
+    "shift_not_registered": "Nicht in dieser Schicht eingetragen",
+    "shifts_disabled": "Schichten sind deaktiviert",
+    "food_disabled": "Essensspenden sind deaktiviert"
+  },
+  "admin": {
+    "slug_taken": "Slug bereits vergeben",
+    "last_admin": "Letzter Admin kann nicht gelöscht werden",
+    "own_account": "Eigenes Konto kann nicht gelöscht werden"
+  }
+}

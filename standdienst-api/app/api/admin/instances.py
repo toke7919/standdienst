@@ -1,0 +1,92 @@
+from flask import request, g
+from marshmallow import ValidationError
+
+from . import admin_bp
+from ...extensions import db
+from ...models import Instance, SiteSettings, ActivityLog
+from ...schemas.instance import InstanceSchema, InstanceCreateSchema, InstanceUpdateSchema
+from ...utils.auth import require_admin
+from ...utils.responses import ok, created, no_content, error, paginated
+
+_schema = InstanceSchema()
+_many = InstanceSchema(many=True)
+_create = InstanceCreateSchema()
+_update = InstanceUpdateSchema()
+
+
+@admin_bp.route('/instances', methods=['GET'])
+@require_admin
+def list_instances():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    q = Instance.query.order_by(Instance.name)
+    total = q.count()
+    items = q.paginate(page=page, per_page=per_page, error_out=False).items
+    return paginated(_many.dump(items), total, page, per_page)
+
+
+@admin_bp.route('/instances', methods=['POST'])
+@require_admin
+def create_instance():
+    try:
+        data = _create.load(request.get_json() or {})
+    except ValidationError as e:
+        return error('Validierungsfehler', 422, e.messages)
+
+    if Instance.query.filter_by(slug=data['slug']).first():
+        return error('Slug bereits vergeben', 409)
+
+    instance = Instance(**data)
+    db.session.add(instance)
+    db.session.flush()
+
+    settings = SiteSettings(instance_id=instance.id)
+    db.session.add(settings)
+
+    _log(instance.id, 'Instanz angelegt', g.current_user.email)
+    db.session.commit()
+    return created(_schema.dump(instance))
+
+
+@admin_bp.route('/instances/<int:instance_id>', methods=['GET'])
+@require_admin
+def get_instance(instance_id):
+    instance = Instance.query.get_or_404(instance_id)
+    return ok(_schema.dump(instance))
+
+
+@admin_bp.route('/instances/<int:instance_id>', methods=['PUT'])
+@require_admin
+def update_instance(instance_id):
+    instance = Instance.query.get_or_404(instance_id)
+    try:
+        data = _update.load(request.get_json() or {})
+    except ValidationError as e:
+        return error('Validierungsfehler', 422, e.messages)
+
+    for key, value in data.items():
+        setattr(instance, key, value)
+
+    _log(instance.id, 'Instanz geändert', g.current_user.email)
+    db.session.commit()
+    return ok(_schema.dump(instance))
+
+
+@admin_bp.route('/instances/<int:instance_id>', methods=['DELETE'])
+@require_admin
+def delete_instance(instance_id):
+    instance = Instance.query.get_or_404(instance_id)
+    _log(None, f'Instanz gelöscht: {instance.name} (slug={instance.slug})', g.current_user.email)
+    db.session.delete(instance)
+    db.session.commit()
+    return no_content()
+
+
+def _log(instance_id, details, actor_email):
+    db.session.add(ActivityLog(
+        instance_id=instance_id,
+        event_type=ActivityLog.AUDIT_DATA,
+        volunteer_name=actor_email,
+        actor_type='admin',
+        details=details,
+    ))
