@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from flask import request, g
 from marshmallow import ValidationError
 
@@ -7,7 +5,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import Volunteer, ActivityLog
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
-from ...utils.auth import require_staff, require_instance_admin, validate_password_strength
+from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = VolunteerSchema()
@@ -95,12 +93,23 @@ def update_volunteer(slug, volunteer_id):
 @require_instance_admin
 def delete_volunteer(slug, volunteer_id):
     volunteer = _get_or_404(volunteer_id, g.instance.id)
-    # DSGVO-konformes Soft-Delete
-    volunteer.name = 'Gelöschter Nutzer'
-    volunteer.email = None
-    volunteer.password_hash = '!'
-    volunteer.deleted_at = datetime.now(timezone.utc)
-    _log(g.instance.id, f'Helfer gelöscht (ID={volunteer_id})', g.current_user)
+    volunteer.soft_delete()
+    _log(g.instance.id, f'Helfer pseudonymisiert (ID={volunteer_id})', g.current_user)
+    db.session.commit()
+    return no_content()
+
+
+@admin_bp.route('/<slug>/volunteers/<int:volunteer_id>/permanent', methods=['DELETE'])
+@require_admin
+def permanent_delete_volunteer(slug, volunteer_id):
+    """Endgültiges Löschen – nur Global-Admins. Für DSGVO-Löschanfragen."""
+    from flask import g as _g
+    # Instanz manuell auflösen (kein @require_instance_admin hier)
+    from ...models import Instance
+    instance = Instance.query.filter_by(slug=slug).first_or_404()
+    volunteer = _get_or_404(volunteer_id, instance.id)
+    _log(instance.id, f'Helfer endgültig gelöscht (ID={volunteer_id})', _g.current_user)
+    db.session.delete(volunteer)
     db.session.commit()
     return no_content()
 

@@ -1,0 +1,22 @@
+# Python
+standdienst-api/.venv/
+standdienst-api/__pycache__/
+standdienst-api/**/__pycache__/
+standdienst-api/*.pyc
+standdienst-api/.env
+standdienst-api/dev_init.db
+standdienst-api/dev.db
+
+# Frontend
+standdienst-frontend/node_modules/
+standdienst-frontend/dist/
+
+# Build output (managed via install.sh)
+standdienst-api/static/dist/
+
+# Uploads & Logs
+standdienst-api/uploads/
+standdienst-api/logs/
+
+# OS
+.DS_Store

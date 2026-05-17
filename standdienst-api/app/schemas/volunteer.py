@@ -7,7 +7,8 @@ class VolunteerSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Volunteer
         load_instance = False
-        exclude = ('password_hash', 'reset_token', 'reset_token_expires')
+        exclude = ('password_hash', 'reset_token', 'reset_token_expires',
+                   'welcome_token', 'welcome_token_expires')
 
     is_deleted = fields.Bool(dump_only=True)
     has_login = fields.Bool(dump_only=True)
@@ -26,8 +27,8 @@ class VolunteerUpdateSchema(Schema):
 
 
 class VolunteerRegisterSchema(Schema):
+    """Passwortloser Flow: E-Mail optional; Consent nur erzwungen wenn Privacy-Policy konfiguriert."""
     name = fields.Str(required=True, validate=validate.Length(min=2, max=100))
-    email = fields.Email(required=True)
-    password = fields.Str(required=True, validate=validate.Length(min=8))
+    email = fields.Email(allow_none=True, load_default=None)
     captcha_answer = fields.Int(required=True)
-    consent = fields.Bool(required=True)
+    consent = fields.Bool(load_default=False)

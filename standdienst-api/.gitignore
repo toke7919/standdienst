@@ -12,7 +12,6 @@ uploads/*
 logs/*
 !logs/.gitkeep
 static/dist/
-migrations/versions/
 .pytest_cache/
 .coverage
 htmlcov/

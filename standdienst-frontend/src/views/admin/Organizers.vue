@@ -11,6 +11,7 @@
           <tr>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Name</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">E-Mail</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Rolle</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Instanzen</th>
             <th class="px-4 py-3" />
           </tr>
@@ -19,6 +20,15 @@
           <tr v-for="o in organizers" :key="o.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium text-gray-900">{{ o.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ o.email }}</td>
+            <td class="px-4 py-3">
+              <span
+                v-if="o.is_instance_admin"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700"
+              >
+                Instanz-Admin
+              </span>
+              <span v-else class="text-xs text-gray-400">Organisator</span>
+            </td>
             <td class="px-4 py-3 text-gray-500">{{ o.instance_count ?? 0 }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
@@ -36,6 +46,13 @@
         <div v-if="!editing">
           <label class="label">Passwort</label>
           <input v-model="form.password" type="password" class="input" required />
+        </div>
+        <div class="flex items-center gap-3">
+          <input v-model="form.is_instance_admin" type="checkbox" id="is_instance_admin" class="rounded" />
+          <label for="is_instance_admin" class="text-sm text-gray-700">
+            Instanz-Admin
+            <span class="text-xs text-gray-400 ml-1">(kann Einstellungen der eigenen Instanz bearbeiten)</span>
+          </label>
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">
@@ -57,7 +74,7 @@ const ui = useUiStore()
 const organizers = ref([])
 const showModal = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', email: '', password: '' })
+const form = ref({ name: '', email: '', password: '', is_instance_admin: false })
 const saveError = ref('')
 
 onMounted(load)
@@ -69,14 +86,14 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', email: '', password: '' }
+  form.value = { name: '', email: '', password: '', is_instance_admin: false }
   saveError.value = ''
   showModal.value = true
 }
 
 function openEdit(o) {
   editing.value = o
-  form.value = { name: o.name, email: o.email }
+  form.value = { name: o.name, email: o.email, is_instance_admin: o.is_instance_admin ?? false }
   saveError.value = ''
   showModal.value = true
 }
@@ -85,7 +102,11 @@ async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateOrganizer(editing.value.id, form.value)
+      await adminApi.updateOrganizer(editing.value.id, {
+        name: form.value.name,
+        email: form.value.email,
+        is_instance_admin: form.value.is_instance_admin,
+      })
       ui.success('Organisator aktualisiert')
     } else {
       await adminApi.createOrganizer(form.value)

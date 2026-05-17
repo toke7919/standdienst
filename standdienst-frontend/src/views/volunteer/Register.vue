@@ -6,20 +6,39 @@
         <p class="text-gray-500 mt-1">Als Helfer registrieren</p>
       </div>
 
-      <div v-if="done" class="card text-center text-green-800 bg-green-50">
+      <!-- E-Mail gesendet -->
+      <div v-if="emailSent" class="card text-center">
+        <p class="text-4xl mb-3">📧</p>
+        <p class="font-semibold text-gray-900">Bitte prüfe deine E-Mails</p>
+        <p class="text-sm text-gray-500 mt-2">
+          Wir haben dir einen Link zum Einrichten deines Passworts geschickt.<br />
+          Der Link ist 24 Stunden gültig.
+        </p>
+        <RouterLink :to="`/${slug}/login`" class="mt-5 btn-secondary inline-flex">
+          Zum Login
+        </RouterLink>
+      </div>
+
+      <!-- Direkt eingeloggt (anonym) -->
+      <div v-else-if="loggedIn" class="card text-center text-green-800 bg-green-50">
         <p class="font-semibold">Registrierung erfolgreich!</p>
-        <p class="text-sm mt-1">Du kannst dich jetzt anmelden.</p>
-        <RouterLink :to="`/${slug}/login`" class="mt-4 btn-primary inline-flex">Zum Login</RouterLink>
+        <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
       </div>
 
       <div v-else class="card">
         <form @submit.prevent="submit" class="space-y-4">
-          <div><label class="label">Name</label><input v-model="form.name" class="input" required /></div>
-          <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" required /></div>
           <div>
-            <label class="label">Passwort</label>
-            <input v-model="form.password" type="password" class="input" required autocomplete="new-password" />
-            <p class="text-xs text-gray-400 mt-1">Mindestens 8 Zeichen, 1 Ziffer, 1 Sonderzeichen</p>
+            <label class="label">Name <span class="text-red-500">*</span></label>
+            <input v-model="form.name" class="input" required autocomplete="name" />
+          </div>
+
+          <div>
+            <label class="label">E-Mail <span class="text-gray-400 text-xs">(optional)</span></label>
+            <input v-model="form.email" type="email" class="input" autocomplete="email"
+                   placeholder="Für Passwort-Einrichtung per Mail" />
+            <p class="text-xs text-gray-400 mt-1">
+              Ohne E-Mail wirst du direkt eingeloggt (anonymer Zugang).
+            </p>
           </div>
 
           <!-- CAPTCHA -->
@@ -28,22 +47,22 @@
             <input v-model="form.captcha_answer" type="number" class="input max-w-32" required />
           </div>
 
-          <!-- DSGVO -->
-          <div class="flex items-start gap-2">
-            <input v-model="form.consent" type="checkbox" id="consent" class="mt-1" required />
+          <!-- Datenschutz-Consent – nur wenn Policy konfiguriert -->
+          <div v-if="hasPrivacyPolicy" class="flex items-start gap-2">
+            <input v-model="form.consent" type="checkbox" id="consent" class="mt-1" />
             <label for="consent" class="text-sm text-gray-600">
-              Ich stimme der
-              <RouterLink :to="`/${slug}/privacy`" class="text-primary-600 underline" target="_blank">
+              Ich habe die
+              <RouterLink :to="`/${slug}/datenschutz`" class="text-primary-600 underline" target="_blank">
                 Datenschutzerklärung
               </RouterLink>
-              zu und erkläre mich mit der Verarbeitung meiner Daten einverstanden.
+              gelesen und stimme der Verarbeitung meiner Daten zu.
             </label>
           </div>
 
           <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
 
-          <button type="submit" class="btn-primary w-full" :disabled="loading || !form.consent">
-            <LoadingSpinner v-if="loading" size="sm" />
+          <button type="submit" class="btn-primary w-full" :disabled="loading || (hasPrivacyPolicy && !form.consent)">
+            <LoadingSpinner v-if="loading" size="sm" class="mr-2" />
             Registrieren
           </button>
         </form>
@@ -60,43 +79,63 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/stores/instance'
+import { useAuthStore } from '@/stores/auth'
 import { publicApi } from '@/api/public'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const instanceStore = useInstanceStore()
+const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current?.settings)
+const hasPrivacyPolicy = computed(() => instanceStore.current?.has_privacy_policy ?? false)
 
 const captcha = ref(null)
-const form = ref({ name: '', email: '', password: '', captcha_answer: '', consent: false })
+const form = ref({ name: '', email: '', captcha_answer: '', consent: false })
 const loading = ref(false)
 const errorMsg = ref('')
-const done = ref(false)
+const emailSent = ref(false)
+const loggedIn = ref(false)
 
 onMounted(async () => {
   if (!instanceStore.current) await instanceStore.loadInstance(slug.value)
+  await loadCaptcha()
+})
+
+async function loadCaptcha() {
   const res = await publicApi.getCaptcha(slug.value)
   captcha.value = res.data
-})
+  form.value.captcha_answer = ''
+}
 
 async function submit() {
   loading.value = true
   errorMsg.value = ''
   try {
-    await publicApi.register(slug.value, {
-      ...form.value,
+    const payload = {
+      name: form.value.name,
       captcha_answer: parseInt(form.value.captcha_answer),
-    })
-    done.value = true
+      consent: form.value.consent,
+    }
+    if (form.value.email) payload.email = form.value.email
+
+    const res = await publicApi.register(slug.value, payload)
+
+    if (res.data.user) {
+      // Anonyme Registrierung → direkt eingeloggt
+      loggedIn.value = true
+      await auth.fetchMe()
+      router.push(`/${slug.value}/shifts`)
+    } else {
+      // E-Mail-Registrierung → Welcome-Token-Mail
+      emailSent.value = true
+    }
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Registrierung fehlgeschlagen'
-    // Reload CAPTCHA on failure
-    const res = await publicApi.getCaptcha(slug.value)
-    captcha.value = res.data
-    form.value.captcha_answer = ''
+    await loadCaptcha()
   } finally {
     loading.value = false
   }

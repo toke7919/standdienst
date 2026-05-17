@@ -220,13 +220,42 @@ def update_profile(slug):
 @volunteer_bp.route('/<slug>/profile', methods=['DELETE'])
 @require_volunteer
 def delete_profile(slug):
-    volunteer = g.current_user
-    volunteer.name = 'Gelöschter Nutzer'
-    volunteer.email = None
-    volunteer.password_hash = '!'
-    volunteer.deleted_at = datetime.now(timezone.utc)
+    g.current_user.soft_delete()
     db.session.commit()
     return no_content()
+
+
+# ---------------------------------------------------------------------------
+# DSGVO – Datenauskunft Art. 20
+# ---------------------------------------------------------------------------
+
+@volunteer_bp.route('/<slug>/meine-daten', methods=['GET'])
+@require_volunteer
+def meine_daten(slug):
+    v = g.current_user
+    registrations = []
+    for reg in v.registrations:
+        shift = reg.shift
+        registrations.append({
+            'shift_id': shift.id,
+            'stand': shift.stand.name,
+            'date': shift.event_date.date.isoformat(),
+            'start_time': shift.start_time.isoformat(),
+            'end_time': shift.end_time.isoformat(),
+            'registered_at': reg.registered_at.isoformat() if reg.registered_at else None,
+        })
+
+    return ok({
+        'volunteer': {
+            'id': v.id,
+            'name': v.name,
+            'email': v.email,
+            'instance_id': v.instance_id,
+            'created_at': v.created_at.isoformat() if v.created_at else None,
+            'consent_given_at': v.consent_given_at.isoformat() if v.consent_given_at else None,
+        },
+        'registrations': registrations,
+    })
 
 
 # ---------------------------------------------------------------------------

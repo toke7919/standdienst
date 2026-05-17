@@ -26,3 +26,14 @@ def build_registration_email(name: str, instance_title: str, login_url: str) -> 
     <p>deine Registrierung bei <strong>{instance_title}</strong> war erfolgreich.</p>
     <p><a href="{login_url}">Zum Login</a></p>
     """
+
+
+def build_welcome_email(name: str, instance_title: str, setup_url: str, base_url: str) -> str:
+    return f"""
+    <p>Hallo {name},</p>
+    <p>du wurdest bei <strong>{instance_title}</strong> als Helfer registriert.</p>
+    <p>Bitte klicke auf den folgenden Link, um dein Passwort einzurichten und dein Konto zu aktivieren:</p>
+    <p><a href="{setup_url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Passwort einrichten</a></p>
+    <p>Der Link ist <strong>24 Stunden</strong> gültig.</p>
+    <p>Falls du keine Registrierung angefordert hast, kannst du diese E-Mail ignorieren.</p>
+    """

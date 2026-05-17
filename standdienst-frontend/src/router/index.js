@@ -113,6 +113,14 @@ const router = createRouter({
       component: () => import('@/views/volunteer/ResetPassword.vue'),
     },
     {
+      path: '/:slug/welcome/:token',
+      component: () => import('@/views/volunteer/WelcomeSetup.vue'),
+    },
+    {
+      path: '/:slug/datenschutz',
+      component: () => import('@/views/public/PrivacyPolicy.vue'),
+    },
+    {
       path: '/:slug',
       component: () => import('@/layouts/VolunteerLayout.vue'),
       meta: { requiresAuth: true, requiresVolunteer: true },
@@ -123,7 +131,7 @@ const router = createRouter({
         { path: 'food', component: () => import('@/views/volunteer/FoodDonations.vue') },
         { path: 'profile', component: () => import('@/views/volunteer/Profile.vue') },
         { path: 'impressum', component: () => import('@/views/public/Impressum.vue') },
-        { path: 'privacy', component: () => import('@/views/public/PrivacyPolicy.vue') },
+        { path: 'datenschutz', component: () => import('@/views/public/PrivacyPolicy.vue') },
       ],
     },
 

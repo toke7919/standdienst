@@ -2,6 +2,7 @@ import hashlib
 from datetime import datetime, timezone
 
 from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import set_access_cookies, set_refresh_cookies
 from marshmallow import ValidationError
 
 from ..extensions import db, limiter
@@ -9,7 +10,7 @@ from ..models import Instance, SiteSettings, GlobalSettings, ActivityLog, Volunt
 from ..schemas.volunteer import VolunteerRegisterSchema
 from ..utils.auth import validate_password_strength
 from ..utils.captcha import generate_captcha, verify_captcha
-from ..utils.mail import send_mail, build_reset_email, build_registration_email
+from ..utils.mail import send_mail, build_reset_email, build_welcome_email, build_registration_email
 
 public_bp = Blueprint('public', __name__)
 
@@ -19,9 +20,7 @@ _register_schema = VolunteerRegisterSchema()
 @public_bp.route('/instances', methods=['GET'])
 def list_instances():
     instances = Instance.query.filter_by(is_active=True).order_by(Instance.name).all()
-    return jsonify(data=[
-        {'slug': i.slug, 'name': i.name} for i in instances
-    ]), 200
+    return jsonify(data=[{'slug': i.slug, 'name': i.name} for i in instances]), 200
 
 
 @public_bp.route('/<slug>/info', methods=['GET'])
@@ -38,6 +37,10 @@ def instance_info(slug):
 def captcha(slug):
     return jsonify(generate_captcha()), 200
 
+
+# ---------------------------------------------------------------------------
+# Registrierung – passwortloser Flow
+# ---------------------------------------------------------------------------
 
 @public_bp.route('/<slug>/register', methods=['POST'])
 @limiter.limit('10 per minute')
@@ -59,23 +62,25 @@ def register(slug):
 
     if not verify_captcha(data['captcha_answer']):
         return jsonify(error='Falsches CAPTCHA'), 400
-    if not data.get('consent'):
-        return jsonify(error='Datenschutzzustimmung erforderlich'), 400
-    if not validate_password_strength(data['password']):
-        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)'), 400
 
-    email = data['email'].strip().lower()
-    if Volunteer.query.filter_by(instance_id=instance.id, email=email).first():
+    # Einwilligung nur erzwungen wenn Datenschutzerklärung konfiguriert
+    has_policy = bool(settings and settings.privacy_policy_html)
+    if has_policy and not data.get('consent'):
+        return jsonify(error='Datenschutzzustimmung erforderlich'), 400
+
+    email = (data.get('email') or '').strip().lower() or None
+
+    if email and Volunteer.query.filter_by(instance_id=instance.id, email=email).first():
         return jsonify(error='E-Mail-Adresse bereits vergeben'), 409
 
     volunteer = Volunteer(
         instance_id=instance.id,
         name=data['name'].strip(),
         email=email,
-        consent_given_at=datetime.now(timezone.utc),
+        consent_given_at=datetime.now(timezone.utc) if data.get('consent') else None,
     )
-    volunteer.set_password(data['password'])
     db.session.add(volunteer)
+    db.session.flush()  # ID generieren
 
     db.session.add(ActivityLog(
         instance_id=instance.id,
@@ -83,19 +88,88 @@ def register(slug):
         volunteer_name=volunteer.name,
         ip_address=request.remote_addr,
         actor_type='volunteer',
+        user_agent=request.headers.get('User-Agent', '')[:500],
     ))
-    db.session.commit()
 
-    try:
+    if email:
+        # Welcome-Token-Flow: kein Passwort, E-Mail mit Einrichtungslink
+        raw_token = volunteer.generate_welcome_token()
+        db.session.commit()
+
         title = settings.site_title if settings else instance.name
         base_url = current_app.config.get('FRONTEND_URL', '')
-        send_mail(email, f'Registrierung bei {title}',
-                  build_registration_email(volunteer.name, title, f'{base_url}/{slug}/login'))
-    except Exception:
-        pass
+        setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
+        try:
+            send_mail(email, f'Willkommen bei {title}',
+                      build_welcome_email(volunteer.name, title, setup_url, base_url))
+        except Exception:
+            pass
 
-    return jsonify(message='Registrierung erfolgreich'), 201
+        return jsonify(message='E-Mail mit Einrichtungslink gesendet'), 201
 
+    else:
+        # Anonyme Registrierung: direkt einloggen
+        db.session.commit()
+        from ..api.auth import _issue_tokens, _set_token_cookies, _user_payload
+        access, refresh = _issue_tokens(volunteer)
+        resp = jsonify(user=_user_payload(volunteer), message='Registrierung erfolgreich')
+        resp.status_code = 201
+        return _set_token_cookies(resp, access, refresh)
+
+
+# ---------------------------------------------------------------------------
+# Welcome-Token – Passwort einrichten
+# ---------------------------------------------------------------------------
+
+@public_bp.route('/<slug>/welcome/<raw_token>', methods=['GET'])
+def welcome_info(slug, raw_token):
+    volunteer = _find_volunteer_by_welcome_token(slug, raw_token)
+    if not volunteer:
+        return jsonify(error='Ungültiger oder abgelaufener Einrichtungslink'), 400
+    return jsonify(data={'name': volunteer.name, 'slug': slug}), 200
+
+
+@public_bp.route('/<slug>/welcome/<raw_token>', methods=['POST'])
+@limiter.limit('10 per minute')
+def welcome_setup(slug, raw_token):
+    volunteer = _find_volunteer_by_welcome_token(slug, raw_token)
+    if not volunteer:
+        return jsonify(error='Ungültiger oder abgelaufener Einrichtungslink'), 400
+
+    password = (request.get_json() or {}).get('password', '')
+    if not validate_password_strength(password):
+        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)'), 400
+
+    volunteer.set_password(password)
+    volunteer.clear_welcome_token()
+    db.session.commit()
+
+    from ..api.auth import _issue_tokens, _set_token_cookies, _user_payload
+    access, refresh = _issue_tokens(volunteer)
+    resp = jsonify(user=_user_payload(volunteer), message='Passwort eingerichtet')
+    return _set_token_cookies(resp, access, refresh)
+
+
+# ---------------------------------------------------------------------------
+# Datenschutzerklärung
+# ---------------------------------------------------------------------------
+
+@public_bp.route('/<slug>/datenschutz', methods=['GET'])
+def datenschutz(slug):
+    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    if not instance:
+        return jsonify(error='Instanz nicht gefunden'), 404
+    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+    return jsonify(data={
+        'privacy_policy_html': settings.privacy_policy_html if settings else None,
+        'instance_name': instance.name,
+        'slug': slug,
+    }), 200
+
+
+# ---------------------------------------------------------------------------
+# Passwort-Reset
+# ---------------------------------------------------------------------------
 
 @public_bp.route('/<slug>/forgot-password', methods=['POST'])
 @limiter.limit('5 per minute')
@@ -110,6 +184,7 @@ def volunteer_forgot_password(slug):
     if volunteer and not volunteer.is_deleted:
         raw_token = volunteer.generate_reset_token()
         db.session.commit()
+        settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
         base_url = current_app.config.get('FRONTEND_URL', '')
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
         try:
@@ -149,8 +224,27 @@ def volunteer_reset_password(slug):
     return jsonify(message='Passwort wurde geändert'), 200
 
 
+# ---------------------------------------------------------------------------
+# Hilfsfunktionen
+# ---------------------------------------------------------------------------
+
+def _find_volunteer_by_welcome_token(slug: str, raw_token: str):
+    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    if not instance:
+        return None
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    volunteer = Volunteer.query.filter_by(
+        instance_id=instance.id, welcome_token=token_hash
+    ).first()
+    if not volunteer or not volunteer.is_welcome_token_valid or volunteer.is_deleted:
+        return None
+    return volunteer
+
+
 def _build_instance_info(instance, settings, global_settings) -> dict:
+    has_policy = bool(settings and settings.privacy_policy_html)
     return {
+        'id': instance.id,
         'slug': instance.slug,
         'name': instance.name,
         'title': settings.site_title if settings else instance.name,
@@ -161,6 +255,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'shifts_enabled': settings.shifts_enabled if settings else True,
         'food_donations_enabled': settings.food_donations_enabled if settings else True,
         'registration_open': settings.registration_open if settings else True,
+        'has_privacy_policy': has_policy,
         'impressum_html': _merge_impressum(settings, global_settings),
         'privacy_policy_html': settings.privacy_policy_html if settings else None,
     }

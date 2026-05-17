@@ -19,6 +19,8 @@ export const adminApi = {
   createVolunteer: (slug, data) => client.post(`${a(slug)}/volunteers`, data),
   updateVolunteer: (slug, id, data) => client.put(`${a(slug)}/volunteers/${id}`, data),
   deleteVolunteer: (slug, id) => client.delete(`${a(slug)}/volunteers/${id}`),
+  permanentDeleteVolunteer: (slug, id) =>
+    client.delete(`${a(slug)}/volunteers/${id}/permanent`),
   resetVolunteerPassword: (slug, id, data) =>
     client.post(`${a(slug)}/volunteers/${id}/reset-password`, data),
 

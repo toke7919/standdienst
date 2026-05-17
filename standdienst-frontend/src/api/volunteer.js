@@ -13,4 +13,5 @@ export const volunteerApi = {
     client.delete(`/volunteer/${slug}/food-donations/${donationId}`),
   updateProfile: (slug, data) => client.put(`/volunteer/${slug}/profile`, data),
   deleteAccount: (slug) => client.delete(`/volunteer/${slug}/profile`),
+  getMeineDaten: (slug) => client.get(`/volunteer/${slug}/meine-daten`),
 }
