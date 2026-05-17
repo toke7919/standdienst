@@ -16,6 +16,7 @@ def create_app(config_class=Config):
     _register_error_handlers(app)
     _register_spa_fallback(app)
     _init_db(app)
+    _start_scheduler(app)
 
     return app
 
@@ -99,6 +100,11 @@ def _register_spa_fallback(app):
         if os.path.isfile(index):
             return send_from_directory(dist_path, 'index.html')
         return jsonify(error='Frontend noch nicht gebaut'), 503
+
+
+def _start_scheduler(app):
+    from .utils.scheduler import init_scheduler
+    init_scheduler(app)
 
 
 def _init_db(app):

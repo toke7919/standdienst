@@ -102,6 +102,41 @@ def my_registrations(slug):
     return ok(_reg_schema.dump(regs))
 
 
+@volunteer_bp.route('/<slug>/my-registrations/ical', methods=['GET'])
+@require_volunteer
+def my_registrations_ical(slug):
+    from datetime import date
+    from icalendar import Calendar, Event as IEvent
+    import io
+    from flask import send_file
+    import pytz
+
+    cal = Calendar()
+    cal.add('prodid', f'-//Standdienst//{g.instance.slug}//DE')
+    cal.add('version', '2.0')
+    cal.add('x-wr-calname', f'Meine Schichten – {g.instance.name}')
+
+    tz = pytz.timezone('Europe/Berlin')
+    regs = Registration.query.filter_by(volunteer_id=g.current_user.id).all()
+
+    for reg in regs:
+        shift = reg.shift
+        event = IEvent()
+        event.add('summary', f'Standdienst: {shift.stand.name}')
+        event.add('dtstart', tz.localize(
+            datetime.combine(shift.event_date.date, shift.start_time)
+        ))
+        event.add('dtend', tz.localize(
+            datetime.combine(shift.event_date.date, shift.end_time)
+        ))
+        event.add('uid', f'vol-{reg.id}@standdienst')
+        cal.add_component(event)
+
+    buf = io.BytesIO(cal.to_ical())
+    filename = f'meine-schichten-{g.instance.slug}.ics'
+    return send_file(buf, mimetype='text/calendar', as_attachment=True, download_name=filename)
+
+
 # ---------------------------------------------------------------------------
 # Essensspenden
 # ---------------------------------------------------------------------------
