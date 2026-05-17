@@ -40,11 +40,13 @@ def _register_blueprints(app):
     from .api.public import public_bp
     from .api.volunteer import volunteer_bp
     from .api.admin import admin_bp
+    from .api.setup import setup_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(public_bp, url_prefix='/api/public')
     app.register_blueprint(volunteer_bp, url_prefix='/api/volunteer')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(setup_bp, url_prefix='/api/setup')
 
 
 def _register_error_handlers(app):
@@ -115,7 +117,7 @@ def _init_db(app):
 
 
 def _seed_admin(app):
-    from .models import Admin
+    from .models import Admin, GlobalSettings
     if Admin.query.count() > 0:
         return
     admin_email = app.config.get('ADMIN_EMAIL', 'admin@example.com')
@@ -125,4 +127,8 @@ def _seed_admin(app):
     admin = Admin(email=admin_email, is_primary=True)
     admin.set_password(admin_pw)
     db.session.add(admin)
+    # Setup in Tests als abgeschlossen markieren
+    gs = GlobalSettings.query.first() or GlobalSettings()
+    gs.setup_complete = True
+    db.session.add(gs)
     db.session.commit()

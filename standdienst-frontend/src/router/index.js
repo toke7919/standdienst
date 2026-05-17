@@ -1,9 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useSetupStore } from '@/stores/setup'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // Setup-Assistent (vor allen anderen Routen ausgewertet)
+    {
+      path: '/setup',
+      component: () => import('@/views/setup/SetupWizard.vue'),
+      meta: { setupOnly: true },
+    },
+
     // Public
     {
       path: '/',
@@ -51,51 +59,21 @@ const router = createRouter({
         { path: 'backup', component: () => import('@/views/admin/Backup.vue') },
         { path: 'update', component: () => import('@/views/admin/Update.vue') },
         { path: 'profile/2fa', component: () => import('@/views/admin/TwoFASetup.vue') },
-        // Instance-specific
-        {
-          path: ':slug/volunteers',
-          component: () => import('@/views/admin/Volunteers.vue'),
-        },
-        {
-          path: ':slug/stands',
-          component: () => import('@/views/admin/Stands.vue'),
-        },
-        {
-          path: ':slug/dates',
-          component: () => import('@/views/admin/Dates.vue'),
-        },
-        {
-          path: ':slug/shifts',
-          component: () => import('@/views/admin/Shifts.vue'),
-        },
-        {
-          path: ':slug/registrations',
-          component: () => import('@/views/admin/Registrations.vue'),
-        },
-        {
-          path: ':slug/food',
-          component: () => import('@/views/admin/Food.vue'),
-        },
-        {
-          path: ':slug/settings',
-          component: () => import('@/views/admin/settings/Instance.vue'),
-        },
-        {
-          path: ':slug/export',
-          component: () => import('@/views/admin/Export.vue'),
-        },
-        {
-          path: ':slug/import',
-          component: () => import('@/views/admin/Import.vue'),
-        },
-        {
-          path: ':slug/activity',
-          component: () => import('@/views/admin/InstanceActivity.vue'),
-        },
+        // Instanz-spezifisch
+        { path: ':slug/volunteers', component: () => import('@/views/admin/Volunteers.vue') },
+        { path: ':slug/stands', component: () => import('@/views/admin/Stands.vue') },
+        { path: ':slug/dates', component: () => import('@/views/admin/Dates.vue') },
+        { path: ':slug/shifts', component: () => import('@/views/admin/Shifts.vue') },
+        { path: ':slug/registrations', component: () => import('@/views/admin/Registrations.vue') },
+        { path: ':slug/food', component: () => import('@/views/admin/Food.vue') },
+        { path: ':slug/settings', component: () => import('@/views/admin/settings/Instance.vue') },
+        { path: ':slug/export', component: () => import('@/views/admin/Export.vue') },
+        { path: ':slug/import', component: () => import('@/views/admin/Import.vue') },
+        { path: ':slug/activity', component: () => import('@/views/admin/InstanceActivity.vue') },
       ],
     },
 
-    // Volunteer area
+    // Volunteer-Bereich
     {
       path: '/:slug/login',
       component: () => import('@/views/volunteer/Login.vue'),
@@ -142,19 +120,26 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const auth = useAuthStore()
+  const setup = useSetupStore()
+  const setupDone = await setup.check()
 
+  // Setup-Seite: nur wenn Setup noch nicht abgeschlossen
+  if (to.meta.setupOnly) {
+    if (setupDone) return '/'
+    return // Weiterleiten zum Wizard
+  }
+
+  // Alle anderen Seiten: Setup muss zuerst abgeschlossen sein
+  if (!setupDone) return '/setup'
+
+  // Standard Auth-Guards
+  const auth = useAuthStore()
   if (auth.isLoggedIn === false && (to.meta.requiresAuth || to.meta.requiresStaff)) {
     await auth.fetchMe()
   }
 
-  if (to.meta.requiresStaff && !auth.isStaff) {
-    return '/admin/login'
-  }
-
-  if (to.meta.requiresVolunteer && !auth.isVolunteer) {
-    return `/${to.params.slug}/login`
-  }
+  if (to.meta.requiresStaff && !auth.isStaff) return '/admin/login'
+  if (to.meta.requiresVolunteer && !auth.isVolunteer) return `/${to.params.slug}/login`
 
   if (to.meta.guest && auth.isLoggedIn) {
     if (auth.isStaff) return '/admin/dashboard'

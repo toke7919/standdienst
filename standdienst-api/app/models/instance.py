@@ -41,6 +41,8 @@ class GlobalSettings(db.Model):
     smb_path = db.Column(db.String(500), nullable=True)
     smb_username = db.Column(db.String(200), nullable=True)
     smb_password = db.Column(db.String(500), nullable=True)
+    setup_complete = db.Column(db.Boolean, nullable=False, default=False)
+    github_pat = db.Column(db.String(500), nullable=True)
     updated_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
