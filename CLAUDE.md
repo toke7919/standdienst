@@ -14,7 +14,7 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 - **Organisator** – operativer Zugriff (Schichten, Termine, Anmeldungen); kein Zugriff auf Instanz-Einstellungen
 - **Volunteer** – Self-Service (eigene Instanz): Schichten buchen, Essen spenden, Profil verwalten
 
-**Aktueller Stand:** v3.0.0-beta.1 (2026-05-17) – Erster Beta-Meilenstein mit Drei-Rollen-System, DSGVO und passwortlosem Registrierungsflow.
+**Aktueller Stand:** v3.0.0-beta.2 (2026-05-17) – Setup-Wizard, überarbeitete Installation (Port-Abfrage), Deinstallations-Script.
 
 ---
 
@@ -31,6 +31,7 @@ standdienst_v2/
 │   │   │   ├── auth.py           # Login, 2FA, Refresh, Passwort-Reset (Admin/Org/Volunteer)
 │   │   │   ├── public.py         # Öffentliche Routes (Info, Registrierung, Welcome, DSGVO)
 │   │   │   ├── volunteer.py      # Volunteer-Bereich (Schichten, Essen, Profil, DSGVO-Export)
+│   │   │   ├── setup.py          # Ersteinrichtung (nur solange setup_complete=False)
 │   │   │   └── admin/
 │   │   │       ├── __init__.py   # admin_bp Blueprint
 │   │   │       ├── instances.py  # Instanz-CRUD
@@ -70,7 +71,8 @@ standdienst_v2/
 │   │       └── responses.py      # Response-Helper (ok, created, error, paginated)
 │   ├── migrations/               # Alembic-Migrationen (Flask-Migrate)
 │   │   └── versions/
-│   │       └── c1efeb76ffc8_initial_schema_volunteer_welcome_token.py
+│   │       ├── c1efeb76ffc8_initial_schema_volunteer_welcome_token.py
+│   │       └── a4f2c9e1d7b3_add_setup_complete_github_pat.py
 │   ├── tests/
 │   │   ├── conftest.py           # Fixtures (TestingConfig, SQLite in-memory, client)
 │   │   ├── test_auth.py
@@ -92,11 +94,13 @@ standdienst_v2/
 │   │   │   ├── auth.js
 │   │   │   ├── public.js         # register, welcomeInfo, welcomeSetup, getPrivacyPolicy
 │   │   │   ├── volunteer.js      # Schichten, Essen, Profil, getMeineDaten
-│   │   │   └── admin.js          # Vollständige Admin-API inkl. permanentDeleteVolunteer
+│   │   │   ├── admin.js          # Vollständige Admin-API inkl. permanentDeleteVolunteer
+│   │   │   └── setup.js          # status, createAdmin, saveConfig, saveMail, finish
 │   │   ├── stores/
 │   │   │   ├── auth.js           # User-State, Login-Actions, isStaff/isVolunteer
 │   │   │   ├── instance.js       # Instanz-Kontext
-│   │   │   └── ui.js             # Toast, Modal, Confirm-Dialog
+│   │   │   ├── ui.js             # Toast, Modal, Confirm-Dialog
+│   │   │   └── setup.js          # Setup-Status cachen, markComplete()
 │   │   ├── router/index.js       # Vue Router 4 (lazy-loading, Route-Guards)
 │   │   ├── layouts/
 │   │   │   ├── AdminLayout.vue   # Sidebar + Instanz-Selector
@@ -104,13 +108,16 @@ standdienst_v2/
 │   │   ├── views/
 │   │   │   ├── public/           # Landing, Impressum, PrivacyPolicy
 │   │   │   ├── admin/            # 20 Views (Dashboard, CRUD, Export, Backup, …)
-│   │   │   └── volunteer/        # Login, Register, WelcomeSetup, Shifts, Profile, …
+│   │   │   ├── volunteer/        # Login, Register, WelcomeSetup, Shifts, Profile, …
+│   │   │   └── setup/
+│   │   │       └── SetupWizard.vue  # 5-stufiger Ersteinrichtungs-Assistent
 │   │   └── components/           # ToastContainer, Modal, ConfirmDialog, Pagination, LoadingSpinner
 │   ├── package.json
 │   ├── vite.config.js            # Build → standdienst-api/static/dist/
 │   ├── tailwind.config.js
 │   └── postcss.config.js
-├── install.sh                    # Vollständiges Debian/Ubuntu-Installations-Script
+├── install.sh                    # Technische Installation (Port-Abfrage, kein Admin-PW)
+├── uninstall.sh                  # Vollständige Deinstallation (interaktiv, mit Bestätigung)
 ├── .gitignore
 └── README.md
 ```
@@ -242,7 +249,7 @@ Mathe-Addition in Flask-Session gespeichert, 5-Minuten-TTL, einmalig konsumiert.
 | `Instance` | Organisationseinheit | `slug` eindeutig, URL-Identifier, `is_active` |
 | `Admin` | Global-Admin | `is_primary`, TOTP 2FA, Reset-Token (1h) |
 | `Organizer` | Instanz-Verantwortlicher | `is_instance_admin`, Many-to-Many Instanzen |
-| `GlobalSettings` | Plattform-Einstellungen | Base-URL, SMB-Backup-Config, Log-Retention |
+| `GlobalSettings` | Plattform-Einstellungen | Base-URL, SMB-Backup-Config, Log-Retention, `setup_complete`, `github_pat` |
 | `MailSettings` | SMTP-Konfiguration | (DB-gespeichert, optional via .env) |
 | `ActivityLog` | Audit-Trail | `instance_id=NULL` = globaler Eintrag |
 
@@ -287,6 +294,23 @@ AUDIT_SETTINGS, AUDIT_DATA, AUDIT_ORGANIZER, AUDIT_ADMIN
 ---
 
 ## API-Endpunkte
+
+### setup_bp (`/api/setup`)
+
+Nur erreichbar solange `GlobalSettings.setup_complete = False`. Danach 403 auf alle Endpunkte außer `/status`.
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| GET | `/status` | `{setup_complete, has_admin}` – immer zugänglich |
+| POST | `/admin` | Ersten Admin-Account anlegen (E-Mail + Passwort) |
+| POST | `/config` | Basis-URL, Copyright-Text, GitHub PAT speichern |
+| POST | `/mail` | SMTP-Konfiguration (Server, Port, TLS, Credentials) |
+| POST | `/finish` | `setup_complete=True` setzen (erfordert vorhandenen Admin) |
+
+**Guard-Logik:** `_check_guard()` gibt 403 zurück wenn `gs.setup_complete=True`.  
+**Upgrade-Sicherheit:** Migration `a4f2c9e1d7b3` setzt `setup_complete=True` automatisch wenn `admins`-Tabelle bereits Einträge enthält.
+
+---
 
 ### auth_bp (`/api/auth`)
 
@@ -400,6 +424,7 @@ Scheduler startet nur wenn `not app.config['TESTING']`.
 ## Frontend-Routing
 
 ```
+/setup                      → SetupWizard (meta: setupOnly; redirect → / wenn setup_complete=True)
 /                           → Landing (öffentlich)
 /impressum                  → Impressum
 /admin/login                → Admin/Org-Login
@@ -416,6 +441,18 @@ Scheduler startet nur wenn `not app.config['TESTING']`.
 /:slug/food                 → Essen-Spenden
 /:slug/profile              → Profil + DSGVO-Export + Konto löschen
 ```
+
+### Router-Guard (Setup-Flow)
+
+```js
+// beforeEach – wird vor jeder Navigation ausgeführt
+const setupDone = await useSetupStore().check()  // gecacht nach erstem Aufruf
+
+if (to.meta.setupOnly && setupDone)  → redirect '/'
+if (!setupDone && !to.meta.setupOnly) → redirect '/setup'
+```
+
+`useSetupStore.check()` ruft `GET /api/setup/status` einmalig auf und cached das Ergebnis für die gesamte Session. Bei Netzwerkfehler wird `true` angenommen (kein Blocking).
 
 ---
 
@@ -493,15 +530,46 @@ standdienst.service → Gunicorn (After: postgresql + redis-server)
 ```
 
 ### install.sh
-Führt vollständige Debian/Ubuntu-Installation durch:
-1. Systempakete (PostgreSQL, Redis, Node.js 20, Nginx)
-2. Service-User, Verzeichnisse
-3. PostgreSQL + Redis konfigurieren
-4. Python-Venv + Dependencies
-5. Secrets generieren (`.env`)
-6. Frontend bauen (`npm install && npm run build`)
+Rein **technische** Installation – kein Admin-Passwort, keine inhaltliche Konfiguration.
+
+1. **Port abfragen** (Default 8420) – Validierung (1024–65535) + Verfügbarkeitsprüfung via `ss`/`netstat`
+2. Systempakete (PostgreSQL, Redis, Node.js 20, Nginx)
+3. Service-User, Verzeichnisse
+4. PostgreSQL + Redis konfigurieren
+5. Python-Venv + Dependencies
+6. Minimale `.env` generieren (`SECRET_KEY`, `DATABASE_URL`, `GUNICORN_BIND=0.0.0.0:<port>`)
 7. DB-Migrationen (`flask db upgrade`)
-8. systemd + Nginx einrichten
+8. Frontend bauen (`npm install && npm run build`)
+9. systemd + Nginx einrichten
+10. Verweist auf `http://<IP>/setup` für die Erstkonfiguration
+
+### uninstall.sh
+Vollständige, interaktive Deinstallation – jeder Schritt erfordert explizite Bestätigung:
+
+1. systemd-Service stoppen, deaktivieren, entfernen
+2. Nginx-Konfiguration löschen + Reload
+3. Installationsverzeichnis löschen (mit Inhaltswarnung)
+4. PostgreSQL-Datenbank + -User löschen
+5. Service-User entfernen
+6. Optional: System-Pakete deinstallieren (PostgreSQL, Redis, Nginx, Node.js)
+
+---
+
+## Setup-Wizard
+
+Der Ersteinrichtungs-Assistent unter `/setup` führt durch 5 Schritte:
+
+| Schritt | Inhalt | Pflicht |
+|---------|--------|---------|
+| 1 | Willkommen – Übersicht | – |
+| 2 | Admin-Account (E-Mail, Passwort) | ✓ |
+| 3 | Basis-URL + Copyright-Text | – |
+| 4 | Mail-Server (SMTP) | – (überspringbar) |
+| 5 | GitHub PAT für Updates | – (überspringbar) |
+
+Nach Abschluss: `setup_complete=True` in `GlobalSettings`, Weiterleitung zu `/admin/login`.
+
+**Bestehende Installationen** (Upgrade von v2 auf v3): Migration `a4f2c9e1d7b3` setzt `setup_complete=True` automatisch wenn Admins vorhanden sind → kein Setup-Wizard beim Upgrade.
 
 ---
 
@@ -512,5 +580,6 @@ Führt vollständige Debian/Ubuntu-Installation durch:
 | CSP | `'unsafe-inline'` im Frontend (Tailwind) | Mittel |
 | Scheduler | APScheduler Worker-lokal (Multi-Worker: Jobs laufen mehrfach) | Mittel |
 | Settings-Cache | Kein Cache implementiert (v2 hatte TTL-Cache, v3 noch offen) | Niedrig |
-| Migrationen | Erste Migration deckt gesamtes Schema ab; kein Rollback-Szenario getestet | Mittel |
+| Migrationen | Kein Rollback-Szenario getestet | Mittel |
 | E-Mail | Kein Retry bei SMTP-Fehler | Niedrig |
+| Setup-Guard | `/api/setup/*` prüft nur `setup_complete`-Flag, kein IP-Beschränkung | Niedrig |
