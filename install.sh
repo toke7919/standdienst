@@ -206,10 +206,13 @@ chmod 600 "$INSTALL_DIR/.env"
 chown "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR/.env"
 info "Konfigurationsdatei geschrieben: $INSTALL_DIR/.env"
 
-# Datenbankmigrationen
-FLASK_APP=wsgi DATABASE_URL="$DATABASE_URL" SECRET_KEY="$SECRET_KEY" \
-    .venv/bin/flask db upgrade
+# Datenbankmigrationen (als Service-User damit logs/ nicht root-owned wird)
+su -s /bin/bash "$SERVICE_USER" -c \
+    "FLASK_APP=wsgi DATABASE_URL='$DATABASE_URL' SECRET_KEY='$SECRET_KEY' '$INSTALL_DIR/.venv/bin/flask' db upgrade"
 info "Datenbankmigrationen angewendet"
+
+# Eigentümer nach Migration sicherstellen (falls doch root-Dateien entstanden)
+chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"/{logs,uploads}
 
 # ---------------------------------------------------------------------------
 # 5. Frontend bauen
