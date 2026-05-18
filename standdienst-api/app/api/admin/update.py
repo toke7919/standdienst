@@ -99,7 +99,8 @@ def _repo_slug_and_pat():
     from ...models import GlobalSettings
     gs = GlobalSettings.query.first()
     pat = gs.github_pat if gs else None
-    slug = (gs.github_repo if gs else None) or _git_repo_slug()
+    # Priorität: DB-Einstellung → Env-Variable (von install.sh gesetzt) → git-Erkennung (Dev)
+    slug = (gs.github_repo if gs else None) or os.environ.get('GITHUB_REPO') or _git_repo_slug()
     return slug, pat
 
 
