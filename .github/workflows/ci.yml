@@ -53,5 +53,5 @@ jobs:
           DATABASE_URL: sqlite:///ci-migrate.db
         run: |
           flask --app wsgi db upgrade
-          flask --app wsgi db downgrade -1
+          flask --app wsgi db downgrade -- -1
           flask --app wsgi db upgrade
