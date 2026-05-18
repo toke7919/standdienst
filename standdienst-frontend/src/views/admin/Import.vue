@@ -15,6 +15,9 @@
           <a :href="adminApi.importTemplateXlsxUrl(slug)" class="btn-secondary text-sm">
             XLSX-Vorlage
           </a>
+          <a :href="adminApi.importTemplateOdsUrl(slug)" class="btn-secondary text-sm">
+            ODS-Vorlage
+          </a>
         </div>
       </div>
 

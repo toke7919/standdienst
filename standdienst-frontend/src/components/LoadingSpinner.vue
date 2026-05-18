@@ -14,5 +14,5 @@ const props = defineProps({
   fullPage: Boolean,
 })
 const sizeClass = computed(() => ({ sm: 'w-4 h-4', md: 'w-6 h-6', lg: 'w-10 h-10' }[props.size]))
-const wrapClass = computed(() => props.fullPage ? 'min-h-screen text-primary-600' : 'py-8 text-gray-400')
+const wrapClass = computed(() => props.fullPage ? 'min-h-screen text-primary-600' : 'text-gray-400')
 </script>

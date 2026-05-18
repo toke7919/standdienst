@@ -32,6 +32,35 @@ def import_template_csv(slug):
                      download_name='schicht-vorlage.csv')
 
 
+@admin_bp.route('/<slug>/import/template/ods', methods=['GET'])
+@require_staff
+def import_template_ods(slug):
+    try:
+        from odf.opendocument import OpenDocumentSpreadsheet
+        from odf.table import Table, TableRow, TableCell
+        from odf.text import P
+    except ImportError:
+        return error('odfpy nicht installiert', 500)
+
+    doc = OpenDocumentSpreadsheet()
+    table = Table(name='Schichten')
+    for row_data in [_IMPORT_COLUMNS, ['Kasse', '01.08.2025', '08:00', '12:00', '3']]:
+        row = TableRow()
+        for val in row_data:
+            cell = TableCell(valuetype='string')
+            cell.addElement(P(text=str(val)))
+            row.addElement(cell)
+        table.addElement(row)
+    doc.spreadsheet.addElement(table)
+
+    buf = io.BytesIO()
+    doc.write(buf)
+    buf.seek(0)
+    return send_file(buf,
+                     mimetype='application/vnd.oasis.opendocument.spreadsheet',
+                     as_attachment=True, download_name='schicht-vorlage.ods')
+
+
 @admin_bp.route('/<slug>/import/template/xlsx', methods=['GET'])
 @require_staff
 def import_template_xlsx(slug):
