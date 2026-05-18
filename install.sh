@@ -109,6 +109,16 @@ CONFIRM="${CONFIRM:-J}"
 # ---------------------------------------------------------------------------
 section "1/6  Systempakete installieren"
 export DEBIAN_FRONTEND=noninteractive
+
+# Defekte Drittanbieter-Repositories entfernen, die apt-get update blockieren würden
+# (packages.sury.org/python existiert nicht mehr)
+if find /etc/apt/sources.list.d/ -name "*.list" -print0 2>/dev/null | \
+        xargs -0 grep -l "sury.org/python" 2>/dev/null | grep -q .; then
+    find /etc/apt/sources.list.d/ -name "*.list" -print0 | \
+        xargs -0 grep -l "sury.org/python" | xargs rm -f
+    warn "Veraltetes packages.sury.org/python-Repository entfernt"
+fi
+
 apt-get update -qq
 apt-get install -y -qq \
     python3 python3-venv python3-dev \
