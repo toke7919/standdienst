@@ -13,10 +13,13 @@ _LOOPBACK = {'127.0.0.1', '::1', 'localhost'}
 def _check_setup_ip():
     """Prüft ob die Request-IP auf der Setup-Allowlist steht.
 
-    Ohne SETUP_ALLOWED_IPS darf nur localhost zugreifen. Mit gesetzter Env-Var
-    werden die darin enthaltenen IPs (kommagetrennt) zusätzlich zugelassen.
+    Ohne SETUP_ALLOWED_IPS: alle IPs erlaubt (frische Installation braucht
+    Zugriff von außen). Mit gesetzter Env-Var werden nur die darin enthaltenen
+    IPs (kommagetrennt) plus Localhost zugelassen.
     """
     allowed_env = os.environ.get('SETUP_ALLOWED_IPS', '')
+    if not allowed_env.strip():
+        return None  # keine Einschränkung – jede IP darf Setup aufrufen
     allowed = _LOOPBACK | {ip.strip() for ip in allowed_env.split(',') if ip.strip()}
     ip = request.remote_addr or ''
     if ip not in allowed:

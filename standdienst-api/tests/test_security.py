@@ -90,8 +90,18 @@ def test_admin_reset_invalidates_existing_session(client, admin_user):
 # Setup-Guard – IP-Beschränkung
 # ---------------------------------------------------------------------------
 
-def test_setup_blocked_from_external_ip(client):
-    """POST /api/setup/admin von externer IP → 403."""
+def test_setup_allowed_from_external_ip_without_allowlist(client, monkeypatch):
+    """Ohne SETUP_ALLOWED_IPS darf jede IP das Setup aufrufen."""
+    monkeypatch.delenv('SETUP_ALLOWED_IPS', raising=False)
+    rv = client.post('/api/setup/admin',
+                     json={'email': 'admin@test.de', 'password': 'StarkesPass1!Xx'},
+                     environ_base={'REMOTE_ADDR': '1.2.3.4'})
+    assert rv.status_code in (201, 409)  # IP-Block greift nicht
+
+
+def test_setup_blocked_from_external_ip_with_allowlist(client, monkeypatch):
+    """Mit SETUP_ALLOWED_IPS wird externe IP blockiert."""
+    monkeypatch.setenv('SETUP_ALLOWED_IPS', '192.168.1.10')
     rv = client.post('/api/setup/admin',
                      json={'email': 'hacker@evil.com', 'password': 'P@ssw0rd123456'},
                      environ_base={'REMOTE_ADDR': '1.2.3.4'})
@@ -99,8 +109,9 @@ def test_setup_blocked_from_external_ip(client):
     assert 'IP' in rv.get_json()['error']
 
 
-def test_setup_config_blocked_from_external_ip(client):
-    """POST /api/setup/config von externer IP → 403."""
+def test_setup_config_blocked_from_external_ip_with_allowlist(client, monkeypatch):
+    """POST /api/setup/config von nicht-erlaubter IP mit gesetzter Allowlist → 403."""
+    monkeypatch.setenv('SETUP_ALLOWED_IPS', '192.168.1.10')
     rv = client.post('/api/setup/config',
                      json={'base_url': 'http://evil.com'},
                      environ_base={'REMOTE_ADDR': '10.0.0.1'})
@@ -112,7 +123,6 @@ def test_setup_allowed_from_localhost(client):
     rv = client.post('/api/setup/admin',
                      json={'email': 'admin@test.de', 'password': 'StarkesPass1!Xx'},
                      environ_base={'REMOTE_ADDR': '127.0.0.1'})
-    # Kein IP-Block → inhaltliche Verarbeitung (Admin angelegt oder existiert bereits)
     assert rv.status_code in (201, 409)
 
 

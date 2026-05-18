@@ -568,7 +568,7 @@ if (!setupDone && !to.meta.setupOnly) → redirect '/setup'
 | `GUNICORN_BIND` | `0.0.0.0:8420` | Bind-Adresse |
 | `LOG_LEVEL` | `INFO` (prod) / `DEBUG` (dev) | Log-Level |
 | `LOG_DIR` | `logs` | Verzeichnis für Log-Dateien |
-| `SETUP_ALLOWED_IPS` | `''` | Zusätzliche IPs (kommagetrennt) für `/api/setup/*`; Localhost immer erlaubt |
+| `SETUP_ALLOWED_IPS` | `''` | Erlaubte IPs für `/api/setup/*` (kommagetrennt); leer = alle IPs erlaubt; Localhost immer erlaubt |
 
 ---
 
