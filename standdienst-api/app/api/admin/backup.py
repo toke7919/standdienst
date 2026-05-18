@@ -110,13 +110,15 @@ def _validate_filename(name: str) -> bool:
     return bool(name) and '/' not in name and not name.startswith('.') and name.endswith('.enc')
 
 
-def run_backup() -> str:
+def run_backup(label: str | None = None) -> str:
     """Erstellt ein Backup und gibt den Dateinamen zurück. Wirft Exception bei Fehler."""
     d = _backup_dir()
     _autorotate(d)
     raw = _dump_database()
     encrypted = _encrypt(raw, _derive_aes_key())
-    name = f'standdienst_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.enc'
+    ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+    suffix = f'_{label}' if label else ''
+    name = f'standdienst_{ts}{suffix}.enc'
     (d / name).write_bytes(encrypted)
     current_app.logger.info('Backup erstellt: %s (%d Bytes)', name, len(encrypted))
     return name
