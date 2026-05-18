@@ -1,10 +1,27 @@
 """Ersteinrichtungs-Blueprint – nur erreichbar solange setup_complete=False."""
+import os
 from flask import Blueprint, request, jsonify
 
 from ..extensions import db
 from ..models import Admin, GlobalSettings, MailSettings
 
 setup_bp = Blueprint('setup', __name__)
+
+_LOOPBACK = {'127.0.0.1', '::1', 'localhost'}
+
+
+def _check_setup_ip():
+    """Prüft ob die Request-IP auf der Setup-Allowlist steht.
+
+    Ohne SETUP_ALLOWED_IPS darf nur localhost zugreifen. Mit gesetzter Env-Var
+    werden die darin enthaltenen IPs (kommagetrennt) zusätzlich zugelassen.
+    """
+    allowed_env = os.environ.get('SETUP_ALLOWED_IPS', '')
+    allowed = _LOOPBACK | {ip.strip() for ip in allowed_env.split(',') if ip.strip()}
+    ip = request.remote_addr or ''
+    if ip not in allowed:
+        return jsonify(error='Setup-Zugriff von dieser IP nicht erlaubt'), 403
+    return None
 
 
 def _check_guard():
@@ -42,7 +59,7 @@ def status():
 
 @setup_bp.route('/admin', methods=['POST'])
 def create_admin():
-    err = _check_guard()
+    err = _check_setup_ip() or _check_guard()
     if err:
         return err
 
@@ -76,7 +93,7 @@ def create_admin():
 
 @setup_bp.route('/config', methods=['POST'])
 def save_config():
-    err = _check_guard()
+    err = _check_setup_ip() or _check_guard()
     if err:
         return err
 
@@ -98,7 +115,7 @@ def save_config():
 
 @setup_bp.route('/mail', methods=['POST'])
 def save_mail():
-    err = _check_guard()
+    err = _check_setup_ip() or _check_guard()
     if err:
         return err
 
@@ -125,7 +142,7 @@ def save_mail():
 
 @setup_bp.route('/finish', methods=['POST'])
 def finish():
-    err = _check_guard()
+    err = _check_setup_ip() or _check_guard()
     if err:
         return err
 

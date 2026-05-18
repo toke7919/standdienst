@@ -24,6 +24,7 @@ class Admin(db.Model):
     totp_enabled = db.Column(db.Boolean, nullable=False, default=False)
     reset_token = db.Column(db.String(64), unique=True, nullable=True, index=True)
     reset_token_expires = db.Column(db.DateTime(timezone=True), nullable=True)
+    jwt_version = db.Column(db.Integer, nullable=False, default=1)
 
     def set_password(self, password: str):
         self.password_hash = bcrypt.hashpw(
@@ -57,6 +58,9 @@ class Admin(db.Model):
     @property
     def role(self):
         return 'admin'
+
+    def rotate_jwt(self):
+        self.jwt_version = (self.jwt_version or 1) + 1
 
     def get_jwt_identity(self):
         return f'admin_{self.id}'

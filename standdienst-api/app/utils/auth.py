@@ -16,6 +16,12 @@ def _load_user(identity: str):
     return None
 
 
+def _jwt_version_valid(user, claims: dict) -> bool:
+    """Prüft ob das Token noch zur aktuellen DB-Version gehört."""
+    token_version = claims.get('jwt_version', 1)
+    return (user.jwt_version or 1) == token_version
+
+
 def _resolve_instance(slug: str):
     instance = Instance.query.filter_by(slug=slug).first()
     if not instance:
@@ -28,9 +34,13 @@ def require_admin(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()
-        if get_jwt().get('role') != 'admin':
+        claims = get_jwt()
+        if claims.get('role') != 'admin':
             return jsonify(error='Zugriff nur für Admins'), 403
-        g.current_user = _load_user(get_jwt_identity())
+        user = _load_user(get_jwt_identity())
+        if not user or not _jwt_version_valid(user, claims):
+            return jsonify(error='Sitzung abgelaufen – bitte erneut anmelden'), 401
+        g.current_user = user
         g.role = 'admin'
         return fn(*args, **kwargs)
     return wrapper
@@ -41,11 +51,14 @@ def require_staff(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()
-        role = get_jwt().get('role')
+        claims = get_jwt()
+        role = claims.get('role')
         if role not in ('admin', 'organizer'):
             return jsonify(error='Zugriff verweigert'), 403
 
         user = _load_user(get_jwt_identity())
+        if not user or not _jwt_version_valid(user, claims):
+            return jsonify(error='Sitzung abgelaufen – bitte erneut anmelden'), 401
         g.current_user = user
         g.role = role
 
@@ -67,11 +80,14 @@ def require_instance_admin(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()
-        role = get_jwt().get('role')
+        claims = get_jwt()
+        role = claims.get('role')
         if role not in ('admin', 'organizer'):
             return jsonify(error='Zugriff verweigert'), 403
 
         user = _load_user(get_jwt_identity())
+        if not user or not _jwt_version_valid(user, claims):
+            return jsonify(error='Sitzung abgelaufen – bitte erneut anmelden'), 401
         g.current_user = user
         g.role = role
 
@@ -96,12 +112,15 @@ def require_volunteer(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()
-        if get_jwt().get('role') != 'volunteer':
+        claims = get_jwt()
+        if claims.get('role') != 'volunteer':
             return jsonify(error='Zugriff verweigert'), 403
 
         volunteer = _load_user(get_jwt_identity())
         if not volunteer or volunteer.is_deleted:
             return jsonify(error='Konto nicht verfügbar'), 403
+        if not _jwt_version_valid(volunteer, claims):
+            return jsonify(error='Sitzung abgelaufen – bitte erneut anmelden'), 401
 
         slug = kwargs.get('slug')
         if slug:

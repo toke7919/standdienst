@@ -47,7 +47,12 @@ def _fail2ban_log(ip, user):
 
 def _issue_tokens(user):
     identity = user.get_jwt_identity()
-    claims = {'role': user.role, 'name': getattr(user, 'name', user.email), 'email': user.email}
+    claims = {
+        'role': user.role,
+        'name': getattr(user, 'name', user.email),
+        'email': user.email,
+        'jwt_version': user.jwt_version or 1,
+    }
     access = create_access_token(identity=identity, additional_claims=claims)
     refresh = create_refresh_token(identity=identity, additional_claims=claims)
     return access, refresh
@@ -216,9 +221,21 @@ def refresh():
     user = _load_user_by_identity(identity, role)
     if not user:
         return jsonify(error='Benutzer nicht gefunden'), 404
+
+    token_version = claims.get('jwt_version', 1)
+    if (user.jwt_version or 1) != token_version:
+        resp = jsonify(error='Sitzung abgelaufen – bitte erneut anmelden')
+        unset_jwt_cookies(resp)
+        return resp, 401
+
     access = create_access_token(
         identity=identity,
-        additional_claims={'role': role, 'email': claims.get('email'), 'name': claims.get('name')},
+        additional_claims={
+            'role': role,
+            'email': claims.get('email'),
+            'name': claims.get('name'),
+            'jwt_version': user.jwt_version or 1,
+        },
     )
     resp = jsonify(message='Token erneuert')
     set_access_cookies(resp, access)
@@ -266,9 +283,13 @@ def reset_password():
     raw_token = data.get('token', '')
     new_password = data.get('password', '')
     user_type = data.get('type', 'admin')
+    role = 'admin' if user_type == 'admin' else 'organizer'
 
-    if not validate_password_strength(new_password):
-        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)'), 400
+    if not validate_password_strength(new_password, role=role):
+        return jsonify(error=(
+            'Passwort zu schwach (mind. 12 Zeichen, '
+            'Groß-/Kleinbuchstabe, Ziffer, Sonderzeichen)'
+        )), 400
 
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     model = Admin if user_type == 'admin' else Organizer
@@ -278,6 +299,7 @@ def reset_password():
         return jsonify(error='Ungültiger oder abgelaufener Reset-Link'), 400
 
     user.set_password(new_password)
+    user.rotate_jwt()
     user.clear_reset_token()
     db.session.commit()
     return jsonify(message='Passwort wurde geändert'), 200

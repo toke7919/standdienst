@@ -26,6 +26,7 @@ class Organizer(db.Model):
     password_hash = db.Column(db.String(256), nullable=True)
     reset_token = db.Column(db.String(64), unique=True, nullable=True, index=True)
     reset_token_expires = db.Column(db.DateTime(timezone=True), nullable=True)
+    jwt_version = db.Column(db.Integer, nullable=False, default=1)
     created_at = db.Column(db.DateTime(timezone=True),
                            default=lambda: datetime.now(timezone.utc))
     totp_secret = db.Column(db.String(64), nullable=True)
@@ -75,6 +76,9 @@ class Organizer(db.Model):
     @property
     def role(self):
         return 'organizer'
+
+    def rotate_jwt(self):
+        self.jwt_version = (self.jwt_version or 1) + 1
 
     def get_jwt_identity(self):
         return f'organizer_{self.id}'

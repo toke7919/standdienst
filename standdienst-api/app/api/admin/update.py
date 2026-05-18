@@ -1,6 +1,9 @@
 import subprocess
 import sys
 import os
+import urllib.request
+import urllib.error
+import json
 from datetime import datetime, timezone
 
 from flask import current_app
@@ -14,31 +17,90 @@ from ...utils.responses import ok, error
 @require_admin
 def check_update():
     try:
-        result = subprocess.run(
-            ['git', 'fetch', '--dry-run'],
-            capture_output=True, text=True, timeout=15,
-            cwd=_repo_root(),
-        )
-        behind = subprocess.run(
-            ['git', 'rev-list', '--count', 'HEAD..origin/main'],
-            capture_output=True, text=True, timeout=10,
-            cwd=_repo_root(),
-        )
-        commits_behind = int(behind.stdout.strip()) if behind.returncode == 0 else 0
+        root = _repo_root()
+        current_version = _git_current_version(root)
+        repo_slug = _git_repo_slug(root)
 
-        current = subprocess.run(
-            ['git', 'describe', '--tags', '--always'],
-            capture_output=True, text=True, timeout=5,
-            cwd=_repo_root(),
-        )
+        if not repo_slug:
+            return ok({
+                'current_version': current_version,
+                'update_available': False,
+                'error': 'GitHub-Remote nicht gefunden',
+            })
 
+        from ...models import GlobalSettings
+        gs = GlobalSettings.query.first()
+        pat = gs.github_pat if gs else None
+
+        latest = _github_latest_release(repo_slug, pat)
+        if latest is None:
+            return ok({
+                'current_version': current_version,
+                'update_available': False,
+                'error': 'GitHub-Release-Abfrage fehlgeschlagen',
+            })
+
+        latest_version = latest.get('tag_name', '')
+        update_available = _is_newer(latest_version, current_version)
         return ok({
-            'current_version': current.stdout.strip(),
-            'commits_behind': commits_behind,
-            'update_available': commits_behind > 0,
+            'current_version': current_version,
+            'latest_version': latest_version,
+            'update_available': update_available,
+            'release_url': latest.get('html_url', ''),
+            'release_notes': latest.get('body', ''),
         })
     except Exception as e:
         return error(f'Update-Check fehlgeschlagen: {e}', 500)
+
+
+def _git_current_version(root: str) -> str:
+    result = subprocess.run(
+        ['git', 'describe', '--tags', '--always'],
+        capture_output=True, text=True, timeout=5, cwd=root,
+    )
+    return result.stdout.strip() if result.returncode == 0 else 'unbekannt'
+
+
+def _git_repo_slug(root: str) -> str | None:
+    """Extrahiert owner/repo aus git remote origin."""
+    result = subprocess.run(
+        ['git', 'remote', 'get-url', 'origin'],
+        capture_output=True, text=True, timeout=5, cwd=root,
+    )
+    if result.returncode != 0:
+        return None
+    url = result.stdout.strip()
+    # SSH: git@github.com:owner/repo.git oder HTTPS: https://github.com/owner/repo.git
+    if 'github.com' not in url:
+        return None
+    path = url.split('github.com')[-1].lstrip('/:').removesuffix('.git')
+    parts = path.split('/')
+    return f'{parts[0]}/{parts[1]}' if len(parts) >= 2 else None
+
+
+def _github_latest_release(repo_slug: str, pat: str | None) -> dict | None:
+    url = f'https://api.github.com/repos/{repo_slug}/releases/latest'
+    req = urllib.request.Request(url, headers={
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        **(({'Authorization': f'Bearer {pat}'}) if pat else {}),
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read())
+    except (urllib.error.URLError, ValueError):
+        return None
+
+
+def _is_newer(latest: str, current: str) -> bool:
+    """Vergleicht Tag-Namen; normalisiert führendes 'v'."""
+    def _parts(v: str):
+        v = v.lstrip('v').split('-')[0]  # ignoriere pre-release Suffix
+        try:
+            return tuple(int(x) for x in v.split('.'))
+        except ValueError:
+            return (0,)
+    return _parts(latest) > _parts(current)
 
 
 @admin_bp.route('/update/apply', methods=['POST'])
