@@ -1,6 +1,11 @@
+import time
+import logging
+
 from flask import current_app
 from flask_mail import Message
 from ..extensions import mail
+
+log = logging.getLogger(__name__)
 
 
 def is_mail_configured(app=None) -> bool:
@@ -9,11 +14,25 @@ def is_mail_configured(app=None) -> bool:
     return bool(cfg.get('MAIL_SERVER'))
 
 
-def send_mail(to: str, subject: str, html: str, sender_name: str = None):
+def send_mail(to: str, subject: str, html: str, sender_name: str = None, retries: int = 3):
+    """Sendet eine E-Mail mit bis zu `retries` Versuchen (exponentielles Backoff)."""
     default_sender = current_app.config.get('MAIL_DEFAULT_SENDER', '')
     sender = f'{sender_name} <{default_sender}>' if sender_name else default_sender
     msg = Message(subject=subject, recipients=[to], html=html, sender=sender)
-    mail.send(msg)
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        try:
+            mail.send(msg)
+            return
+        except Exception as exc:
+            last_exc = exc
+            if attempt < retries - 1:
+                delay = 2 ** attempt  # 1s, 2s
+                log.warning('E-Mail-Versand fehlgeschlagen (Versuch %d/%d): %s – Retry in %ds',
+                            attempt + 1, retries, exc, delay)
+                if not current_app.config.get('TESTING'):
+                    time.sleep(delay)
+    raise last_exc
 
 
 def _footer(base_url: str, datenschutz_path: str = '/datenschutz') -> str:
@@ -44,6 +63,44 @@ def build_registration_email(name: str, instance_title: str, login_url: str,
     <p>Hallo {name},</p>
     <p>deine Registrierung bei <strong>{instance_title}</strong> war erfolgreich.</p>
     <p><a href="{login_url}">Zum Login</a></p>
+    {_footer(base_url)}
+    """
+
+
+def build_daten_auskunft_email(name: str, data: dict, instance_title: str, base_url: str) -> str:
+    """Art. 15 DSGVO – Datenauskunft als HTML-E-Mail."""
+    v = data['volunteer']
+    regs = data['registrations']
+    food = data['food_donations']
+
+    reg_rows = ''.join(
+        f'<tr><td>{r["date"]}</td><td>{r["stand"]}</td>'
+        f'<td>{r["start_time"]}–{r["end_time"]}</td></tr>'
+        for r in regs
+    )
+    food_rows = ''.join(
+        f'<tr><td>{f["food_type"]}</td><td>{f["description"]}</td>'
+        f'<td>{"Ja" if f["needs_refrigeration"] else "Nein"}</td></tr>'
+        for f in food
+    )
+
+    return f"""
+    <p>Hallo {name},</p>
+    <p>gemäß <strong>Art. 15 DSGVO</strong> erhalten Sie eine Übersicht aller bei
+    <strong>{instance_title}</strong> gespeicherten Daten.</p>
+    <h3>Personendaten</h3>
+    <ul>
+      <li><strong>Name:</strong> {v["name"]}</li>
+      <li><strong>E-Mail:</strong> {v["email"] or "–"}</li>
+      <li><strong>Registriert am:</strong> {v["created_at"] or "–"}</li>
+      <li><strong>Einwilligung erteilt am:</strong> {v["consent_given_at"] or "–"}</li>
+    </ul>
+    <h3>Schichtanmeldungen ({len(regs)})</h3>
+    {'<table border="1" cellpadding="4"><tr><th>Datum</th><th>Ort</th><th>Zeit</th></tr>'
+     + reg_rows + '</table>' if regs else '<p><em>Keine Einträge</em></p>'}
+    <h3>Essensspenden ({len(food)})</h3>
+    {'<table border="1" cellpadding="4"><tr><th>Kategorie</th><th>Beschreibung</th><th>Kühlung</th></tr>'
+     + food_rows + '</table>' if food else '<p><em>Keine Einträge</em></p>'}
     {_footer(base_url)}
     """
 

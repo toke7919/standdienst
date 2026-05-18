@@ -4,7 +4,7 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 
 ## Was dieses Projekt ist
 
-**Standdienst v2** ist eine mehrsprachig ausgelegte, deutschsprachige REST-API + Vue-3-SPA zur Verwaltung von Freiwilligendiensten (Schichten) und Essensspenden bei Veranstaltungen.
+**Standdienst v2** ist eine deutschsprachige REST-API + Vue-3-SPA zur Verwaltung von Freiwilligendiensten (Schichten) und Essensspenden bei Veranstaltungen.
 
 **Multi-Instanz-Betrieb:** Eine Plattform hostet beliebig viele organisatorische Einheiten (Vereine, Events) als isolierte Instanzen mit eigenem Slug, Branding, Datenschutzerklärung und Daten.
 
@@ -14,7 +14,7 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 - **Organisator** – operativer Zugriff (Schichten, Termine, Anmeldungen); kein Zugriff auf Instanz-Einstellungen
 - **Volunteer** – Self-Service (eigene Instanz): Schichten buchen, Essen spenden, Profil verwalten
 
-**Aktueller Stand:** v3.1.0 (2026-05-18) – Session-Invalidierung nach Passwort-Änderung, Welcome-Token Rate-Limit, Setup-IP-Guard, GitHub-Releases-basierter Update-Check.
+**Aktueller Stand:** v3.2.0 (2026-05-18) – DSGVO Art. 15 E-Mail-Export, Art. 30 Verarbeitungsverzeichnis, E-Mail-Retry, Migration-Roundtrip-CI.
 
 ---
 
@@ -213,6 +213,7 @@ sudo bash install.sh [--dir /opt/standdienst]
 - **Location**: `['headers', 'cookies']` – beides unterstützt
 - **CSRF**: Double-Submit-Cookie, SameSite=Strict
 - **Identity-Format**: `"admin_1"`, `"organizer_2"`, `"volunteer_3"`
+- **`jwt_version`-Claim**: Integer-Claim im Token, wird bei Passwort-Änderung inkrementiert; alle Auth-Decorators und Refresh prüfen gegen DB-Wert → Sofort-Invalidierung aller alten Sessions
 
 ### Auth-Decorators (app/utils/auth.py)
 
@@ -248,6 +249,8 @@ Frontend zeigt die Anforderungen als Echtzeit-Checkliste beim Eingabefeld.
 | Passwort vergessen | 5/min |
 | Passwort zurücksetzen | 10/min |
 | Schicht-Toggle | 30/min |
+| Welcome-Token GET | 20/h |
+| DSGVO E-Mail-Export | 3/Tag |
 | Global Default | 200/h |
 
 Redis-Backend (`RATELIMIT_STORAGE_URI=redis://127.0.0.1:6379/0`) für worker-übergreifendes Rate-Limiting.
@@ -373,7 +376,8 @@ Nur erreichbar solange `GlobalSettings.setup_complete = False`. Danach 403 auf a
 | GET | `/<slug>/food-donations` | Essen-Spenden anzeigen |
 | POST | `/<slug>/food-donations` | Essen spenden |
 | DELETE | `/<slug>/food-donations/<id>` | Eigene Spende löschen |
-| GET | `/<slug>/meine-daten` | DSGVO Art. 20 – JSON-Export |
+| GET | `/<slug>/meine-daten` | DSGVO Art. 20 – JSON-Export (inkl. Essensspenden) |
+| POST | `/<slug>/meine-daten/export` | DSGVO Art. 15 – Datenauskunft per E-Mail (3/Tag) |
 | PUT | `/<slug>/profile` | Profil aktualisieren |
 | DELETE | `/<slug>/profile` | Soft-Delete (DSGVO) |
 
@@ -394,7 +398,8 @@ Nur erreichbar solange `GlobalSettings.setup_complete = False`. Danach 403 auf a
 | GET | `/<slug>/export/<format>` | require_staff | CSV/Excel/iCal-Export |
 | POST | `/<slug>/import/shifts/<format>` | require_instance_admin | Daten-Import |
 | POST | `/backup/create` | require_admin | DB-Backup erstellen |
-| GET | `/update/check` | require_admin | Update-Verfügbarkeit |
+| GET | `/update/check` | require_admin | Update-Verfügbarkeit (GitHub Releases API) |
+| GET | `/<slug>/dsgvo/processing-record` | require_instance_admin | Art. 30 DSGVO Verarbeitungsverzeichnis |
 
 ---
 
@@ -481,7 +486,7 @@ Marketing-E-Mails / Informations-E-Mails:
 ## APScheduler-Jobs
 
 ```python
-# täglich 00:00 – abgelaufene Tokens löschen
+# stündlich (00:xx) – abgelaufene Reset-/Welcome-Tokens löschen
 purge_tokens()
 
 # täglich 03:00 – ActivityLogs älter als log_retention_months löschen
@@ -489,6 +494,9 @@ purge_logs()
 
 # täglich 02:30 – DB-Dump, AES-256-GCM-Verschlüsselung, SMB-Upload
 smb_backup()   # nur wenn GlobalSettings.smb_enabled = True
+
+# monatlich am 1. um 04:00 – inaktive Volunteers nach Aufbewahrungsfrist löschen
+purge_volunteers()  # nur wenn GlobalSettings.volunteer_retention_months gesetzt
 ```
 
 Scheduler startet nur wenn `not app.config['TESTING']`.
@@ -560,6 +568,7 @@ if (!setupDone && !to.meta.setupOnly) → redirect '/setup'
 | `GUNICORN_BIND` | `0.0.0.0:8420` | Bind-Adresse |
 | `LOG_LEVEL` | `INFO` (prod) / `DEBUG` (dev) | Log-Level |
 | `LOG_DIR` | `logs` | Verzeichnis für Log-Dateien |
+| `SETUP_ALLOWED_IPS` | `''` | Zusätzliche IPs (kommagetrennt) für `/api/setup/*`; Localhost immer erlaubt |
 
 ---
 
@@ -781,7 +790,5 @@ Standard: `Europe/Berlin`. Wird für Scheduler-Jobs und E-Mail-Zeitangaben verwe
 | CSP | `'unsafe-inline'` im Frontend (Tailwind) | Mittel |
 | Scheduler | APScheduler Worker-lokal (Multi-Worker: Jobs laufen mehrfach) | Mittel |
 | Settings-Cache | Kein Cache implementiert (v2 hatte TTL-Cache, v3 noch offen) | Niedrig |
-| Migrationen | Kein Rollback-Szenario getestet | Mittel |
-| E-Mail | Kein Retry bei SMTP-Fehler | Niedrig |
-| DSGVO | Kein automatisierter Auskunfts-Workflow (Art. 15); nur JSON-Export | Mittel |
-| DSGVO | Kein Verarbeitungsverzeichnis (Art. 30) | Niedrig |
+| APScheduler | Worker-lokal (Multi-Worker: Jobs laufen mehrfach) | Mittel |
+| CSP | `'unsafe-inline'` im Frontend (Tailwind) | Mittel |

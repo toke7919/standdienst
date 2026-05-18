@@ -47,6 +47,7 @@ def _clean_state(client):
     for table in reversed(_db.metadata.sorted_tables):
         _db.session.execute(table.delete())
     _db.session.commit()
+    _db.session.expunge_all()
     # Werkzeug 3.x: cookie store ist _cookies dict
     client._cookies.clear()
 
