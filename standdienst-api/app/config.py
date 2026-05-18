@@ -40,7 +40,7 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH_MB', 5)) * 1024 * 1024
 
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
-    RATELIMIT_DEFAULT = '200 per hour'
+    RATELIMIT_DEFAULT = '600 per hour'
 
     MAIL_SERVER = os.getenv('MAIL_SERVER', '')
     MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
