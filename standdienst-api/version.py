@@ -1,2 +1,2 @@
-VERSION = "3.0.0-beta.3"
+VERSION = "3.3.0"
 VERSION_DATE = "2026-05-18"
