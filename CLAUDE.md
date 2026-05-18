@@ -18,6 +18,17 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 
 ---
 
+## Designprinzipien – PFLICHTREGELN
+
+1. **Erst fragen, dann umsetzen.** Bei jeder Unklarheit wird zuerst nachgefragt, bevor mit der Implementierung begonnen wird. Lieber eine Frage zu viel als eine falsche Umsetzung.
+2. **Keine hypothetischen Features.** Keine Abstraktion, keine Vorbereitung auf Szenarien, die nicht explizit angefordert wurden.
+3. **Kein Gold-Plating.** Nur das Nötigste, um die Anforderung zu erfüllen.
+4. **Fehler nie verschlucken.** Jeder Fehler wird geloggt und der aufrufenden Schicht gemeldet.
+5. **Additive-only Migrations.** Alembic-Migrationen dürfen Spalten/Tabellen nur hinzufügen, niemals entfernen oder umbenennen.
+6. **Optimistic Locking bei PUT-Endpunkten.** Jeder PUT-Request muss `updated_at` des Datensatzes senden. Backend prüft gegen aktuellen DB-Wert; bei Abweichung → 409 Conflict.
+
+---
+
 ## Projektstruktur
 
 ```
@@ -68,6 +79,7 @@ standdienst_v2/
 │   │       ├── captcha.py        # Mathe-CAPTCHA (Session-basiert, 5 min TTL)
 │   │       ├── sanitizer.py      # HTML-Whitelist-Sanitizer
 │   │       ├── color.py          # Farb-Utilities
+│   │       ├── logging_setup.py  # Strukturiertes Logging (app.log + error.log, Request-ID)
 │   │       └── responses.py      # Response-Helper (ok, created, error, paginated)
 │   ├── migrations/               # Alembic-Migrationen (Flask-Migrate)
 │   │   └── versions/
@@ -110,7 +122,7 @@ standdienst_v2/
 │   │   │   ├── admin/            # 20 Views (Dashboard, CRUD, Export, Backup, …)
 │   │   │   ├── volunteer/        # Login, Register, WelcomeSetup, Shifts, Profile, …
 │   │   │   └── setup/
-│   │   │       └── SetupWizard.vue  # 5-stufiger Ersteinrichtungs-Assistent
+│   │   │       └── SetupWizard.vue  # 7-stufiger Ersteinrichtungs-Assistent
 │   │   └── components/           # ToastContainer, Modal, ConfirmDialog, Pagination, LoadingSpinner
 │   ├── package.json
 │   ├── vite.config.js            # Build → standdienst-api/static/dist/
@@ -215,9 +227,15 @@ sudo bash install.sh [--dir /opt/standdienst]
 
 **`require_instance_admin`** wie `require_staff`, aber Organizer braucht zusätzlich `is_instance_admin=True`.
 
-### Passwort-Validierung
+### Passwort-Richtlinien
 
-Mindestens 8 Zeichen, 1 Ziffer, 1 Sonderzeichen (`validate_password_strength()`).
+| Rolle | Mindestanforderungen |
+|-------|----------------------|
+| **Volunteer** | Mindestens 6 Zeichen |
+| **Admin / Organizer** | Mindestens 12 Zeichen, mind. 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Ziffer, 1 Sonderzeichen |
+
+Implementiert in `validate_password_strength(password, role='volunteer')`.  
+Frontend zeigt die Anforderungen als Echtzeit-Checkliste beim Eingabefeld.
 
 ### Rate-Limits
 
@@ -249,7 +267,7 @@ Mathe-Addition in Flask-Session gespeichert, 5-Minuten-TTL, einmalig konsumiert.
 | `Instance` | Organisationseinheit | `slug` eindeutig, URL-Identifier, `is_active` |
 | `Admin` | Global-Admin | `is_primary`, TOTP 2FA, Reset-Token (1h) |
 | `Organizer` | Instanz-Verantwortlicher | `is_instance_admin`, Many-to-Many Instanzen |
-| `GlobalSettings` | Plattform-Einstellungen | Base-URL, SMB-Backup-Config, Log-Retention, `setup_complete`, `github_pat` |
+| `GlobalSettings` | Plattform-Einstellungen | Base-URL, SMB-Backup-Config, Log-Retention, `setup_complete`, `github_pat`, `timezone` |
 | `MailSettings` | SMTP-Konfiguration | (DB-gespeichert, optional via .env) |
 | `ActivityLog` | Audit-Trail | `instance_id=NULL` = globaler Eintrag |
 
@@ -262,14 +280,14 @@ Mathe-Addition in Flask-Session gespeichert, 5-Minuten-TTL, einmalig konsumiert.
 
 | Model | Besonderheiten |
 |-------|----------------|
-| `Volunteer` | E-Mail optional, Soft-Delete, Welcome-Token, `consent_given_at` |
+| `Volunteer` | E-Mail optional, Soft-Delete, Welcome-Token (7 Tage), `consent_given_at` |
 | `Stand` | Schicht-Ort, `sort_order` |
 | `EventDate` | `(instance_id, date)` UNIQUE, German-formatted `formatted` |
 | `Shift` | `(stand_id, event_date_id, start_time, end_time)` UNIQUE, `is_full`, `spots_left` |
 | `Registration` | `(volunteer_id, shift_id)` UNIQUE, `registered_by_admin` |
 | `FoodDonationType` | Pro Instanz + EventDate, `delivery_datetime` |
 | `FoodDonation` | `needs_refrigeration`, FK zu Volunteer + FoodDonationType |
-| `SiteSettings` | 1:1 zu Instanz; Branding, Locks, Deadlines, `privacy_policy_html` |
+| `SiteSettings` | 1:1 zu Instanz; Branding, Locks, Deadlines, `privacy_policy_html`, `impressum_html` |
 
 ### Volunteer-Besonderheiten
 
@@ -277,8 +295,8 @@ Mathe-Addition in Flask-Session gespeichert, 5-Minuten-TTL, einmalig konsumiert.
 volunteer.soft_delete()      # name=[gelöscht-{id}], email=None, password_hash='!'
 volunteer.is_deleted         # @property (deleted_at is not None)
 volunteer.has_login          # email gesetzt + gültiger password_hash
-volunteer.generate_welcome_token(86400)  # SHA-256, 24h TTL, gibt raw zurück
-volunteer.is_welcome_token_valid        # prüft hash + expiry
+volunteer.generate_welcome_token(604800)  # SHA-256, 7 Tage TTL, gibt raw zurück
+volunteer.is_welcome_token_valid          # prüft hash + expiry
 ```
 
 ### ActivityLog-Typen
@@ -303,8 +321,9 @@ Nur erreichbar solange `GlobalSettings.setup_complete = False`. Danach 403 auf a
 |---------|------|--------------|
 | GET | `/status` | `{setup_complete, has_admin}` – immer zugänglich |
 | POST | `/admin` | Ersten Admin-Account anlegen (E-Mail + Passwort) |
-| POST | `/config` | Basis-URL, Copyright-Text, GitHub PAT speichern |
+| POST | `/config` | Basis-URL, Copyright-Text, Zeitzone, Impressum, Datenschutzerklärung |
 | POST | `/mail` | SMTP-Konfiguration (Server, Port, TLS, Credentials) |
+| POST | `/legal` | Technisches Impressum und Datenschutzerklärung der Plattform |
 | POST | `/finish` | `setup_complete=True` setzen (erfordert vorhandenen Admin) |
 
 **Guard-Logik:** `_check_guard()` gibt 403 zurück wenn `gs.setup_complete=True`.  
@@ -347,7 +366,7 @@ Nur erreichbar solange `GlobalSettings.setup_complete = False`. Danach 403 auf a
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|
 | GET | `/<slug>/shifts` | Schichten (mit `is_registered`) |
-| POST | `/<slug>/shifts/<id>/register` | Schicht anmelden |
+| POST | `/<slug>/shifts/<id>/register` | Schicht anmelden (Row-Level Lock, atomar) |
 | DELETE | `/<slug>/shifts/<id>/register` | Schicht abmelden |
 | GET | `/<slug>/my-registrations` | Meine Anmeldungen |
 | GET | `/<slug>/my-registrations/ical` | Als iCal exportieren |
@@ -385,7 +404,7 @@ Nur erreichbar solange `GlobalSettings.setup_complete = False`. Danach 403 auf a
 ```
 POST /<slug>/register {name, email, captcha_answer, consent?}
   → 201 {message: 'E-Mail mit Einrichtungslink gesendet'}
-  → E-Mail mit Link: /<slug>/welcome/<raw_token> (24h gültig)
+  → E-Mail mit Link: /<slug>/welcome/<raw_token> (7 Tage gültig)
 
 GET /<slug>/welcome/<raw_token>
   → 200 {data: {name, email}}
@@ -401,6 +420,61 @@ POST /<slug>/register {name, captcha_answer, consent?}
 ```
 
 **Consent** wird nur erzwungen, wenn `SiteSettings.privacy_policy_html` gesetzt ist.
+
+---
+
+## Race-Condition-Schutz bei Schicht-Anmeldung
+
+`POST /<slug>/shifts/<id>/register` verwendet PostgreSQL Row-Level Locking:
+
+```python
+# Innerhalb einer Transaktion – atomar
+shift = Shift.query.with_for_update().get(shift_id)   # SELECT ... FOR UPDATE
+if shift.spots_left <= 0:
+    return error('Schicht ist voll', 409)
+if _has_time_overlap(volunteer, shift):
+    return error('Zeitüberschneidung', 409)
+# Registration anlegen
+db.session.add(Registration(volunteer_id=..., shift_id=...))
+db.session.commit()
+```
+
+Durch `SELECT ... FOR UPDATE` wird die Schicht-Zeile für die Dauer der Transaktion gesperrt. Gleichzeitige Requests warten, bis die erste Transaktion abgeschlossen ist – kein Overbooking möglich.
+
+---
+
+## SMTP-Fallback
+
+Die App prüft beim Start, ob SMTP konfiguriert ist:
+
+```python
+def is_mail_configured(app) -> bool:
+    return bool(app.config.get('MAIL_SERVER'))
+```
+
+- **Nicht konfiguriert:** Alle E-Mail-Funktionen sind deaktiviert. Betroffene Endpunkte geben `503 Service Unavailable` mit `{"error": "E-Mail nicht konfiguriert"}` zurück.
+- **Betroffen:** Welcome-Token-E-Mail, Passwort-Reset, Benachrichtigungen
+- **Anonym-Registrierung** (ohne E-Mail) funktioniert weiterhin
+- **Frontend:** Zeigt Hinweis-Banner wenn `/api/public/<slug>/info` das Flag `mail_enabled: false` meldet
+
+---
+
+## E-Mail-Anforderungen (DSGVO)
+
+Alle ausgehenden E-Mails müssen enthalten:
+
+1. **Absender** mit vollständiger Adresse (kein `noreply@` ohne echten Ansprechpartner)
+2. **Abmelde-Link** (Unsubscribe) in der Fußzeile, außer bei reinen Transaktions-E-Mails (z.B. Passwort-Reset)
+3. **Datenschutzhinweis** als Kurztext: „Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer Datenschutzerklärung: <URL>"
+4. **Kein Tracking-Pixel** – keine externen Bilder ohne expliziten Nutzer-Consent
+
+Transaktions-E-Mails (kein Opt-out erforderlich):
+- Passwort-Reset-Link
+- Welcome-Token (Einrichtungslink)
+
+Marketing-E-Mails / Informations-E-Mails:
+- Abmelde-Link zwingend erforderlich
+- Opt-in vor dem ersten Versand
 
 ---
 
@@ -484,6 +558,8 @@ if (!setupDone && !to.meta.setupOnly) → redirect '/setup'
 | `MAIL_DEFAULT_SENDER` | `''` | Absender-Adresse |
 | `GUNICORN_WORKERS` | `CPU*2+1` | Anzahl Worker-Prozesse |
 | `GUNICORN_BIND` | `0.0.0.0:8420` | Bind-Adresse |
+| `LOG_LEVEL` | `INFO` (prod) / `DEBUG` (dev) | Log-Level |
+| `LOG_DIR` | `logs` | Verzeichnis für Log-Dateien |
 
 ---
 
@@ -501,11 +577,55 @@ if (!setupDone && !to.meta.setupOnly) → redirect '/setup'
 
 ## Git-Konventionen
 
-- **Niemals direkt auf `main`** arbeiten oder pushen
-- Neue Branch anlegen: `feat/xyz`, `fix/abc`, `chore/xyz`
-- Conventional Commits auf Deutsch: `feat:`, `fix:`, `refactor:`, `chore:`
-- Nach Merge: Branch lokal und remote löschen
-- Nach Merge: Release mit Tag erstellen
+### Branch-Namensschema
+
+| Präfix | Verwendung |
+|--------|------------|
+| `feat/` | Neue Funktionen |
+| `fix/` | Bugfixes |
+| `refactor/` | Code-Umstrukturierung ohne Funktionsänderung |
+| `chore/` | Infrastruktur, Dependencies, CI |
+| `docs/` | Dokumentation, CLAUDE.md |
+
+Beispiele: `feat/schicht-warteliste`, `fix/token-ablauf`, `docs/improve-claude-md`
+
+### Workflow
+
+1. **Branch anlegen** – niemals direkt auf `main` arbeiten oder pushen
+2. **Conventional Commits** auf Deutsch: `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`
+3. **Tests** – kein Commit / PR ohne vorherige Tests
+4. **PR erstellen** und mergen
+5. **Release erstellen** – **Pflicht** nach jedem `feat/`- oder `fix/`-PR (s.u.)
+6. **Branches löschen** – lokal und remote nach dem Merge
+
+```bash
+git branch -d feat/meine-funktion
+git push origin --delete feat/meine-funktion
+```
+
+### Semantic Versioning
+
+| PR-Typ | Versionserhöhung | Beispiel |
+|--------|-----------------|---------|
+| `feat/` | **Minor** (Y) | v3.0.0 → v3.1.0 |
+| `fix/` | **Patch** (Z) | v3.1.0 → v3.1.1 |
+| `refactor/`, `chore/`, `docs/` | keine (oder Patch) | – |
+| Breaking Change | **Major** (X) | v3.1.0 → v4.0.0 |
+
+Beta-Phase: `3.0.0-beta.1`, `3.0.0-beta.2`, usw.
+
+**Pflicht bei jedem `feat/`- oder `fix/`-Merge in main:**
+1. `version.py` und `CHANGELOG.md` aktualisieren
+2. Git-Tag setzen und GitHub-Release erstellen:
+
+```bash
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
+
+gh release create vX.Y.Z \
+  --title "vX.Y.Z – Kurzbeschreibung" \
+  --notes "$(sed -n '/^## \[X.Y.Z\]/,/^## \[/{ /^## \[X.Y.Z\]/d; /^## \[/d; /^---/d; p }' CHANGELOG.md)"
+```
 
 ---
 
@@ -557,19 +677,100 @@ Vollständige, interaktive Deinstallation – jeder Schritt erfordert explizite 
 
 ## Setup-Wizard
 
-Der Ersteinrichtungs-Assistent unter `/setup` führt durch 5 Schritte:
+Der Ersteinrichtungs-Assistent unter `/setup` führt durch 7 Schritte:
 
 | Schritt | Inhalt | Pflicht |
 |---------|--------|---------|
 | 1 | Willkommen – Übersicht | – |
 | 2 | Admin-Account (E-Mail, Passwort) | ✓ |
-| 3 | Basis-URL + Copyright-Text | – |
-| 4 | Mail-Server (SMTP) | – (überspringbar) |
-| 5 | GitHub PAT für Updates | – (überspringbar) |
+| 3 | Basis-URL, Copyright-Text, Zeitzone | – |
+| 4 | Technisches Impressum (§5 TMG) | – (mit Vorlagentext) |
+| 5 | Datenschutzerklärung der Plattform | – (mit Vorlagentext) |
+| 6 | Mail-Server (SMTP) | – (überspringbar) |
+| 7 | GitHub PAT für Updates | – (überspringbar) |
 
 Nach Abschluss: `setup_complete=True` in `GlobalSettings`, Weiterleitung zu `/admin/login`.
 
 **Bestehende Installationen** (Upgrade von v2 auf v3): Migration `a4f2c9e1d7b3` setzt `setup_complete=True` automatisch wenn Admins vorhanden sind → kein Setup-Wizard beim Upgrade.
+
+### Zeitzone
+
+`GlobalSettings.timezone` speichert einen IANA-Zeitzonennamen (z.B. `Europe/Berlin`).  
+Standard: `Europe/Berlin`. Wird für Scheduler-Jobs und E-Mail-Zeitangaben verwendet.
+
+### Vorlagentext: Technisches Impressum (§5 TMG)
+
+```html
+<h2>Angaben gemäß § 5 TMG</h2>
+<p>
+  [Name des Betreibers / Verein]<br>
+  [Straße, Hausnummer]<br>
+  [PLZ Ort]
+</p>
+<h3>Vertreten durch</h3>
+<p>[Vorname Nachname, Funktion]</p>
+<h3>Kontakt</h3>
+<p>
+  Telefon: [+49 ...]<br>
+  E-Mail: [impressum@beispiel.de]
+</p>
+<!-- Verein zusätzlich: -->
+<h3>Registereintrag</h3>
+<p>
+  Eingetragen im Vereinsregister.<br>
+  Registergericht: [Amtsgericht Stadt]<br>
+  Registernummer: VR [XXXXX]
+</p>
+<h3>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h3>
+<p>[Vorname Nachname, Anschrift]</p>
+```
+
+### Vorlagentext: Datenschutzerklärung (Art. 13 DSGVO)
+
+```html
+<h2>Datenschutzerklärung</h2>
+<h3>1. Verantwortlicher</h3>
+<p>
+  Verantwortlicher im Sinne der DSGVO ist:<br>
+  [Name / Organisation]<br>
+  [Adresse]<br>
+  E-Mail: [kontakt@beispiel.de]
+</p>
+<h3>2. Erhobene Daten und Zweck</h3>
+<p>
+  Zur Nutzung dieser Plattform erheben wir folgende personenbezogene Daten:
+</p>
+<ul>
+  <li><strong>Name</strong> – zur Identifikation bei Veranstaltungen</li>
+  <li><strong>E-Mail-Adresse</strong> (optional) – für Anmeldebestätigungen und Passwort-Reset</li>
+  <li><strong>Schicht- und Spendenanmeldungen</strong> – zur Koordination des Standdienstes</li>
+</ul>
+<p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung / vorvertragliche Maßnahmen).</p>
+<h3>3. Speicherdauer</h3>
+<p>
+  Personenbezogene Daten werden gelöscht, sobald sie für den Verarbeitungszweck nicht mehr
+  benötigt werden, spätestens jedoch [X Monate] nach Ende der Veranstaltung.
+  Auf Anfrage erfolgt eine sofortige Löschung (Art. 17 DSGVO).
+</p>
+<h3>4. Weitergabe an Dritte</h3>
+<p>Daten werden nicht an Dritte weitergegeben, außer dies ist gesetzlich vorgeschrieben.</p>
+<h3>5. Ihre Rechte</h3>
+<p>
+  Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17),
+  Einschränkung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO).
+  Zur Ausübung Ihrer Rechte wenden Sie sich an: [kontakt@beispiel.de]
+</p>
+<h3>6. Cookies und lokale Speicherung</h3>
+<p>
+  Diese Anwendung verwendet ausschließlich technisch notwendige Cookies (Sitzungs-Token).
+  Es werden keine Tracking- oder Werbe-Cookies eingesetzt.
+  Eine Einwilligung nach § 25 TDDDG ist für diese Cookies nicht erforderlich.
+</p>
+<h3>7. Beschwerderecht</h3>
+<p>
+  Sie haben das Recht, sich bei der zuständigen Datenschutz-Aufsichtsbehörde zu beschweren.
+</p>
+```
 
 ---
 
@@ -582,4 +783,5 @@ Nach Abschluss: `setup_complete=True` in `GlobalSettings`, Weiterleitung zu `/ad
 | Settings-Cache | Kein Cache implementiert (v2 hatte TTL-Cache, v3 noch offen) | Niedrig |
 | Migrationen | Kein Rollback-Szenario getestet | Mittel |
 | E-Mail | Kein Retry bei SMTP-Fehler | Niedrig |
-| Setup-Guard | `/api/setup/*` prüft nur `setup_complete`-Flag, kein IP-Beschränkung | Niedrig |
+| Setup-Guard | `/api/setup/*` prüft nur `setup_complete`-Flag, keine IP-Beschränkung | Niedrig |
+| DSGVO | Kein automatisierter Lösch-Workflow nach Aufbewahrungsfrist | Mittel |
