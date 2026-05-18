@@ -6,6 +6,7 @@ from .shifts import Stand, EventDate, Shift, Registration
 from .food import FoodDonationType, FoodDonation
 from .settings import SiteSettings
 from .activity import ActivityLog
+from .passkey import PasskeyCredential
 
 __all__ = [
     'Instance', 'GlobalSettings', 'MailSettings', 'organizer_instances',
@@ -14,4 +15,5 @@ __all__ = [
     'FoodDonationType', 'FoodDonation',
     'SiteSettings',
     'ActivityLog',
+    'PasskeyCredential',
 ]
