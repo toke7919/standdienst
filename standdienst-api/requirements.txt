@@ -16,6 +16,8 @@ blinker==1.9.0
     #   flask-mail
 brotli==1.2.0
     # via fonttools
+cbor2==6.1.1
+    # via webauthn
 cffi==2.0.0
     # via
     #   cryptography
@@ -23,7 +25,10 @@ cffi==2.0.0
 click==8.4.0
     # via flask
 cryptography==48.0.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   pyopenssl
+    #   webauthn
 cssselect2==0.9.0
     # via weasyprint
 defusedxml==0.7.1
@@ -100,12 +105,16 @@ pillow==12.2.0
     #   weasyprint
 psycopg2-binary==2.9.12
     # via -r requirements.in
+pyasn1==0.6.3
+    # via webauthn
 pycparser==3.0
     # via cffi
 pydyf==0.12.1
     # via weasyprint
 pyjwt==2.12.1
     # via flask-jwt-extended
+pyopenssl==26.2.0
+    # via webauthn
 pyotp==2.9.0
     # via -r requirements.in
 pyphen==0.17.2
@@ -146,6 +155,8 @@ tzdata==2026.2
 tzlocal==5.3.1
     # via apscheduler
 weasyprint==68.1
+    # via -r requirements.in
+webauthn==2.7.1
     # via -r requirements.in
 webencodings==0.5.1
     # via
