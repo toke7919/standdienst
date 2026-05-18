@@ -1,65 +1,144 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">
+      {{ slug ? `Dashboard – ${slug}` : 'Plattform-Dashboard' }}
+    </h1>
 
     <div v-if="loading" class="flex justify-center py-12">
       <LoadingSpinner size="lg" />
     </div>
 
-    <div v-else-if="data" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <StatCard label="Helfer" :value="data.volunteer_count" color="blue" />
-      <StatCard label="Schichten" :value="data.shift_count" color="green" />
-      <StatCard label="Anmeldungen" :value="data.registration_count" color="purple" />
-      <StatCard label="Belegung" :value="`${data.fill_rate ?? 0}%`" color="orange" />
-    </div>
+    <template v-else-if="data">
+      <!-- Instanz-Dashboard -->
+      <template v-if="slug">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Helfer" :value="data.volunteers" color="blue" />
+          <StatCard label="Schichten" :value="data.shifts" color="green" />
+          <StatCard label="Anmeldungen" :value="data.registrations" color="purple" />
+          <StatCard label="Belegung" :value="`${data.fill_rate ?? 0}%`" color="orange" />
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Stände" :value="data.stands" color="blue" />
+          <StatCard label="Termine" :value="data.dates" color="green" />
+          <StatCard label="Voll belegt" :value="data.shifts_full" color="purple" />
+          <StatCard label="Essensspenden" :value="data.food_donations" color="orange" />
+        </div>
+      </template>
 
-    <div v-if="data?.recent_activity?.length" class="card">
-      <h2 class="text-base font-semibold text-gray-800 mb-4">Letzte Aktivitäten</h2>
-      <div class="space-y-2">
-        <div
-          v-for="log in data.recent_activity"
-          :key="log.id"
-          class="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0"
-        >
-          <span class="text-xs text-gray-400 whitespace-nowrap mt-0.5 w-32 flex-shrink-0">
-            {{ formatDate(log.created_at) }}
-          </span>
-          <span class="text-sm text-gray-700">{{ log.event_type }}</span>
-          <span v-if="log.volunteer_name" class="text-sm text-gray-500 ml-auto">{{ log.volunteer_name }}</span>
+      <!-- Globales Admin-Dashboard -->
+      <template v-else>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Instanzen" :value="data.instance_count" color="blue" />
+          <StatCard label="Helfer gesamt" :value="data.total_volunteers" color="green" />
+          <StatCard label="Anmeldungen" :value="data.total_registrations" color="purple" />
+          <StatCard label="Essensspenden" :value="data.total_food_donations" color="orange" />
+        </div>
+        <div v-if="data.instances?.length" class="card mb-8">
+          <h2 class="text-base font-semibold text-gray-800 mb-4">Instanzübersicht</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100">
+                  <th class="text-left py-2 pr-4 font-medium text-gray-500">Instanz</th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-500">Helfer</th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-500">Schichten</th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-500">Anmeldungen</th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-500">Belegung</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="inst in data.instances"
+                  :key="inst.id"
+                  class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+                  @click="$router.push(`/admin/${inst.slug}/volunteers`)"
+                >
+                  <td class="py-2 pr-4 font-medium text-gray-900">{{ inst.name }}</td>
+                  <td class="py-2 px-3 text-right text-gray-600">{{ inst.volunteers }}</td>
+                  <td class="py-2 px-3 text-right text-gray-600">{{ inst.shifts }}</td>
+                  <td class="py-2 px-3 text-right text-gray-600">{{ inst.registrations }}</td>
+                  <td class="py-2 px-3 text-right">
+                    <span :class="fillColor(inst.fill_rate)" class="text-xs font-semibold px-2 py-0.5 rounded-full">
+                      {{ inst.fill_rate }}%
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </template>
+
+      <!-- Letzte Aktivitäten (beide Ansichten) -->
+      <div v-if="data.recent_activity?.length" class="card">
+        <h2 class="text-base font-semibold text-gray-800 mb-4">Letzte Aktivitäten</h2>
+        <div class="space-y-2">
+          <div
+            v-for="log in data.recent_activity"
+            :key="log.id"
+            class="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0"
+          >
+            <span class="text-xs text-gray-400 whitespace-nowrap mt-0.5 w-32 flex-shrink-0">
+              {{ fmt(log.timestamp) }}
+            </span>
+            <span class="text-sm text-gray-700">{{ log.event_type }}</span>
+            <span v-if="log.volunteer_name" class="text-sm text-gray-500 ml-auto truncate max-w-xs">
+              {{ log.volunteer_name }}
+            </span>
+          </div>
         </div>
       </div>
+    </template>
+
+    <div v-else class="text-center text-gray-400 py-16">
+      Bitte eine Instanz auswählen, um das Dashboard anzuzeigen.
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, defineComponent, h } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch, defineComponent, h } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 const data = ref(null)
 const loading = ref(true)
 
-onMounted(async () => {
+const slug = computed(() => route.params.slug || null)
+
+async function loadData() {
+  loading.value = true
+  data.value = null
   try {
-    const slug = route.params.slug || (auth.user?.instance_slug)
-    if (slug) {
-      const res = await adminApi.getDashboard(slug)
+    if (slug.value) {
+      const res = await adminApi.getDashboard(slug.value)
+      data.value = res.data.data
+    } else if (auth.isAdmin) {
+      const res = await adminApi.getGlobalDashboard()
       data.value = res.data.data
     }
-  } catch { /* ignore if no instance selected */ }
+  } catch { /* Instanz existiert evtl. nicht mehr */ }
   finally {
     loading.value = false
   }
-})
+}
 
-function formatDate(iso) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })
+onMounted(loadData)
+watch(slug, loadData)
+
+function fmt(iso) {
+  return iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : ''
+}
+
+function fillColor(rate) {
+  if (rate >= 90) return 'bg-green-100 text-green-700'
+  if (rate >= 50) return 'bg-yellow-100 text-yellow-700'
+  return 'bg-gray-100 text-gray-600'
 }
 
 const StatCard = defineComponent({

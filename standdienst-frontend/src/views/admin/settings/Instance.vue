@@ -62,6 +62,22 @@
         Speichern
       </button>
     </form>
+
+    <!-- Gefahrenzone: nur für globale Admins -->
+    <div v-if="auth.isAdmin" class="max-w-2xl mt-10">
+      <div class="card border-red-200 bg-red-50 space-y-3">
+        <h2 class="text-base font-semibold text-red-800">Gefahrenzone</h2>
+        <p class="text-sm text-red-700">
+          Löscht alle Helfer, Stände, Termine, Schichten, Anmeldungen und Essensspenden dieser Instanz.
+          Die Instanz selbst und ihre Einstellungen bleiben erhalten. Diese Aktion ist
+          <strong>nicht umkehrbar</strong>.
+        </p>
+        <button class="btn-primary bg-red-600 hover:bg-red-700 text-sm" :disabled="clearing" @click="clearData">
+          <LoadingSpinner v-if="clearing" size="sm" />
+          Alle Instanzdaten löschen
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -70,12 +86,15 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
 const ui = useUiStore()
+const auth = useAuthStore()
 const loading = ref(true)
 const saving = ref(false)
+const clearing = ref(false)
 const saveError = ref('')
 const form = ref({})
 
@@ -98,6 +117,25 @@ async function save() {
     saveError.value = e.response?.data?.error || 'Fehler'
   } finally {
     saving.value = false
+  }
+}
+
+async function clearData() {
+  const ok = await ui.confirm({
+    title: 'Alle Instanzdaten löschen',
+    message: 'Alle Helfer, Stände, Termine, Schichten und Anmeldungen dieser Instanz werden unwiderruflich gelöscht. Fortfahren?',
+    confirmText: 'Endgültig löschen',
+    danger: true,
+  })
+  if (!ok) return
+  clearing.value = true
+  try {
+    await adminApi.clearInstanceData(route.params.slug)
+    ui.success('Instanzdaten gelöscht')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler beim Löschen')
+  } finally {
+    clearing.value = false
   }
 }
 

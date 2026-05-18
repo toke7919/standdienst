@@ -3,7 +3,11 @@ from marshmallow import ValidationError
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Instance, SiteSettings, ActivityLog
+from ...models import (
+    Instance, SiteSettings, ActivityLog,
+    Volunteer, Stand, Shift, EventDate, Registration,
+    FoodDonationType, FoodDonation,
+)
 from ...schemas.instance import InstanceSchema, InstanceCreateSchema, InstanceUpdateSchema
 from ...utils.auth import require_admin, require_staff
 from ...utils.responses import ok, created, no_content, error, paginated
@@ -84,6 +88,30 @@ def delete_instance(instance_id):
     instance = Instance.query.get_or_404(instance_id)
     _log(None, f'Instanz gelöscht: {instance.name} (slug={instance.slug})', g.current_user.email)
     db.session.delete(instance)
+    db.session.commit()
+    return no_content()
+
+
+@admin_bp.route('/<slug>/clear-data', methods=['DELETE'])
+@require_staff
+def clear_instance_data(slug):
+    if g.role != 'admin':
+        return error('Nur Admins können Instanzdaten löschen', 403)
+    instance_id = g.instance.id
+
+    stand_ids = db.session.query(Stand.id).filter_by(instance_id=instance_id)
+    shift_ids = db.session.query(Shift.id).filter(Shift.stand_id.in_(stand_ids))
+    ftype_ids = db.session.query(FoodDonationType.id).filter_by(instance_id=instance_id)
+
+    Registration.query.filter(Registration.shift_id.in_(shift_ids)).delete(synchronize_session=False)
+    FoodDonation.query.filter(FoodDonation.food_type_id.in_(ftype_ids)).delete(synchronize_session=False)
+    FoodDonationType.query.filter_by(instance_id=instance_id).delete()
+    Shift.query.filter(Shift.stand_id.in_(stand_ids)).delete(synchronize_session=False)
+    Stand.query.filter_by(instance_id=instance_id).delete()
+    EventDate.query.filter_by(instance_id=instance_id).delete()
+    Volunteer.query.filter_by(instance_id=instance_id).delete()
+
+    _log(instance_id, 'Alle Instanzdaten gelöscht', g.current_user.email)
     db.session.commit()
     return no_content()
 

@@ -54,6 +54,7 @@ class GlobalSettingsUpdateSchema(Schema):
     timezone = fields.Str(validate=validate.Length(max=100))
     github_pat = fields.Str(validate=validate.Length(max=500), allow_none=True)
     github_repo = fields.Str(validate=validate.Length(max=200), allow_none=True)
+    ip_whitelist = fields.Str(allow_none=True)
 
 
 class MailSettingsSchema(SQLAlchemyAutoSchema):

@@ -35,6 +35,24 @@
       </div>
 
       <div class="card space-y-4">
+        <h2 class="text-base font-semibold text-gray-800">Sicherheit</h2>
+        <div>
+          <label class="label">IP-Whitelist (Rate-Limit + Fail2Ban ausgenommen)</label>
+          <textarea
+            v-model="form.ip_whitelist"
+            class="input font-mono text-sm"
+            rows="3"
+            placeholder="Eine IP oder CIDR pro Zeile, z.B.: 192.168.1.0/24, 10.0.0.1"
+            @blur="normalizeWhitelist"
+          />
+          <p class="text-xs text-gray-400 mt-1">
+            Komma- oder zeilengetrennte IPv4/IPv6-Adressen oder CIDR-Ranges.
+            Diese IPs sind von Rate-Limits und Fail2Ban-Logging ausgenommen.
+          </p>
+        </div>
+      </div>
+
+      <div class="card space-y-4">
         <h2 class="text-base font-semibold text-gray-800">GitHub / Updates</h2>
         <div>
           <label class="label">GitHub-Repository</label>
@@ -134,6 +152,15 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function normalizeWhitelist() {
+  if (!form.value.ip_whitelist) return
+  form.value.ip_whitelist = form.value.ip_whitelist
+    .split(/[\n,]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .join(', ')
+}
 
 async function save() {
   saving.value = true

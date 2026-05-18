@@ -58,6 +58,13 @@ def _register_blueprints(app):
 
 
 def _register_request_hooks(app):
+    from .extensions import limiter
+    from .utils.ip_whitelist import is_whitelisted
+
+    @limiter.request_filter
+    def _bypass_whitelisted():
+        return is_whitelisted(request.remote_addr)
+
     @app.before_request
     def _inject_request_id():
         g.request_id = uuid4().hex[:8]

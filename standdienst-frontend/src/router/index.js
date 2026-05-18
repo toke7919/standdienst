@@ -50,6 +50,7 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/admin/dashboard' },
         { path: 'dashboard', component: () => import('@/views/admin/Dashboard.vue') },
+        { path: ':slug/dashboard', component: () => import('@/views/admin/Dashboard.vue') },
         { path: 'instances', component: () => import('@/views/admin/Instances.vue') },
         { path: 'organizers', component: () => import('@/views/admin/Organizers.vue') },
         { path: 'admins', component: () => import('@/views/admin/Admins.vue') },

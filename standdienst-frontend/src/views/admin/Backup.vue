@@ -9,8 +9,12 @@
           <LoadingSpinner v-if="creating" size="sm" />
           Backup erstellen
         </button>
+        <label class="btn-secondary cursor-pointer">
+          <input type="file" accept=".enc" class="hidden" @change="handleUpload" />
+          Backup hochladen
+        </label>
         <button class="btn-secondary" @click="showKeyModal = true">
-          Verschlüsselungsschlüssel exportieren
+          Schlüssel exportieren
         </button>
         <p class="text-xs text-gray-400 ml-auto">
           Max. {{ maxBackups }} Backups – älteste werden automatisch gelöscht.
@@ -34,7 +38,12 @@
               <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ b.filename }}</td>
               <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ fmt(b.created_at) }}</td>
               <td class="px-4 py-3 text-gray-400">{{ (b.size_bytes / 1024).toFixed(1) }} KB</td>
-              <td class="px-4 py-3 flex gap-2">
+              <td class="px-4 py-3 flex gap-3">
+                <a
+                  :href="adminApi.downloadBackupUrl(b.filename)"
+                  download
+                  class="text-green-600 hover:underline text-xs"
+                >Herunterladen</a>
                 <button class="text-indigo-600 hover:underline text-xs" @click="restore(b.filename)">
                   Wiederherstellen
                 </button>
@@ -179,6 +188,21 @@ async function confirmRestore() {
   } finally {
     restoring.value = false
   }
+}
+
+async function handleUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const fd = new FormData()
+  fd.append('file', file)
+  try {
+    const res = await adminApi.uploadBackup(fd)
+    backups.value = res.data.data.backups
+    ui.success('Backup hochgeladen')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Upload fehlgeschlagen')
+  }
+  event.target.value = ''
 }
 
 watch(showKeyModal, async (open) => {

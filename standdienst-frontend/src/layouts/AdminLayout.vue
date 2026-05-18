@@ -26,7 +26,7 @@
       </div>
 
       <nav class="flex-1 overflow-y-auto p-3 space-y-1">
-        <NavItem to="/admin/dashboard" :icon="HomeIcon">Dashboard</NavItem>
+        <NavItem :to="selectedSlug ? `/admin/${selectedSlug}/dashboard` : '/admin/dashboard'" :icon="HomeIcon">Dashboard</NavItem>
 
         <template v-if="selectedSlug">
           <p class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3">
