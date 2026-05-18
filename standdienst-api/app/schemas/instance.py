@@ -1,5 +1,5 @@
 import re
-from marshmallow import Schema, fields, validate, validates, ValidationError
+from marshmallow import Schema, fields, validate, validates, ValidationError, EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import Instance, GlobalSettings, MailSettings
 
@@ -12,6 +12,9 @@ class InstanceSchema(SQLAlchemyAutoSchema):
 
 
 class InstanceCreateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     slug = fields.Str(required=True, validate=validate.Length(min=3, max=50))
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     is_active = fields.Bool(load_default=True)
@@ -25,6 +28,9 @@ class InstanceCreateSchema(Schema):
 
 
 class InstanceUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     name = fields.Str(validate=validate.Length(min=1, max=100))
     is_active = fields.Bool()
 
@@ -36,6 +42,9 @@ class GlobalSettingsSchema(SQLAlchemyAutoSchema):
 
 
 class GlobalSettingsUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     base_url = fields.Str(validate=validate.Length(max=500), allow_none=True)
     copyright_text = fields.Str(validate=validate.Length(max=500), allow_none=True)
     provider_impressum_html = fields.Str(allow_none=True)
@@ -55,6 +64,9 @@ class MailSettingsSchema(SQLAlchemyAutoSchema):
 
 
 class MailSettingsUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     mail_server = fields.Str(validate=validate.Length(max=200))
     mail_port = fields.Int(validate=validate.Range(min=1, max=65535))
     mail_use_tls = fields.Bool()
