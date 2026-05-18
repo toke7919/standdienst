@@ -50,6 +50,11 @@ class Config:
 
     FAIL2BAN_LOG = os.getenv('FAIL2BAN_LOG', 'logs/auth.log')
 
+    # Logging
+    _debug_mode = os.getenv('FLASK_DEBUG', '0') not in ('0', 'false', 'False', '')
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG' if _debug_mode else 'INFO')
+    LOG_DIR = os.getenv('LOG_DIR', 'logs')
+
 
 class TestingConfig(Config):
     TESTING = True
@@ -58,3 +63,4 @@ class TestingConfig(Config):
     JWT_COOKIE_CSRF_PROTECT = False
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
+    LOG_LEVEL = 'WARNING'   # kein Info/Debug-Rauschen in der Testausgabe
