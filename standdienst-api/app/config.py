@@ -64,3 +64,5 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     LOG_LEVEL = 'WARNING'   # kein Info/Debug-Rauschen in der Testausgabe
+    # Dummy-SMTP damit is_mail_configured()=True; send_mail() schlägt fehl, aber Tests fangen das ab
+    MAIL_SERVER = 'localhost'

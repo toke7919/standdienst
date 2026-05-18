@@ -30,6 +30,12 @@ def init_scheduler(app):
         id='smb_backup',
         replace_existing=True,
     )
+    _scheduler.add_job(
+        lambda: _purge_old_volunteers(app),
+        CronTrigger(day=1, hour=4, minute=0),  # monatlich am 1. um 04:00
+        id='purge_volunteers',
+        replace_existing=True,
+    )
 
     _scheduler.start()
     log.info('APScheduler gestartet')
@@ -68,6 +74,48 @@ def _purge_old_logs(app):
                      deleted, months)
         except Exception:
             log.exception('Protokoll-Bereinigung fehlgeschlagen')
+
+
+def _purge_old_volunteers(app):
+    """DSGVO Art. 5 – löscht inaktive Volunteers nach Aufbewahrungsfrist."""
+    with app.app_context():
+        try:
+            from ..extensions import db
+            from ..models import GlobalSettings, Volunteer, Registration, Shift, EventDate
+
+            gs = GlobalSettings.query.first()
+            if not gs or not gs.volunteer_retention_months:
+                return
+
+            cutoff = datetime.now(timezone.utc) - timedelta(days=gs.volunteer_retention_months * 30)
+            candidates = Volunteer.query.filter(
+                Volunteer.deleted_at.is_(None),
+                Volunteer.created_at < cutoff,
+            ).all()
+
+            count = 0
+            for v in candidates:
+                # Nicht löschen wenn Volunteer noch zukünftige Schichten hat
+                has_future = (
+                    Registration.query
+                    .join(Shift, Registration.shift_id == Shift.id)
+                    .join(EventDate, Shift.event_date_id == EventDate.id)
+                    .filter(
+                        Registration.volunteer_id == v.id,
+                        EventDate.date >= datetime.now(timezone.utc).date(),
+                    )
+                    .first()
+                )
+                if not has_future:
+                    v.soft_delete()
+                    count += 1
+
+            if count:
+                db.session.commit()
+                log.info('DSGVO-Bereinigung: %d Volunteers nach %d Monaten gelöscht',
+                         count, gs.volunteer_retention_months)
+        except Exception:
+            log.exception('DSGVO-Volunteer-Bereinigung fehlgeschlagen')
 
 
 def _run_smb_backup(app):

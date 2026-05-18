@@ -57,8 +57,11 @@ def create_admin():
         return jsonify(error='E-Mail und Passwort sind erforderlich'), 400
 
     from ..utils.auth import validate_password_strength
-    if not validate_password_strength(password):
-        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)'), 400
+    if not validate_password_strength(password, role='admin'):
+        return jsonify(error=(
+            'Passwort zu schwach (mind. 12 Zeichen, '
+            'Groß-/Kleinbuchstabe, Ziffer, Sonderzeichen)'
+        )), 400
 
     admin = Admin(email=email, is_primary=True)
     admin.set_password(password)
@@ -83,6 +86,8 @@ def save_config():
     gs.base_url = base_url or None
     gs.github_pat = data.get('github_pat') or None
     gs.copyright_text = data.get('copyright_text') or None
+    if data.get('timezone'):
+        gs.timezone = data['timezone']
     db.session.commit()
     return jsonify(message='Konfiguration gespeichert')
 

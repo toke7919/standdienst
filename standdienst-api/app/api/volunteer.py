@@ -11,8 +11,8 @@ from ..models import (
 )
 from ..schemas.shifts import ShiftSchema, RegistrationSchema
 from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
-from ..utils.auth import require_volunteer
-from ..utils.responses import ok, created, no_content, error
+from ..utils.auth import require_volunteer, validate_password_strength
+from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 
 volunteer_bp = Blueprint('volunteer', __name__)
 
@@ -61,17 +61,22 @@ def register_shift(slug, shift_id):
     if settings and not settings.registration_open:
         return error('Anmeldeschluss ist überschritten', 403)
 
-    shift = _get_instance_shift(shift_id, g.instance.id)
+    # Row-Level Lock: sperrt Schicht-Zeile für Dauer der Transaktion
+    shift = Shift.query.with_for_update().get(shift_id)
     if not shift:
         return error('Schicht nicht gefunden', 404)
+    stand = Stand.query.get(shift.stand_id)
+    if not stand or stand.instance_id != g.instance.id:
+        return error('Schicht nicht gefunden', 404)
+
     if shift.is_full:
         return error('Schicht ist bereits voll', 409)
-
     if Registration.query.filter_by(volunteer_id=g.current_user.id, shift_id=shift_id).first():
         return error('Bereits eingetragen', 409)
+    if _has_time_overlap(g.current_user.id, shift):
+        return error('Zeitüberschneidung mit einer anderen Schicht', 409)
 
-    reg = Registration(volunteer_id=g.current_user.id, shift_id=shift_id)
-    db.session.add(reg)
+    db.session.add(Registration(volunteer_id=g.current_user.id, shift_id=shift_id))
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_REGISTER, g.current_user,
                              details=f'shift_id={shift_id}'))
     db.session.commit()
@@ -202,19 +207,22 @@ def delete_food_donation(slug, donation_id):
 @volunteer_bp.route('/<slug>/profile', methods=['PUT'])
 @require_volunteer
 def update_profile(slug):
-    from ..utils.auth import validate_password_strength
     data = request.get_json() or {}
     volunteer = g.current_user
+
+    if optimistic_lock_conflict(volunteer, data.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     if 'name' in data:
         volunteer.name = data['name'].strip()
     if 'password' in data and data['password']:
-        if not validate_password_strength(data['password']):
-            return error('Passwort zu schwach', 400)
+        if not validate_password_strength(data['password'], role='volunteer'):
+            return error('Passwort zu schwach (mind. 6 Zeichen)', 400)
         volunteer.set_password(data['password'])
 
     db.session.commit()
-    return ok({'name': volunteer.name, 'email': volunteer.email})
+    return ok({'name': volunteer.name, 'email': volunteer.email,
+               'updated_at': volunteer.updated_at.isoformat() if volunteer.updated_at else None})
 
 
 @volunteer_bp.route('/<slug>/profile', methods=['DELETE'])
@@ -262,14 +270,23 @@ def meine_daten(slug):
 # Hilfsfunktionen
 # ---------------------------------------------------------------------------
 
-def _get_instance_shift(shift_id: int, instance_id: int):
-    shift = Shift.query.get(shift_id)
-    if not shift:
-        return None
-    stand = Stand.query.get(shift.stand_id)
-    if not stand or stand.instance_id != instance_id:
-        return None
-    return shift
+def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
+    """Prüft ob Volunteer am selben Veranstaltungstag eine überlappende Schicht hat."""
+    existing = (
+        Registration.query
+        .join(Shift, Registration.shift_id == Shift.id)
+        .filter(
+            Registration.volunteer_id == volunteer_id,
+            Shift.event_date_id == new_shift.event_date_id,
+            Shift.id != new_shift.id,
+        )
+        .all()
+    )
+    for reg in existing:
+        s = reg.shift
+        if s.start_time < new_shift.end_time and new_shift.start_time < s.end_time:
+            return True
+    return False
 
 
 def _activity(instance_id, event_type, user, details=None) -> ActivityLog:

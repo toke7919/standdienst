@@ -31,6 +31,23 @@ def error(message, status=400, errors=None):
     return jsonify(body), status
 
 
+def optimistic_lock_conflict(record, client_ts_str: str | None) -> bool:
+    """True wenn der Datensatz seit dem Laden durch den Client geändert wurde."""
+    if not client_ts_str or not hasattr(record, 'updated_at') or record.updated_at is None:
+        return False
+    try:
+        from datetime import datetime, timezone
+        db_ts = record.updated_at
+        if db_ts.tzinfo is None:
+            db_ts = db_ts.replace(tzinfo=timezone.utc)
+        client_ts = datetime.fromisoformat(client_ts_str.replace('Z', '+00:00'))
+        if client_ts.tzinfo is None:
+            client_ts = client_ts.replace(tzinfo=timezone.utc)
+        return db_ts > client_ts
+    except (ValueError, AttributeError):
+        return False
+
+
 def paginated(items, total, page, per_page):
     return jsonify({
         'data': items,

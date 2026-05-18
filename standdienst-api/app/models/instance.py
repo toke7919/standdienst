@@ -43,6 +43,8 @@ class GlobalSettings(db.Model):
     smb_password = db.Column(db.String(500), nullable=True)
     setup_complete = db.Column(db.Boolean, nullable=False, default=False)
     github_pat = db.Column(db.String(500), nullable=True)
+    timezone = db.Column(db.String(100), nullable=False, default='Europe/Berlin')
+    volunteer_retention_months = db.Column(db.Integer, nullable=True)
     updated_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

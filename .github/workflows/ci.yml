@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**', 'refactor/**', 'chore/**', 'docs/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+
+    defaults:
+      run:
+        working-directory: standdienst-api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python ${{ matrix.python-version }} einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: standdienst-api/requirements.txt
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements.txt
+
+      - name: Tests ausführen
+        env:
+          SECRET_KEY: ci-test-secret-key-minimum-32-chars!!
+          DATABASE_URL: sqlite:///ci-test.db
+        run: pytest --tb=short -q
+
+      - name: Coverage-Report
+        if: matrix.python-version == '3.13'
+        env:
+          SECRET_KEY: ci-test-secret-key-minimum-32-chars!!
+          DATABASE_URL: sqlite:///ci-test.db
+        run: pytest --cov=app --cov-report=term-missing -q
