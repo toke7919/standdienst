@@ -34,7 +34,8 @@ def create_admin():
     if not validate_password_strength(data['password']):
         return error('Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)', 400)
 
-    admin = Admin(email=data['email'].lower(), is_primary=data.get('is_primary', False))
+    admin = Admin(email=data['email'].lower(), is_primary=data.get('is_primary', False),
+                  name=data.get('name', ''))
     admin.set_password(data['password'])
     db.session.add(admin)
     _log(f'Admin angelegt: {admin.email}', g.current_user)
@@ -58,6 +59,8 @@ def update_admin(admin_id):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
+    if 'name' in data:
+        admin.name = data['name']
     if 'email' in data:
         email = data['email'].lower()
         existing = Admin.query.filter_by(email=email).first()

@@ -51,14 +51,12 @@ def create_shift(slug):
 
     shift = Shift(**data)
     db.session.add(shift)
+    _log(g.instance.id, f'Schicht angelegt: stand={data["stand_id"]}', g.current_user)
     try:
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
         return error('Schicht mit diesen Parametern existiert bereits', 409)
-
-    _log(g.instance.id, f'Schicht angelegt: stand={data["stand_id"]}', g.current_user)
-    db.session.commit()
     return created(_schema.dump(shift))
 
 

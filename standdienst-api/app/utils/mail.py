@@ -9,9 +9,30 @@ log = logging.getLogger(__name__)
 
 
 def is_mail_configured(app=None) -> bool:
-    """True wenn SMTP-Server konfiguriert ist."""
+    """True wenn SMTP-Server konfiguriert (env oder DB)."""
     cfg = (app or current_app).config
-    return bool(cfg.get('MAIL_SERVER'))
+    if cfg.get('MAIL_SERVER'):
+        return True
+    try:
+        from ..models import MailSettings
+        ms = MailSettings.query.first()
+        return bool(ms and ms.mail_server)
+    except Exception:
+        return False
+
+
+def apply_db_mail_config(settings) -> None:
+    """Schreibt DB-MailSettings in die Flask-App-Config (aktiviert Flask-Mail)."""
+    from ..extensions import mail
+    current_app.config.update(
+        MAIL_SERVER=settings.mail_server or '',
+        MAIL_PORT=settings.mail_port or 587,
+        MAIL_USE_TLS=settings.mail_use_tls,
+        MAIL_USERNAME=settings.mail_username or '',
+        MAIL_PASSWORD=settings.mail_password or '',
+        MAIL_DEFAULT_SENDER=settings.mail_default_sender or '',
+    )
+    mail.init_app(current_app)
 
 
 def send_mail(to: str, subject: str, html: str, sender_name: str = None, retries: int = 3):

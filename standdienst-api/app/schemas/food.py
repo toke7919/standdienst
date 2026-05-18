@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import FoodDonationType, FoodDonation
 
@@ -12,6 +12,9 @@ class FoodDonationTypeSchema(SQLAlchemyAutoSchema):
 
 
 class FoodDonationTypeCreateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     event_date_id = fields.Int(required=True)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     delivery_datetime = fields.DateTime(allow_none=True, load_default=None)
@@ -20,6 +23,9 @@ class FoodDonationTypeCreateSchema(Schema):
 
 
 class FoodDonationTypeUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     name = fields.Str(validate=validate.Length(min=1, max=100))
     delivery_datetime = fields.DateTime(allow_none=True)
     delivery_location = fields.Str(validate=validate.Length(max=200), allow_none=True)

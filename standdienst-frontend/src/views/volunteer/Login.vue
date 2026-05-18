@@ -47,6 +47,14 @@
       <div class="mt-6 text-center">
         <RouterLink to="/" class="text-sm text-gray-500 hover:text-gray-700">← Startseite</RouterLink>
       </div>
+
+      <footer v-if="settings?.impressum_html || settings?.copyright_text" class="mt-8 text-center text-xs text-gray-400 space-y-1">
+        <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
+        <div v-if="settings?.impressum_html" class="flex justify-center gap-4">
+          <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
+          <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+        </div>
+      </footer>
     </div>
   </div>
 </template>
@@ -64,7 +72,7 @@ const route = useRoute()
 const router = useRouter()
 
 const slug = computed(() => route.params.slug)
-const settings = computed(() => instanceStore.current?.settings)
+const settings = computed(() => instanceStore.current)
 const form = ref({ email: '', password: '' })
 const errorMsg = ref('')
 const loading = ref(false)

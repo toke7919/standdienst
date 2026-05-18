@@ -5,7 +5,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import Instance, SiteSettings, ActivityLog
 from ...schemas.instance import InstanceSchema, InstanceCreateSchema, InstanceUpdateSchema
-from ...utils.auth import require_admin
+from ...utils.auth import require_admin, require_staff
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = InstanceSchema()
@@ -15,11 +15,17 @@ _update = InstanceUpdateSchema()
 
 
 @admin_bp.route('/instances', methods=['GET'])
-@require_admin
+@require_staff
 def list_instances():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
-    q = Instance.query.order_by(Instance.name)
+
+    if g.role == 'organizer':
+        instance_ids = [i.id for i in g.current_user.instances.all()]
+        q = Instance.query.filter(Instance.id.in_(instance_ids)).order_by(Instance.name)
+    else:
+        q = Instance.query.order_by(Instance.name)
+
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
     return paginated(_many.dump(items), total, page, per_page)

@@ -29,7 +29,7 @@
               </span>
               <span v-else class="text-xs text-gray-400">Organisator</span>
             </td>
-            <td class="px-4 py-3 text-gray-500">{{ o.instance_count ?? 0 }}</td>
+            <td class="px-4 py-3 text-gray-500">{{ o.instance_ids?.length ?? 0 }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
               <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>

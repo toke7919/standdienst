@@ -14,7 +14,7 @@
         </thead>
         <tbody>
           <tr v-for="log in logs" :key="log.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{{ fmt(log.created_at) }}</td>
+            <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{{ fmt(log.timestamp) }}</td>
             <td class="px-4 py-3 font-medium">{{ log.event_type }}</td>
             <td class="px-4 py-3 text-gray-500">{{ log.volunteer_name || '—' }}</td>
             <td class="px-4 py-3 text-gray-500 text-xs">{{ log.details || '' }}</td>

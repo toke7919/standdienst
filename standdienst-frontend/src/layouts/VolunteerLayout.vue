@@ -54,7 +54,7 @@ const instanceStore = useInstanceStore()
 const route = useRoute()
 
 const slug = computed(() => route.params.slug)
-const settings = computed(() => instanceStore.current?.settings)
+const settings = computed(() => instanceStore.current)
 
 const brandStyle = computed(() => {
   const color = settings.value?.primary_color
