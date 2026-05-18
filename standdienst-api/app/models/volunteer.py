@@ -24,11 +24,16 @@ class Volunteer(db.Model):
     password_hash = db.Column(db.String(256), nullable=True)
     reset_token = db.Column(db.String(64), nullable=True, index=True)
     reset_token_expires = db.Column(db.DateTime(timezone=True), nullable=True)
-    # Welcome-Token für passwortlosen Erstregistrierungsflow (24h)
+    # Welcome-Token für passwortlosen Erstregistrierungsflow (7 Tage)
     welcome_token = db.Column(db.String(64), nullable=True, index=True)
     welcome_token_expires = db.Column(db.DateTime(timezone=True), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True),
                            default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     consent_given_at = db.Column(db.DateTime(timezone=True), nullable=True)
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
@@ -72,7 +77,7 @@ class Volunteer(db.Model):
     def is_reset_token_valid(self) -> bool:
         return self._token_valid(self.reset_token, self.reset_token_expires)
 
-    def generate_welcome_token(self, expiry_seconds: int = 86400) -> str:
+    def generate_welcome_token(self, expiry_seconds: int = 604800) -> str:
         raw = secrets.token_urlsafe(32)
         self.welcome_token = _hash_token(raw)
         self.welcome_token_expires = datetime.now(timezone.utc) + timedelta(seconds=expiry_seconds)

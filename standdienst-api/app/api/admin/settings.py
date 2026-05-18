@@ -13,7 +13,7 @@ from ...schemas.instance import (
 from ...schemas.settings import SiteSettingsSchema, SiteSettingsUpdateSchema
 from ...utils.auth import require_admin, require_instance_admin
 from ...utils.sanitizer import sanitize_html
-from ...utils.responses import ok, error
+from ...utils.responses import ok, error, optimistic_lock_conflict
 
 _site_schema = SiteSettingsSchema()
 _site_update = SiteSettingsUpdateSchema()
@@ -35,12 +35,16 @@ def get_site_settings(slug):
 @admin_bp.route('/<slug>/settings', methods=['PUT'])
 @require_instance_admin
 def update_site_settings(slug):
+    raw = request.get_json() or {}
     try:
-        data = _site_update.load(request.get_json() or {})
+        data = _site_update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
     settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+
+    if optimistic_lock_conflict(settings, raw.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     for key in ('instance_impressum_html', 'privacy_policy_html', 'lock_message'):
         if key in data and data[key]:
@@ -90,8 +94,9 @@ def get_global_settings():
 @admin_bp.route('/settings/global', methods=['PUT'])
 @require_admin
 def update_global_settings():
+    raw = request.get_json() or {}
     try:
-        data = _global_update.load(request.get_json() or {})
+        data = _global_update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
@@ -99,6 +104,9 @@ def update_global_settings():
     if not settings:
         settings = GlobalSettings()
         db.session.add(settings)
+
+    if optimistic_lock_conflict(settings, raw.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     for key in ('provider_impressum_html', 'landing_impressum_html'):
         if key in data and data[key]:
@@ -126,8 +134,9 @@ def get_mail_settings():
 @admin_bp.route('/settings/mail', methods=['PUT'])
 @require_admin
 def update_mail_settings():
+    raw = request.get_json() or {}
     try:
-        data = _mail_update.load(request.get_json() or {})
+        data = _mail_update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
@@ -135,6 +144,9 @@ def update_mail_settings():
     if not settings:
         settings = MailSettings()
         db.session.add(settings)
+
+    if optimistic_lock_conflict(settings, raw.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     for key, value in data.items():
         setattr(settings, key, value)

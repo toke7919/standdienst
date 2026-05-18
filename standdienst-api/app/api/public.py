@@ -2,7 +2,6 @@ import hashlib
 from datetime import datetime, timezone
 
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import set_access_cookies, set_refresh_cookies
 from marshmallow import ValidationError
 
 from ..extensions import db, limiter
@@ -10,7 +9,10 @@ from ..models import Instance, SiteSettings, GlobalSettings, ActivityLog, Volunt
 from ..schemas.volunteer import VolunteerRegisterSchema
 from ..utils.auth import validate_password_strength
 from ..utils.captcha import generate_captcha, verify_captcha
-from ..utils.mail import send_mail, build_reset_email, build_welcome_email, build_registration_email
+from ..utils.mail import (
+    is_mail_configured, send_mail,
+    build_reset_email, build_welcome_email, build_registration_email,
+)
 
 public_bp = Blueprint('public', __name__)
 
@@ -63,12 +65,14 @@ def register(slug):
     if not verify_captcha(data['captcha_answer']):
         return jsonify(error='Falsches CAPTCHA'), 400
 
-    # Einwilligung nur erzwungen wenn Datenschutzerklärung konfiguriert
     has_policy = bool(settings and settings.privacy_policy_html)
     if has_policy and not data.get('consent'):
         return jsonify(error='Datenschutzzustimmung erforderlich'), 400
 
     email = (data.get('email') or '').strip().lower() or None
+
+    if email and not is_mail_configured():
+        return jsonify(error='E-Mail-Registrierung nicht verfügbar – SMTP nicht konfiguriert'), 503
 
     if email and Volunteer.query.filter_by(instance_id=instance.id, email=email).first():
         return jsonify(error='E-Mail-Adresse bereits vergeben'), 409
@@ -80,7 +84,7 @@ def register(slug):
         consent_given_at=datetime.now(timezone.utc) if data.get('consent') else None,
     )
     db.session.add(volunteer)
-    db.session.flush()  # ID generieren
+    db.session.flush()
 
     db.session.add(ActivityLog(
         instance_id=instance.id,
@@ -92,7 +96,6 @@ def register(slug):
     ))
 
     if email:
-        # Welcome-Token-Flow: kein Passwort, E-Mail mit Einrichtungslink
         raw_token = volunteer.generate_welcome_token()
         db.session.commit()
 
@@ -108,7 +111,6 @@ def register(slug):
         return jsonify(message='E-Mail mit Einrichtungslink gesendet'), 201
 
     else:
-        # Anonyme Registrierung: direkt einloggen
         db.session.commit()
         from ..api.auth import _issue_tokens, _set_token_cookies, _user_payload
         access, refresh = _issue_tokens(volunteer)
@@ -137,8 +139,8 @@ def welcome_setup(slug, raw_token):
         return jsonify(error='Ungültiger oder abgelaufener Einrichtungslink'), 400
 
     password = (request.get_json() or {}).get('password', '')
-    if not validate_password_strength(password):
-        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)'), 400
+    if not validate_password_strength(password, role='volunteer'):
+        return jsonify(error='Passwort zu schwach (mind. 6 Zeichen)', ), 400
 
     volunteer.set_password(password)
     volunteer.clear_welcome_token()
@@ -181,10 +183,9 @@ def volunteer_forgot_password(slug):
     email = ((request.get_json() or {}).get('email') or '').strip().lower()
     volunteer = Volunteer.query.filter_by(instance_id=instance.id, email=email).first()
 
-    if volunteer and not volunteer.is_deleted:
+    if volunteer and not volunteer.is_deleted and is_mail_configured():
         raw_token = volunteer.generate_reset_token()
         db.session.commit()
-        settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
         base_url = current_app.config.get('FRONTEND_URL', '')
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
         try:
@@ -207,8 +208,8 @@ def volunteer_reset_password(slug):
     raw_token = data.get('token', '')
     new_password = data.get('password', '')
 
-    if not validate_password_strength(new_password):
-        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)'), 400
+    if not validate_password_strength(new_password, role='volunteer'):
+        return jsonify(error='Passwort zu schwach (mind. 6 Zeichen)'), 400
 
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     volunteer = Volunteer.query.filter_by(
@@ -256,6 +257,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'food_donations_enabled': settings.food_donations_enabled if settings else True,
         'registration_open': settings.registration_open if settings else True,
         'has_privacy_policy': has_policy,
+        'mail_enabled': is_mail_configured(),
         'impressum_html': _merge_impressum(settings, global_settings),
         'privacy_policy_html': settings.privacy_policy_html if settings else None,
     }
