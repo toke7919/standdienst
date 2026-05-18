@@ -146,8 +146,6 @@ def check_update():
 def apply_update():
     log = []
     try:
-        _auto_backup(log)
-
         repo_slug, pat = _repo_slug_and_pat()
         if not repo_slug:
             return error('GitHub-Repository nicht konfiguriert (Einstellungen → Global)', 400)
@@ -159,6 +157,8 @@ def apply_update():
         if not tarball_url:
             return error('Kein Tarball im GitHub-Release gefunden', 500)
 
+        target_version = latest.get('tag_name', '').lstrip('v')
+        _auto_backup(log, target_version)
         _apply_tarball(tarball_url, pat, log)
 
         return ok({'log': log, 'applied_at': datetime.now(timezone.utc).isoformat()},
@@ -168,10 +168,11 @@ def apply_update():
         return error(f'Update fehlgeschlagen: {e}', 500)
 
 
-def _auto_backup(log: list):
+def _auto_backup(log: list, target_version: str | None = None):
     try:
         from .backup import run_backup
-        name = run_backup()
+        label = f'vor_update_v{target_version}' if target_version else 'vor_update'
+        name = run_backup(label=label)
         log.append({'step': 'backup', 'ok': True, 'output': f'Backup erstellt: {name}'})
     except Exception as e:
         current_app.logger.warning('Backup vor Update fehlgeschlagen: %s', e)
