@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import SiteSettings
 
@@ -12,6 +12,9 @@ class SiteSettingsSchema(SQLAlchemyAutoSchema):
 
 
 class SiteSettingsUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     site_title = fields.Str(validate=validate.Length(min=1, max=200))
     primary_color = fields.Str(validate=validate.Regexp(r'^#[0-9a-fA-F]{6}$'))
     mail_sender_name = fields.Str(validate=validate.Length(max=200))

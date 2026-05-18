@@ -172,6 +172,14 @@
 
         <form @submit.prevent="submitPat" class="space-y-4">
           <div>
+            <label class="label">GitHub-Repository <span class="text-gray-400 text-xs">(optional)</span></label>
+            <input v-model="config.github_repo" class="input font-mono text-sm"
+                   placeholder="owner/repository" autocomplete="off" />
+            <p class="text-xs text-gray-400 mt-1">
+              Format: <code class="bg-gray-100 px-1 rounded">owner/repo</code>, z.B. <code class="bg-gray-100 px-1 rounded">meinverein/standdienst</code>
+            </p>
+          </div>
+          <div>
             <label class="label">GitHub PAT <span class="text-gray-400 text-xs">(optional)</span></label>
             <input v-model="config.github_pat" class="input font-mono text-sm"
                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
@@ -233,7 +241,7 @@ const timezones = [
 ]
 
 const admin = ref({ email: '', password: '', passwordConfirm: '' })
-const config = ref({ base_url: '', copyright_text: '', timezone: 'Europe/Berlin', github_pat: '' })
+const config = ref({ base_url: '', copyright_text: '', timezone: 'Europe/Berlin', github_pat: '', github_repo: '' })
 const mail = ref({
   server: '', port: 587, use_tls: true,
   username: '', password: '', sender: '', sender_name: 'Standdienst',
@@ -290,12 +298,13 @@ async function submitPat() {
   errors.value.pat = ''
   loading.value = true
   try {
-    if (config.value.github_pat) {
+    if (config.value.github_pat || config.value.github_repo) {
       await setupApi.saveConfig({
         base_url: config.value.base_url,
         copyright_text: config.value.copyright_text,
         timezone: config.value.timezone,
         github_pat: config.value.github_pat,
+        github_repo: config.value.github_repo,
       })
     }
     await finishSetup()
