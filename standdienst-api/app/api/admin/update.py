@@ -208,7 +208,8 @@ def _apply_tarball(tarball_url: str, pat: str | None, log: list):
     _run_step(['pip', 'install', '-r', 'requirements.txt', '-q'], api_root, 'pip install', log, use_python=True)
     _run_step(['flask', 'db', 'upgrade'], api_root, 'db upgrade', log,
               use_python=True, extra_env={'FLASK_APP': 'wsgi'})
-    _run_step(['sudo', 'systemctl', 'restart', 'standdienst'], None, 'restart', log)
+    systemctl = shutil.which('systemctl') or 'systemctl'
+    _run_step(['sudo', systemctl, 'restart', 'standdienst'], None, 'restart', log)
 
 
 def _rebuild_frontend(extracted: str, log: list):

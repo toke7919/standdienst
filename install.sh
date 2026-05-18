@@ -260,10 +260,11 @@ systemctl restart standdienst
 info "standdienst.service aktiviert und gestartet"
 
 # Sudoers: Service-User darf den eigenen Dienst ohne Passwort neu starten
-echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: /bin/systemctl restart standdienst" \
+SYSTEMCTL_PATH="$(command -v systemctl)"
+echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL_PATH} restart standdienst" \
     > /etc/sudoers.d/standdienst-restart
 chmod 440 /etc/sudoers.d/standdienst-restart
-info "Sudoers-Eintrag für Service-Restart angelegt"
+info "Sudoers-Eintrag angelegt (${SYSTEMCTL_PATH})"
 
 # Nginx
 cat > /etc/nginx/sites-available/standdienst <<EOF
