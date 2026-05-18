@@ -21,9 +21,9 @@
         </thead>
         <tbody>
           <tr v-for="v in volunteers" :key="v.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">{{ v.name }}</td>
+            <td class="px-4 py-3 font-medium text-gray-900">{{ v.display_name || v.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ v.email || '—' }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ formatDate(v.created_at) }}</td>
+            <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ formatDate(v.created_at) }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
               <button class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
@@ -37,9 +37,15 @@
 
     <Modal v-model="showModal" :title="editing ? 'Helfer bearbeiten' : 'Neuer Helfer'">
       <form @submit.prevent="save" class="space-y-4">
-        <div>
-          <label class="label">Name</label>
-          <input v-model="form.name" class="input" required />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">Vorname</label>
+            <input v-model="form.first_name" class="input" required />
+          </div>
+          <div>
+            <label class="label">Nachname</label>
+            <input v-model="form.last_name" class="input" />
+          </div>
         </div>
         <div>
           <label class="label">E-Mail</label>
@@ -47,7 +53,10 @@
         </div>
         <div v-if="!editing">
           <label class="label">Passwort</label>
-          <input v-model="form.password" type="password" class="input" />
+          <input v-model="form.password" type="password" class="input" placeholder="Leer lassen = Willkommens-E-Mail" />
+          <p v-if="form.email && !form.password" class="text-xs text-gray-500 mt-1">
+            Helfer erhält eine Willkommens-E-Mail zum Einrichten des Passworts.
+          </p>
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">
@@ -78,7 +87,7 @@ const perPage = 20
 const search = ref('')
 const showModal = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', email: '', password: '' })
+const form = ref({ first_name: '', last_name: '', email: '', password: '' })
 const saveError = ref('')
 
 onMounted(load)
@@ -95,19 +104,26 @@ async function load() {
 }
 
 function formatDate(iso) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE') : ''
+  return iso ? new Date(iso).toLocaleString('de-DE', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }) : ''
 }
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', email: '', password: '' }
+  form.value = { first_name: '', last_name: '', email: '', password: '' }
   saveError.value = ''
   showModal.value = true
 }
 
 function openEdit(v) {
   editing.value = v
-  form.value = { name: v.name, email: v.email || '' }
+  form.value = {
+    first_name: v.first_name || v.name || '',
+    last_name: v.last_name || '',
+    email: v.email || '',
+  }
   saveError.value = ''
   showModal.value = true
 }

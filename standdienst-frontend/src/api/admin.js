@@ -108,6 +108,7 @@ export const adminApi = {
     }),
   importTemplateCsvUrl: (slug) => `/api/admin/${slug}/import/template/csv`,
   importTemplateXlsxUrl: (slug) => `/api/admin/${slug}/import/template/xlsx`,
+  importTemplateOdsUrl: (slug) => `/api/admin/${slug}/import/template/ods`,
 
   // Backup
   listBackups: () => client.get('/admin/backup/list'),

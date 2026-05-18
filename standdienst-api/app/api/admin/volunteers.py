@@ -1,11 +1,12 @@
-from flask import request, g
+from flask import request, g, current_app
 from marshmallow import ValidationError
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Volunteer, ActivityLog
+from ...models import Volunteer, ActivityLog, GlobalSettings
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
 from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
+from ...utils.mail import is_mail_configured, send_mail, build_welcome_email
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = VolunteerSchema()
@@ -24,7 +25,7 @@ def list_volunteers(slug):
     q = Volunteer.query.filter_by(instance_id=g.instance.id)
     if not include_deleted:
         q = q.filter(Volunteer.deleted_at.is_(None))
-    q = q.order_by(Volunteer.name)
+    q = q.order_by(Volunteer.first_name, Volunteer.last_name, Volunteer.name)
 
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
@@ -43,15 +44,32 @@ def create_volunteer(slug):
     if email and Volunteer.query.filter_by(instance_id=g.instance.id, email=email).first():
         return error('E-Mail-Adresse bereits vergeben', 409)
 
-    volunteer = Volunteer(instance_id=g.instance.id, name=data['name'].strip(), email=email)
+    first_name = data['first_name'].strip()
+    last_name = (data.get('last_name') or '').strip()
+    full_name = f'{first_name} {last_name}'.strip()
+
+    volunteer = Volunteer(
+        instance_id=g.instance.id,
+        name=full_name,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+    )
+
     if data.get('password'):
         if not validate_password_strength(data['password']):
             return error('Passwort zu schwach', 400)
         volunteer.set_password(data['password'])
 
     db.session.add(volunteer)
-    _log(g.instance.id, f'Helfer angelegt: {volunteer.name}', g.current_user)
+    _log(g.instance.id, f'Helfer angelegt: {full_name}', g.current_user)
     db.session.commit()
+
+    if not data.get('password') and email and is_mail_configured():
+        raw_token = volunteer.generate_welcome_token(604800)
+        db.session.commit()
+        _send_welcome_email(volunteer, raw_token)
+
     return created(_schema.dump(volunteer))
 
 
@@ -77,8 +95,12 @@ def update_volunteer(slug, volunteer_id):
         if existing and existing.id != volunteer_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
         volunteer.email = email
-    if 'name' in data:
-        volunteer.name = data['name'].strip()
+    if 'first_name' in data:
+        volunteer.first_name = data['first_name'].strip()
+    if 'last_name' in data:
+        volunteer.last_name = (data['last_name'] or '').strip()
+    if volunteer.first_name:
+        volunteer.name = f'{volunteer.first_name} {volunteer.last_name or ""}'.strip()
     if data.get('password'):
         if not validate_password_strength(data['password']):
             return error('Passwort zu schwach', 400)
@@ -124,6 +146,17 @@ def reset_volunteer_password(slug, volunteer_id):
     volunteer.set_password(password)
     db.session.commit()
     return ok(message='Passwort wurde geändert')
+
+
+def _send_welcome_email(volunteer, raw_token):
+    try:
+        gs = GlobalSettings.query.first()
+        base_url = (gs.base_url or '').rstrip('/') if gs else ''
+        setup_url = f'{base_url}/{g.instance.slug}/welcome/{raw_token}'
+        html = build_welcome_email(volunteer.display_name, g.instance.name, setup_url, base_url)
+        send_mail(volunteer.email, f'Willkommen bei {g.instance.name}', html)
+    except Exception:
+        pass  # E-Mail optional – Helfer trotzdem anlegen
 
 
 def _get_or_404(volunteer_id, instance_id):

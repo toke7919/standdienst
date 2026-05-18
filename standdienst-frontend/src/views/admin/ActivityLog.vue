@@ -2,6 +2,13 @@
   <div>
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Globales Aktivitätsprotokoll</h1>
 
+    <div class="mb-4 flex items-center gap-3">
+      <select v-model="filterType" class="input max-w-xs" @change="page = 1; load()">
+        <option value="">Alle Ereignisse</option>
+        <option v-for="(label, type) in EVENT_LABELS" :key="type" :value="type">{{ label }}</option>
+      </select>
+    </div>
+
     <div class="card overflow-hidden p-0">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
@@ -10,17 +17,23 @@
             <th class="px-4 py-3 text-left font-medium text-gray-500">Ereignis</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Benutzer</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">IP</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Details</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="log in logs" :key="log.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{{ fmt(log.timestamp) }}</td>
-            <td class="px-4 py-3 font-medium">{{ log.event_type }}</td>
+            <td class="px-4 py-3">
+              <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', badgeClass(log.event_type)]">
+                {{ EVENT_LABELS[log.event_type] || log.event_type }}
+              </span>
+            </td>
             <td class="px-4 py-3 text-gray-500">{{ log.volunteer_name || '—' }}</td>
             <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ log.ip_address || '—' }}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs max-w-xs truncate" :title="log.details">{{ log.details || '' }}</td>
           </tr>
           <tr v-if="!logs.length">
-            <td colspan="4" class="px-4 py-8 text-center text-gray-400">Keine Einträge</td>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-400">Keine Einträge</td>
           </tr>
         </tbody>
       </table>
@@ -35,21 +48,59 @@ import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import Pagination from '@/components/Pagination.vue'
 
+const EVENT_LABELS = {
+  SHIFT_REGISTER: 'Schicht angemeldet',
+  SHIFT_UNREGISTER: 'Schicht abgemeldet',
+  FOOD_REGISTER: 'Essensspende',
+  FOOD_UNREGISTER: 'Essensspende storniert',
+  LOGIN_SUCCESS: 'Login erfolgreich',
+  LOGIN_FAIL: 'Login fehlgeschlagen',
+  VOLUNTEER_REGISTER: 'Registrierung',
+  AUDIT_SETTINGS: 'Einstellungen geändert',
+  AUDIT_DATA: 'Datenverwaltung',
+  AUDIT_ORGANIZER: 'Organizer verwaltet',
+  AUDIT_ADMIN: 'Admin verwaltet',
+}
+
+const BADGE_CLASSES = {
+  SHIFT_REGISTER: 'bg-green-100 text-green-700',
+  SHIFT_UNREGISTER: 'bg-orange-100 text-orange-700',
+  FOOD_REGISTER: 'bg-teal-100 text-teal-700',
+  FOOD_UNREGISTER: 'bg-orange-100 text-orange-700',
+  LOGIN_SUCCESS: 'bg-blue-100 text-blue-700',
+  LOGIN_FAIL: 'bg-red-100 text-red-700',
+  VOLUNTEER_REGISTER: 'bg-purple-100 text-purple-700',
+  AUDIT_SETTINGS: 'bg-yellow-100 text-yellow-700',
+  AUDIT_DATA: 'bg-yellow-100 text-yellow-700',
+  AUDIT_ORGANIZER: 'bg-indigo-100 text-indigo-700',
+  AUDIT_ADMIN: 'bg-indigo-100 text-indigo-700',
+}
+
 const logs = ref([])
 const page = ref(1)
 const pages = ref(1)
 const total = ref(0)
+const filterType = ref('')
 
 onMounted(load)
 
 async function load() {
-  const res = await adminApi.getActivityLog({ page: page.value, per_page: 20 })
+  const params = { page: page.value, per_page: 20 }
+  if (filterType.value) params.event_type = filterType.value
+  const res = await adminApi.getActivityLog(params)
   logs.value = res.data.data
   pages.value = res.data.pages
   total.value = res.data.total
 }
 
 function fmt(iso) {
-  return iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : ''
+  return iso ? new Date(iso).toLocaleString('de-DE', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }) : ''
+}
+
+function badgeClass(type) {
+  return BADGE_CLASSES[type] || 'bg-gray-100 text-gray-600'
 }
 </script>

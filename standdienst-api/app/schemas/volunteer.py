@@ -12,16 +12,19 @@ class VolunteerSchema(SQLAlchemyAutoSchema):
 
     is_deleted = fields.Bool(dump_only=True)
     has_login = fields.Bool(dump_only=True)
+    display_name = fields.Str(dump_only=True)
 
 
 class VolunteerCreateSchema(Schema):
-    name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    first_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    last_name = fields.Str(validate=validate.Length(max=100), load_default='')
     email = fields.Email(allow_none=True, load_default=None)
     password = fields.Str(validate=validate.Length(min=8), allow_none=True, load_default=None)
 
 
 class VolunteerUpdateSchema(Schema):
-    name = fields.Str(validate=validate.Length(min=1, max=100))
+    first_name = fields.Str(validate=validate.Length(min=1, max=100))
+    last_name = fields.Str(validate=validate.Length(max=100), allow_none=True)
     email = fields.Email(allow_none=True)
     password = fields.Str(validate=validate.Length(min=8), allow_none=True)
 

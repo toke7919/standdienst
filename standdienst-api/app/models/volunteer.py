@@ -20,6 +20,8 @@ class Volunteer(db.Model):
         nullable=False, index=True,
     )
     name = db.Column(db.String(100), nullable=False)
+    first_name = db.Column(db.String(100), nullable=True)
+    last_name = db.Column(db.String(100), nullable=True)
     email = db.Column(db.String(120), nullable=True, index=True)
     password_hash = db.Column(db.String(256), nullable=True)
     reset_token = db.Column(db.String(64), nullable=True, index=True)
@@ -95,8 +97,16 @@ class Volunteer(db.Model):
     def rotate_jwt(self):
         self.jwt_version = (self.jwt_version or 1) + 1
 
+    @property
+    def display_name(self) -> str:
+        if self.first_name:
+            return f'{self.first_name} {self.last_name or ""}'.strip()
+        return self.name
+
     def soft_delete(self):
         self.name = f'[gelöscht-{self.id}]'
+        self.first_name = f'[gelöscht-{self.id}]'
+        self.last_name = ''
         self.email = None
         self.password_hash = '!'
         self.reset_token = None

@@ -17,30 +17,33 @@
         <p v-if="settings.lock_message" class="text-sm mt-1">{{ settings.lock_message }}</p>
       </div>
 
-      <div v-else class="card">
-        <form @submit.prevent="submit" class="space-y-4">
-          <div>
-            <label class="label">E-Mail</label>
-            <input v-model="form.email" type="email" class="input" required autocomplete="email" />
-          </div>
-          <div>
-            <label class="label">Passwort</label>
-            <input v-model="form.password" type="password" class="input" required autocomplete="current-password" />
-          </div>
-          <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
-          <button type="submit" class="btn-primary w-full" :disabled="loading">
-            <LoadingSpinner v-if="loading" size="sm" />
-            Anmelden
-          </button>
-        </form>
+      <div v-else class="space-y-3">
+        <RouterLink :to="`/${slug}/register`" class="btn-primary w-full flex items-center justify-center text-base py-3">
+          Neu anmelden / Registrieren
+        </RouterLink>
 
-        <div class="mt-4 flex justify-between text-sm">
-          <RouterLink :to="`/${slug}/register`" class="text-primary-600 hover:underline">
-            Neu anmelden
-          </RouterLink>
-          <RouterLink :to="`/${slug}/forgot-password`" class="text-gray-500 hover:text-gray-700">
-            Passwort vergessen?
-          </RouterLink>
+        <div class="card">
+          <p class="text-sm text-gray-500 mb-3">Bereits registriert? Hier einloggen:</p>
+          <form @submit.prevent="submit" class="space-y-3">
+            <div>
+              <label class="label">E-Mail</label>
+              <input v-model="form.email" type="email" class="input" required autocomplete="email" />
+            </div>
+            <div>
+              <label class="label">Passwort</label>
+              <input v-model="form.password" type="password" class="input" required autocomplete="current-password" />
+            </div>
+            <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
+            <button type="submit" class="btn-secondary w-full" :disabled="loading">
+              <LoadingSpinner v-if="loading" size="sm" />
+              Anmelden
+            </button>
+          </form>
+          <div class="mt-3 text-right">
+            <RouterLink :to="`/${slug}/forgot-password`" class="text-sm text-gray-500 hover:text-gray-700">
+              Passwort vergessen?
+            </RouterLink>
+          </div>
         </div>
       </div>
 
