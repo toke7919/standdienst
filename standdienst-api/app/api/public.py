@@ -124,6 +124,7 @@ def register(slug):
 # ---------------------------------------------------------------------------
 
 @public_bp.route('/<slug>/welcome/<raw_token>', methods=['GET'])
+@limiter.limit('20 per hour')
 def welcome_info(slug, raw_token):
     volunteer = _find_volunteer_by_welcome_token(slug, raw_token)
     if not volunteer:
@@ -220,6 +221,7 @@ def volunteer_reset_password(slug):
         return jsonify(error='Ungültiger oder abgelaufener Reset-Link'), 400
 
     volunteer.set_password(new_password)
+    volunteer.rotate_jwt()
     volunteer.clear_reset_token()
     db.session.commit()
     return jsonify(message='Passwort wurde geändert'), 200

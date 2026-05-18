@@ -36,6 +36,7 @@ class Volunteer(db.Model):
     )
     consent_given_at = db.Column(db.DateTime(timezone=True), nullable=True)
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    jwt_version = db.Column(db.Integer, nullable=False, default=1)
 
     registrations = db.relationship(
         'Registration', backref='volunteer', lazy='dynamic', cascade='all, delete-orphan'
@@ -90,6 +91,9 @@ class Volunteer(db.Model):
     @property
     def is_welcome_token_valid(self) -> bool:
         return self._token_valid(self.welcome_token, self.welcome_token_expires)
+
+    def rotate_jwt(self):
+        self.jwt_version = (self.jwt_version or 1) + 1
 
     def soft_delete(self):
         self.name = f'[gelöscht-{self.id}]'

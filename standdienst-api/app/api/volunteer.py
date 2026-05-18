@@ -219,6 +219,7 @@ def update_profile(slug):
         if not validate_password_strength(data['password'], role='volunteer'):
             return error('Passwort zu schwach (mind. 6 Zeichen)', 400)
         volunteer.set_password(data['password'])
+        volunteer.rotate_jwt()
 
     db.session.commit()
     return ok({'name': volunteer.name, 'email': volunteer.email,
