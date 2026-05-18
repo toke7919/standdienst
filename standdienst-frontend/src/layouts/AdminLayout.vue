@@ -61,6 +61,7 @@
 
       <div class="p-3 border-t border-gray-100">
         <NavItem to="/admin/profile/2fa" :icon="LockClosedIcon">2FA einrichten</NavItem>
+        <NavItem to="/admin/profile/passkeys" :icon="KeyIcon">Passkeys</NavItem>
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           @click="auth.logout"
@@ -91,7 +92,7 @@ import {
   ClipboardDocumentListIcon, ShoppingBagIcon, ArrowDownTrayIcon, ArrowUpTrayIcon,
   CogIcon, DocumentTextIcon, ServerIcon, UserGroupIcon, ShieldCheckIcon,
   AdjustmentsHorizontalIcon, EnvelopeIcon, CloudArrowUpIcon, ArrowPathIcon,
-  LockClosedIcon, ArrowRightOnRectangleIcon,
+  LockClosedIcon, ArrowRightOnRectangleIcon, KeyIcon,
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()

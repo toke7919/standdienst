@@ -60,6 +60,7 @@ const router = createRouter({
         { path: 'backup', component: () => import('@/views/admin/Backup.vue') },
         { path: 'update', component: () => import('@/views/admin/Update.vue') },
         { path: 'profile/2fa', component: () => import('@/views/admin/TwoFASetup.vue') },
+        { path: 'profile/passkeys', component: () => import('@/views/admin/PasskeySettings.vue') },
         // Instanz-spezifisch
         { path: ':slug/volunteers', component: () => import('@/views/admin/Volunteers.vue') },
         { path: ':slug/stands', component: () => import('@/views/admin/Stands.vue') },

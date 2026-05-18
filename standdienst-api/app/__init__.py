@@ -45,12 +45,14 @@ def _init_extensions(app):
 
 def _register_blueprints(app):
     from .api.auth import auth_bp
+    from .api.passkey import passkey_bp
     from .api.public import public_bp
     from .api.volunteer import volunteer_bp
     from .api.admin import admin_bp
     from .api.setup import setup_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(passkey_bp, url_prefix='/api/auth/passkey')
     app.register_blueprint(public_bp, url_prefix='/api/public')
     app.register_blueprint(volunteer_bp, url_prefix='/api/volunteer')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')

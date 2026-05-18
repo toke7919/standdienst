@@ -14,4 +14,13 @@ export const authApi = {
     client.post('/auth/forgot-password', { email, type }),
   resetPassword: (token, password, type = 'admin') =>
     client.post('/auth/reset-password', { token, password, type }),
+
+  // Passkey
+  passkeyRegisterBegin: () => client.post('/auth/passkey/register/begin'),
+  passkeyRegisterComplete: (credential) => client.post('/auth/passkey/register/complete', credential),
+  passkeyAuthenticateBegin: () => client.post('/auth/passkey/authenticate/begin'),
+  passkeyAuthenticateComplete: (credential) =>
+    client.post('/auth/passkey/authenticate/complete', credential),
+  passkeyList: () => client.get('/auth/passkey/credentials'),
+  passkeyDelete: (id) => client.delete(`/auth/passkey/credentials/${id}`),
 }
