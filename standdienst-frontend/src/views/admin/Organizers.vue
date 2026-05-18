@@ -54,6 +54,28 @@
             <span class="text-xs text-gray-400 ml-1">(kann Einstellungen der eigenen Instanz bearbeiten)</span>
           </label>
         </div>
+
+        <div>
+          <label class="label">Zugeordnete Instanzen</label>
+          <div v-if="!instances.length" class="text-xs text-gray-400 py-2">Keine Instanzen vorhanden</div>
+          <div v-else class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
+            <label
+              v-for="inst in instances"
+              :key="inst.id"
+              class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :value="inst.id"
+                v-model="form.instance_ids"
+                class="rounded"
+              />
+              <span class="text-sm text-gray-700">{{ inst.name }}</span>
+              <span class="text-xs text-gray-400 font-mono">{{ inst.slug }}</span>
+            </label>
+          </div>
+        </div>
+
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">
           <button type="button" class="btn-secondary" @click="showModal = false">Abbrechen</button>
@@ -72,28 +94,41 @@ import Modal from '@/components/Modal.vue'
 
 const ui = useUiStore()
 const organizers = ref([])
+const instances = ref([])
 const showModal = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', email: '', password: '', is_instance_admin: false })
+const form = ref({ name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] })
 const saveError = ref('')
 
-onMounted(load)
+onMounted(async () => {
+  await Promise.all([load(), loadInstances()])
+})
 
 async function load() {
   const res = await adminApi.getOrganizers({ per_page: 100 })
   organizers.value = res.data.data
 }
 
+async function loadInstances() {
+  const res = await adminApi.getInstances({ per_page: 200 })
+  instances.value = res.data.data
+}
+
 function openCreate() {
   editing.value = null
-  form.value = { name: '', email: '', password: '', is_instance_admin: false }
+  form.value = { name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] }
   saveError.value = ''
   showModal.value = true
 }
 
 function openEdit(o) {
   editing.value = o
-  form.value = { name: o.name, email: o.email, is_instance_admin: o.is_instance_admin ?? false }
+  form.value = {
+    name: o.name,
+    email: o.email,
+    is_instance_admin: o.is_instance_admin ?? false,
+    instance_ids: [...(o.instance_ids ?? [])],
+  }
   saveError.value = ''
   showModal.value = true
 }
@@ -106,6 +141,7 @@ async function save() {
         name: form.value.name,
         email: form.value.email,
         is_instance_admin: form.value.is_instance_admin,
+        instance_ids: form.value.instance_ids,
       })
       ui.success('Organisator aktualisiert')
     } else {
