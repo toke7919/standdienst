@@ -113,6 +113,11 @@ def _register_error_handlers(app):
 
 def _register_spa_fallback(app):
     dist_path = os.path.join(app.root_path, '..', 'static', 'dist')
+    upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+
+    @app.route('/uploads/<path:filename>')
+    def serve_upload(filename):
+        return send_from_directory(os.path.abspath(upload_folder), filename)
 
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
@@ -138,6 +143,18 @@ def _init_db(app):
         with app.app_context():
             db.create_all()
             _seed_admin(app)
+        return
+    # Produktiv: DB-Mail-Einstellungen in Flask-Config laden (falls kein env-SMTP gesetzt)
+    if not app.config.get('MAIL_SERVER'):
+        with app.app_context():
+            try:
+                from .models import MailSettings
+                from .utils.mail import apply_db_mail_config
+                ms = MailSettings.query.first()
+                if ms and ms.mail_server:
+                    apply_db_mail_config(ms)
+            except Exception:
+                pass
 
 
 def _seed_admin(app):

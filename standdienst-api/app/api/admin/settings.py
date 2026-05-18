@@ -14,7 +14,7 @@ from ...schemas.settings import SiteSettingsSchema, SiteSettingsUpdateSchema
 from ...utils.auth import require_admin, require_instance_admin
 from ...utils.sanitizer import sanitize_html
 from ...utils.responses import ok, error, optimistic_lock_conflict
-from ...utils.mail import send_mail, is_mail_configured
+from ...utils.mail import send_mail, is_mail_configured, apply_db_mail_config
 
 _site_schema = SiteSettingsSchema()
 _site_update = SiteSettingsUpdateSchema()
@@ -129,6 +129,8 @@ def get_mail_settings():
         settings = MailSettings()
         db.session.add(settings)
         db.session.commit()
+    if settings.mail_server:
+        apply_db_mail_config(settings)
     return ok(_mail_schema.dump(settings))
 
 
@@ -154,6 +156,8 @@ def update_mail_settings():
 
     _log(None, 'Mail-Einstellungen geändert', g.current_user)
     db.session.commit()
+    if settings.mail_server:
+        apply_db_mail_config(settings)
     return ok(_mail_schema.dump(settings))
 
 

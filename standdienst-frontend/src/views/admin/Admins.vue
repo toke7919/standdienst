@@ -9,6 +9,7 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Name</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">E-Mail</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Primär</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">2FA</th>
@@ -17,6 +18,7 @@
         </thead>
         <tbody>
           <tr v-for="a in admins" :key="a.id" class="border-b border-gray-50 hover:bg-gray-50">
+            <td class="px-4 py-3 text-gray-700">{{ a.name || '—' }}</td>
             <td class="px-4 py-3 font-medium text-gray-900">{{ a.email }}</td>
             <td class="px-4 py-3">
               <span :class="a.is_primary ? 'badge-blue' : 'badge-yellow'">
@@ -38,6 +40,7 @@
 
     <Modal v-model="showModal" title="Neuer Administrator">
       <form @submit.prevent="save" class="space-y-4">
+        <div><label class="label">Name</label><input v-model="form.name" class="input" /></div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" required /></div>
         <div><label class="label">Passwort</label><input v-model="form.password" type="password" class="input" required /></div>
         <div class="flex items-center gap-2">
@@ -63,7 +66,7 @@ import Modal from '@/components/Modal.vue'
 const ui = useUiStore()
 const admins = ref([])
 const showModal = ref(false)
-const form = ref({ email: '', password: '', is_primary: false })
+const form = ref({ name: '', email: '', password: '', is_primary: false })
 const saveError = ref('')
 
 onMounted(load)
@@ -74,7 +77,7 @@ async function load() {
 }
 
 function openCreate() {
-  form.value = { email: '', password: '', is_primary: false }
+  form.value = { name: '', email: '', password: '', is_primary: false }
   saveError.value = ''
   showModal.value = true
 }

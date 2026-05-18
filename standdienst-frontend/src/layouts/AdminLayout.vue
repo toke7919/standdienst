@@ -100,10 +100,14 @@ const instances = ref([])
 const selectedSlug = ref('')
 
 onMounted(async () => {
-  if (auth.isAdmin) {
+  if (auth.isStaff) {
     try {
       const res = await adminApi.getInstances({ per_page: 100 })
       instances.value = res.data.data
+      if (auth.isOrganizer && instances.value.length === 1) {
+        selectedSlug.value = instances.value[0].slug
+        router.push(`/admin/${selectedSlug.value}/volunteers`)
+      }
     } catch { /* ignore */ }
   }
 })
