@@ -109,6 +109,18 @@ def _validate_filename(name: str) -> bool:
     return bool(name) and '/' not in name and not name.startswith('.') and name.endswith('.enc')
 
 
+def run_backup() -> str:
+    """Erstellt ein Backup und gibt den Dateinamen zurück. Wirft Exception bei Fehler."""
+    d = _backup_dir()
+    _autorotate(d)
+    raw = _dump_database()
+    encrypted = _encrypt(raw, _derive_aes_key())
+    name = f'standdienst_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.enc'
+    (d / name).write_bytes(encrypted)
+    current_app.logger.info('Backup erstellt: %s (%d Bytes)', name, len(encrypted))
+    return name
+
+
 @admin_bp.route('/backup/list', methods=['GET'])
 @require_admin
 def list_backups():
@@ -119,14 +131,8 @@ def list_backups():
 @require_admin
 def create_backup():
     try:
-        d = _backup_dir()
-        _autorotate(d)
-        raw = _dump_database()
-        encrypted = _encrypt(raw, _derive_aes_key())
-        name = f'standdienst_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.enc'
-        (d / name).write_bytes(encrypted)
-        current_app.logger.info('Backup erstellt: %s (%d Bytes)', name, len(encrypted))
-        return ok({'backups': _list_backups(d), 'created': name}, 'Backup erstellt')
+        name = run_backup()
+        return ok({'backups': _list_backups(_backup_dir()), 'created': name}, 'Backup erstellt')
     except Exception as e:
         current_app.logger.exception('Backup fehlgeschlagen')
         return error(f'Backup fehlgeschlagen: {e}', 500)

@@ -18,19 +18,19 @@ from ...utils.responses import ok, error
 def check_update():
     try:
         current_version = _installed_version()
-        root = _repo_root()
-        repo_slug = _git_repo_slug(root)
-
-        if not repo_slug:
-            return ok({
-                'current_version': current_version,
-                'update_available': False,
-                'error': 'GitHub-Remote nicht gefunden',
-            })
 
         from ...models import GlobalSettings
         gs = GlobalSettings.query.first()
         pat = gs.github_pat if gs else None
+        repo_slug = (gs.github_repo if gs else None) or _git_repo_slug(_repo_root())
+
+        if not repo_slug:
+            return ok({
+                'current_version': current_version,
+                'current_release_notes': '',
+                'update_available': False,
+                'error': 'GitHub-Repository nicht konfiguriert (Einstellungen → Global)',
+            })
 
         current_notes = _github_release_notes(repo_slug, _version_tag(current_version), pat)
         latest = _github_latest_release(repo_slug, pat)
@@ -80,7 +80,7 @@ def _git_current_version(root: str) -> str:
 
 
 def _git_repo_slug(root: str) -> str | None:
-    """Extrahiert owner/repo aus git remote origin."""
+    """Extrahiert owner/repo aus git remote origin – funktioniert nur in Dev-Umgebung."""
     result = subprocess.run(
         ['git', 'remote', 'get-url', 'origin'],
         capture_output=True, text=True, timeout=5, cwd=root,
@@ -134,9 +134,18 @@ def _is_newer(latest: str, current: str) -> bool:
 @admin_bp.route('/update/apply', methods=['POST'])
 @require_admin
 def apply_update():
+    log = []
     try:
+        # Automatisches Backup vor dem Update
+        try:
+            from .backup import run_backup
+            backup_name = run_backup()
+            log.append({'step': 'backup', 'ok': True, 'output': f'Backup erstellt: {backup_name}'})
+        except Exception as be:
+            current_app.logger.warning('Backup vor Update fehlgeschlagen: %s', be)
+            log.append({'step': 'backup', 'ok': False, 'output': f'Backup fehlgeschlagen (Update wird fortgesetzt): {be}'})
+
         root = _repo_root()
-        log = []
 
         fetch = subprocess.run(
             ['git', 'fetch', 'origin', 'main'],

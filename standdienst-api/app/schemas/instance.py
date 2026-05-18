@@ -43,6 +43,8 @@ class GlobalSettingsUpdateSchema(Schema):
     log_retention_months = fields.Int(validate=validate.Range(min=1, max=36))
     volunteer_retention_months = fields.Int(validate=validate.Range(min=1, max=120), allow_none=True)
     timezone = fields.Str(validate=validate.Length(max=100))
+    github_pat = fields.Str(validate=validate.Length(max=500), allow_none=True)
+    github_repo = fields.Str(validate=validate.Length(max=200), allow_none=True)
 
 
 class MailSettingsSchema(SQLAlchemyAutoSchema):
