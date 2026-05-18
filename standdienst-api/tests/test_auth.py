@@ -61,3 +61,31 @@ def test_reset_password_weak(client):
     rv = client.post('/api/auth/reset-password',
                      json={'token': 'fake', 'password': 'kurz', 'type': 'admin'})
     assert rv.status_code == 400
+
+
+def test_reset_password_admin_requires_uppercase(client):
+    """Admin-Passwort mit 12 Zeichen aber ohne Großbuchstabe → abgelehnt."""
+    rv = client.post('/api/auth/reset-password',
+                     json={'token': 'fake', 'password': 'aaaa1111!!!!', 'type': 'admin'})
+    assert rv.status_code == 400
+
+
+def test_reset_password_admin_requires_digit(client):
+    """Admin-Passwort ohne Ziffer → abgelehnt."""
+    rv = client.post('/api/auth/reset-password',
+                     json={'token': 'fake', 'password': 'AAAAbbbb!!!!', 'type': 'admin'})
+    assert rv.status_code == 400
+
+
+def test_reset_password_admin_requires_special_char(client):
+    """Admin-Passwort ohne Sonderzeichen → abgelehnt."""
+    rv = client.post('/api/auth/reset-password',
+                     json={'token': 'fake', 'password': 'AAAAbbbb1234', 'type': 'admin'})
+    assert rv.status_code == 400
+
+
+def test_reset_password_organizer_requires_complexity(client):
+    """Organizer-Passwort unterliegt denselben Regeln wie Admin."""
+    rv = client.post('/api/auth/reset-password',
+                     json={'token': 'fake', 'password': 'kurz', 'type': 'organizer'})
+    assert rv.status_code == 400
