@@ -180,7 +180,6 @@ def _auto_backup(log: list):
 
 def _apply_tarball(tarball_url: str, pat: str | None, log: list):
     api_root = _api_root()
-    project_root = os.path.normpath(os.path.join(api_root, '..'))
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tar_path = os.path.join(tmpdir, 'release.tar.gz')
@@ -196,6 +195,9 @@ def _apply_tarball(tarball_url: str, pat: str | None, log: list):
         extracted = os.path.join(tmpdir, dirs[0])
         log.append({'step': 'extract', 'ok': True, 'output': f'Entpackt: {dirs[0]}'})
 
+        # Frontend zuerst bauen – Output landet in extracted/standdienst-api/static/dist/
+        _rebuild_frontend(extracted, log)
+
         src_api = os.path.join(extracted, 'standdienst-api')
         if os.path.exists(src_api):
             shutil.copytree(src_api, api_root,
@@ -203,23 +205,42 @@ def _apply_tarball(tarball_url: str, pat: str | None, log: list):
                             dirs_exist_ok=True)
             log.append({'step': 'copy', 'ok': True, 'output': 'API-Dateien überschrieben'})
 
-        _rebuild_frontend(extracted, project_root, log)
-
     _run_step(['pip', 'install', '-r', 'requirements.txt', '-q'], api_root, 'pip install', log, use_python=True)
     _run_step(['flask', 'db', 'upgrade'], api_root, 'db upgrade', log,
               use_python=True, extra_env={'FLASK_APP': 'wsgi'})
     _run_step(['sudo', 'systemctl', 'restart', 'standdienst'], None, 'restart', log)
 
 
-def _rebuild_frontend(extracted: str, project_root: str, log: list):
+def _rebuild_frontend(extracted: str, log: list):
+    """Baut das Frontend aus dem extrahierten Tarball.
+
+    vite baut nach ../standdienst-api/static/dist/ (relativ zum Frontend-Verzeichnis),
+    also landet der Output in extracted/standdienst-api/static/dist/ und wird
+    anschließend durch copytree mit in die Produktion übernommen.
+    """
     src_fe = os.path.join(extracted, 'standdienst-frontend')
-    fe_root = os.path.join(project_root, 'standdienst-frontend')
-    if not (os.path.exists(src_fe) and os.path.exists(fe_root)):
+    if not os.path.exists(src_fe):
+        log.append({'step': 'frontend', 'ok': False,
+                    'output': 'standdienst-frontend/ nicht im Release-Tarball enthalten – Frontend nicht aktualisiert'})
         return
-    shutil.copytree(src_fe, fe_root, dirs_exist_ok=True)
-    subprocess.run(['npm', 'install'], capture_output=True, text=True, timeout=120, cwd=fe_root)
-    build = subprocess.run(['npm', 'run', 'build'], capture_output=True, text=True, timeout=120, cwd=fe_root)
-    log.append({'step': 'frontend', 'ok': build.returncode == 0, 'output': build.stdout + build.stderr})
+
+    npm = shutil.which('npm')
+    if not npm:
+        log.append({'step': 'frontend', 'ok': False,
+                    'output': 'npm nicht gefunden – Frontend nicht aktualisiert'})
+        return
+
+    install = subprocess.run([npm, 'install', '--silent'],
+                             capture_output=True, text=True, timeout=180, cwd=src_fe)
+    if install.returncode != 0:
+        log.append({'step': 'frontend', 'ok': False,
+                    'output': f'npm install fehlgeschlagen:\n{install.stderr}'})
+        return
+
+    build = subprocess.run([npm, 'run', 'build'],
+                           capture_output=True, text=True, timeout=180, cwd=src_fe)
+    log.append({'step': 'frontend', 'ok': build.returncode == 0,
+                'output': build.stdout + build.stderr})
 
 
 def _run_step(cmd: list, cwd: str | None, label: str, log: list,
