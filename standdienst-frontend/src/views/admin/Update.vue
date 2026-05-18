@@ -10,20 +10,49 @@
         </div>
 
         <template v-else-if="updateInfo">
-          <div class="flex items-center gap-3">
+          <!-- Installierte Version -->
+          <div class="flex items-center justify-between">
             <div>
-              <p class="font-medium text-gray-900">Version: {{ updateInfo.current_version }}</p>
-              <p class="text-sm text-gray-500 mt-0.5">
-                {{ updateInfo.update_available
-                  ? `${updateInfo.commits_behind} Commit(s) hinter origin/main`
-                  : 'Aktuell — kein Update verfügbar' }}
-              </p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Installierte Version</p>
+              <p class="font-semibold text-gray-900 text-lg font-mono">{{ updateInfo.current_version }}</p>
             </div>
-            <span v-if="updateInfo.update_available" class="badge-blue ml-auto">Update verfügbar</span>
-            <span v-else class="badge-green ml-auto">Aktuell</span>
+            <span v-if="updateInfo.update_available" class="badge-blue">Update verfügbar</span>
+            <span v-else class="badge-green">Aktuell</span>
           </div>
 
-          <div class="flex gap-3">
+          <!-- Release-Notes installierte Version -->
+          <div v-if="updateInfo.current_release_notes" class="border border-gray-100 rounded-lg">
+            <button type="button"
+                    class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+                    @click="showCurrentNotes = !showCurrentNotes">
+              Release-Notes {{ updateInfo.current_version }}
+              <span class="text-gray-400 text-xs">{{ showCurrentNotes ? '▲' : '▼' }}</span>
+            </button>
+            <div v-if="showCurrentNotes" class="px-4 pb-4 pt-1 text-sm text-gray-600 whitespace-pre-wrap border-t border-gray-100">
+              {{ updateInfo.current_release_notes }}
+            </div>
+          </div>
+
+          <!-- Neueste Version (wenn Update verfügbar) -->
+          <template v-if="updateInfo.update_available">
+            <div class="border-t border-gray-100 pt-4">
+              <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Neue Version</p>
+              <p class="font-semibold text-indigo-700 text-lg font-mono">{{ updateInfo.latest_version }}</p>
+            </div>
+            <div v-if="updateInfo.latest_release_notes" class="border border-indigo-100 rounded-lg bg-indigo-50/50">
+              <button type="button"
+                      class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                      @click="showLatestNotes = !showLatestNotes">
+                Release-Notes {{ updateInfo.latest_version }}
+                <span class="text-indigo-400 text-xs">{{ showLatestNotes ? '▲' : '▼' }}</span>
+              </button>
+              <div v-if="showLatestNotes" class="px-4 pb-4 pt-1 text-sm text-gray-600 whitespace-pre-wrap border-t border-indigo-100">
+                {{ updateInfo.latest_release_notes }}
+              </div>
+            </div>
+          </template>
+
+          <div class="flex gap-3 pt-2">
             <button class="btn-secondary" @click="checkUpdate">Erneut prüfen</button>
             <button
               v-if="updateInfo.update_available"
@@ -66,12 +95,16 @@ const checking = ref(false)
 const applying = ref(false)
 const updateInfo = ref(null)
 const updateLog = ref([])
+const showCurrentNotes = ref(false)
+const showLatestNotes = ref(true)
 
 async function checkUpdate() {
   checking.value = true
   try {
     const res = await adminApi.checkUpdate()
     updateInfo.value = res.data.data
+    showCurrentNotes.value = false
+    showLatestNotes.value = !!updateInfo.value?.update_available
   } catch (e) {
     ui.err(e.response?.data?.error || 'Update-Check fehlgeschlagen')
   } finally {
@@ -80,12 +113,12 @@ async function checkUpdate() {
 }
 
 async function applyUpdate() {
-  const ok = await ui.confirm({
+  const confirmed = await ui.confirm({
     title: 'Update anwenden',
     message: 'Das System wird aktualisiert. Danach ist ein Neustart erforderlich. Fortfahren?',
     confirmText: 'Update starten',
   })
-  if (!ok) return
+  if (!confirmed) return
 
   applying.value = true
   updateLog.value = []

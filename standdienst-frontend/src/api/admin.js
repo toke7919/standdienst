@@ -80,6 +80,7 @@ export const adminApi = {
   updateGlobalSettings: (data) => client.put('/admin/settings/global', data),
   getMailSettings: () => client.get('/admin/settings/mail'),
   updateMailSettings: (data) => client.put('/admin/settings/mail', data),
+  sendTestMail: (data) => client.post('/admin/settings/mail/test', data),
 
   // Activity log
   getActivityLog: (p) => client.get('/admin/activity', { params: p }),
@@ -107,8 +108,11 @@ export const adminApi = {
   importTemplateXlsxUrl: (slug) => `/api/admin/${slug}/import/template/xlsx`,
 
   // Backup
+  listBackups: () => client.get('/admin/backup/list'),
   createBackup: () => client.post('/admin/backup/create'),
-  testSmbConnection: () => client.post('/admin/backup/test-connection'),
+  deleteBackup: (name) => client.delete(`/admin/backup/${name}`),
+  restoreBackup: (name, data) => client.post(`/admin/backup/${name}/restore`, data || {}),
+  exportBackupKey: () => client.get('/admin/backup/export-key'),
 
   // Update
   checkUpdate: () => client.get('/admin/update/check'),

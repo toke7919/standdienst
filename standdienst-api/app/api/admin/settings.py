@@ -14,6 +14,7 @@ from ...schemas.settings import SiteSettingsSchema, SiteSettingsUpdateSchema
 from ...utils.auth import require_admin, require_instance_admin
 from ...utils.sanitizer import sanitize_html
 from ...utils.responses import ok, error, optimistic_lock_conflict
+from ...utils.mail import send_mail, is_mail_configured
 
 _site_schema = SiteSettingsSchema()
 _site_update = SiteSettingsUpdateSchema()
@@ -154,6 +155,26 @@ def update_mail_settings():
     _log(None, 'Mail-Einstellungen geändert', g.current_user)
     db.session.commit()
     return ok(_mail_schema.dump(settings))
+
+
+@admin_bp.route('/settings/mail/test', methods=['POST'])
+@require_admin
+def send_test_mail():
+    if not is_mail_configured(current_app):
+        return error('E-Mail nicht konfiguriert', 503)
+    data = request.get_json() or {}
+    to = data.get('email') or getattr(g.current_user, 'email', None)
+    if not to:
+        return error('Empfänger-E-Mail fehlt', 400)
+    try:
+        send_mail(
+            to=to,
+            subject='Standdienst – Testmail',
+            html='<p>Diese Testmail wurde erfolgreich über die konfigurierte SMTP-Verbindung gesendet.</p>',
+        )
+        return ok(message=f'Testmail an {to} gesendet')
+    except Exception as e:
+        return error(f'Versand fehlgeschlagen: {e}', 500)
 
 
 def _log(instance_id, details, actor):

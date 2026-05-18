@@ -36,6 +36,7 @@ class Config:
 
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')
+    BACKUP_DIR = os.getenv('BACKUP_DIR', 'backups')
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH_MB', 5)) * 1024 * 1024
 
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
