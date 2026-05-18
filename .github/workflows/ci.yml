@@ -26,10 +26,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-dependency-path: standdienst-api/requirements.txt
+          cache-dependency-path: |
+            standdienst-api/requirements.txt
+            standdienst-api/requirements-dev.in
 
       - name: Abhängigkeiten installieren
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -r requirements-dev.in
 
       - name: Tests ausführen
         env:

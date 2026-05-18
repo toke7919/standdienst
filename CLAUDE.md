@@ -14,7 +14,7 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 - **Organisator** – operativer Zugriff (Schichten, Termine, Anmeldungen); kein Zugriff auf Instanz-Einstellungen
 - **Volunteer** – Self-Service (eigene Instanz): Schichten buchen, Essen spenden, Profil verwalten
 
-**Aktueller Stand:** v3.0.0 (2026-05-18) – Multi-Admin, DSGVO, Setup-Wizard, strukturiertes Logging, Sicherheitsverbesserungen, CI/CD.
+**Aktueller Stand:** v3.1.0 (2026-05-18) – Session-Invalidierung nach Passwort-Änderung, Welcome-Token Rate-Limit, Setup-IP-Guard, GitHub-Releases-basierter Update-Check.
 
 ---
 
@@ -783,5 +783,5 @@ Standard: `Europe/Berlin`. Wird für Scheduler-Jobs und E-Mail-Zeitangaben verwe
 | Settings-Cache | Kein Cache implementiert (v2 hatte TTL-Cache, v3 noch offen) | Niedrig |
 | Migrationen | Kein Rollback-Szenario getestet | Mittel |
 | E-Mail | Kein Retry bei SMTP-Fehler | Niedrig |
-| Setup-Guard | `/api/setup/*` prüft nur `setup_complete`-Flag, keine IP-Beschränkung | Niedrig |
-| DSGVO | Kein automatisierter Lösch-Workflow nach Aufbewahrungsfrist | Mittel |
+| DSGVO | Kein automatisierter Auskunfts-Workflow (Art. 15); nur JSON-Export | Mittel |
+| DSGVO | Kein Verarbeitungsverzeichnis (Art. 30) | Niedrig |
