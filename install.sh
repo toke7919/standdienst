@@ -236,6 +236,7 @@ Type=notify
 User=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$INSTALL_DIR/.env
+Environment=HOME=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/.venv/bin/gunicorn wsgi:app --config gunicorn.conf.py
 ExecReload=/bin/kill -s HUP \$MAINPID
 KillMode=mixed
