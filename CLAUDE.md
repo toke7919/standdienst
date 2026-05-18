@@ -14,6 +14,8 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 - **Organisator** – operativer Zugriff (Schichten, Termine, Anmeldungen); kein Zugriff auf Instanz-Einstellungen
 - **Volunteer** – Self-Service (eigene Instanz): Schichten buchen, Essen spenden, Profil verwalten
 
+**Aktueller Stand:** v3.0.0 (2026-05-18) – Multi-Admin, DSGVO, Setup-Wizard, strukturiertes Logging, Sicherheitsverbesserungen, CI/CD.
+
 ---
 
 ## Designprinzipien – PFLICHTREGELN
@@ -610,11 +612,8 @@ git push origin --delete feat/meine-funktion
 | `refactor/`, `chore/`, `docs/` | keine (oder Patch) | – |
 | Breaking Change | **Major** (X) | v3.1.0 → v4.0.0 |
 
-Beta-Phase: `3.0.0-beta.1`, `3.0.0-beta.2`, usw.
-
 **Pflicht bei jedem `feat/`- oder `fix/`-Merge in main:**
-1. `version.py` und `CHANGELOG.md` aktualisieren
-2. Git-Tag setzen und GitHub-Release erstellen:
+1. Git-Tag setzen und GitHub-Release mit Release-Notes erstellen:
 
 ```bash
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
@@ -622,8 +621,11 @@ git push origin vX.Y.Z
 
 gh release create vX.Y.Z \
   --title "vX.Y.Z – Kurzbeschreibung" \
-  --notes "$(sed -n '/^## \[X.Y.Z\]/,/^## \[/{ /^## \[X.Y.Z\]/d; /^## \[/d; /^---/d; p }' CHANGELOG.md)"
+  --notes "Beschreibung der Änderungen"
 ```
+
+**Kein CHANGELOG.md** – Release-Notes leben ausschließlich in GitHub Releases.  
+**`version.py`** nur pflegen wenn der Code die eigene Versionsnummer zur Laufzeit braucht (z.B. `/api/admin/update/check`).
 
 ---
 
