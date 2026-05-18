@@ -10,8 +10,8 @@ export const adminApi = {
   getInstances: (p) => client.get('/admin/instances', { params: p }),
   getInstance: (slug) => client.get(`${a(slug)}/info`),
   createInstance: (data) => client.post('/admin/instances', data),
-  updateInstance: (slug, data) => client.put(`${a(slug)}/instance`, data),
-  deleteInstance: (slug) => client.delete(`${a(slug)}/instance`),
+  updateInstance: (id, data) => client.put(`/admin/instances/${id}`, data),
+  deleteInstance: (id) => client.delete(`/admin/instances/${id}`),
 
   // Volunteers
   getVolunteers: (slug, p) => client.get(`${a(slug)}/volunteers`, { params: p }),
@@ -61,7 +61,7 @@ export const adminApi = {
   createOrganizer: (data) => client.post('/admin/organizers', data),
   updateOrganizer: (id, data) => client.put(`/admin/organizers/${id}`, data),
   deleteOrganizer: (id) => client.delete(`/admin/organizers/${id}`),
-  assignInstances: (id, data) => client.put(`/admin/organizers/${id}/instances`, data),
+  assignInstances: (id, instanceIds) => client.put(`/admin/organizers/${id}`, { instance_ids: instanceIds }),
 
   // Admins
   getAdmins: () => client.get('/admin/admins'),

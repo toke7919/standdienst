@@ -101,7 +101,7 @@ async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateInstance(editing.value.slug, form.value)
+      await adminApi.updateInstance(editing.value.id, form.value)
       ui.success('Instanz aktualisiert')
     } else {
       await adminApi.createInstance(form.value)
@@ -125,7 +125,7 @@ async function deleteInst(inst) {
   })
   if (!ok) return
   try {
-    await adminApi.deleteInstance(inst.slug)
+    await adminApi.deleteInstance(inst.id)
     ui.success('Instanz gelöscht')
     await load()
   } catch (e) {
