@@ -1,9 +1,15 @@
+import logging
 import os
-from flask import Flask, jsonify, send_from_directory
+from uuid import uuid4
+
+from flask import Flask, g, jsonify, request, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import Config
 from .extensions import db, migrate, jwt, mail, limiter, cors
+from .utils.logging_setup import init_logging
+
+log = logging.getLogger(__name__)
 
 
 def create_app(config_class=Config):
@@ -11,9 +17,11 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
+    init_logging(app)
     _init_extensions(app)
     _register_blueprints(app)
     _register_error_handlers(app)
+    _register_request_hooks(app)
     _register_spa_fallback(app)
     _init_db(app)
     _start_scheduler(app)
@@ -49,6 +57,21 @@ def _register_blueprints(app):
     app.register_blueprint(setup_bp, url_prefix='/api/setup')
 
 
+def _register_request_hooks(app):
+    @app.before_request
+    def _inject_request_id():
+        g.request_id = uuid4().hex[:8]
+        log.debug('%s %s', request.method, request.path)
+
+    @app.after_request
+    def _log_response(response):
+        if response.status_code >= 400:
+            log.warning('%s %s → %d', request.method, request.path, response.status_code)
+        else:
+            log.debug('%s %s → %d', request.method, request.path, response.status_code)
+        return response
+
+
 def _register_error_handlers(app):
     @app.errorhandler(400)
     def bad_request(e):
@@ -72,6 +95,7 @@ def _register_error_handlers(app):
 
     @app.errorhandler(500)
     def server_error(e):
+        log.exception('Unbehandelter Serverfehler: %s %s', request.method, request.path)
         return jsonify(error='Interner Serverfehler'), 500
 
     @jwt.expired_token_loader
