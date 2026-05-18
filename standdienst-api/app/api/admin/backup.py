@@ -5,7 +5,8 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import current_app, g, request
+from flask import current_app, g, request, send_file
+from werkzeug.utils import secure_filename
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from sqlalchemy import text
 
@@ -170,6 +171,33 @@ def restore_backup(name):
     except Exception as e:
         current_app.logger.exception('Restore fehlgeschlagen')
         return error(f'Restore fehlgeschlagen: {e}', 500)
+
+
+@admin_bp.route('/backup/<name>/download', methods=['GET'])
+@require_admin
+def download_backup(name):
+    if not _validate_filename(name):
+        return error('Ungültiger Dateiname', 400)
+    f = _backup_dir() / name
+    if not f.exists():
+        return error('Backup nicht gefunden', 404)
+    return send_file(str(f.resolve()), as_attachment=True, download_name=name)
+
+
+@admin_bp.route('/backup/upload', methods=['POST'])
+@require_admin
+def upload_backup():
+    if 'file' not in request.files:
+        return error('Keine Datei übergeben', 400)
+    file = request.files['file']
+    name = secure_filename(file.filename or '')
+    if not _validate_filename(name):
+        return error('Nur .enc-Dateien erlaubt', 400)
+    d = _backup_dir()
+    _autorotate(d)
+    file.save(str(d / name))
+    current_app.logger.info('Backup hochgeladen: %s', name)
+    return ok({'backups': _list_backups(d)}, 'Backup hochgeladen')
 
 
 @admin_bp.route('/backup/export-key', methods=['GET'])

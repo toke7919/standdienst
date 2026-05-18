@@ -5,6 +5,7 @@ const a = (slug) => `/admin/${slug}`
 export const adminApi = {
   // Dashboard
   getDashboard: (slug) => client.get(`${a(slug)}/dashboard`),
+  getGlobalDashboard: () => client.get('/admin/dashboard/global'),
 
   // Instances
   getInstances: (p) => client.get('/admin/instances', { params: p }),
@@ -12,6 +13,7 @@ export const adminApi = {
   createInstance: (data) => client.post('/admin/instances', data),
   updateInstance: (id, data) => client.put(`/admin/instances/${id}`, data),
   deleteInstance: (id) => client.delete(`/admin/instances/${id}`),
+  clearInstanceData: (slug) => client.delete(`${a(slug)}/clear-data`),
 
   // Volunteers
   getVolunteers: (slug, p) => client.get(`${a(slug)}/volunteers`, { params: p }),
@@ -110,6 +112,11 @@ export const adminApi = {
   // Backup
   listBackups: () => client.get('/admin/backup/list'),
   createBackup: () => client.post('/admin/backup/create'),
+  downloadBackupUrl: (name) => `/api/admin/backup/${name}/download`,
+  uploadBackup: (formData) =>
+    client.post('/admin/backup/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   deleteBackup: (name) => client.delete(`/admin/backup/${name}`),
   restoreBackup: (name, data) => client.post(`/admin/backup/${name}/restore`, data || {}),
   exportBackupKey: () => client.get('/admin/backup/export-key'),

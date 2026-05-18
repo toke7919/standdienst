@@ -37,6 +37,9 @@ def _log_activity(event_type, ip, user_name=None, actor_type='admin', details=No
 
 
 def _fail2ban_log(ip, user):
+    from ..utils.ip_whitelist import is_whitelisted
+    if is_whitelisted(ip):
+        return
     try:
         log_path = current_app.config.get('FAIL2BAN_LOG', 'logs/auth.log')
         with open(log_path, 'a') as f:

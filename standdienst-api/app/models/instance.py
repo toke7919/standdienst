@@ -46,6 +46,7 @@ class GlobalSettings(db.Model):
     github_repo = db.Column(db.String(200), nullable=True)
     timezone = db.Column(db.String(100), nullable=False, default='Europe/Berlin')
     volunteer_retention_months = db.Column(db.Integer, nullable=True)
+    ip_whitelist = db.Column(db.Text, nullable=True)
     updated_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
