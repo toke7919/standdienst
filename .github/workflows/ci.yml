@@ -45,3 +45,13 @@ jobs:
           SECRET_KEY: ci-test-secret-key-minimum-32-chars!!
           DATABASE_URL: sqlite:///ci-test.db
         run: pytest --cov=app --cov-report=term-missing -q
+
+      - name: Migration Roundtrip (upgrade → downgrade -1 → upgrade)
+        if: matrix.python-version == '3.13'
+        env:
+          SECRET_KEY: ci-test-secret-key-minimum-32-chars!!
+          DATABASE_URL: sqlite:///ci-migrate.db
+        run: |
+          flask --app wsgi db upgrade
+          flask --app wsgi db downgrade -1
+          flask --app wsgi db upgrade

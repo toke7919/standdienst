@@ -2,4 +2,4 @@ from flask import Blueprint
 
 admin_bp = Blueprint('admin', __name__)
 
-from . import dashboard, instances, volunteers, stands, dates, shifts, registrations, food, organizers, admins, settings, activity, export, import_, backup, update  # noqa: E402, F401
+from . import dashboard, instances, volunteers, stands, dates, shifts, registrations, food, organizers, admins, settings, activity, export, import_, backup, update, dsgvo  # noqa: E402, F401

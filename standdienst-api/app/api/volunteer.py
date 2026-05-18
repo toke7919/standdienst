@@ -12,6 +12,7 @@ from ..models import (
 from ..schemas.shifts import ShiftSchema, RegistrationSchema
 from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
 from ..utils.auth import require_volunteer, validate_password_strength
+from ..utils.mail import is_mail_configured, send_mail, build_daten_auskunft_email
 from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 
 volunteer_bp = Blueprint('volunteer', __name__)
@@ -241,35 +242,65 @@ def delete_profile(slug):
 @volunteer_bp.route('/<slug>/meine-daten', methods=['GET'])
 @require_volunteer
 def meine_daten(slug):
-    v = g.current_user
-    registrations = []
-    for reg in v.registrations:
-        shift = reg.shift
-        registrations.append({
-            'shift_id': shift.id,
-            'stand': shift.stand.name,
-            'date': shift.event_date.date.isoformat(),
-            'start_time': shift.start_time.isoformat(),
-            'end_time': shift.end_time.isoformat(),
-            'registered_at': reg.registered_at.isoformat() if reg.registered_at else None,
-        })
+    return ok(_build_volunteer_export(g.current_user))
 
-    return ok({
-        'volunteer': {
-            'id': v.id,
-            'name': v.name,
-            'email': v.email,
-            'instance_id': v.instance_id,
-            'created_at': v.created_at.isoformat() if v.created_at else None,
-            'consent_given_at': v.consent_given_at.isoformat() if v.consent_given_at else None,
-        },
-        'registrations': registrations,
-    })
+
+@volunteer_bp.route('/<slug>/meine-daten/export', methods=['POST'])
+@limiter.limit('3 per day')
+@require_volunteer
+def meine_daten_export(slug):
+    """Art. 15 DSGVO – Datenauskunft per E-Mail zusenden."""
+    v = g.current_user
+    if not v.email:
+        return error('Keine E-Mail-Adresse hinterlegt', 400)
+    if not is_mail_configured():
+        return error('E-Mail nicht konfiguriert', 503)
+
+    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    title = settings.site_title if settings else g.instance.name
+    base_url = current_app.config.get('FRONTEND_URL', '')
+    send_mail(v.email, f'Ihre Daten bei {title}',
+              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url))
+    return ok({'message': 'Daten wurden an Ihre E-Mail-Adresse gesendet'})
 
 
 # ---------------------------------------------------------------------------
 # Hilfsfunktionen
 # ---------------------------------------------------------------------------
+
+def _build_volunteer_export(v) -> dict:
+    """Alle gespeicherten Daten eines Volunteers (Art. 15/20 DSGVO)."""
+    registrations = [
+        {
+            'shift_id': reg.shift.id,
+            'stand': reg.shift.stand.name,
+            'date': reg.shift.event_date.date.isoformat(),
+            'start_time': reg.shift.start_time.isoformat(),
+            'end_time': reg.shift.end_time.isoformat(),
+            'registered_at': reg.registered_at.isoformat() if reg.registered_at else None,
+        }
+        for reg in v.registrations
+    ]
+    food_donations = [
+        {
+            'food_type': fd.food_type.name,
+            'description': fd.description,
+            'needs_refrigeration': fd.needs_refrigeration,
+            'registered_at': fd.registered_at.isoformat() if fd.registered_at else None,
+        }
+        for fd in v.food_donations
+    ]
+    return {
+        'volunteer': {
+            'id': v.id, 'name': v.name, 'email': v.email,
+            'instance_id': v.instance_id,
+            'created_at': v.created_at.isoformat() if v.created_at else None,
+            'consent_given_at': v.consent_given_at.isoformat() if v.consent_given_at else None,
+        },
+        'registrations': registrations,
+        'food_donations': food_donations,
+    }
+
 
 def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
     """Prüft ob Volunteer am selben Veranstaltungstag eine überlappende Schicht hat."""
