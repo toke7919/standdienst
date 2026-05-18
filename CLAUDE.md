@@ -14,8 +14,6 @@ Dieses File gibt Claude Code Kontext über das Projekt, die Architektur und die 
 - **Organisator** – operativer Zugriff (Schichten, Termine, Anmeldungen); kein Zugriff auf Instanz-Einstellungen
 - **Volunteer** – Self-Service (eigene Instanz): Schichten buchen, Essen spenden, Profil verwalten
 
-**Aktueller Stand:** v3.0.0-beta.2 (2026-05-17) – Setup-Wizard, überarbeitete Installation (Port-Abfrage), Deinstallations-Script.
-
 ---
 
 ## Designprinzipien – PFLICHTREGELN
