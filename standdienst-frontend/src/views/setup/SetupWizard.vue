@@ -86,6 +86,12 @@
             <input v-model="config.copyright_text" class="input"
                    placeholder="© 2026 Mein Verein" />
           </div>
+          <div>
+            <label class="label">Zeitzone</label>
+            <select v-model="config.timezone" class="input">
+              <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
+            </select>
+          </div>
           <p v-if="errors.config" class="text-sm text-red-600">{{ errors.config }}</p>
           <div class="flex gap-3 pt-2">
             <button type="button" class="btn-secondary flex-1" @click="step = 2">Zurück</button>
@@ -219,8 +225,15 @@ const totalSteps = 5
 const loading = ref(false)
 const errors = ref({ admin: '', config: '', mail: '', pat: '' })
 
+const timezones = [
+  'Europe/Berlin', 'Europe/Vienna', 'Europe/Zurich', 'Europe/London',
+  'Europe/Paris', 'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Rome',
+  'Europe/Warsaw', 'Europe/Prague', 'Europe/Budapest', 'Europe/Lisbon',
+  'Europe/Stockholm', 'Europe/Helsinki', 'UTC',
+]
+
 const admin = ref({ email: '', password: '', passwordConfirm: '' })
-const config = ref({ base_url: '', copyright_text: '', github_pat: '' })
+const config = ref({ base_url: '', copyright_text: '', timezone: 'Europe/Berlin', github_pat: '' })
 const mail = ref({
   server: '', port: 587, use_tls: true,
   username: '', password: '', sender: '', sender_name: 'Standdienst',
@@ -250,6 +263,7 @@ async function submitConfig() {
     await setupApi.saveConfig({
       base_url: config.value.base_url,
       copyright_text: config.value.copyright_text,
+      timezone: config.value.timezone,
     })
     step.value = 4
   } catch (e) {
@@ -280,6 +294,7 @@ async function submitPat() {
       await setupApi.saveConfig({
         base_url: config.value.base_url,
         copyright_text: config.value.copyright_text,
+        timezone: config.value.timezone,
         github_pat: config.value.github_pat,
       })
     }
