@@ -1,6 +1,9 @@
 import subprocess
 import sys
 import os
+import tarfile
+import shutil
+import tempfile
 import urllib.request
 import urllib.error
 import json
@@ -13,77 +16,29 @@ from ...utils.auth import require_admin
 from ...utils.responses import ok, error
 
 
-@admin_bp.route('/update/check', methods=['GET'])
-@require_admin
-def check_update():
-    try:
-        current_version = _installed_version()
-
-        from ...models import GlobalSettings
-        gs = GlobalSettings.query.first()
-        pat = gs.github_pat if gs else None
-        repo_slug = (gs.github_repo if gs else None) or _git_repo_slug(_repo_root())
-
-        if not repo_slug:
-            return ok({
-                'current_version': current_version,
-                'current_release_notes': '',
-                'update_available': False,
-                'error': 'GitHub-Repository nicht konfiguriert (Einstellungen → Global)',
-            })
-
-        current_notes = _github_release_notes(repo_slug, _version_tag(current_version), pat)
-        latest = _github_latest_release(repo_slug, pat)
-        if latest is None:
-            return ok({
-                'current_version': current_version,
-                'current_release_notes': current_notes,
-                'update_available': False,
-                'error': 'GitHub-Release-Abfrage fehlgeschlagen',
-            })
-
-        latest_version = latest.get('tag_name', '')
-        update_available = _is_newer(latest_version, current_version)
-        return ok({
-            'current_version': current_version,
-            'current_release_notes': current_notes,
-            'latest_version': latest_version,
-            'latest_release_notes': latest.get('body', ''),
-            'update_available': update_available,
-            'release_url': latest.get('html_url', ''),
-        })
-    except Exception as e:
-        return error(f'Update-Check fehlgeschlagen: {e}', 500)
+def _api_root() -> str:
+    return os.path.normpath(os.path.join(current_app.root_path, '..'))
 
 
 def _installed_version() -> str:
-    version_path = os.path.join(current_app.root_path, '..', 'version.py')
     ns: dict = {}
     try:
-        with open(version_path) as f:
+        with open(os.path.join(_api_root(), 'version.py')) as f:
             exec(f.read(), ns)  # noqa: S102
         return ns.get('VERSION', 'unbekannt')
     except OSError:
-        return _git_current_version(_repo_root())
+        return 'unbekannt'
 
 
 def _version_tag(version: str) -> str:
     return version if version.startswith('v') else f'v{version}'
 
 
-def _git_current_version(root: str) -> str:
-    result = subprocess.run(
-        ['git', 'describe', '--tags', '--always'],
-        capture_output=True, text=True, timeout=5, cwd=root,
-    )
-    return result.stdout.strip() if result.returncode == 0 else 'unbekannt'
-
-
-def _git_repo_slug(root: str) -> str | None:
-    """Extrahiert owner/repo aus git remote origin – funktioniert nur in Dev-Umgebung."""
+def _git_repo_slug() -> str | None:
+    """Nur in Dev-Umgebungen mit .git-Verzeichnis verfügbar."""
     result = subprocess.run(
         ['git', 'remote', 'get-url', 'origin'],
-        capture_output=True, text=True, timeout=5, cwd=root,
+        capture_output=True, text=True, timeout=5, cwd=_api_root(),
     )
     if result.returncode != 0:
         return None
@@ -131,56 +86,145 @@ def _is_newer(latest: str, current: str) -> bool:
     return _parts(latest) > _parts(current)
 
 
+def _download(url: str, dest: str, pat: str | None):
+    req = urllib.request.Request(
+        url, headers={'Authorization': f'Bearer {pat}'} if pat else {}
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        with open(dest, 'wb') as f:
+            shutil.copyfileobj(resp, f)
+
+
+def _repo_slug_and_pat():
+    from ...models import GlobalSettings
+    gs = GlobalSettings.query.first()
+    pat = gs.github_pat if gs else None
+    slug = (gs.github_repo if gs else None) or _git_repo_slug()
+    return slug, pat
+
+
+@admin_bp.route('/update/check', methods=['GET'])
+@require_admin
+def check_update():
+    try:
+        current_version = _installed_version()
+        repo_slug, pat = _repo_slug_and_pat()
+
+        if not repo_slug:
+            return ok({
+                'current_version': current_version,
+                'current_release_notes': '',
+                'update_available': False,
+                'error': 'GitHub-Repository nicht konfiguriert (Einstellungen → Global)',
+            })
+
+        current_notes = _github_release_notes(repo_slug, _version_tag(current_version), pat)
+        latest = _github_latest_release(repo_slug, pat)
+        if latest is None:
+            return ok({
+                'current_version': current_version,
+                'current_release_notes': current_notes,
+                'update_available': False,
+                'error': 'GitHub-Release-Abfrage fehlgeschlagen',
+            })
+
+        latest_version = latest.get('tag_name', '')
+        return ok({
+            'current_version': current_version,
+            'current_release_notes': current_notes,
+            'latest_version': latest_version,
+            'latest_release_notes': latest.get('body', ''),
+            'update_available': _is_newer(latest_version, current_version),
+            'release_url': latest.get('html_url', ''),
+        })
+    except Exception as e:
+        return error(f'Update-Check fehlgeschlagen: {e}', 500)
+
+
 @admin_bp.route('/update/apply', methods=['POST'])
 @require_admin
 def apply_update():
     log = []
     try:
-        # Automatisches Backup vor dem Update
-        try:
-            from .backup import run_backup
-            backup_name = run_backup()
-            log.append({'step': 'backup', 'ok': True, 'output': f'Backup erstellt: {backup_name}'})
-        except Exception as be:
-            current_app.logger.warning('Backup vor Update fehlgeschlagen: %s', be)
-            log.append({'step': 'backup', 'ok': False, 'output': f'Backup fehlgeschlagen (Update wird fortgesetzt): {be}'})
+        _auto_backup(log)
 
-        root = _repo_root()
+        repo_slug, pat = _repo_slug_and_pat()
+        if not repo_slug:
+            return error('GitHub-Repository nicht konfiguriert (Einstellungen → Global)', 400)
 
-        fetch = subprocess.run(
-            ['git', 'fetch', 'origin', 'main'],
-            capture_output=True, text=True, timeout=60, cwd=root,
-        )
-        log.append({'step': 'git fetch', 'ok': fetch.returncode == 0, 'output': fetch.stdout + fetch.stderr})
-        if fetch.returncode != 0:
-            return error('git fetch fehlgeschlagen', 500, {'log': log})
+        latest = _github_latest_release(repo_slug, pat)
+        if not latest:
+            return error('GitHub-Release-Abfrage fehlgeschlagen', 502)
+        tarball_url = latest.get('tarball_url')
+        if not tarball_url:
+            return error('Kein Tarball im GitHub-Release gefunden', 500)
 
-        pull = subprocess.run(
-            ['git', 'pull', '--ff-only', 'origin', 'main'],
-            capture_output=True, text=True, timeout=60, cwd=root,
-        )
-        log.append({'step': 'git pull', 'ok': pull.returncode == 0, 'output': pull.stdout + pull.stderr})
-        if pull.returncode != 0:
-            return error('git pull fehlgeschlagen', 500, {'log': log})
-
-        pip_install = subprocess.run(
-            [sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt', '-q'],
-            capture_output=True, text=True, timeout=180, cwd=root,
-        )
-        log.append({'step': 'pip install', 'ok': pip_install.returncode == 0,
-                    'output': pip_install.stdout + pip_install.stderr})
+        _apply_tarball(tarball_url, pat, log)
 
         return ok({'log': log, 'applied_at': datetime.now(timezone.utc).isoformat()},
-                  'Update angewendet – bitte neu starten')
-
+                  'Update angewendet – Dienst wird neu gestartet')
     except Exception as e:
         current_app.logger.exception('Update fehlgeschlagen')
         return error(f'Update fehlgeschlagen: {e}', 500)
 
 
-def _repo_root() -> str:
-    result = subprocess.run(
-        ['git', 'rev-parse', '--show-toplevel'],
-        capture_output=True, text=True, timeout=5,
-    )
-    return result.stdout.strip() if result.returncode == 0 else os.getcwd()
+def _auto_backup(log: list):
+    try:
+        from .backup import run_backup
+        name = run_backup()
+        log.append({'step': 'backup', 'ok': True, 'output': f'Backup erstellt: {name}'})
+    except Exception as e:
+        current_app.logger.warning('Backup vor Update fehlgeschlagen: %s', e)
+        log.append({'step': 'backup', 'ok': False, 'output': f'Backup fehlgeschlagen (Update wird fortgesetzt): {e}'})
+
+
+def _apply_tarball(tarball_url: str, pat: str | None, log: list):
+    api_root = _api_root()
+    project_root = os.path.normpath(os.path.join(api_root, '..'))
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tar_path = os.path.join(tmpdir, 'release.tar.gz')
+        _download(tarball_url, tar_path, pat)
+        log.append({'step': 'download', 'ok': True, 'output': 'Release heruntergeladen'})
+
+        with tarfile.open(tar_path) as tf:
+            tf.extractall(tmpdir, filter='data')
+
+        dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+        if not dirs:
+            raise RuntimeError('Entpacktes Verzeichnis nicht gefunden')
+        extracted = os.path.join(tmpdir, dirs[0])
+        log.append({'step': 'extract', 'ok': True, 'output': f'Entpackt: {dirs[0]}'})
+
+        src_api = os.path.join(extracted, 'standdienst-api')
+        if os.path.exists(src_api):
+            shutil.copytree(src_api, api_root,
+                            ignore=shutil.ignore_patterns('.env', 'uploads', 'backups', 'logs', '.venv', '__pycache__', '*.pyc'),
+                            dirs_exist_ok=True)
+            log.append({'step': 'copy', 'ok': True, 'output': 'API-Dateien überschrieben'})
+
+        _rebuild_frontend(extracted, project_root, log)
+
+    _run_step(['pip', 'install', '-r', 'requirements.txt', '-q'], api_root, 'pip install', log, use_python=True)
+    _run_step(['flask', 'db', 'upgrade'], api_root, 'db upgrade', log,
+              use_python=True, extra_env={'FLASK_APP': 'wsgi'})
+    _run_step(['systemctl', 'restart', 'standdienst'], None, 'restart', log)
+
+
+def _rebuild_frontend(extracted: str, project_root: str, log: list):
+    src_fe = os.path.join(extracted, 'standdienst-frontend')
+    fe_root = os.path.join(project_root, 'standdienst-frontend')
+    if not (os.path.exists(src_fe) and os.path.exists(fe_root)):
+        return
+    shutil.copytree(src_fe, fe_root, dirs_exist_ok=True)
+    subprocess.run(['npm', 'install'], capture_output=True, text=True, timeout=120, cwd=fe_root)
+    build = subprocess.run(['npm', 'run', 'build'], capture_output=True, text=True, timeout=120, cwd=fe_root)
+    log.append({'step': 'frontend', 'ok': build.returncode == 0, 'output': build.stdout + build.stderr})
+
+
+def _run_step(cmd: list, cwd: str | None, label: str, log: list,
+              use_python: bool = False, extra_env: dict | None = None):
+    full_cmd = [sys.executable, '-m'] + cmd if use_python else cmd
+    env = {**os.environ, **(extra_env or {})} if extra_env else None
+    result = subprocess.run(full_cmd, capture_output=True, text=True, timeout=180, cwd=cwd, env=env)
+    log.append({'step': label, 'ok': result.returncode == 0, 'output': result.stdout + result.stderr})
