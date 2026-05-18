@@ -34,6 +34,24 @@
         </div>
       </div>
 
+      <div class="card space-y-4">
+        <h2 class="text-base font-semibold text-gray-800">GitHub / Updates</h2>
+        <div>
+          <label class="label">GitHub-Repository</label>
+          <input v-model="form.github_repo" class="input font-mono text-sm"
+                 placeholder="owner/repo  z.B. toke7919/standdienst_v2" />
+          <p class="text-xs text-gray-400 mt-1">
+            Wird für den Update-Check benötigt. Format: <code class="bg-gray-100 px-1 rounded">owner/repo</code>
+          </p>
+        </div>
+        <div>
+          <label class="label">GitHub Personal Access Token (PAT)</label>
+          <input v-model="form.github_pat" type="password" class="input font-mono text-sm"
+                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+          <p class="text-xs text-gray-400 mt-1">Optional – erhöht das API-Limit für private Repos.</p>
+        </div>
+      </div>
+
       <div class="card">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-base font-semibold text-gray-800">Betreiber-Impressum (HTML)</h2>

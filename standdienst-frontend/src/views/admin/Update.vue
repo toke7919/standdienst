@@ -20,6 +20,12 @@
             <span v-else class="badge-green">Aktuell</span>
           </div>
 
+          <!-- Hinweis wenn GitHub-Repo nicht konfiguriert -->
+          <div v-if="updateInfo.error" class="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+            {{ updateInfo.error }}
+            <RouterLink to="/admin/settings/global" class="underline ml-1">Jetzt konfigurieren →</RouterLink>
+          </div>
+
           <!-- Release-Notes installierte Version -->
           <div v-if="updateInfo.current_release_notes" class="border border-gray-100 rounded-lg">
             <button type="button"
@@ -85,7 +91,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -97,6 +104,8 @@ const updateInfo = ref(null)
 const updateLog = ref([])
 const showCurrentNotes = ref(false)
 const showLatestNotes = ref(true)
+
+onMounted(checkUpdate)
 
 async function checkUpdate() {
   checking.value = true
