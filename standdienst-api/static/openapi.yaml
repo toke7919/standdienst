@@ -1,0 +1,916 @@
+openapi: 3.1.0
+info:
+  title: Standdienst API
+  version: "3.8.0"
+  description: |
+    REST-API für die Standdienst-Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden.
+
+    **Authentifizierung:** JWT via HttpOnly-Cookie (`access_token`) oder `Authorization: Bearer <token>` Header.
+
+    **CSRF:** Für alle schreibenden Anfragen muss der `X-CSRF-TOKEN` Header mit dem CSRF-Token aus dem `csrf_access_token` Cookie mitgesendet werden.
+
+    **Rollen:**
+    - `admin` – Globaler Administrator
+    - `organizer` – Instanz-Verantwortlicher
+    - `volunteer` – Helfer (instanzgebunden)
+
+servers:
+  - url: /api
+    description: API-Basis
+
+tags:
+  - name: setup
+    description: Ersteinrichtung (nur solange setup_complete=false)
+  - name: auth
+    description: Authentifizierung und Sitzungsverwaltung
+  - name: passkey
+    description: WebAuthn/FIDO2-Passkey-Verwaltung
+  - name: public
+    description: Öffentliche Endpunkte (ohne Authentifizierung)
+  - name: volunteer
+    description: Volunteer-Bereich (Schichten, Essen, Profil)
+  - name: admin
+    description: Admin-Bereich (Instanzen, Einstellungen, Export, Backup)
+
+# ---------------------------------------------------------------------------
+# Components
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    Success:
+      type: object
+      properties:
+        data:
+          description: Nutzlast (Typ je nach Endpunkt)
+        message:
+          type: string
+
+    Instance:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        is_active: { type: boolean }
+
+    Shift:
+      type: object
+      properties:
+        id: { type: integer }
+        stand_id: { type: integer }
+        stand_name: { type: string }
+        event_date_id: { type: integer }
+        date: { type: string, format: date }
+        date_formatted: { type: string }
+        start_time: { type: string, format: time }
+        end_time: { type: string, format: time }
+        time_range: { type: string }
+        max_volunteers: { type: integer }
+        current_count: { type: integer }
+        spots_left: { type: integer }
+        is_full: { type: boolean }
+        is_registered: { type: boolean }
+
+    Volunteer:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, nullable: true }
+        instance_id: { type: integer }
+        is_deleted: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # ── Setup ──────────────────────────────────────────────────────────────
+
+  /setup/status:
+    get:
+      tags: [setup]
+      summary: Setup-Status abrufen
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      setup_complete: { type: boolean }
+                      has_admin: { type: boolean }
+
+  /setup/admin:
+    post:
+      tags: [setup]
+      summary: Ersten Admin-Account anlegen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 12 }
+      responses:
+        "201": { description: Admin angelegt }
+        "400": { description: Validierungsfehler }
+        "403": { description: Setup bereits abgeschlossen }
+
+  /setup/config:
+    post:
+      tags: [setup]
+      summary: Basis-Konfiguration speichern
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                base_url: { type: string }
+                copyright_text: { type: string }
+                timezone: { type: string, example: Europe/Berlin }
+      responses:
+        "200": { description: Konfiguration gespeichert }
+
+  /setup/finish:
+    post:
+      tags: [setup]
+      summary: Einrichtung abschließen
+      responses:
+        "200": { description: setup_complete=true gesetzt }
+        "403": { description: Kein Admin vorhanden }
+
+  # ── Auth ───────────────────────────────────────────────────────────────
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Admin/Organizer-Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Eingeloggt (JWT-Cookies gesetzt)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      requires_2fa: { type: boolean }
+                      user:
+                        type: object
+                        properties:
+                          id: { type: integer }
+                          email: { type: string }
+                          role: { type: string, enum: [admin, organizer] }
+        "401": { description: Ungültige Zugangsdaten }
+        "429": { description: Rate-Limit überschritten }
+
+  /auth/volunteer-login:
+    post:
+      tags: [auth]
+      summary: Volunteer-Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, email, password]
+              properties:
+                slug: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200": { description: Eingeloggt }
+        "401": { description: Ungültige Zugangsdaten }
+
+  /auth/2fa/verify:
+    post:
+      tags: [auth]
+      summary: 2FA-Code prüfen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, minLength: 6, maxLength: 6 }
+      responses:
+        "200": { description: 2FA bestätigt, JWT-Cookies gesetzt }
+        "401": { description: Ungültiger Code }
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Access-Token erneuern
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: Neuer Access-Token gesetzt }
+        "401": { description: Refresh-Token ungültig oder abgelaufen }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Abmelden (JWT-Cookies löschen)
+      responses:
+        "200": { description: Abgemeldet }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Aktuell eingeloggten Nutzer abrufen
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Nutzerdaten
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id: { type: integer }
+                      email: { type: string }
+                      role: { type: string }
+        "401": { description: Nicht eingeloggt }
+
+  /auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: Passwort-Reset-Link anfordern (Admin/Organizer)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200": { description: Reset-Link gesendet (falls E-Mail bekannt) }
+
+  /auth/reset-password:
+    post:
+      tags: [auth]
+      summary: Passwort zurücksetzen (Admin/Organizer)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 12 }
+      responses:
+        "200": { description: Passwort geändert }
+        "400": { description: Token ungültig oder abgelaufen }
+
+  # ── Passkey ────────────────────────────────────────────────────────────
+
+  /auth/passkey/register/begin:
+    post:
+      tags: [passkey]
+      summary: Passkey-Registrierung starten
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: WebAuthn-Optionen zurückgegeben }
+        "401": { description: Nicht authentifiziert }
+
+  /auth/passkey/register/complete:
+    post:
+      tags: [passkey]
+      summary: Passkey-Registrierung abschließen
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, description: Anzeigename des Passkeys }
+                credential: { type: object, description: WebAuthn AuthenticatorAttestationResponse }
+      responses:
+        "201": { description: Passkey gespeichert }
+        "400": { description: Verifikation fehlgeschlagen }
+
+  /auth/passkey/authenticate/begin:
+    post:
+      tags: [passkey]
+      summary: Passkey-Authentifizierung starten
+      responses:
+        "200": { description: WebAuthn-Optionen zurückgegeben }
+
+  /auth/passkey/authenticate/complete:
+    post:
+      tags: [passkey]
+      summary: Passkey-Authentifizierung abschließen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: WebAuthn AuthenticatorAssertionResponse
+      responses:
+        "200": { description: Eingeloggt, JWT-Cookies gesetzt }
+        "401": { description: Verifikation fehlgeschlagen }
+
+  /auth/passkey/credentials:
+    get:
+      tags: [passkey]
+      summary: Eigene Passkeys auflisten
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Liste der Passkeys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        name: { type: string }
+                        created_at: { type: string, format: date-time }
+                        last_used_at: { type: string, format: date-time, nullable: true }
+
+  /auth/passkey/credentials/{id}:
+    delete:
+      tags: [passkey]
+      summary: Passkey löschen
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Passkey gelöscht }
+        "404": { description: Nicht gefunden }
+
+  # ── Public ─────────────────────────────────────────────────────────────
+
+  /public/instances:
+    get:
+      tags: [public]
+      summary: Alle aktiven Instanzen auflisten
+      responses:
+        "200":
+          description: Instanzliste
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Instance'
+
+  /public/{slug}/info:
+    get:
+      tags: [public]
+      summary: Instanz-Info + Branding
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Instanz-Info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      name: { type: string }
+                      slug: { type: string }
+                      site_title: { type: string }
+                      primary_color: { type: string }
+                      logo_url: { type: string, nullable: true }
+                      mail_enabled: { type: boolean }
+                      has_privacy_policy: { type: boolean }
+        "404": { description: Instanz nicht gefunden }
+
+  /public/{slug}/captcha:
+    get:
+      tags: [public]
+      summary: CAPTCHA generieren
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Mathe-CAPTCHA
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      question: { type: string, example: "3 + 5 = ?" }
+
+  /public/{slug}/register:
+    post:
+      tags: [public]
+      summary: Volunteer registrieren
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, captcha_answer]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                captcha_answer: { type: integer }
+                consent: { type: boolean }
+      responses:
+        "201": { description: Registrierung erfolgreich }
+        "400": { description: Validierungsfehler oder CAPTCHA falsch }
+        "409": { description: E-Mail bereits registriert }
+
+  /public/{slug}/datenschutz:
+    get:
+      tags: [public]
+      summary: Datenschutzerklärung
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: HTML der Datenschutzerklärung
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      html: { type: string }
+
+  # ── Volunteer ──────────────────────────────────────────────────────────
+
+  /volunteer/{slug}/shifts:
+    get:
+      tags: [volunteer]
+      summary: Schichten abrufen
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Schichtliste mit Anmeldestatus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Shift'
+        "403": { description: Schichten deaktiviert }
+
+  /volunteer/{slug}/shifts/events:
+    get:
+      tags: [volunteer]
+      summary: Echtzeit-Schichtupdates (Server-Sent Events)
+      description: |
+        SSE-Stream: sendet ein Event wenn sich die Belegung einer Schicht ändert.
+        Browser-EventSource reconnectet automatisch nach 25s Timeout.
+        Erfordert Redis (`RATELIMIT_STORAGE_URI=redis://...`).
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: SSE-Stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: "data: {\"shift_id\": 42}\n\n"
+
+  /volunteer/{slug}/shifts/{shift_id}/register:
+    post:
+      tags: [volunteer]
+      summary: Schicht anmelden
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+        - name: shift_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "201": { description: Angemeldet }
+        "403": { description: Anmeldeschluss }
+        "409": { description: Schicht voll, bereits eingetragen oder Zeitüberschneidung }
+    delete:
+      tags: [volunteer]
+      summary: Schicht abmelden
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+        - name: shift_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Abgemeldet }
+        "404": { description: Nicht eingetragen }
+
+  /volunteer/{slug}/my-registrations:
+    get:
+      tags: [volunteer]
+      summary: Eigene Anmeldungen abrufen
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Anmeldungen }
+
+  /volunteer/{slug}/food-donations:
+    get:
+      tags: [volunteer]
+      summary: Eigene Essensspenden abrufen
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Essensspenden }
+    post:
+      tags: [volunteer]
+      summary: Essensspende eintragen
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [food_type_id]
+              properties:
+                food_type_id: { type: integer }
+                description: { type: string }
+                needs_refrigeration: { type: boolean }
+      responses:
+        "201": { description: Spende eingetragen }
+
+  /volunteer/{slug}/meine-daten:
+    get:
+      tags: [volunteer]
+      summary: DSGVO Art. 20 – Eigene Daten als JSON
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Nutzerdaten-Export }
+
+  /volunteer/{slug}/meine-daten/export:
+    post:
+      tags: [volunteer]
+      summary: DSGVO Art. 15 – Datenauskunft per E-Mail
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: E-Mail gesendet }
+        "400": { description: Keine E-Mail-Adresse hinterlegt }
+        "503": { description: E-Mail nicht konfiguriert }
+
+  /volunteer/{slug}/profile:
+    put:
+      tags: [volunteer]
+      summary: Profil aktualisieren
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                password: { type: string, minLength: 6 }
+                updated_at: { type: string, format: date-time, description: Optimistic-Lock-Feld }
+      responses:
+        "200": { description: Profil aktualisiert }
+        "409": { description: Optimistic-Lock-Konflikt }
+    delete:
+      tags: [volunteer]
+      summary: Konto löschen (DSGVO Soft-Delete)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Konto gelöscht }
+
+  # ── Admin: Instanzen ───────────────────────────────────────────────────
+
+  /admin/instances:
+    get:
+      tags: [admin]
+      summary: Alle Instanzen auflisten
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: Instanzliste }
+    post:
+      tags: [admin]
+      summary: Neue Instanz anlegen
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name: { type: string }
+                slug: { type: string, pattern: '^[a-z0-9-]+$' }
+      responses:
+        "201": { description: Instanz angelegt }
+        "409": { description: Slug bereits vergeben }
+
+  /admin/instances/{id}:
+    put:
+      tags: [admin]
+      summary: Instanz aktualisieren
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Instanz aktualisiert }
+    delete:
+      tags: [admin]
+      summary: Instanz löschen (mit allen Daten)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Instanz gelöscht }
+
+  # ── Admin: Einstellungen ───────────────────────────────────────────────
+
+  /admin/{slug}/settings:
+    get:
+      tags: [admin]
+      summary: Instanz-Einstellungen abrufen
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Instanz-Einstellungen }
+    put:
+      tags: [admin]
+      summary: Instanz-Einstellungen aktualisieren
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Einstellungen gespeichert }
+
+  /admin/settings/global:
+    get:
+      tags: [admin]
+      summary: Globale Einstellungen abrufen
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: Globale Einstellungen }
+    put:
+      tags: [admin]
+      summary: Globale Einstellungen aktualisieren
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: Einstellungen gespeichert }
+
+  /admin/settings/mail:
+    get:
+      tags: [admin]
+      summary: Mail-Einstellungen abrufen
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: SMTP-Konfiguration }
+    put:
+      tags: [admin]
+      summary: Mail-Einstellungen aktualisieren
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: Mail-Einstellungen gespeichert }
+
+  /admin/settings/mail/test:
+    post:
+      tags: [admin]
+      summary: Test-E-Mail senden
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200": { description: Testmail gesendet }
+        "503": { description: E-Mail nicht konfiguriert }
+
+  # ── Admin: Backup & Update ─────────────────────────────────────────────
+
+  /admin/backup/create:
+    post:
+      tags: [admin]
+      summary: Datenbank-Backup erstellen
+      security:
+        - cookieAuth: []
+      responses:
+        "201":
+          description: Backup erstellt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      name: { type: string }
+                      size_bytes: { type: integer }
+
+  /admin/update/check:
+    get:
+      tags: [admin]
+      summary: Verfügbare Updates prüfen (GitHub Releases API)
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Update-Status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      current_version: { type: string }
+                      latest_version: { type: string }
+                      update_available: { type: boolean }
+                      release_url: { type: string }
+
+  /admin/update/apply:
+    post:
+      tags: [admin]
+      summary: Update durchführen
+      security:
+        - cookieAuth: []
+      responses:
+        "200": { description: Update angewendet }
+        "502": { description: GitHub-Release nicht erreichbar }

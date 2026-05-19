@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
@@ -69,6 +69,7 @@ const ui = useUiStore()
 const shifts = ref([])
 const loading = ref(true)
 const toggling = ref(null)
+let eventSource = null
 
 const grouped = computed(() => {
   const g = {}
@@ -79,7 +80,41 @@ const grouped = computed(() => {
   return g
 })
 
-onMounted(load)
+onMounted(async () => {
+  await load()
+  startEventSource()
+})
+
+onUnmounted(() => {
+  if (eventSource) {
+    eventSource.close()
+    eventSource = null
+  }
+})
+
+function startEventSource() {
+  const slug = route.params.slug
+  eventSource = new EventSource(`/api/volunteer/${slug}/shifts/events`, { withCredentials: true })
+  eventSource.onmessage = async (e) => {
+    try {
+      const data = JSON.parse(e.data)
+      if (data.type === 'connected') return
+      if (data.type === 'unavailable') {
+        // Kein Redis → SSE nicht verfügbar; Verbindung schließen um Reconnect-Loop zu verhindern
+        eventSource.close()
+        eventSource = null
+        return
+      }
+      // Belegung eines konkreten Shifts hat sich geändert → Liste neu laden
+      await silentReload()
+    } catch {
+      // Ungültiges JSON ignorieren
+    }
+  }
+  eventSource.onerror = () => {
+    // Browser reconnectet automatisch; bei geschlossener Verbindung (unavailable) kein Handler aktiv
+  }
+}
 
 async function load() {
   loading.value = true
@@ -88,6 +123,16 @@ async function load() {
     shifts.value = res.data.data
   } finally {
     loading.value = false
+  }
+}
+
+async function silentReload() {
+  // Stille Aktualisierung ohne Ladeindikator (ausgelöst durch SSE)
+  try {
+    const res = await volunteerApi.getShifts(route.params.slug)
+    shifts.value = res.data.data
+  } catch {
+    // Netzwerkfehler bei stiller Aktualisierung ignorieren
   }
 }
 

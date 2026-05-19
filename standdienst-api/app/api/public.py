@@ -5,8 +5,9 @@ from flask import Blueprint, request, jsonify, current_app
 from marshmallow import ValidationError
 
 from ..extensions import db, limiter
-from ..models import Instance, SiteSettings, GlobalSettings, ActivityLog, Volunteer
+from ..models import Instance, SiteSettings, ActivityLog, Volunteer
 from ..schemas.volunteer import VolunteerRegisterSchema
+from ..utils.settings_cache import get_global_settings
 from ..utils.auth import validate_password_strength
 from ..utils.captcha import generate_captcha, verify_captcha
 from ..utils.mail import (
@@ -31,7 +32,7 @@ def instance_info(slug):
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
     settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
-    global_settings = GlobalSettings.query.first()
+    global_settings = get_global_settings()
     return jsonify(data=_build_instance_info(instance, settings, global_settings)), 200
 
 
@@ -77,9 +78,15 @@ def register(slug):
     if email and Volunteer.query.filter_by(instance_id=instance.id, email=email).first():
         return jsonify(error='E-Mail-Adresse bereits vergeben'), 409
 
+    first_name = data['first_name'].strip()
+    last_name = (data.get('last_name') or '').strip()
+    full_name = f'{first_name} {last_name}'.strip()
+
     volunteer = Volunteer(
         instance_id=instance.id,
-        name=data['name'].strip(),
+        name=full_name,
+        first_name=first_name,
+        last_name=last_name,
         email=email,
         consent_given_at=datetime.now(timezone.utc) if data.get('consent') else None,
     )
@@ -89,7 +96,7 @@ def register(slug):
     db.session.add(ActivityLog(
         instance_id=instance.id,
         event_type=ActivityLog.VOLUNTEER_REGISTER,
-        volunteer_name=volunteer.name,
+        volunteer_name=full_name,
         ip_address=request.remote_addr,
         actor_type='volunteer',
         user_agent=request.headers.get('User-Agent', '')[:500],
@@ -104,7 +111,8 @@ def register(slug):
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
         try:
             send_mail(email, f'Willkommen bei {title}',
-                      build_welcome_email(volunteer.name, title, setup_url, base_url))
+                      build_welcome_email(volunteer.name, title, setup_url, base_url),
+                      sender_name=title)
         except Exception:
             pass
 
@@ -189,9 +197,12 @@ def volunteer_forgot_password(slug):
         db.session.commit()
         base_url = current_app.config.get('FRONTEND_URL', '')
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
+        settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+        title = settings.site_title if settings else instance.name
         try:
             send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(volunteer.name, reset_url, base_url))
+                      build_reset_email(volunteer.name, reset_url, base_url),
+                      sender_name=title)
         except Exception:
             pass
 

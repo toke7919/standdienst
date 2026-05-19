@@ -1,0 +1,70 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: standdienst
+      POSTGRES_USER: standdienst
+      POSTGRES_PASSWORD: standdienst
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U standdienst"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+
+  api:
+    build:
+      context: ./standdienst-api
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-minimum-32-chars-!!!}
+      DATABASE_URL: postgresql://standdienst:standdienst@db:5432/standdienst
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FLASK_DEBUG: "0"
+      SESSION_COOKIE_SECURE: "false"
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
+      - backups:/app/backups
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      sh -c "flask --app wsgi db upgrade && gunicorn wsgi:app --config gunicorn.conf.py"
+
+  frontend:
+    build:
+      context: ./standdienst-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - api
+
+  # Dev-only: Vite-Frontend mit Hot-Reload
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host"
+    volumes:
+      - ./standdienst-frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE: http://api:8420
+    profiles:
+      - dev
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+  logs:
+  backups:

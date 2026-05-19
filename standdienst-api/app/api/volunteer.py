@@ -1,12 +1,14 @@
+import json
+import time as _time
 from datetime import datetime, timezone
 
-from flask import Blueprint, request, jsonify, g, current_app
+from flask import Blueprint, request, jsonify, g, current_app, Response, stream_with_context
 from flask_jwt_extended import create_access_token, create_refresh_token
 from marshmallow import ValidationError
 
 from ..extensions import db, limiter
 from ..models import (
-    Instance, SiteSettings, Stand, EventDate, Shift, Registration,
+    Instance, Stand, EventDate, Shift, Registration,
     FoodDonationType, FoodDonation, ActivityLog, Volunteer,
 )
 from ..schemas.shifts import ShiftSchema, RegistrationSchema
@@ -14,6 +16,7 @@ from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
 from ..utils.auth import require_volunteer, validate_password_strength
 from ..utils.mail import is_mail_configured, send_mail, build_daten_auskunft_email
 from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
+from ..utils.settings_cache import get_site_settings
 
 volunteer_bp = Blueprint('volunteer', __name__)
 
@@ -27,11 +30,51 @@ _food_create_schema = FoodDonationCreateSchema()
 # Schichten
 # ---------------------------------------------------------------------------
 
+@volunteer_bp.route('/<slug>/shifts/events', methods=['GET'])
+@require_volunteer
+def shift_events(slug):
+    """SSE-Endpunkt: liefert Echtzeit-Aktualisierungen wenn Schichten belegt/freigegeben werden."""
+    uri = current_app.config.get('RATELIMIT_STORAGE_URI', 'memory://')
+    if not uri.startswith('redis://'):
+        # Ohne Redis: einmaliges Event senden und Verbindung schließen
+        return Response('data: {"type":"unavailable"}\n\n',
+                        content_type='text/event-stream',
+                        headers={'Cache-Control': 'no-cache'})
+
+    def generate():
+        import redis as redis_lib
+        r = redis_lib.from_url(uri, socket_connect_timeout=2)
+        pubsub = r.pubsub()
+        pubsub.subscribe(f'shifts:{slug}')
+        deadline = _time.monotonic() + 25
+        try:
+            yield 'data: {"type":"connected"}\n\n'
+            while _time.monotonic() < deadline:
+                msg = pubsub.get_message(timeout=1.0)
+                if msg and msg['type'] == 'message':
+                    data = msg['data']
+                    if isinstance(data, bytes):
+                        data = data.decode()
+                    yield f'data: {data}\n\n'
+        finally:
+            try:
+                pubsub.close()
+                r.close()
+            except Exception:
+                pass
+
+    return Response(
+        stream_with_context(generate()),
+        content_type='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
+
+
 @volunteer_bp.route('/<slug>/shifts', methods=['GET'])
 @require_volunteer
 def list_shifts(slug):
     instance = g.instance
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+    settings = get_site_settings(instance.id)
     if settings and not settings.shifts_enabled:
         return error('Schichten sind deaktiviert', 403)
 
@@ -58,7 +101,7 @@ def list_shifts(slug):
 @limiter.limit('30 per minute')
 @require_volunteer
 def register_shift(slug, shift_id):
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    settings = get_site_settings(g.instance.id)
     if settings and not settings.registration_open:
         return error('Anmeldeschluss ist überschritten', 403)
 
@@ -81,6 +124,7 @@ def register_shift(slug, shift_id):
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_REGISTER, g.current_user,
                              details=f'shift_id={shift_id}'))
     db.session.commit()
+    _publish_shift_update(current_app, slug, shift_id)
     return created({'shift_id': shift_id})
 
 
@@ -98,6 +142,7 @@ def unregister_shift(slug, shift_id):
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_UNREGISTER, g.current_user,
                              details=f'shift_id={shift_id}'))
     db.session.commit()
+    _publish_shift_update(current_app, slug, shift_id)
     return no_content()
 
 
@@ -150,7 +195,7 @@ def my_registrations_ical(slug):
 @volunteer_bp.route('/<slug>/food-donations', methods=['GET'])
 @require_volunteer
 def list_food_donations(slug):
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    settings = get_site_settings(g.instance.id)
     if settings and not settings.food_donations_enabled:
         return error('Essensspenden sind deaktiviert', 403)
 
@@ -162,7 +207,7 @@ def list_food_donations(slug):
 @limiter.limit('20 per minute')
 @require_volunteer
 def create_food_donation(slug):
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    settings = get_site_settings(g.instance.id)
     if settings and not settings.registration_open:
         return error('Anmeldeschluss ist überschritten', 403)
 
@@ -214,8 +259,15 @@ def update_profile(slug):
     if optimistic_lock_conflict(volunteer, data.get('updated_at')):
         return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
-    if 'name' in data:
-        volunteer.name = data['name'].strip()
+    if 'first_name' in data:
+        first = data['first_name'].strip()
+        if not first:
+            return error('Vorname darf nicht leer sein', 422)
+        volunteer.first_name = first
+    if 'last_name' in data:
+        volunteer.last_name = (data.get('last_name') or '').strip()
+    if 'first_name' in data or 'last_name' in data:
+        volunteer.name = f'{volunteer.first_name or ""} {volunteer.last_name or ""}'.strip() or volunteer.name
     if 'password' in data and data['password']:
         if not validate_password_strength(data['password'], role='volunteer'):
             return error('Passwort zu schwach (mind. 6 Zeichen)', 400)
@@ -223,8 +275,13 @@ def update_profile(slug):
         volunteer.rotate_jwt()
 
     db.session.commit()
-    return ok({'name': volunteer.name, 'email': volunteer.email,
-               'updated_at': volunteer.updated_at.isoformat() if volunteer.updated_at else None})
+    return ok({
+        'name': volunteer.name,
+        'first_name': volunteer.first_name,
+        'last_name': volunteer.last_name,
+        'email': volunteer.email,
+        'updated_at': volunteer.updated_at.isoformat() if volunteer.updated_at else None,
+    })
 
 
 @volunteer_bp.route('/<slug>/profile', methods=['DELETE'])
@@ -256,11 +313,12 @@ def meine_daten_export(slug):
     if not is_mail_configured():
         return error('E-Mail nicht konfiguriert', 503)
 
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    settings = get_site_settings(g.instance.id)
     title = settings.site_title if settings else g.instance.name
     base_url = current_app.config.get('FRONTEND_URL', '')
     send_mail(v.email, f'Ihre Daten bei {title}',
-              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url))
+              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url),
+              sender_name=title)
     return ok({'message': 'Daten wurden an Ihre E-Mail-Adresse gesendet'})
 
 
@@ -319,6 +377,20 @@ def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
         if s.start_time < new_shift.end_time and new_shift.start_time < s.end_time:
             return True
     return False
+
+
+def _publish_shift_update(app, slug: str, shift_id: int) -> None:
+    """Benachrichtigt SSE-Clients über eine geänderte Schichtbelegung."""
+    uri = app.config.get('RATELIMIT_STORAGE_URI', 'memory://')
+    if not uri.startswith('redis://'):
+        return
+    try:
+        import redis as redis_lib
+        r = redis_lib.from_url(uri, socket_connect_timeout=2)
+        r.publish(f'shifts:{slug}', json.dumps({'shift_id': shift_id}))
+        r.close()
+    except Exception:
+        pass  # SSE ist Best-Effort – Fehler nicht an Client weitergeben
 
 
 def _activity(instance_id, event_type, user, details=None) -> ActivityLog:

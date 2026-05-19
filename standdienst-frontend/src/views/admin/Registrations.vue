@@ -9,15 +9,15 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Helfer</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Stand</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Datum / Zeit</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Quelle</th>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="volunteer_name" @sort="toggleSort">Helfer</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="stand_name" @sort="toggleSort">Stand</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="date_formatted" @sort="toggleSort">Datum / Zeit</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="registered_by_admin" @sort="toggleSort">Quelle</SortTh>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in registrations" :key="r.id" class="border-b border-gray-50 hover:bg-gray-50">
+          <tr v-for="r in sortedRegs" :key="r.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium">{{ r.volunteer_name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ r.stand_name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ r.date_formatted }} {{ r.time_range }}</td>
@@ -69,12 +69,15 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
 import Pagination from '@/components/Pagination.vue'
+import SortTh from '@/components/SortTh.vue'
 
 const route = useRoute()
 const ui = useUiStore()
 const registrations = ref([])
+const { sortKey, sortDir, sorted: sortedRegs, toggleSort } = useSort(registrations, 'volunteer_name')
 const volunteers = ref([])
 const shifts = ref([])
 const page = ref(1)

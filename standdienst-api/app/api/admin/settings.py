@@ -15,6 +15,7 @@ from ...utils.auth import require_admin, require_instance_admin
 from ...utils.sanitizer import sanitize_html
 from ...utils.responses import ok, error, optimistic_lock_conflict
 from ...utils.mail import send_mail, is_mail_configured, apply_db_mail_config
+from ...utils.settings_cache import invalidate_site, invalidate_global
 
 _site_schema = SiteSettingsSchema()
 _site_update = SiteSettingsUpdateSchema()
@@ -56,6 +57,7 @@ def update_site_settings(slug):
 
     _log(g.instance.id, 'Instanz-Einstellungen geändert', g.current_user)
     db.session.commit()
+    invalidate_site(g.instance.id)
     return ok(_site_schema.dump(settings))
 
 
@@ -118,6 +120,7 @@ def update_global_settings():
 
     _log(None, 'Globale Einstellungen geändert', g.current_user)
     db.session.commit()
+    invalidate_global()
     return ok(_global_schema.dump(settings))
 
 

@@ -40,8 +40,16 @@ def create_organizer():
     instance_ids = data.pop('instance_ids', [])
     password = data.pop('password', None)
 
-    organizer = Organizer(email=data['email'].lower(), name=data['name'],
-                          is_instance_admin=data.get('is_instance_admin', False))
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    full_name = f'{first_name} {last_name}'.strip()
+    organizer = Organizer(
+        email=data['email'].lower(),
+        first_name=first_name,
+        last_name=last_name,
+        name=full_name or first_name,
+        is_instance_admin=data.get('is_instance_admin', False),
+    )
     if password:
         if not validate_password_strength(password):
             return error('Passwort zu schwach', 400)
@@ -78,8 +86,10 @@ def update_organizer(organizer_id):
         if existing and existing.id != organizer_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
         organizer.email = email
-    if 'name' in data:
-        organizer.name = data['name']
+    if 'first_name' in data or 'last_name' in data:
+        organizer.first_name = data.get('first_name', organizer.first_name or '').strip()
+        organizer.last_name = data.get('last_name', organizer.last_name or '').strip()
+        organizer.name = f'{organizer.first_name} {organizer.last_name}'.strip() or organizer.first_name
     if 'is_instance_admin' in data:
         organizer.is_instance_admin = data['is_instance_admin']
     if 'password' in data and data['password']:

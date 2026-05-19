@@ -14,7 +14,8 @@ class AdminCreateSchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
-    name = fields.Str(validate=validate.Length(max=100), load_default='')
+    first_name = fields.Str(required=True, validate=validate.Length(min=1, max=50))
+    last_name = fields.Str(validate=validate.Length(max=50), load_default='')
     email = fields.Email(required=True)
     password = fields.Str(required=True, validate=validate.Length(min=8))
     is_primary = fields.Bool(load_default=False)
@@ -24,7 +25,8 @@ class AdminUpdateSchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
-    name = fields.Str(validate=validate.Length(max=100))
+    first_name = fields.Str(validate=validate.Length(min=1, max=50))
+    last_name = fields.Str(validate=validate.Length(max=50))
     email = fields.Email()
     password = fields.Str(validate=validate.Length(min=8))
     is_primary = fields.Bool()

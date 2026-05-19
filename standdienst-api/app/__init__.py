@@ -58,6 +58,22 @@ def _register_blueprints(app):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(setup_bp, url_prefix='/api/setup')
 
+    # Swagger UI (OpenAPI-Dokumentation)
+    from flask_swagger_ui import get_swaggerui_blueprint
+    import os
+    spec_url = '/static/openapi.yaml'
+    swaggerui_bp = get_swaggerui_blueprint(
+        '/api/docs',
+        spec_url,
+        config={'app_name': 'Standdienst API'},
+    )
+    app.register_blueprint(swaggerui_bp, url_prefix='/api/docs')
+
+    @app.route('/static/openapi.yaml')
+    def serve_openapi_spec():
+        static_dir = os.path.join(app.root_path, '..', 'static')
+        return send_from_directory(os.path.abspath(static_dir), 'openapi.yaml')
+
 
 def _register_request_hooks(app):
     from .extensions import limiter

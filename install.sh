@@ -165,8 +165,15 @@ systemctl start postgresql
 
 DB_PASSWORD="$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 32)"
 
-su -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'\" | grep -q 1 || \
-    psql -c \"CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\"" postgres
+# User anlegen oder Passwort aktualisieren (Reininstallation auf gleichem System)
+PG_USER_EXISTS="$(su -c "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'\"" postgres)"
+if [ "$PG_USER_EXISTS" = "1" ]; then
+    su -c "psql -c \"ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\"" postgres
+    info "PostgreSQL: Passwort für User '$DB_USER' aktualisiert"
+else
+    su -c "psql -c \"CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';\"" postgres
+    info "PostgreSQL: User '$DB_USER' angelegt"
+fi
 su -c "psql -lqt | cut -d\| -f1 | grep -qw '$DB_NAME' || \
     psql -c \"CREATE DATABASE $DB_NAME OWNER $DB_USER;\"" postgres
 su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;\"" postgres
@@ -190,6 +197,15 @@ info "Python-Pakete installiert"
 SECRET_KEY="$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9+/=' | head -c 64)"
 DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@127.0.0.1:5432/$DB_NAME"
 
+# GitHub-Repository aus Git-Remote ableiten (ermöglicht automatische Updates)
+GITHUB_REPO_LINE=""
+GITHUB_REMOTE="$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)"
+if [[ "$GITHUB_REMOTE" =~ github\.com[:/]([^/]+/[^/]+) ]]; then
+    GITHUB_SLUG="${BASH_REMATCH[1]%.git}"   # .git-Suffix entfernen
+    GITHUB_REPO_LINE="GITHUB_REPO=${GITHUB_SLUG}"
+    info "GitHub-Repository erkannt: ${GITHUB_SLUG}"
+fi
+
 cat > "$INSTALL_DIR/.env" <<EOF
 # Standdienst v2 – technische Konfiguration
 # Ersteinrichtung (Admin, Mail, URL) erfolgt über das Web-Setup-Interface.
@@ -202,6 +218,7 @@ GUNICORN_BIND=0.0.0.0:${APP_PORT}
 SESSION_COOKIE_SECURE=false
 FLASK_DEBUG=0
 EOF
+[ -n "$GITHUB_REPO_LINE" ] && echo "$GITHUB_REPO_LINE" >> "$INSTALL_DIR/.env"
 chmod 600 "$INSTALL_DIR/.env"
 chown "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR/.env"
 info "Konfigurationsdatei geschrieben: $INSTALL_DIR/.env"
