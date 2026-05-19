@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, validates, ValidationError
+from marshmallow import Schema, fields, validate
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import Stand, EventDate, Shift, Registration
 
@@ -68,10 +68,6 @@ class ShiftCreateSchema(Schema):
     start_time = fields.Time(required=True)
     end_time = fields.Time(required=True)
     max_volunteers = fields.Int(load_default=2, validate=validate.Range(min=1))
-
-    @validates('end_time')
-    def validate_times(self, value):
-        pass  # Cross-field validation done in route handler
 
 
 class ShiftUpdateSchema(Schema):
