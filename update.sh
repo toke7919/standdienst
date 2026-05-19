@@ -265,7 +265,7 @@ info "pip install abgeschlossen"
 # ---------------------------------------------------------------------------
 section "Datenbankmigrationen"
 su -s /bin/bash "$SERVICE_USER" -c \
-    "FLASK_APP=wsgi '$INSTALL_DIR/.venv/bin/flask' --app wsgi db upgrade" \
+    "cd '$INSTALL_DIR' && FLASK_APP=wsgi '$INSTALL_DIR/.venv/bin/flask' db upgrade" \
     2>&1 | sed 's/^/  /'
 info "Migrationen angewendet"
 
