@@ -53,13 +53,13 @@ class ShiftSchema(SQLAlchemyAutoSchema):
     spots_left = fields.Int(dump_only=True)
     is_full = fields.Bool(dump_only=True)
     stand_name = fields.Method('_stand_name', dump_only=True)
-    date = fields.Method('_date', dump_only=True)
+    date_formatted = fields.Method('_date_formatted', dump_only=True)
 
     def _stand_name(self, obj):
         return obj.stand.name if obj.stand else None
 
-    def _date(self, obj):
-        return str(obj.event_date.date) if obj.event_date else None
+    def _date_formatted(self, obj):
+        return obj.event_date.formatted if obj.event_date else None
 
 
 class ShiftCreateSchema(Schema):
@@ -87,7 +87,9 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
 
     volunteer_name = fields.Method('_volunteer_name', dump_only=True)
     volunteer_email = fields.Method('_volunteer_email', dump_only=True)
-    shift_info = fields.Method('_shift_info', dump_only=True)
+    stand_name = fields.Method('_stand_name', dump_only=True)
+    date_formatted = fields.Method('_date_formatted', dump_only=True)
+    time_range = fields.Method('_time_range', dump_only=True)
 
     def _volunteer_name(self, obj):
         return obj.volunteer.name if obj.volunteer else None
@@ -95,15 +97,18 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
     def _volunteer_email(self, obj):
         return obj.volunteer.email if obj.volunteer else None
 
-    def _shift_info(self, obj):
-        if not obj.shift:
+    def _stand_name(self, obj):
+        if not obj.shift or not obj.shift.stand:
             return None
-        s = obj.shift
-        return {
-            'stand': s.stand.name if s.stand else None,
-            'time_range': s.time_range,
-            'date': str(s.event_date.date) if s.event_date else None,
-        }
+        return obj.shift.stand.name
+
+    def _date_formatted(self, obj):
+        if not obj.shift or not obj.shift.event_date:
+            return None
+        return obj.shift.event_date.formatted
+
+    def _time_range(self, obj):
+        return obj.shift.time_range if obj.shift else None
 
 
 class RegistrationCreateSchema(Schema):

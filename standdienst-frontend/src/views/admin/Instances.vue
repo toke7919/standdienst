@@ -9,14 +9,14 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Name</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Slug</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="slug" @sort="toggleSort">Slug</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="is_active" @sort="toggleSort">Status</SortTh>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="inst in instances" :key="inst.id" class="border-b border-gray-50 hover:bg-gray-50">
+          <tr v-for="inst in sorted" :key="inst.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium text-gray-900">{{ inst.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ inst.slug }}</td>
             <td class="px-4 py-3">
@@ -65,10 +65,13 @@
 import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
+import SortTh from '@/components/SortTh.vue'
 
 const ui = useUiStore()
 const instances = ref([])
+const { sortKey, sortDir, sorted, toggleSort } = useSort(instances, 'name')
 const showModal = ref(false)
 const editing = ref(null)
 const form = ref({ name: '', slug: '', is_active: true })

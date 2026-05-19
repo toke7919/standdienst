@@ -134,8 +134,8 @@ def register_complete():
             expected_origin=origin,
         )
     except Exception as e:
-        log.warning('Passkey-Registrierung fehlgeschlagen: %s', e)
-        return jsonify(error='Passkey-Verifizierung fehlgeschlagen'), 400
+        log.warning('Passkey-Registrierung fehlgeschlagen (rp_id=%s, origin=%s): %s', rp_id, origin, e)
+        return jsonify(error=f'Passkey-Verifizierung fehlgeschlagen. Erwartet: {origin}'), 400
 
     pk = PasskeyCredential(
         admin_id=user.id if role == 'admin' else None,

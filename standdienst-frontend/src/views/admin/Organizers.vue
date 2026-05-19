@@ -9,15 +9,15 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Name</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">E-Mail</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Rolle</th>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="email" @sort="toggleSort">E-Mail</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="is_instance_admin" @sort="toggleSort">Rolle</SortTh>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Instanzen</th>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="o in organizers" :key="o.id" class="border-b border-gray-50 hover:bg-gray-50">
+          <tr v-for="o in sorted" :key="o.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium text-gray-900">{{ o.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ o.email }}</td>
             <td class="px-4 py-3">
@@ -41,7 +41,16 @@
 
     <Modal v-model="showModal" :title="editing ? 'Organisator bearbeiten' : 'Neuer Organisator'">
       <form @submit.prevent="save" class="space-y-4">
-        <div><label class="label">Name</label><input v-model="form.name" class="input" required /></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">Vorname</label>
+            <input v-model="form.first_name" class="input" required />
+          </div>
+          <div>
+            <label class="label">Nachname</label>
+            <input v-model="form.last_name" class="input" />
+          </div>
+        </div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" required /></div>
         <div v-if="!editing">
           <label class="label">Passwort</label>
@@ -90,15 +99,19 @@
 import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
+import SortTh from '@/components/SortTh.vue'
 
 const ui = useUiStore()
 const organizers = ref([])
 const instances = ref([])
 const showModal = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] })
+const form = ref({ first_name: '', last_name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] })
 const saveError = ref('')
+
+const { sortKey, sortDir, sorted, toggleSort } = useSort(organizers, 'name')
 
 onMounted(async () => {
   await Promise.all([load(), loadInstances()])
@@ -116,15 +129,17 @@ async function loadInstances() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] }
+  form.value = { first_name: '', last_name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] }
   saveError.value = ''
   showModal.value = true
 }
 
 function openEdit(o) {
   editing.value = o
+  const parts = (o.name || '').split(' ')
   form.value = {
-    name: o.name,
+    first_name: o.first_name || parts[0] || '',
+    last_name: o.last_name || parts.slice(1).join(' ') || '',
     email: o.email,
     is_instance_admin: o.is_instance_admin ?? false,
     instance_ids: [...(o.instance_ids ?? [])],
@@ -138,7 +153,8 @@ async function save() {
   try {
     if (editing.value) {
       await adminApi.updateOrganizer(editing.value.id, {
-        name: form.value.name,
+        first_name: form.value.first_name,
+        last_name: form.value.last_name,
         email: form.value.email,
         is_instance_admin: form.value.is_instance_admin,
         instance_ids: form.value.instance_ids,

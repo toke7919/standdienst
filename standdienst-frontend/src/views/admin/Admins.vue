@@ -9,15 +9,15 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Name</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">E-Mail</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Primär</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">2FA</th>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="email" @sort="toggleSort">E-Mail</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="is_primary" @sort="toggleSort">Typ</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="totp_enabled" @sort="toggleSort">2FA</SortTh>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in admins" :key="a.id" class="border-b border-gray-50 hover:bg-gray-50">
+          <tr v-for="a in sorted" :key="a.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 text-gray-700">{{ a.name || '—' }}</td>
             <td class="px-4 py-3 font-medium text-gray-900">{{ a.email }}</td>
             <td class="px-4 py-3">
@@ -31,18 +31,34 @@
               </span>
             </td>
             <td class="px-4 py-3 text-right space-x-2">
+              <button class="text-xs text-primary-600 hover:underline" @click="openEdit(a)">Bearbeiten</button>
               <button class="text-xs text-red-600 hover:underline" @click="deleteAdmin(a)">Löschen</button>
             </td>
+          </tr>
+          <tr v-if="!admins.length">
+            <td colspan="5" class="px-4 py-8 text-center text-gray-400">Keine Admins gefunden</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <Modal v-model="showModal" title="Neuer Administrator">
+    <Modal v-model="showModal" :title="editing ? 'Admin bearbeiten' : 'Neuer Administrator'">
       <form @submit.prevent="save" class="space-y-4">
-        <div><label class="label">Name</label><input v-model="form.name" class="input" /></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">Vorname</label>
+            <input v-model="form.first_name" class="input" :required="!editing" />
+          </div>
+          <div>
+            <label class="label">Nachname</label>
+            <input v-model="form.last_name" class="input" />
+          </div>
+        </div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" required /></div>
-        <div><label class="label">Passwort</label><input v-model="form.password" type="password" class="input" required /></div>
+        <div>
+          <label class="label">{{ editing ? 'Neues Passwort (leer = unverändert)' : 'Passwort' }}</label>
+          <input v-model="form.password" type="password" class="input" :required="!editing" />
+        </div>
         <div class="flex items-center gap-2">
           <input v-model="form.is_primary" type="checkbox" id="primary" />
           <label for="primary" class="text-sm text-gray-700">Primärer Admin (Kontaktformular-Empfänger)</label>
@@ -50,7 +66,7 @@
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">
           <button type="button" class="btn-secondary" @click="showModal = false">Abbrechen</button>
-          <button type="submit" class="btn-primary">Erstellen</button>
+          <button type="submit" class="btn-primary">{{ editing ? 'Speichern' : 'Erstellen' }}</button>
         </div>
       </form>
     </Modal>
@@ -61,13 +77,18 @@
 import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
+import SortTh from '@/components/SortTh.vue'
 
 const ui = useUiStore()
 const admins = ref([])
 const showModal = ref(false)
-const form = ref({ name: '', email: '', password: '', is_primary: false })
+const editing = ref(null)
+const form = ref({ first_name: '', last_name: '', email: '', password: '', is_primary: false })
 const saveError = ref('')
+
+const { sortKey, sortDir, sorted, toggleSort } = useSort(admins, 'email')
 
 onMounted(load)
 
@@ -77,7 +98,22 @@ async function load() {
 }
 
 function openCreate() {
-  form.value = { name: '', email: '', password: '', is_primary: false }
+  editing.value = null
+  form.value = { first_name: '', last_name: '', email: '', password: '', is_primary: false }
+  saveError.value = ''
+  showModal.value = true
+}
+
+function openEdit(a) {
+  editing.value = a
+  const parts = (a.name || '').split(' ')
+  form.value = {
+    first_name: a.first_name || parts[0] || '',
+    last_name: a.last_name || parts.slice(1).join(' ') || '',
+    email: a.email,
+    password: '',
+    is_primary: a.is_primary,
+  }
   saveError.value = ''
   showModal.value = true
 }
@@ -85,8 +121,15 @@ function openCreate() {
 async function save() {
   saveError.value = ''
   try {
-    await adminApi.createAdmin(form.value)
-    ui.success('Admin erstellt')
+    const payload = { ...form.value }
+    if (editing.value) {
+      if (!payload.password) delete payload.password
+      await adminApi.updateAdmin(editing.value.id, payload)
+      ui.success('Admin aktualisiert')
+    } else {
+      await adminApi.createAdmin(payload)
+      ui.success('Admin erstellt')
+    }
     showModal.value = false
     await load()
   } catch (e) {

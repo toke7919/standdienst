@@ -317,7 +317,8 @@ def meine_daten_export(slug):
     title = settings.site_title if settings else g.instance.name
     base_url = current_app.config.get('FRONTEND_URL', '')
     send_mail(v.email, f'Ihre Daten bei {title}',
-              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url))
+              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url),
+              sender_name=title)
     return ok({'message': 'Daten wurden an Ihre E-Mail-Adresse gesendet'})
 
 

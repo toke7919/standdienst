@@ -111,7 +111,8 @@ def register(slug):
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
         try:
             send_mail(email, f'Willkommen bei {title}',
-                      build_welcome_email(volunteer.name, title, setup_url, base_url))
+                      build_welcome_email(volunteer.name, title, setup_url, base_url),
+                      sender_name=title)
         except Exception:
             pass
 
@@ -196,9 +197,12 @@ def volunteer_forgot_password(slug):
         db.session.commit()
         base_url = current_app.config.get('FRONTEND_URL', '')
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
+        settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+        title = settings.site_title if settings else instance.name
         try:
             send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(volunteer.name, reset_url, base_url))
+                      build_reset_email(volunteer.name, reset_url, base_url),
+                      sender_name=title)
         except Exception:
             pass
 

@@ -57,6 +57,7 @@ def create_shift(slug):
     except IntegrityError:
         db.session.rollback()
         return error('Schicht mit diesen Parametern existiert bereits', 409)
+    shift = _get_or_404(shift.id, g.instance.id)
     return created(_schema.dump(shift))
 
 
