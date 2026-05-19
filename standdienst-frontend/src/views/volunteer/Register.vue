@@ -2,12 +2,23 @@
   <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
+        <img
+          v-if="settings?.logo_filename"
+          :src="`/uploads/${settings.logo_filename}`"
+          class="h-16 object-contain mx-auto mb-4"
+          alt="Logo"
+        />
         <h1 class="text-2xl font-bold text-gray-900">{{ settings?.site_title || 'Standdienst' }}</h1>
         <p class="text-gray-500 mt-1">Als Helfer registrieren</p>
       </div>
 
+      <div v-if="settings?.site_locked" class="card text-center text-amber-800 bg-amber-50 border border-amber-200">
+        <p class="font-medium">Anmeldung gesperrt</p>
+        <p v-if="settings.lock_message" class="text-sm mt-1">{{ settings.lock_message }}</p>
+      </div>
+
       <!-- Direkt eingeloggt -->
-      <div v-if="loggedIn" class="card text-center text-green-800 bg-green-50">
+      <div v-else-if="loggedIn" class="card text-center text-green-800 bg-green-50">
         <p class="font-semibold">Registrierung erfolgreich!</p>
         <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
       </div>
@@ -85,7 +96,7 @@ const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 const slug = computed(() => route.params.slug)
-const settings = computed(() => instanceStore.current?.settings)
+const settings = computed(() => instanceStore.current)
 const hasPrivacyPolicy = computed(() => instanceStore.current?.has_privacy_policy ?? false)
 
 const captcha = ref(null)
@@ -95,7 +106,7 @@ const errorMsg = ref('')
 const loggedIn = ref(false)
 
 onMounted(async () => {
-  if (!instanceStore.current) await instanceStore.loadInstance(slug.value)
+  await instanceStore.loadInstance(slug.value)
   await loadCaptcha()
 })
 

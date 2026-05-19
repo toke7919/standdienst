@@ -86,7 +86,7 @@ const loaded = ref(false)
 const errorMsg = ref('')
 
 const refrigerationEnabled = computed(
-  () => instanceStore.current?.food_refrigeration_enabled ?? true
+  () => foodTypes.value.find(t => t.id === form.value.food_type_id)?.refrigeration_enabled ?? false
 )
 
 onMounted(load)

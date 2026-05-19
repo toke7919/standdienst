@@ -345,6 +345,11 @@ watch(selectedSlug, (slug) => {
 // Mehr-Sheet bei Navigation schließen
 watch(() => route.path, () => { moreOpen.value = false })
 
+// Seitentitel aktualisieren wenn Instanz wechselt
+watch(instanceInfo, (info) => {
+  if (info?.site_title) document.title = info.site_title
+})
+
 function onInstanceChange() {
   moreOpen.value = false
   if (selectedSlug.value) {
