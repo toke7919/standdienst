@@ -17,7 +17,8 @@ def _captcha_answer(client, slug):
 def test_register_anonymous_direct_login(client, instance):
     answer = _captcha_answer(client, instance.slug)
     rv = client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Anonym Tester',
+        'first_name': 'Anonym',
+        'last_name': 'Tester',
         'captcha_answer': answer,
     })
     assert rv.status_code == 201
@@ -30,7 +31,8 @@ def test_register_anonymous_direct_login(client, instance):
 def test_register_anonymous_no_password_set(client, instance):
     answer = _captcha_answer(client, instance.slug)
     client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Kein PW',
+        'first_name': 'Kein',
+        'last_name': 'PW',
         'captcha_answer': answer,
     })
     v = Volunteer.query.filter_by(instance_id=instance.id, name='Kein PW').first()
@@ -45,7 +47,8 @@ def test_register_anonymous_no_password_set(client, instance):
 def test_register_with_email_no_direct_login(client, instance):
     answer = _captcha_answer(client, instance.slug)
     rv = client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Mail Tester',
+        'first_name': 'Mail',
+        'last_name': 'Tester',
         'email': 'mailtester@test.de',
         'captcha_answer': answer,
     })
@@ -58,7 +61,8 @@ def test_register_with_email_no_direct_login(client, instance):
 def test_register_email_creates_welcome_token(client, instance):
     answer = _captcha_answer(client, instance.slug)
     client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Token Tester',
+        'first_name': 'Token',
+        'last_name': 'Tester',
         'email': 'tokentest@test.de',
         'captcha_answer': answer,
     })
@@ -72,7 +76,8 @@ def test_register_email_creates_welcome_token(client, instance):
 def test_welcome_setup_sets_password_and_logs_in(client, instance):
     answer = _captcha_answer(client, instance.slug)
     client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Setup Tester',
+        'first_name': 'Setup',
+        'last_name': 'Tester',
         'email': 'setup@test.de',
         'captcha_answer': answer,
     })
@@ -107,7 +112,8 @@ def test_welcome_setup_sets_password_and_logs_in(client, instance):
 def test_welcome_setup_weak_password_rejected(client, instance):
     answer = _captcha_answer(client, instance.slug)
     client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Weak PW',
+        'first_name': 'Weak',
+        'last_name': 'PW',
         'email': 'weak@test.de',
         'captcha_answer': answer,
     })
@@ -135,7 +141,8 @@ def test_register_consent_not_required_without_policy(client, instance):
     """Keine Datenschutzerklärung konfiguriert → consent optional."""
     answer = _captcha_answer(client, instance.slug)
     rv = client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Kein Consent',
+        'first_name': 'Kein',
+        'last_name': 'Consent',
         'captcha_answer': answer,
         'consent': False,
     })
@@ -150,7 +157,8 @@ def test_register_consent_required_with_policy(client, instance):
 
     answer = _captcha_answer(client, instance.slug)
     rv = client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Kein Consent',
+        'first_name': 'Kein',
+        'last_name': 'Consent',
         'captcha_answer': answer,
         'consent': False,
     })
@@ -165,7 +173,8 @@ def test_register_consent_accepted_with_policy(client, instance):
 
     answer = _captcha_answer(client, instance.slug)
     rv = client.post(f'/api/public/{instance.slug}/register', json={
-        'name': 'Mit Consent',
+        'first_name': 'Mit',
+        'last_name': 'Consent',
         'captcha_answer': answer,
         'consent': True,
     })

@@ -13,15 +13,17 @@ from app.models import Volunteer
 
 def test_profile_update_name(client, instance, volunteer, volunteer_token):
     rv = client.put(f'/api/volunteer/{instance.slug}/profile',
-                    json={'name': 'Neuer Name'})
+                    json={'first_name': 'Neuer', 'last_name': 'Name'})
     assert rv.status_code == 200
     _db.session.refresh(volunteer)
     assert volunteer.name == 'Neuer Name'
+    assert volunteer.first_name == 'Neuer'
+    assert volunteer.last_name == 'Name'
 
 
 def test_profile_update_returns_updated_at(client, instance, volunteer, volunteer_token):
     rv = client.put(f'/api/volunteer/{instance.slug}/profile',
-                    json={'name': 'Mit Timestamp'})
+                    json={'first_name': 'Mit', 'last_name': 'Timestamp'})
     assert rv.status_code == 200
     assert 'updated_at' in rv.get_json()['data']
 
@@ -42,7 +44,7 @@ def test_profile_update_password_too_short(client, instance, volunteer, voluntee
 
 def test_profile_update_requires_auth(client, instance):
     rv = client.put(f'/api/volunteer/{instance.slug}/profile',
-                    json={'name': 'Anonym'})
+                    json={'first_name': 'Anonym'})
     assert rv.status_code == 401
 
 
@@ -53,14 +55,14 @@ def test_profile_update_requires_auth(client, instance):
 def test_profile_update_optimistic_lock_conflict(client, instance, volunteer, volunteer_token):
     """Veraltetes updated_at → 409 Conflict."""
     rv = client.put(f'/api/volunteer/{instance.slug}/profile',
-                    json={'name': 'Veraltet', 'updated_at': '2020-01-01T00:00:00+00:00'})
+                    json={'first_name': 'Veraltet', 'updated_at': '2020-01-01T00:00:00+00:00'})
     assert rv.status_code == 409
 
 
 def test_profile_update_no_conflict_without_timestamp(client, instance, volunteer, volunteer_token):
     """Ohne updated_at kein Konflikt (optionaler Mechanismus)."""
     rv = client.put(f'/api/volunteer/{instance.slug}/profile',
-                    json={'name': 'Kein Lock'})
+                    json={'first_name': 'Kein', 'last_name': 'Lock'})
     assert rv.status_code == 200
 
 

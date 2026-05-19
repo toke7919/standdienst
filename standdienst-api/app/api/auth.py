@@ -346,6 +346,9 @@ def _user_payload(user) -> dict:
     payload = {'id': user.id, 'email': user.email, 'role': user.role}
     if hasattr(user, 'name'):
         payload['name'] = user.name
+    if hasattr(user, 'first_name'):
+        payload['first_name'] = user.first_name
+        payload['last_name'] = getattr(user, 'last_name', None)
     if hasattr(user, 'is_primary'):
         payload['is_primary'] = user.is_primary
     if hasattr(user, 'totp_enabled'):

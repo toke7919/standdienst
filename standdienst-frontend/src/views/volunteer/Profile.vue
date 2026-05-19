@@ -5,7 +5,10 @@
     <div class="card space-y-4 mb-6">
       <h2 class="text-base font-semibold text-gray-800">Daten ändern</h2>
       <form @submit.prevent="save" class="space-y-4">
-        <div><label class="label">Name</label><input v-model="form.name" class="input" required /></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Vorname</label><input v-model="form.first_name" class="input" required autocomplete="given-name" /></div>
+          <div><label class="label">Nachname</label><input v-model="form.last_name" class="input" autocomplete="family-name" /></div>
+        </div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" /></div>
         <div>
           <label class="label">Neues Passwort (leer lassen zum Beibehalten)</label>
@@ -52,7 +55,8 @@ const auth = useAuthStore()
 const ui = useUiStore()
 
 const form = ref({
-  name: auth.user?.name || '',
+  first_name: auth.user?.first_name || auth.user?.name || '',
+  last_name: auth.user?.last_name || '',
   email: auth.user?.email || '',
   password: '',
 })
@@ -63,7 +67,7 @@ const saveOk = ref(true)
 async function save() {
   saving.value = true
   saveMsg.value = ''
-  const data = { name: form.value.name, email: form.value.email }
+  const data = { first_name: form.value.first_name, last_name: form.value.last_name, email: form.value.email }
   if (form.value.password) data.password = form.value.password
   try {
     await volunteerApi.updateProfile(route.params.slug, data)
