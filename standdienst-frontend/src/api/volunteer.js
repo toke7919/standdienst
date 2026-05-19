@@ -7,6 +7,7 @@ export const volunteerApi = {
   unregisterShift: (slug, shiftId) =>
     client.delete(`/volunteer/${slug}/shifts/${shiftId}/register`),
   getMyRegistrations: (slug) => client.get(`/volunteer/${slug}/my-registrations`),
+  getFoodTypes: (slug) => client.get(`/volunteer/${slug}/food-types`),
   getFoodDonations: (slug) => client.get(`/volunteer/${slug}/food-donations`),
   addFoodDonation: (slug, data) => client.post(`/volunteer/${slug}/food-donations`, data),
   removeFoodDonation: (slug, donationId) =>

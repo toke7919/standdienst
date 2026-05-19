@@ -87,12 +87,17 @@ def list_shifts(slug):
                 stand_id=stand.id, event_date_id=date.id
             ).order_by(Shift.start_time).all()
             for shift in shifts:
-                is_registered = Registration.query.filter_by(
-                    volunteer_id=g.current_user.id, shift_id=shift.id
-                ).first() is not None
+                regs = Registration.query.filter_by(shift_id=shift.id).all()
+                is_registered = any(r.volunteer_id == g.current_user.id for r in regs)
+                registered_names = [
+                    r.volunteer.name if r.volunteer else r.guest_name
+                    for r in regs
+                    if (r.volunteer and not r.volunteer.is_deleted) or r.guest_name
+                ]
                 result.append({
                     **ShiftSchema().dump(shift),
                     'is_registered': is_registered,
+                    'registered_names': registered_names,
                 })
     return ok(result)
 
@@ -195,6 +200,17 @@ def my_registrations_ical(slug):
 # Essensspenden
 # ---------------------------------------------------------------------------
 
+@volunteer_bp.route('/<slug>/food-types', methods=['GET'])
+@require_volunteer
+def list_food_types(slug):
+    settings = get_site_settings(g.instance.id)
+    if settings and not settings.food_donations_enabled:
+        return error('Essensspenden sind deaktiviert', 403)
+
+    types = FoodDonationType.query.filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name).all()
+    return ok([{'id': t.id, 'name': t.name} for t in types])
+
+
 @volunteer_bp.route('/<slug>/food-donations', methods=['GET'])
 @require_volunteer
 def list_food_donations(slug):
@@ -202,8 +218,34 @@ def list_food_donations(slug):
     if settings and not settings.food_donations_enabled:
         return error('Essensspenden sind deaktiviert', 403)
 
-    donations = FoodDonation.query.filter_by(volunteer_id=g.current_user.id).all()
-    return ok(_food_schema.dump(donations))
+    # Alle Spenden der Instanz, gruppiert nach Essensart
+    types = FoodDonationType.query.filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name).all()
+    result = []
+    for t in types:
+        donations = (
+            FoodDonation.query
+            .filter_by(food_type_id=t.id)
+            .join(Volunteer, FoodDonation.volunteer_id == Volunteer.id)
+            .order_by(Volunteer.name)
+            .all()
+        )
+        result.append({
+            'id': t.id,
+            'name': t.name,
+            'donations': [
+                {
+                    'id': d.id,
+                    'description': d.description,
+                    'needs_refrigeration': d.needs_refrigeration,
+                    'volunteer_name': d.volunteer.name if d.volunteer else None,
+                    'is_mine': d.volunteer_id == g.current_user.id,
+                    'registered_at': d.registered_at.isoformat() if d.registered_at else None,
+                }
+                for d in donations
+                if d.volunteer and not d.volunteer.is_deleted
+            ],
+        })
+    return ok(result)
 
 
 @volunteer_bp.route('/<slug>/food-donations', methods=['POST'])

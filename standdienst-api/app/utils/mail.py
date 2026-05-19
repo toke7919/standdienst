@@ -126,12 +126,20 @@ def build_daten_auskunft_email(name: str, data: dict, instance_title: str, base_
     """
 
 
-def build_welcome_email(name: str, instance_title: str, setup_url: str, base_url: str) -> str:
+def build_welcome_email(name: str, instance_title: str, setup_url: str, base_url: str,
+                        primary_color: str = '#4f46e5', logo_url: str = None) -> str:
+    logo_html = (
+        f'<div style="margin-bottom:16px">'
+        f'<img src="{logo_url}" alt="{instance_title}" style="max-height:48px;max-width:200px;object-fit:contain">'
+        f'</div>'
+    ) if logo_url else ''
     return f"""
+    {logo_html}
     <p>Hallo {name},</p>
-    <p>du wurdest bei <strong>{instance_title}</strong> als Helfer registriert.</p>
-    <p>Bitte klicke auf den folgenden Link, um dein Passwort einzurichten und dein Konto zu aktivieren:</p>
-    <p><a href="{setup_url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Passwort einrichten</a></p>
+    <p>du hast dich bei <strong>{instance_title}</strong> als Helfer registriert.</p>
+    <p>Bitte klicke auf den folgenden Link, um dein Passwort einzurichten und dein Konto zu aktivieren.
+    Dadurch kannst du deine Standdienste oder Essensspenden einsehen und bearbeiten.</p>
+    <p><a href="{setup_url}" style="background:{primary_color};color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Passwort einrichten</a></p>
     <p>Der Link ist <strong>7 Tage</strong> gültig.</p>
     <p>Falls du keine Registrierung angefordert hast, kannst du diese E-Mail ignorieren.</p>
     {_footer(base_url)}

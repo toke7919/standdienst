@@ -20,6 +20,16 @@ public_bp = Blueprint('public', __name__)
 _register_schema = VolunteerRegisterSchema()
 
 
+def _base_url() -> str:
+    """Ermittelt die Basis-URL; respektiert X-Forwarded-Header bei Reverse-Proxy-Betrieb."""
+    cfg = current_app.config.get('FRONTEND_URL', '').rstrip('/')
+    if cfg and 'localhost' not in cfg and '127.0.0.1' not in cfg:
+        return cfg
+    host = request.headers.get('X-Forwarded-Host') or request.headers.get('Host', 'localhost')
+    proto = request.headers.get('X-Forwarded-Proto', 'http').split(',')[0].strip()
+    return f'{proto}://{host}'
+
+
 @public_bp.route('/instances', methods=['GET'])
 def list_instances():
     instances = Instance.query.filter_by(is_active=True).order_by(Instance.name).all()
@@ -107,11 +117,14 @@ def register(slug):
         db.session.commit()
 
         title = settings.site_title if settings else instance.name
-        base_url = current_app.config.get('FRONTEND_URL', '')
+        base_url = _base_url()
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
+        primary_color = settings.primary_color if settings else '#4f46e5'
+        logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
         try:
             send_mail(email, f'Willkommen bei {title}',
-                      build_welcome_email(volunteer.name, title, setup_url, base_url),
+                      build_welcome_email(volunteer.name, title, setup_url, base_url,
+                                          primary_color=primary_color, logo_url=logo_url),
                       sender_name=title)
         except Exception:
             pass
@@ -199,7 +212,7 @@ def volunteer_forgot_password(slug):
     if volunteer and not volunteer.is_deleted and is_mail_configured():
         raw_token = volunteer.generate_reset_token()
         db.session.commit()
-        base_url = current_app.config.get('FRONTEND_URL', '')
+        base_url = _base_url()
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
         settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
         title = settings.site_title if settings else instance.name
@@ -272,6 +285,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'lock_message': settings.lock_message if settings else None,
         'shifts_enabled': settings.shifts_enabled if settings else True,
         'food_donations_enabled': settings.food_donations_enabled if settings else True,
+        'food_refrigeration_enabled': settings.food_refrigeration_enabled if settings else True,
         'registration_open': settings.registration_open if settings else True,
         'has_privacy_policy': has_policy,
         'mail_enabled': is_mail_configured(),

@@ -16,6 +16,7 @@ class SiteSettings(db.Model):
     mail_sender_name = db.Column(db.String(200), nullable=False, default='')
     shifts_enabled = db.Column(db.Boolean, nullable=False, default=True)
     food_donations_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    food_refrigeration_enabled = db.Column(db.Boolean, nullable=False, default=True)
     site_locked = db.Column(db.Boolean, nullable=False, default=False)
     lock_message = db.Column(db.Text, nullable=True)
     log_retention_months = db.Column(db.Integer, nullable=False, default=3)

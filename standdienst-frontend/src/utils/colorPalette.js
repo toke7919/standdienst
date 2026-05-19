@@ -68,3 +68,14 @@ export function resetTheme() {
   const root = document.documentElement
   SHADES.forEach((s) => root.style.removeProperty(`--primary-${s}`))
 }
+
+// Gibt true zurück wenn auf dem Hex-Hintergrund weiße Schrift besser lesbar ist.
+export function isColorDark(hex) {
+  if (!hex || !/^#[0-9a-fA-F]{6}$/i.test(hex)) return true
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const toLin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4))
+  const L = 0.2126 * toLin(r) + 0.7152 * toLin(g) + 0.0722 * toLin(b)
+  return L < 0.35
+}
