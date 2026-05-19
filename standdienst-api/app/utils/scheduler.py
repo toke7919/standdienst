@@ -8,6 +8,26 @@ log = logging.getLogger(__name__)
 _scheduler = BackgroundScheduler(timezone='Europe/Berlin')
 
 
+def _redis_lock(app, key: str, ttl: int = 3590) -> bool:
+    """Nur ein Gunicorn-Worker darf einen Job gleichzeitig ausführen.
+
+    Gibt True zurück wenn dieser Worker die Sperre erworben hat (oder Redis
+    nicht verfügbar ist – dann wird der Job in allen Workern ausgeführt).
+    """
+    uri = app.config.get('RATELIMIT_STORAGE_URI', 'memory://')
+    if not uri.startswith('redis://'):
+        return True  # kein Redis → Single-Worker-Dev, kein Lock nötig
+    try:
+        import redis as redis_lib
+        r = redis_lib.from_url(uri, socket_connect_timeout=2)
+        acquired = r.set(f'sched:{key}', '1', nx=True, ex=ttl)
+        r.close()
+        return bool(acquired)
+    except Exception:
+        log.warning('Redis-Lock für Scheduler-Job %s nicht erreichbar', key)
+        return True
+
+
 def init_scheduler(app):
     if app.config.get('TESTING'):
         return
@@ -42,6 +62,8 @@ def init_scheduler(app):
 
 
 def _purge_expired_tokens(app):
+    if not _redis_lock(app, 'purge_tokens'):
+        return
     with app.app_context():
         try:
             from ..extensions import db
@@ -61,6 +83,8 @@ def _purge_expired_tokens(app):
 
 
 def _purge_old_logs(app):
+    if not _redis_lock(app, 'purge_logs', ttl=86000):
+        return
     with app.app_context():
         try:
             from ..extensions import db
@@ -78,6 +102,8 @@ def _purge_old_logs(app):
 
 def _purge_old_volunteers(app):
     """DSGVO Art. 5 – löscht inaktive Volunteers nach Aufbewahrungsfrist."""
+    if not _redis_lock(app, 'purge_volunteers', ttl=86000):
+        return
     with app.app_context():
         try:
             from ..extensions import db
@@ -119,6 +145,8 @@ def _purge_old_volunteers(app):
 
 
 def _run_smb_backup(app):
+    if not _redis_lock(app, 'smb_backup', ttl=86000):
+        return
     with app.app_context():
         try:
             from ..models import GlobalSettings

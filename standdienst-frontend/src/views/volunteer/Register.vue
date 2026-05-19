@@ -27,9 +27,15 @@
 
       <div v-else class="card">
         <form @submit.prevent="submit" class="space-y-4">
-          <div>
-            <label class="label">Name <span class="text-red-500">*</span></label>
-            <input v-model="form.name" class="input" required autocomplete="name" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Vorname <span class="text-red-500">*</span></label>
+              <input v-model="form.first_name" class="input" required autocomplete="given-name" />
+            </div>
+            <div>
+              <label class="label">Nachname</label>
+              <input v-model="form.last_name" class="input" autocomplete="family-name" />
+            </div>
           </div>
 
           <div>
@@ -94,7 +100,7 @@ const settings = computed(() => instanceStore.current?.settings)
 const hasPrivacyPolicy = computed(() => instanceStore.current?.has_privacy_policy ?? false)
 
 const captcha = ref(null)
-const form = ref({ name: '', email: '', captcha_answer: '', consent: false })
+const form = ref({ first_name: '', last_name: '', email: '', captcha_answer: '', consent: false })
 const loading = ref(false)
 const errorMsg = ref('')
 const emailSent = ref(false)
@@ -116,7 +122,8 @@ async function submit() {
   errorMsg.value = ''
   try {
     const payload = {
-      name: form.value.name,
+      first_name: form.value.first_name,
+      last_name: form.value.last_name || undefined,
       captcha_answer: parseInt(form.value.captcha_answer),
       consent: form.value.consent,
     }
