@@ -3,7 +3,6 @@
   <div
     class="min-h-screen flex flex-col md:pb-0"
     :class="bottomPad"
-    :style="brandStyle"
   >
     <!-- ====== HEADER ====== -->
     <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
@@ -85,11 +84,6 @@ const route = useRoute()
 
 const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current)
-
-const brandStyle = computed(() => {
-  const color = settings.value?.primary_color
-  return color ? { '--color-primary': color } : {}
-})
 
 // Padding-bottom für mobile: Höhe der Bottom-Nav + Safe Area
 // 4.25rem = h-[4.25rem]; safe-area wird per inline-style im <nav> gesetzt,
