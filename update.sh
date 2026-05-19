@@ -85,19 +85,24 @@ exit(0 if a > b else 1)
 _github_get() {
     local url="$1"
     local pat="${GITHUB_PAT:-}"
-    local auth_header=""
-    [ -n "$pat" ] && auth_header="-H \"Authorization: Bearer $pat\""
-
     curl -fsSL \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         ${pat:+-H "Authorization: Bearer $pat"} \
-        "$url" 2>/dev/null
+        "$url"
 }
 
 _latest_release() {
-    [ -n "$GITHUB_REPO" ] || die "GITHUB_REPO nicht in .env gesetzt (z.B. GITHUB_REPO=user/repo)"
-    _github_get "https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
+    if [ -z "${GITHUB_REPO:-}" ]; then
+        die "GITHUB_REPO ist nicht in $INSTALL_DIR/.env gesetzt.
+  Bitte eintragen: echo 'GITHUB_REPO=toke7919/standdienst_v2' >> $INSTALL_DIR/.env"
+    fi
+    local json
+    json="$(_github_get "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" 2>&1)" \
+        || die "GitHub-API nicht erreichbar (GITHUB_REPO=$GITHUB_REPO).
+  Prüfen: curl -fsSL https://api.github.com/repos/${GITHUB_REPO}/releases/latest
+  Fehler: $json"
+    echo "$json"
 }
 
 # ---------------------------------------------------------------------------
@@ -118,10 +123,15 @@ CURRENT="$(_current_version)"
 info "Installierte Version: $CURRENT"
 
 RELEASE_JSON="$(_latest_release)"
-LATEST="$(echo "$RELEASE_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name',''))")"
-TARBALL_URL="$(echo "$RELEASE_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tarball_url',''))")"
 
-[ -n "$LATEST" ] || die "Konnte aktuellstes Release nicht von GitHub abrufen (GITHUB_REPO=$GITHUB_REPO)"
+LATEST="$(echo "$RELEASE_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name',''))" 2>/dev/null || true)"
+TARBALL_URL="$(echo "$RELEASE_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tarball_url',''))" 2>/dev/null || true)"
+
+if [ -z "$LATEST" ]; then
+    echo -e "  ${RED}✗${NC} GitHub-Antwort:" >&2
+    echo "$RELEASE_JSON" | head -5 >&2
+    die "Konnte Tag-Name nicht aus GitHub-Antwort lesen (GITHUB_REPO=$GITHUB_REPO)"
+fi
 
 info "Verfügbares Release : $LATEST"
 
