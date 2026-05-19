@@ -6,21 +6,8 @@
         <p class="text-gray-500 mt-1">Als Helfer registrieren</p>
       </div>
 
-      <!-- E-Mail gesendet -->
-      <div v-if="emailSent" class="card text-center">
-        <p class="text-4xl mb-3">📧</p>
-        <p class="font-semibold text-gray-900">Bitte prüfe deine E-Mails</p>
-        <p class="text-sm text-gray-500 mt-2">
-          Wir haben dir einen Link zum Einrichten deines Passworts geschickt.<br />
-          Der Link ist 24 Stunden gültig.
-        </p>
-        <RouterLink :to="`/${slug}/login`" class="mt-5 btn-secondary inline-flex">
-          Zum Login
-        </RouterLink>
-      </div>
-
-      <!-- Direkt eingeloggt (anonym) -->
-      <div v-else-if="loggedIn" class="card text-center text-green-800 bg-green-50">
+      <!-- Direkt eingeloggt -->
+      <div v-if="loggedIn" class="card text-center text-green-800 bg-green-50">
         <p class="font-semibold">Registrierung erfolgreich!</p>
         <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
       </div>
@@ -33,8 +20,8 @@
               <input v-model="form.first_name" class="input" required autocomplete="given-name" />
             </div>
             <div>
-              <label class="label">Nachname</label>
-              <input v-model="form.last_name" class="input" autocomplete="family-name" />
+              <label class="label">Nachname <span class="text-red-500">*</span></label>
+              <input v-model="form.last_name" class="input" required autocomplete="family-name" />
             </div>
           </div>
 
@@ -88,11 +75,13 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/stores/instance'
 import { useAuthStore } from '@/stores/auth'
+import { useUiStore } from '@/stores/ui'
 import { publicApi } from '@/api/public'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const instanceStore = useInstanceStore()
 const auth = useAuthStore()
+const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 const slug = computed(() => route.params.slug)
@@ -103,7 +92,6 @@ const captcha = ref(null)
 const form = ref({ first_name: '', last_name: '', email: '', captcha_answer: '', consent: false })
 const loading = ref(false)
 const errorMsg = ref('')
-const emailSent = ref(false)
 const loggedIn = ref(false)
 
 onMounted(async () => {
@@ -123,7 +111,7 @@ async function submit() {
   try {
     const payload = {
       first_name: form.value.first_name,
-      last_name: form.value.last_name || undefined,
+      last_name: form.value.last_name,
       captcha_answer: parseInt(form.value.captcha_answer),
       consent: form.value.consent,
     }
@@ -131,15 +119,14 @@ async function submit() {
 
     const res = await publicApi.register(slug.value, payload)
 
-    if (res.data.user) {
-      // Anonyme Registrierung → direkt eingeloggt
-      loggedIn.value = true
-      await auth.fetchMe()
-      router.push(`/${slug.value}/shifts`)
-    } else {
-      // E-Mail-Registrierung → Welcome-Token-Mail
-      emailSent.value = true
+    loggedIn.value = true
+    await auth.fetchMe()
+
+    if (form.value.email) {
+      ui.info('Wir haben dir einen Link zur Passwort-Einrichtung geschickt.')
     }
+
+    router.push(`/${slug.value}/shifts`)
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Registrierung fehlgeschlagen'
     await loadCaptcha()

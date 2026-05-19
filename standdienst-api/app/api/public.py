@@ -116,7 +116,11 @@ def register(slug):
         except Exception:
             pass
 
-        return jsonify(message='E-Mail mit Einrichtungslink gesendet'), 201
+        from ..api.auth import _issue_tokens, _set_token_cookies, _user_payload
+        access, refresh = _issue_tokens(volunteer)
+        resp = jsonify(user=_user_payload(volunteer), message='E-Mail mit Einrichtungslink gesendet')
+        resp.status_code = 201
+        return _set_token_cookies(resp, access, refresh)
 
     else:
         db.session.commit()

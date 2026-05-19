@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSetupStore } from '@/stores/setup'
+import { resetTheme } from '@/utils/colorPalette'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -141,7 +142,12 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresStaff && !auth.isStaff) return '/admin/login'
-  if (to.meta.requiresVolunteer && !auth.isVolunteer) return `/${to.params.slug}/login`
+  if (to.meta.requiresVolunteer && !auth.isVolunteer) return `/${to.params.slug}/register`
+
+  // Instanz-Farbschema zurücksetzen wenn keine Slug-Route aufgerufen wird
+  if (!to.params.slug && !to.path.startsWith('/admin')) {
+    resetTheme()
+  }
 
   if (to.meta.guest && auth.isLoggedIn) {
     if (auth.isStaff) return '/admin/dashboard'
