@@ -9,10 +9,21 @@ from ...utils.auth import require_staff, require_admin
 from ...utils.responses import ok
 
 
+_ORGANIZER_TYPES = [
+    'shift_register', 'shift_unregister',
+    'food_register', 'food_unregister',
+]
+
+
 @admin_bp.route('/<slug>/dashboard', methods=['GET'])
 @require_staff
 def dashboard(slug):
-    return ok(_instance_stats(g.instance.id))
+    is_instance_admin = (
+        g.role == 'admin'
+        or (g.role == 'organizer' and g.current_user.is_instance_admin)
+    )
+    event_types = None if is_instance_admin else _ORGANIZER_TYPES
+    return ok(_instance_stats(g.instance.id, event_types=event_types))
 
 
 @admin_bp.route('/dashboard/global', methods=['GET'])
@@ -63,7 +74,7 @@ def global_dashboard():
     })
 
 
-def _instance_stats(instance_id: int) -> dict:
+def _instance_stats(instance_id: int, event_types=None) -> dict:
     volunteers = Volunteer.query.filter_by(instance_id=instance_id, deleted_at=None).count()
     stands = Stand.query.filter_by(instance_id=instance_id).count()
     dates = EventDate.query.filter_by(instance_id=instance_id).count()
@@ -83,8 +94,10 @@ def _instance_stats(instance_id: int) -> dict:
                       .filter(FoodDonationType.instance_id == instance_id)
                       .count())
 
-    recent = (ActivityLog.query
-              .filter_by(instance_id=instance_id)
+    recent_q = ActivityLog.query.filter_by(instance_id=instance_id)
+    if event_types is not None:
+        recent_q = recent_q.filter(ActivityLog.event_type.in_(event_types))
+    recent = (recent_q
               .order_by(ActivityLog.timestamp.desc())
               .limit(10)
               .all())
