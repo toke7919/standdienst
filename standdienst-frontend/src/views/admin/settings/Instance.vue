@@ -169,7 +169,8 @@ async function save() {
   saving.value = true
   saveError.value = ''
   try {
-    await adminApi.updateSiteSettings(route.params.slug, form.value)
+    const res = await adminApi.updateSiteSettings(route.params.slug, form.value)
+    form.value.updated_at = res.data.data.updated_at
     if (form.value.primary_color) {
       applyTheme(form.value.primary_color)
       instanceStore.invalidateCache()

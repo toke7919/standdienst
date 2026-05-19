@@ -59,7 +59,8 @@ async function save() {
   saving.value = true
   saveError.value = ''
   try {
-    await adminApi.updateMailSettings(form.value)
+    const res = await adminApi.updateMailSettings(form.value)
+    form.value.updated_at = res.data.data.updated_at
     ui.success('Gespeichert')
   } catch (e) {
     saveError.value = e.response?.data?.error || 'Fehler'
