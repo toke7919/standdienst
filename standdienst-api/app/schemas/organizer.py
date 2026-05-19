@@ -17,7 +17,8 @@ class OrganizerSchema(SQLAlchemyAutoSchema):
 
 
 class OrganizerCreateSchema(Schema):
-    name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    first_name = fields.Str(required=True, validate=validate.Length(min=1, max=50))
+    last_name = fields.Str(validate=validate.Length(max=50), load_default='')
     email = fields.Email(required=True)
     password = fields.Str(validate=validate.Length(min=8), allow_none=True, load_default=None)
     is_instance_admin = fields.Bool(load_default=False)
@@ -25,7 +26,8 @@ class OrganizerCreateSchema(Schema):
 
 
 class OrganizerUpdateSchema(Schema):
-    name = fields.Str(validate=validate.Length(min=1, max=100))
+    first_name = fields.Str(validate=validate.Length(min=1, max=50))
+    last_name = fields.Str(validate=validate.Length(max=50))
     email = fields.Email()
     password = fields.Str(validate=validate.Length(min=8), allow_none=True)
     is_instance_admin = fields.Bool()

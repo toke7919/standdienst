@@ -9,7 +9,8 @@
       </p>
 
       <div v-if="!passkeySupported" class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
-        Dein Browser unterstützt keine Passkeys.
+        Passkeys sind in diesem Kontext nicht verfügbar.
+        {{ !window.isSecureContext ? 'Passkeys erfordern HTTPS (außer auf localhost).' : 'Dein Browser unterstützt keine Passkeys.' }}
       </div>
 
       <!-- Passkey-Liste -->
@@ -84,7 +85,11 @@ const errorMsg = ref('')
 const passkeySupported = ref(false)
 
 onMounted(async () => {
-  passkeySupported.value = !!(window.PublicKeyCredential && navigator.credentials?.create)
+  passkeySupported.value = !!(
+    window.PublicKeyCredential &&
+    navigator.credentials?.create &&
+    window.isSecureContext
+  )
   await load()
 })
 
@@ -119,8 +124,14 @@ async function register() {
   } catch (e) {
     if (e.name === 'NotAllowedError') {
       errorMsg.value = 'Registrierung abgebrochen'
+    } else if (e.name === 'SecurityError') {
+      errorMsg.value = 'Passkeys erfordern HTTPS (außer auf localhost)'
+    } else if (e.name === 'InvalidStateError') {
+      errorMsg.value = 'Dieser Passkey ist bereits registriert'
+    } else if (e.response?.data?.error) {
+      errorMsg.value = e.response.data.error
     } else {
-      errorMsg.value = e.response?.data?.error || 'Registrierung fehlgeschlagen'
+      errorMsg.value = e.message || 'Registrierung fehlgeschlagen'
     }
   } finally {
     registering.value = false

@@ -24,39 +24,35 @@
       <!-- Backup-Liste -->
       <div class="card overflow-hidden p-0">
         <div v-if="loading" class="flex justify-center py-8"><LoadingSpinner size="lg" /></div>
-        <table v-else class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th class="px-4 py-3 text-left font-medium text-gray-500">Datei</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-500">Erstellt</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-500">Größe</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-500">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="b in backups" :key="b.filename" class="border-b border-gray-50 hover:bg-gray-50">
-              <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ b.filename }}</td>
-              <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ fmt(b.created_at) }}</td>
-              <td class="px-4 py-3 text-gray-400">{{ (b.size_bytes / 1024).toFixed(1) }} KB</td>
-              <td class="px-4 py-3 flex gap-3">
+        <div v-else>
+          <div v-if="!backups.length" class="px-4 py-8 text-center text-gray-400 text-sm">
+            Keine Backups vorhanden
+          </div>
+          <div v-for="b in backups" :key="b.filename"
+               class="border-b border-gray-100 last:border-0 hover:bg-gray-50 px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-mono text-xs text-gray-700 truncate">{{ b.filename }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">
+                  {{ fmt(b.created_at) }} &middot; {{ (b.size_bytes / 1024).toFixed(1) }} KB
+                </p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
                 <a
                   :href="adminApi.downloadBackupUrl(b.filename)"
                   download
-                  class="text-green-600 hover:underline text-xs"
+                  class="text-green-600 hover:underline text-xs whitespace-nowrap"
                 >Herunterladen</a>
-                <button class="text-indigo-600 hover:underline text-xs" @click="restore(b.filename)">
+                <button class="text-indigo-600 hover:underline text-xs whitespace-nowrap" @click="restore(b.filename)">
                   Wiederherstellen
                 </button>
                 <button class="text-red-500 hover:underline text-xs" @click="del(b.filename)">
                   Löschen
                 </button>
-              </td>
-            </tr>
-            <tr v-if="!backups.length">
-              <td colspan="4" class="px-4 py-8 text-center text-gray-400">Keine Backups vorhanden</td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

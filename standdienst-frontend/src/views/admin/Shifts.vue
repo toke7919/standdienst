@@ -9,15 +9,15 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Stand</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Datum</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Zeit</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Belegung</th>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="stand_name" @sort="toggleSort">Stand</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="date_formatted" @sort="toggleSort">Datum</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="time_range" @sort="toggleSort">Zeit</SortTh>
+            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="current_count" @sort="toggleSort">Belegung</SortTh>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="s in shifts" :key="s.id" class="border-b border-gray-50 hover:bg-gray-50">
+          <tr v-for="s in sortedShifts" :key="s.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium">{{ s.stand_name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ s.date_formatted }}</td>
             <td class="px-4 py-3 text-gray-500">{{ s.time_range }}</td>
@@ -82,8 +82,10 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
 import Pagination from '@/components/Pagination.vue'
+import SortTh from '@/components/SortTh.vue'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -93,6 +95,8 @@ const dates = ref([])
 const page = ref(1)
 const pages = ref(1)
 const total = ref(0)
+const { sortKey, sortDir, sorted: sortedShifts, toggleSort } = useSort(shifts, 'stand_name')
+
 const showModal = ref(false)
 const editing = ref(null)
 const form = ref({ stand_id: '', event_date_id: '', start_time: '08:00', end_time: '12:00', max_volunteers: 2 })

@@ -13,14 +13,14 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Name</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">E-Mail</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Angemeldet</th>
+            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="name" @sort="toggleLocalSort">Name</SortTh>
+            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="email" @sort="toggleLocalSort">E-Mail</SortTh>
+            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="created_at" @sort="toggleLocalSort">Angemeldet</SortTh>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="v in volunteers" :key="v.id" class="border-b border-gray-50 hover:bg-gray-50">
+          <tr v-for="v in sortedVolunteers" :key="v.id" class="border-b border-gray-50 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium text-gray-900">{{ v.display_name || v.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ v.email || '—' }}</td>
             <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ formatDate(v.created_at) }}</td>
@@ -73,8 +73,10 @@ import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
 import Pagination from '@/components/Pagination.vue'
+import SortTh from '@/components/SortTh.vue'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -87,6 +89,7 @@ const perPage = 20
 const search = ref('')
 const showModal = ref(false)
 const editing = ref(null)
+const { sortKey: localSortKey, sortDir: localSortDir, sorted: sortedVolunteers, toggleSort: toggleLocalSort } = useSort(volunteers, 'name')
 const form = ref({ first_name: '', last_name: '', email: '', password: '' })
 const saveError = ref('')
 
