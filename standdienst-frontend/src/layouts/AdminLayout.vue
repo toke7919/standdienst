@@ -250,6 +250,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useInstanceStore } from '@/stores/instance'
 import { adminApi } from '@/api/admin'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import {
@@ -262,6 +263,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
+const instanceStore = useInstanceStore()
 const router = useRouter()
 const route = useRoute()
 const instances = ref([])
@@ -302,10 +304,20 @@ onMounted(async () => {
   }
 })
 
-// Route-Slug mit selectedSlug synchronisieren
+// Route-Slug mit selectedSlug synchronisieren + Theme anwenden
 watch(() => route.params.slug, (slug) => {
-  if (slug) selectedSlug.value = slug
+  if (slug) {
+    selectedSlug.value = slug
+    instanceStore.loadInstance(slug).catch(() => {})
+  } else if (!selectedSlug.value) {
+    instanceStore.clear()
+  }
 }, { immediate: true })
+
+// Theme zurücksetzen wenn keine Instanz mehr ausgewählt
+watch(selectedSlug, (slug) => {
+  if (!slug) instanceStore.clear()
+})
 
 // Mehr-Sheet bei Navigation schließen
 watch(() => route.path, () => { moreOpen.value = false })

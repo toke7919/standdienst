@@ -105,11 +105,14 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import { useInstanceStore } from '@/stores/instance'
+import { applyTheme } from '@/utils/colorPalette'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
 const ui = useUiStore()
 const auth = useAuthStore()
+const instanceStore = useInstanceStore()
 const loading = ref(true)
 const saving = ref(false)
 const clearing = ref(false)
@@ -167,6 +170,10 @@ async function save() {
   saveError.value = ''
   try {
     await adminApi.updateSiteSettings(route.params.slug, form.value)
+    if (form.value.primary_color) {
+      applyTheme(form.value.primary_color)
+      instanceStore.invalidateCache()
+    }
     ui.success('Einstellungen gespeichert')
   } catch (e) {
     saveError.value = e.response?.data?.error || 'Fehler'
