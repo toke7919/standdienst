@@ -31,6 +31,12 @@
       </button>
     </div>
 
+    <!-- Abmelden (nur mobil sichtbar, auf Desktop ist es im Header) -->
+    <div class="card mb-6 md:hidden">
+      <h2 class="text-base font-semibold text-gray-800 mb-3">Sitzung</h2>
+      <button class="btn-secondary w-full" @click="auth.logout">Abmelden</button>
+    </div>
+
     <div class="card border-red-200">
       <h2 class="text-base font-semibold text-red-700 mb-2">Konto löschen</h2>
       <p class="text-sm text-gray-500 mb-4">

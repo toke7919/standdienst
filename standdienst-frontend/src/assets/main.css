@@ -6,6 +6,24 @@
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
   }
+  /* Kein Overscroll-Bounce auf iOS */
+  html, body {
+    overscroll-behavior: none;
+  }
+}
+
+@layer utilities {
+  /* Safe-Area für eingekerbte Displays (iPhone X+, Android) */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Bottom-Nav-Höhe + Safe-Area als Abstand für den Seiteninhalt */
+  .scroll-pb-nav {
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @layer components {
