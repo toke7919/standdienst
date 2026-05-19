@@ -32,15 +32,7 @@
           <input v-model="form.food_donations_enabled" type="checkbox" id="food" />
           <label for="food" class="text-sm text-gray-700">Essensspenden aktiviert</label>
         </div>
-        <div class="flex items-center gap-2 ml-5">
-          <input v-model="form.food_refrigeration_enabled" type="checkbox" id="food-refrig"
-                 :disabled="!form.food_donations_enabled" />
-          <label for="food-refrig" class="text-sm text-gray-700"
-                 :class="{ 'opacity-50': !form.food_donations_enabled }">
-            Kühlung-Option bei Essensspenden anzeigen
-          </label>
-        </div>
-        <div class="flex items-center gap-2">
+<div class="flex items-center gap-2">
           <input v-model="form.site_locked" type="checkbox" id="locked" />
           <label for="locked" class="text-sm text-gray-700">Anmeldung gesperrt</label>
         </div>

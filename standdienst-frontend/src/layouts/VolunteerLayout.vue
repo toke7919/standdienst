@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
@@ -129,8 +129,10 @@ const bottomLinks = computed(() => {
 })
 
 onMounted(() => {
-  if (slug.value && !instanceStore.current) {
-    instanceStore.loadInstance(slug.value)
-  }
+  if (slug.value) instanceStore.loadInstance(slug.value)
+})
+
+watch(settings, (s) => {
+  if (s?.site_title) document.title = s.site_title
 })
 </script>

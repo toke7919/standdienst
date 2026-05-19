@@ -78,6 +78,10 @@
           <label class="label">Hinweise (optional)</label>
           <textarea v-model="typeForm.notes" class="input" rows="2" />
         </div>
+        <div class="flex items-center gap-2">
+          <input v-model="typeForm.refrigeration_enabled" type="checkbox" id="refrig" />
+          <label for="refrig" class="text-sm text-gray-700">Kühlung-Option für Helfer anzeigen</label>
+        </div>
         <p v-if="typeError" class="text-sm text-red-600">{{ typeError }}</p>
         <div class="flex gap-3 justify-end pt-2">
           <button type="button" class="btn-secondary" @click="showTypeModal = false">Abbrechen</button>
@@ -102,7 +106,7 @@ const donations = ref([])
 const eventDates = ref([])
 const showTypeModal = ref(false)
 const editingType = ref(null)
-const typeForm = ref({ event_date_id: '', name: '', delivery_datetime: '', delivery_location: '', notes: '' })
+const typeForm = ref({ event_date_id: '', name: '', delivery_datetime: '', delivery_location: '', notes: '', refrigeration_enabled: false })
 const typeError = ref('')
 
 onMounted(load)
@@ -120,7 +124,7 @@ async function load() {
 
 function openCreateType() {
   editingType.value = null
-  typeForm.value = { event_date_id: '', name: '', delivery_datetime: '', delivery_location: '', notes: '' }
+  typeForm.value = { event_date_id: '', name: '', delivery_datetime: '', delivery_location: '', notes: '', refrigeration_enabled: false }
   typeError.value = ''
   showTypeModal.value = true
 }
@@ -132,6 +136,7 @@ function openEditType(t) {
     delivery_datetime: t.delivery_datetime ? t.delivery_datetime.substring(0, 16) : '',
     delivery_location: t.delivery_location || '',
     notes: t.notes || '',
+    refrigeration_enabled: t.refrigeration_enabled ?? false,
   }
   typeError.value = ''
   showTypeModal.value = true
@@ -145,6 +150,7 @@ async function saveType() {
       delivery_datetime: typeForm.value.delivery_datetime || null,
       delivery_location: typeForm.value.delivery_location || null,
       notes: typeForm.value.notes || null,
+      refrigeration_enabled: typeForm.value.refrigeration_enabled,
     }
     if (editingType.value) {
       await adminApi.updateFoodType(route.params.slug, editingType.value.id, payload)

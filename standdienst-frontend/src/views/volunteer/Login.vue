@@ -81,7 +81,7 @@ const errorMsg = ref('')
 const loading = ref(false)
 
 onMounted(() => {
-  if (!instanceStore.current) instanceStore.loadInstance(slug.value)
+  instanceStore.loadInstance(slug.value)
 })
 
 async function submit() {
