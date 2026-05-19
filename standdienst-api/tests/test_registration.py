@@ -44,7 +44,8 @@ def test_register_anonymous_no_password_set(client, instance):
 # E-Mail-Registrierung → Welcome-Token-Flow
 # ---------------------------------------------------------------------------
 
-def test_register_with_email_no_direct_login(client, instance):
+def test_register_with_email_direct_login(client, instance):
+    """E-Mail-Registrierung → Nutzer wird direkt eingeloggt + Welcome-Mail-Hinweis."""
     answer = _captcha_answer(client, instance.slug)
     rv = client.post(f'/api/public/{instance.slug}/register', json={
         'first_name': 'Mail',
@@ -54,7 +55,8 @@ def test_register_with_email_no_direct_login(client, instance):
     })
     assert rv.status_code == 201
     data = rv.get_json()
-    assert 'user' not in data
+    assert 'user' in data
+    assert data['user']['email'] == 'mailtester@test.de'
     assert 'E-Mail' in data['message']
 
 

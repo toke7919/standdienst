@@ -5,7 +5,7 @@
     :class="bottomPad"
   >
     <!-- ====== HEADER ====== -->
-    <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
+    <header class="bg-primary-600 shadow-sm sticky top-0 z-20">
       <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <RouterLink :to="`/${slug}/shifts`" class="flex items-center gap-2 min-w-0">
           <img
@@ -14,7 +14,9 @@
             class="h-8 object-contain flex-shrink-0"
             alt="Logo"
           />
-          <span class="font-semibold text-gray-900 truncate">{{ settings?.site_title || 'Standdienst' }}</span>
+          <span class="font-semibold truncate" :class="headerTextClass">
+            {{ settings?.site_title || 'Standdienst' }}
+          </span>
         </RouterLink>
 
         <!-- Desktop-Navigation -->
@@ -23,10 +25,12 @@
             v-for="link in navLinks"
             :key="link.to"
             :to="link.to"
-            class="px-3 py-1.5 text-sm rounded-lg text-gray-600 hover:bg-gray-100 transition-colors [&.router-link-active]:text-primary-700 [&.router-link-active]:font-medium"
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors [&.router-link-active]:font-semibold"
+            :class="headerTextClass + ' hover:bg-white/20 [&.router-link-active]:bg-white/20'"
           >{{ link.label }}</RouterLink>
           <button
-            class="ml-2 px-3 py-1.5 text-sm rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+            class="ml-2 px-3 py-1.5 text-sm rounded-lg hover:bg-white/20 transition-colors"
+            :class="headerTextClass"
             @click="auth.logout"
           >Abmelden</button>
         </nav>
@@ -73,6 +77,7 @@ import { computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
+import { isColorDark } from '@/utils/colorPalette'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import {
   CalendarIcon, ClipboardDocumentListIcon, ShoppingBagIcon, UserCircleIcon,
@@ -84,6 +89,11 @@ const route = useRoute()
 
 const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current)
+
+const headerTextClass = computed(() => {
+  const color = settings.value?.primary_color || '#4f46e5'
+  return isColorDark(color) ? 'text-white' : 'text-gray-900'
+})
 
 // Padding-bottom für mobile: Höhe der Bottom-Nav + Safe Area
 // 4.25rem = h-[4.25rem]; safe-area wird per inline-style im <nav> gesetzt,

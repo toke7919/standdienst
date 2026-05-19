@@ -27,8 +27,17 @@ MAX_PASSKEYS = 5
 def _rp_config():
     frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
     parsed = urlparse(frontend_url)
-    rp_id = current_app.config.get('WEBAUTHN_RP_ID') or parsed.hostname
-    origin = f'{parsed.scheme}://{parsed.netloc}'
+    # Reverse-Proxy-Header berücksichtigen (HTTPS hinter Nginx/Traefik etc.)
+    try:
+        from flask import request as _req
+        fwd_proto = _req.headers.get('X-Forwarded-Proto', '').split(',')[0].strip()
+        fwd_host = _req.headers.get('X-Forwarded-Host', '').split(',')[0].strip()
+        proto = fwd_proto if fwd_proto in ('http', 'https') else parsed.scheme
+        host = fwd_host or parsed.netloc
+    except RuntimeError:
+        proto, host = parsed.scheme, parsed.netloc
+    rp_id = current_app.config.get('WEBAUTHN_RP_ID') or host.split(':')[0]
+    origin = f'{proto}://{host}'
     return rp_id, origin
 
 

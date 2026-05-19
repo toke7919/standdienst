@@ -26,6 +26,13 @@
                 </div>
                 <span class="text-xs text-gray-400">{{ shift.current_count }}/{{ shift.max_volunteers }}</span>
               </div>
+              <div v-if="shift.registered_names?.length" class="mt-1.5 flex flex-wrap gap-1">
+                <span
+                  v-for="name in shift.registered_names"
+                  :key="name"
+                  class="text-xs bg-primary-100 text-primary-700 rounded-full px-2 py-0.5"
+                >{{ name }}</span>
+              </div>
             </div>
             <div class="ml-4">
               <button
