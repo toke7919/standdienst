@@ -2,20 +2,20 @@
   <div>
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Instanz-Protokoll</h1>
 
-    <!-- Filter-Chips -->
+    <!-- Kategorie-Filter -->
     <div class="mb-4 flex flex-wrap gap-2">
       <button
-        v-for="(label, type) in { '': 'Alle', ...EVENT_LABELS }"
-        :key="type"
+        v-for="cat in CATEGORIES"
+        :key="cat.key"
         :class="[
-          'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
-          filterType === type
+          'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
+          activeCategory === cat.key
             ? 'bg-primary-600 text-white border-primary-600'
             : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400',
         ]"
-        @click="setFilter(type)"
+        @click="setCategory(cat.key)"
       >
-        {{ label }}
+        {{ cat.label }}
       </button>
     </div>
 
@@ -86,19 +86,28 @@ const BADGE_CLASSES = {
   audit_admin: 'bg-indigo-100 text-indigo-700',
 }
 
+const CATEGORIES = [
+  { key: '',              label: 'Alle',          types: [] },
+  { key: 'dienste',       label: 'Dienste',        types: ['shift_register', 'shift_unregister'] },
+  { key: 'essensspenden', label: 'Essensspenden',  types: ['food_register', 'food_unregister'] },
+  { key: 'anmeldungen',   label: 'Anmeldungen',    types: ['volunteer_register', 'login_success'] },
+  { key: 'fehlversuche',  label: 'Fehlversuche',   types: ['login_fail'] },
+  { key: 'audit',         label: 'Auditprotokoll', types: ['audit_settings', 'audit_data', 'audit_organizer', 'audit_admin'] },
+]
+
 const route = useRoute()
 const logs = ref([])
 const page = ref(1)
 const pages = ref(1)
 const total = ref(0)
-const filterType = ref('')
+const activeCategory = ref('')
 const sortKey = ref('timestamp')
 const sortDir = ref('desc')
 
 onMounted(load)
 
-function setFilter(type) {
-  filterType.value = type
+function setCategory(key) {
+  activeCategory.value = key
   page.value = 1
   load()
 }
@@ -116,7 +125,8 @@ function toggleSort(key) {
 
 async function load() {
   const params = { page: page.value, per_page: 20, sort: sortKey.value, dir: sortDir.value }
-  if (filterType.value) params.event_type = filterType.value
+  const cat = CATEGORIES.find(c => c.key === activeCategory.value)
+  if (cat?.types.length) params.event_types = cat.types.join(',')
   const res = await adminApi.getInstanceActivity(route.params.slug, params)
   logs.value = res.data.data
   pages.value = res.data.pages

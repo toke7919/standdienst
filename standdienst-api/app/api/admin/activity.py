@@ -20,19 +20,27 @@ def _apply_sort(q, sort_param, dir_param):
     return q.order_by(col.asc() if dir_param == 'asc' else col.desc())
 
 
+def _apply_type_filter(q, raw: str | None):
+    """Filtert nach einem oder mehreren kommaseparierten event_types."""
+    if not raw:
+        return q
+    types = [t.strip() for t in raw.split(',') if t.strip()]
+    if types:
+        q = q.filter(ActivityLog.event_type.in_(types))
+    return q
+
+
 @admin_bp.route('/activity', methods=['GET'])
 @require_admin
 def global_activity():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
-    event_type = request.args.get('event_type')
     sort = request.args.get('sort', 'timestamp')
     direction = request.args.get('dir', 'desc')
+    event_types = request.args.get('event_types')
 
     q = ActivityLog.query.filter(ActivityLog.instance_id.is_(None))
-    if event_type:
-        q = q.filter_by(event_type=event_type)
-
+    q = _apply_type_filter(q, event_types)
     q = _apply_sort(q, sort, direction)
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
@@ -44,14 +52,12 @@ def global_activity():
 def instance_activity(slug):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
-    event_type = request.args.get('event_type')
     sort = request.args.get('sort', 'timestamp')
     direction = request.args.get('dir', 'desc')
+    event_types = request.args.get('event_types')
 
     q = ActivityLog.query.filter_by(instance_id=g.instance.id)
-    if event_type:
-        q = q.filter_by(event_type=event_type)
-
+    q = _apply_type_filter(q, event_types)
     q = _apply_sort(q, sort, direction)
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
