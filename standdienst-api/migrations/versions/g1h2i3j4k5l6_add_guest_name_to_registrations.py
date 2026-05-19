@@ -14,10 +14,12 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('registrations', sa.Column('guest_name', sa.String(100), nullable=True))
-    op.alter_column('registrations', 'volunteer_id', nullable=True)
+    with op.batch_alter_table('registrations') as batch_op:
+        batch_op.add_column(sa.Column('guest_name', sa.String(100), nullable=True))
+        batch_op.alter_column('volunteer_id', nullable=True)
 
 
 def downgrade():
-    op.alter_column('registrations', 'volunteer_id', nullable=False)
-    op.drop_column('registrations', 'guest_name')
+    with op.batch_alter_table('registrations') as batch_op:
+        batch_op.alter_column('volunteer_id', nullable=False)
+        batch_op.drop_column('guest_name')
