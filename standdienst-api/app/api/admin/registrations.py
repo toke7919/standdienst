@@ -53,6 +53,8 @@ def create_registration(slug):
         return error('Helfer oder Schicht nicht gefunden', 404)
     if shift.is_full:
         return error('Schicht ist bereits voll', 409)
+    if _has_time_overlap(volunteer.id, shift):
+        return error('Helfer hat bereits eine überlappende Schicht an diesem Tag', 409)
 
     reg = Registration(registered_by_admin=True, **data)
     db.session.add(reg)
@@ -93,3 +95,20 @@ def _get_instance_shift(shift_id, instance_id):
             .join(Stand, Shift.stand_id == Stand.id)
             .filter(Shift.id == shift_id, Stand.instance_id == instance_id)
             .first())
+
+
+def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
+    existing = (
+        Registration.query
+        .join(Shift, Registration.shift_id == Shift.id)
+        .filter(
+            Registration.volunteer_id == volunteer_id,
+            Shift.event_date_id == new_shift.event_date_id,
+            Shift.id != new_shift.id,
+        )
+        .all()
+    )
+    return any(
+        r.shift.start_time < new_shift.end_time and new_shift.start_time < r.shift.end_time
+        for r in existing
+    )
