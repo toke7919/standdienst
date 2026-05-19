@@ -622,7 +622,15 @@ git push origin --delete feat/meine-funktion
 | Breaking Change | **Major** (X) | v3.1.0 → v4.0.0 |
 
 **Pflicht bei jedem `feat/`- oder `fix/`-Merge in main:**
-1. Git-Tag setzen und GitHub-Release mit Release-Notes erstellen:
+1. `version.py` aktualisieren – **immer**, da der Wert zur Laufzeit für den Update-Check (`/api/admin/update/check`) und das `update.sh`-Skript verwendet wird:
+
+```bash
+# standdienst-api/version.py
+VERSION = "X.Y.Z"
+VERSION_DATE = "YYYY-MM-DD"
+```
+
+2. Git-Tag setzen und GitHub-Release mit Release-Notes erstellen:
 
 ```bash
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
@@ -634,7 +642,7 @@ gh release create vX.Y.Z \
 ```
 
 **Kein CHANGELOG.md** – Release-Notes leben ausschließlich in GitHub Releases.  
-**`version.py`** nur pflegen wenn der Code die eigene Versionsnummer zur Laufzeit braucht (z.B. `/api/admin/update/check`).
+**`version.py` muss bei jedem Release aktualisiert werden** – ohne korrekte Version zeigt `update.sh` nach dem Update weiterhin die alte Versionsnummer an.
 
 ---
 
