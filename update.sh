@@ -235,6 +235,11 @@ section "Dateien aktualisieren"
 SRC_API="$EXTRACTED/standdienst-api"
 [ -d "$SRC_API" ] || die "standdienst-api/ nicht im Release-Tarball enthalten"
 
+if ! command -v rsync &>/dev/null; then
+    warn "rsync nicht gefunden – wird installiert"
+    apt-get install -y -qq rsync
+fi
+
 rsync -a --delete \
     --exclude='.env' \
     --exclude='uploads/' \
