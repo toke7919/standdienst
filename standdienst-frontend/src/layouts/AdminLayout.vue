@@ -4,11 +4,17 @@
     <!-- ============================= DESKTOP SIDEBAR ============================= -->
     <aside class="hidden md:flex flex-col bg-white border-r border-gray-200 w-64 fixed inset-y-0 z-40">
       <div class="p-5 border-b border-gray-100 flex items-center gap-2">
-        <RouterLink to="/admin/dashboard" class="flex items-center gap-2">
-          <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span class="text-white text-sm font-bold">S</span>
+        <RouterLink :to="selectedSlug ? `/admin/${selectedSlug}/dashboard` : '/admin/dashboard'" class="flex items-center gap-2 min-w-0">
+          <img
+            v-if="instanceInfo?.logo_filename"
+            :src="`/uploads/${instanceInfo.logo_filename}`"
+            class="h-8 w-8 object-contain rounded-lg flex-shrink-0"
+            alt="Logo"
+          />
+          <div v-else class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <span class="text-white text-sm font-bold">{{ instanceInitial }}</span>
           </div>
-          <span class="font-semibold text-gray-900">Standdienst</span>
+          <span class="font-semibold text-gray-900 truncate">{{ instanceInfo?.site_title || 'Standdienst' }}</span>
         </RouterLink>
       </div>
 
@@ -65,11 +71,17 @@
     <!-- ============================= MOBILE HEADER ============================= -->
     <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-gray-200 h-14 flex items-center px-4 gap-3 shadow-sm">
       <div class="flex items-center gap-2 flex-1 min-w-0">
-        <div class="w-7 h-7 bg-primary-600 rounded-md flex items-center justify-center flex-shrink-0">
-          <span class="text-white text-xs font-bold">S</span>
+        <img
+          v-if="instanceInfo?.logo_filename"
+          :src="`/uploads/${instanceInfo.logo_filename}`"
+          class="h-7 w-7 object-contain rounded-md flex-shrink-0"
+          alt="Logo"
+        />
+        <div v-else class="w-7 h-7 bg-primary-600 rounded-md flex items-center justify-center flex-shrink-0">
+          <span class="text-white text-xs font-bold">{{ instanceInitial }}</span>
         </div>
         <span class="font-semibold text-gray-900 text-sm truncate">
-          {{ mobileSlug ? (instances.find(i => i.slug === mobileSlug)?.name || mobileSlug) : 'Admin' }}
+          {{ instanceInfo?.site_title || (mobileSlug ? (instances.find(i => i.slug === mobileSlug)?.name || mobileSlug) : 'Admin') }}
         </span>
       </div>
       <!-- Instanz-Selektor im Header -->
@@ -273,6 +285,13 @@ const moreOpen = ref(false)
 // Aktueller Slug aus Route oder selectedSlug
 const mobileSlug = computed(() => route.params.slug || selectedSlug.value || '')
 
+// Instanzinfo für Logo + Seitentitel aus dem Store
+const instanceInfo = computed(() => (mobileSlug.value ? instanceStore.current : null))
+const instanceInitial = computed(() => {
+  const title = instanceInfo.value?.site_title
+  return title ? title.charAt(0).toUpperCase() : 'S'
+})
+
 // Padding für den Content-Bereich auf Mobile (Header 56px + BottomNav ~88px)
 const mobileContentPad = computed(() =>
   'pt-14 pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:pt-0 md:pb-0'
@@ -314,9 +333,13 @@ watch(() => route.params.slug, (slug) => {
   }
 }, { immediate: true })
 
-// Theme zurücksetzen wenn keine Instanz mehr ausgewählt
+// Theme anwenden/zurücksetzen wenn sich Instanz über den Selector ändert
 watch(selectedSlug, (slug) => {
-  if (!slug) instanceStore.clear()
+  if (!slug) {
+    instanceStore.clear()
+  } else {
+    instanceStore.loadInstance(slug).catch(() => {})
+  }
 })
 
 // Mehr-Sheet bei Navigation schließen

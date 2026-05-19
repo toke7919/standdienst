@@ -15,6 +15,8 @@ export const useInstanceStore = defineStore('instance', () => {
     currentSlug.value = slug
     try {
       const res = await publicApi.getInstanceInfo(slug)
+      // Abbrechen, wenn inzwischen eine neuere loadInstance-Anfrage gestartet wurde
+      if (slug !== currentSlug.value) return
       current.value = res.data.data
       if (res.data.data?.primary_color) {
         applyTheme(res.data.data.primary_color)
