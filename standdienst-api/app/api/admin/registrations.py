@@ -64,7 +64,11 @@ def registration_grid(slug):
     regs_by_shift: dict[int, list] = defaultdict(list)
     for reg in registrations:
         name = reg.volunteer.name if reg.volunteer else reg.guest_name or '—'
-        regs_by_shift[reg.shift_id].append({'id': reg.id, 'name': name})
+        regs_by_shift[reg.shift_id].append({
+            'id': reg.id,
+            'name': name,
+            'by_admin': bool(reg.registered_by_admin),
+        })
 
     # Daten für Grid aufbauen
     # Gruppierung: date_id → stand_id → time_range → shift

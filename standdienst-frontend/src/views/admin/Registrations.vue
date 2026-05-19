@@ -18,11 +18,11 @@
           <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th class="px-4 py-3 text-left text-gray-500 font-medium w-32">Zeit</th>
+                <th class="px-4 py-3 text-left text-gray-500 font-medium w-32 shrink-0">Zeit</th>
                 <th
                   v-for="stand in section.stands"
                   :key="stand.id"
-                  class="px-4 py-3 text-left text-gray-700 font-semibold"
+                  class="px-4 py-3 text-left text-gray-700 font-semibold min-w-[180px]"
                 >
                   {{ stand.name }}
                 </th>
@@ -40,38 +40,56 @@
                 <td
                   v-for="(cell, i) in row.cells"
                   :key="i"
-                  class="px-4 py-3 align-top"
+                  class="px-4 py-3 align-top min-w-[180px]"
                 >
                   <template v-if="cell">
-                    <div class="flex flex-wrap gap-1 mb-2">
+                    <!-- Kopfzeile: Belegung links, Balloon rechts -->
+                    <div class="flex items-center justify-between mb-1.5 gap-2">
+                      <span class="text-xs text-gray-500 whitespace-nowrap">
+                        {{ occupied(cell) }}/{{ cell.max_volunteers }} Plätze
+                      </span>
+                      <span :class="['text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', spotBadgeClass(cell)]">
+                        {{ cell.spots_left === 0 ? 'Voll' : `${cell.spots_left} frei` }}
+                      </span>
+                    </div>
+
+                    <!-- Fortschrittsbalken -->
+                    <div class="w-full h-1.5 bg-gray-100 rounded-full mb-2.5 overflow-hidden">
+                      <div
+                        :class="['h-full rounded-full transition-all duration-300', fillBarClass(cell)]"
+                        :style="{ width: `${fillPct(cell)}%` }"
+                      />
+                    </div>
+
+                    <!-- Anmeldungen -->
+                    <div v-if="cell.registrations.length" class="flex flex-wrap gap-1 mb-2">
                       <span
                         v-for="reg in cell.registrations"
                         :key="reg.id"
-                        class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
+                        :class="['inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
+                          reg.by_admin
+                            ? 'bg-gray-100 text-gray-600'
+                            : 'bg-primary-100 text-primary-700'
+                        ]"
+                        :title="reg.by_admin ? 'Eingetragen durch Admin/Organisator' : 'Selbst angemeldet'"
                       >
+                        <PencilSquareIcon v-if="reg.by_admin" class="w-3 h-3 shrink-0 opacity-60" />
                         {{ reg.name }}
                         <button
                           type="button"
-                          class="text-blue-500 hover:text-red-600 leading-none"
+                          class="opacity-50 hover:opacity-100 leading-none ml-0.5"
                           @click="deleteReg(reg, cell.shift_id)"
                         >×</button>
                       </span>
                     </div>
-                    <div class="flex items-center gap-2">
-                      <span
-                        :class="cell.spots_left > 0
-                          ? 'text-green-600 text-xs font-medium'
-                          : 'text-red-500 text-xs font-medium'"
-                      >
-                        {{ cell.spots_left > 0 ? `${cell.spots_left} frei` : 'voll' }}
-                      </span>
-                      <button
-                        v-if="cell.spots_left > 0"
-                        type="button"
-                        class="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                        @click="openCreate(cell.shift_id)"
-                      >+ Eintragen</button>
-                    </div>
+
+                    <!-- Eintragen-Button -->
+                    <button
+                      v-if="cell.spots_left > 0"
+                      type="button"
+                      class="text-xs text-primary-600 hover:text-primary-800 font-medium"
+                      @click="openCreate(cell.shift_id)"
+                    >+ Eintragen</button>
                   </template>
                   <template v-else>
                     <span class="text-gray-300 text-xs">–</span>
@@ -124,6 +142,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
+import { PencilSquareIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -143,6 +162,31 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function occupied(cell) {
+  return cell.max_volunteers - cell.spots_left
+}
+
+function fillPct(cell) {
+  if (!cell.max_volunteers) return 0
+  return Math.round((occupied(cell) / cell.max_volunteers) * 100)
+}
+
+function spotBadgeClass(cell) {
+  if (cell.spots_left === 0) return 'bg-red-100 text-red-700'
+  const pct = fillPct(cell)
+  if (pct >= 75) return 'bg-orange-100 text-orange-700'
+  if (pct >= 50) return 'bg-yellow-100 text-yellow-700'
+  return 'bg-green-100 text-green-700'
+}
+
+function fillBarClass(cell) {
+  if (cell.spots_left === 0) return 'bg-red-400'
+  const pct = fillPct(cell)
+  if (pct >= 75) return 'bg-orange-400'
+  if (pct >= 50) return 'bg-yellow-400'
+  return 'bg-green-400'
 }
 
 function openCreate(shiftId) {
