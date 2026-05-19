@@ -102,6 +102,9 @@ def list_shifts(slug):
 @require_volunteer
 def register_shift(slug, shift_id):
     settings = get_site_settings(g.instance.id)
+    if settings and settings.site_locked:
+        msg = settings.lock_message or 'Anmeldung ist derzeit gesperrt'
+        return error(msg, 403)
     if settings and not settings.registration_open:
         return error('Anmeldeschluss ist überschritten', 403)
 
