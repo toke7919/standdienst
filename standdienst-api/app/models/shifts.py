@@ -107,8 +107,9 @@ class Registration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     volunteer_id = db.Column(
         db.Integer, db.ForeignKey('volunteers.id', ondelete='CASCADE'),
-        nullable=False, index=True,
+        nullable=True, index=True,
     )
+    guest_name = db.Column(db.String(100), nullable=True)
     shift_id = db.Column(
         db.Integer, db.ForeignKey('shifts.id', ondelete='CASCADE'),
         nullable=False, index=True,

@@ -1,10 +1,12 @@
+from collections import defaultdict
+
 from flask import request, g
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Registration, Shift, Stand, Volunteer, ActivityLog
+from ...models import Registration, Shift, Stand, EventDate, ActivityLog
 from ...schemas.shifts import RegistrationSchema, RegistrationCreateSchema
 from ...utils.auth import require_staff, require_instance_admin
 from ...utils.responses import ok, created, no_content, error, paginated
@@ -37,6 +39,94 @@ def list_registrations(slug):
     return paginated(_many.dump(items), total, page, per_page)
 
 
+@admin_bp.route('/<slug>/registrations/grid', methods=['GET'])
+@require_staff
+def registration_grid(slug):
+    """Gibt alle Schichten + Anmeldungen als tabellarische Grid-Struktur zurück.
+    Struktur: eine Sektion pro Veranstaltungstag, Stände als Spalten, Zeiten als Zeilen.
+    """
+    # Alle Schichten dieser Instanz mit Stand und Datum laden
+    shifts = (Shift.query
+              .join(Stand, Shift.stand_id == Stand.id)
+              .join(EventDate, Shift.event_date_id == EventDate.id)
+              .filter(Stand.instance_id == g.instance.id)
+              .order_by(EventDate.date, Stand.sort_order, Shift.start_time)
+              .all())
+
+    if not shifts:
+        return ok([])
+
+    # Alle Anmeldungen für diese Schichten laden
+    shift_ids = [s.id for s in shifts]
+    registrations = Registration.query.filter(Registration.shift_id.in_(shift_ids)).all()
+
+    # Anmeldungen nach shift_id gruppieren
+    regs_by_shift: dict[int, list] = defaultdict(list)
+    for reg in registrations:
+        name = reg.volunteer.name if reg.volunteer else reg.guest_name or '—'
+        regs_by_shift[reg.shift_id].append({'id': reg.id, 'name': name})
+
+    # Daten für Grid aufbauen
+    # Gruppierung: date_id → stand_id → time_range → shift
+    dates_seen: dict[int, dict] = {}  # date_id → {meta, stands, time_slots}
+    stands_per_date: dict[int, dict] = defaultdict(dict)  # date_id → {stand_id: stand}
+    slots_per_date: dict[int, set] = defaultdict(set)     # date_id → {(start, end)}
+    shift_map: dict[int, dict[int, object]] = defaultdict(dict)  # date_id → {(start,end): {stand_id: shift}}
+
+    for shift in shifts:
+        date_id = shift.event_date_id
+        stand_id = shift.stand_id
+        slot = (shift.start_time, shift.end_time)
+
+        if date_id not in dates_seen:
+            dates_seen[date_id] = {
+                'date_id': date_id,
+                'date_formatted': shift.event_date.formatted,
+                'date_sort': shift.event_date.date,
+            }
+        stands_per_date[date_id][stand_id] = shift.stand
+        slots_per_date[date_id].add(slot)
+
+        if slot not in shift_map[date_id]:
+            shift_map[date_id][slot] = {}
+        shift_map[date_id][slot][stand_id] = shift
+
+    # Grid-Struktur serialisieren
+    result = []
+    for date_id, date_meta in sorted(dates_seen.items(), key=lambda x: x[1]['date_sort']):
+        stands = sorted(stands_per_date[date_id].values(), key=lambda s: (s.sort_order, s.name))
+        slots = sorted(slots_per_date[date_id])
+
+        rows = []
+        for (start, end) in slots:
+            cells = []
+            slot_shifts = shift_map[date_id].get((start, end), {})
+            for stand in stands:
+                shift = slot_shifts.get(stand.id)
+                if shift is None:
+                    cells.append(None)
+                else:
+                    cells.append({
+                        'shift_id': shift.id,
+                        'max_volunteers': shift.max_volunteers,
+                        'spots_left': shift.spots_left,
+                        'registrations': regs_by_shift[shift.id],
+                    })
+            rows.append({
+                'time_range': f'{start.strftime("%H:%M")} – {end.strftime("%H:%M")}',
+                'cells': cells,
+            })
+
+        result.append({
+            'date_id': date_meta['date_id'],
+            'date_formatted': date_meta['date_formatted'],
+            'stands': [{'id': s.id, 'name': s.name} for s in stands],
+            'rows': rows,
+        })
+
+    return ok(result)
+
+
 @admin_bp.route('/<slug>/registrations', methods=['POST'])
 @require_instance_admin
 def create_registration(slug):
@@ -45,31 +135,31 @@ def create_registration(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    volunteer = Volunteer.query.filter_by(
-        id=data['volunteer_id'], instance_id=g.instance.id
-    ).first()
     shift = _get_instance_shift(data['shift_id'], g.instance.id)
-    if not volunteer or not shift:
-        return error('Helfer oder Schicht nicht gefunden', 404)
+    if not shift:
+        return error('Schicht nicht gefunden', 404)
     if shift.is_full:
         return error('Schicht ist bereits voll', 409)
-    if _has_time_overlap(volunteer.id, shift):
-        return error('Helfer hat bereits eine überlappende Schicht an diesem Tag', 409)
 
-    reg = Registration(registered_by_admin=True, **data)
+    reg = Registration(
+        shift_id=data['shift_id'],
+        guest_name=data['guest_name'],
+        volunteer_id=None,
+        registered_by_admin=True,
+    )
     db.session.add(reg)
     db.session.add(ActivityLog(
         instance_id=g.instance.id,
         event_type=ActivityLog.AUDIT_DATA,
-        volunteer_name=volunteer.name,
+        volunteer_name=data['guest_name'],
         actor_type=getattr(g.current_user, 'role', 'admin'),
-        details=f'Admin-Eintragung: shift_id={data["shift_id"]}',
+        details=f'Admin-Eintragung (Gast): shift_id={data["shift_id"]}',
     ))
     try:
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return error('Helfer bereits in dieser Schicht eingetragen', 409)
+        return error('Eintragung fehlgeschlagen', 409)
 
     return created(_schema.dump(reg))
 
@@ -95,20 +185,3 @@ def _get_instance_shift(shift_id, instance_id):
             .join(Stand, Shift.stand_id == Stand.id)
             .filter(Shift.id == shift_id, Stand.instance_id == instance_id)
             .first())
-
-
-def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
-    existing = (
-        Registration.query
-        .join(Shift, Registration.shift_id == Shift.id)
-        .filter(
-            Registration.volunteer_id == volunteer_id,
-            Shift.event_date_id == new_shift.event_date_id,
-            Shift.id != new_shift.id,
-        )
-        .all()
-    )
-    return any(
-        r.shift.start_time < new_shift.end_time and new_shift.start_time < r.shift.end_time
-        for r in existing
-    )

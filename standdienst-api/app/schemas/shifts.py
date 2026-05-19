@@ -81,14 +81,16 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
         model = Registration
         load_instance = False
 
-    volunteer_name = fields.Method('_volunteer_name', dump_only=True)
+    display_name = fields.Method('_display_name', dump_only=True)
     volunteer_email = fields.Method('_volunteer_email', dump_only=True)
     stand_name = fields.Method('_stand_name', dump_only=True)
     date_formatted = fields.Method('_date_formatted', dump_only=True)
     time_range = fields.Method('_time_range', dump_only=True)
 
-    def _volunteer_name(self, obj):
-        return obj.volunteer.name if obj.volunteer else None
+    def _display_name(self, obj):
+        if obj.volunteer:
+            return obj.volunteer.name
+        return obj.guest_name or '—'
 
     def _volunteer_email(self, obj):
         return obj.volunteer.email if obj.volunteer else None
@@ -108,5 +110,5 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
 
 
 class RegistrationCreateSchema(Schema):
-    volunteer_id = fields.Int(required=True)
     shift_id = fields.Int(required=True)
+    guest_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))

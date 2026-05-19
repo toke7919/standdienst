@@ -47,6 +47,7 @@ export const adminApi = {
 
   // Registrations
   getRegistrations: (slug, p) => client.get(`${a(slug)}/registrations`, { params: p }),
+  getRegistrationGrid: (slug) => client.get(`${a(slug)}/registrations/grid`),
   createRegistration: (slug, data) => client.post(`${a(slug)}/registrations`, data),
   deleteRegistration: (slug, id) => client.delete(`${a(slug)}/registrations/${id}`),
 
