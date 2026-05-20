@@ -98,6 +98,10 @@ const router = createRouter({
       component: () => import('@/views/volunteer/WelcomeSetup.vue'),
     },
     {
+      path: '/:slug/impressum',
+      component: () => import('@/views/public/Impressum.vue'),
+    },
+    {
       path: '/:slug/datenschutz',
       component: () => import('@/views/public/PrivacyPolicy.vue'),
     },
@@ -111,8 +115,6 @@ const router = createRouter({
         { path: 'my-shifts', component: () => import('@/views/volunteer/MyShifts.vue') },
         { path: 'food', component: () => import('@/views/volunteer/FoodDonations.vue') },
         { path: 'profile', component: () => import('@/views/volunteer/Profile.vue') },
-        { path: 'impressum', component: () => import('@/views/public/Impressum.vue') },
-        { path: 'datenschutz', component: () => import('@/views/public/PrivacyPolicy.vue') },
       ],
     },
 

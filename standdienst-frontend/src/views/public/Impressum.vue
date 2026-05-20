@@ -2,47 +2,55 @@
   <div class="max-w-2xl mx-auto px-4 py-12">
     <h1 class="text-2xl font-bold text-gray-900 mb-8">Impressum</h1>
 
-    <div v-if="providerHtml" class="prose prose-sm max-w-none mb-8">
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">Plattformbetreiber</h2>
-      <div v-html="providerHtml" />
-    </div>
+    <LoadingSpinner v-if="loading" />
 
-    <div v-if="instanceHtml" class="prose prose-sm max-w-none">
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">Inhaltlich Verantwortlicher</h2>
-      <div v-html="instanceHtml" />
-    </div>
+    <template v-else-if="data">
+      <!-- Inhaltlich Verantwortlicher (instanzspezifisch) -->
+      <div v-if="data.html" class="prose prose-sm max-w-none mb-8">
+        <h2 v-if="data.context === 'instance'" class="text-lg font-semibold text-gray-800 mb-3">
+          Inhaltlich Verantwortlicher
+        </h2>
+        <div v-html="data.html" />
+      </div>
 
-    <p v-if="!providerHtml && !instanceHtml" class="text-gray-500">
-      Kein Impressum hinterlegt.
-    </p>
+      <!-- Technischer Betreiber (Plattform-Impressum) -->
+      <div v-if="data.operator_html" class="prose prose-sm max-w-none mb-8 pt-6 border-t border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Technischer Betreiber</h2>
+        <div v-html="data.operator_html" />
+      </div>
+
+      <p v-if="!data.html && !data.operator_html" class="text-gray-500">
+        Kein Impressum hinterlegt.
+      </p>
+    </template>
+
+    <p v-else class="text-gray-500">Kein Impressum hinterlegt.</p>
 
     <button class="mt-8 btn-secondary" @click="$router.back()">Zurück</button>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useInstanceStore } from '@/stores/instance'
-import { adminApi } from '@/api/admin'
-import { ref } from 'vue'
+import { publicApi } from '@/api/public'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
-const instanceStore = useInstanceStore()
-const globalSettings = ref(null)
-
-const instanceHtml = computed(
-  () => instanceStore.current?.settings?.instance_impressum_html || null
-)
-const providerHtml = computed(() => globalSettings.value?.provider_impressum_html || null)
+const data = ref(null)
+const loading = ref(true)
 
 onMounted(async () => {
-  if (!instanceStore.current && route.params.slug) {
-    await instanceStore.loadInstance(route.params.slug)
-  }
   try {
-    const res = await adminApi.getGlobalSettings()
-    globalSettings.value = res.data.data
-  } catch { /* not logged in as admin, skip */ }
+    const slug = route.params.slug
+    const res = slug
+      ? await publicApi.getInstanceImpressum(slug)
+      : await publicApi.getPlatformImpressum()
+    data.value = res.data.data
+  } catch {
+    data.value = null
+  } finally {
+    loading.value = false
+  }
 })
 </script>

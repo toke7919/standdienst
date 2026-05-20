@@ -22,6 +22,12 @@ class Instance(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime(timezone=True),
                            default=lambda: datetime.now(timezone.utc))
+    contact_organisation = db.Column(db.String(200), nullable=True)
+    contact_person = db.Column(db.String(200), nullable=True)
+    contact_street = db.Column(db.String(200), nullable=True)
+    contact_zip_city = db.Column(db.String(100), nullable=True)
+    contact_email = db.Column(db.String(200), nullable=True)
+    contact_phone = db.Column(db.String(50), nullable=True)
 
     def __repr__(self):
         return f'<Instance {self.slug}>'
@@ -34,6 +40,14 @@ class GlobalSettings(db.Model):
     base_url = db.Column(db.String(500), nullable=True)
     copyright_text = db.Column(db.String(500), nullable=True)
     provider_impressum_html = db.Column(db.Text, nullable=True)
+    impressum_template_html = db.Column(db.Text, nullable=True)
+    datenschutz_template_html = db.Column(db.Text, nullable=True)
+    contact_organisation = db.Column(db.String(200), nullable=True)
+    contact_person = db.Column(db.String(200), nullable=True)
+    contact_street = db.Column(db.String(200), nullable=True)
+    contact_zip_city = db.Column(db.String(100), nullable=True)
+    contact_email = db.Column(db.String(200), nullable=True)
+    contact_phone = db.Column(db.String(50), nullable=True)
     log_retention_months = db.Column(db.Integer, nullable=False, default=3)
     smb_enabled = db.Column(db.Boolean, nullable=False, default=False)
     smb_server = db.Column(db.String(200), nullable=True)

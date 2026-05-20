@@ -50,12 +50,7 @@
     </main>
 
     <!-- ====== DESKTOP FOOTER ====== -->
-    <footer class="hidden md:block border-t border-gray-200 bg-white mt-auto">
-      <div class="max-w-4xl mx-auto px-4 py-3 flex gap-4 text-xs text-gray-400">
-        <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
-        <RouterLink :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
-      </div>
-    </footer>
+    <AppFooter class="hidden md:block" :slug="slug" :copyright="settings?.copyright_text" />
 
     <!-- ====== MOBILE BOTTOM NAVIGATION ====== -->
     <nav
@@ -87,6 +82,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
 import { isColorDark, applyTheme } from '@/utils/colorPalette'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import AppFooter from '@/components/AppFooter.vue'
 import {
   CalendarIcon, ClipboardDocumentListIcon, ShoppingBagIcon, UserCircleIcon,
 } from '@heroicons/vue/24/outline'
