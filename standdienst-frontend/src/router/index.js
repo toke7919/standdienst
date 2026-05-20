@@ -106,7 +106,7 @@ const router = createRouter({
       component: () => import('@/layouts/VolunteerLayout.vue'),
       meta: { requiresAuth: true, requiresVolunteer: true },
       children: [
-        { path: '', redirect: (to) => `/${to.params.slug}/shifts` },
+        { path: '', component: () => import('@/views/volunteer/Home.vue') },
         { path: 'shifts', component: () => import('@/views/volunteer/Shifts.vue') },
         { path: 'my-shifts', component: () => import('@/views/volunteer/MyShifts.vue') },
         { path: 'food', component: () => import('@/views/volunteer/FoodDonations.vue') },
