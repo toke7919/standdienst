@@ -7,7 +7,7 @@
     <!-- ====== HEADER ====== -->
     <header class="bg-primary-600 shadow-sm sticky top-0 z-20">
       <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-        <RouterLink :to="`/${slug}/shifts`" class="flex items-center gap-2 min-w-0">
+        <RouterLink :to="`/${slug}`" class="flex items-center gap-2 min-w-0">
           <img
             v-if="settings?.logo_filename"
             :src="`/uploads/${settings.logo_filename}`"
