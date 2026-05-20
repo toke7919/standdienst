@@ -5,22 +5,30 @@
       <button class="btn-primary" @click="openCreate">Neuer Termin</button>
     </div>
 
-    <div class="card space-y-2">
+    <div class="space-y-2">
       <div
         v-for="d in dates"
         :key="d.id"
-        class="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50"
+        class="group bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
       >
-        <div>
-          <p class="font-medium text-gray-900">{{ d.formatted }}</p>
-          <p v-if="d.label" class="text-xs text-gray-500">{{ d.label }}</p>
+        <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+          <CalendarIcon class="w-5 h-5 text-violet-600" />
         </div>
-        <div class="flex gap-2">
-          <button class="text-xs text-primary-600 hover:underline" @click="openEdit(d)">Bearbeiten</button>
-          <button class="text-xs text-red-600 hover:underline" @click="deleteDate(d)">Löschen</button>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-gray-900">{{ d.formatted }}</p>
+          <p v-if="d.label" class="text-sm text-gray-500 mt-0.5">{{ d.label }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(d)">Bearbeiten</button>
+          <span class="text-gray-200">|</span>
+          <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteDate(d)">Löschen</button>
         </div>
       </div>
-      <p v-if="!dates.length" class="text-center text-gray-400 py-8">Noch keine Termine</p>
+
+      <div v-if="!dates.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
+        <CalendarIcon class="w-10 h-10 text-gray-200 mx-auto mb-3" />
+        <p class="text-gray-400 text-sm">Noch keine Termine angelegt</p>
+      </div>
     </div>
 
     <Modal v-model="showModal" :title="editing ? 'Termin bearbeiten' : 'Neuer Termin'">
@@ -49,6 +57,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
+import { CalendarIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
