@@ -166,7 +166,7 @@ def welcome_setup(slug, raw_token):
 
     password = (request.get_json() or {}).get('password', '')
     if not validate_password_strength(password, role='volunteer'):
-        return jsonify(error='Passwort zu schwach (mind. 6 Zeichen)', ), 400
+        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen)', ), 400
 
     volunteer.set_password(password)
     volunteer.clear_welcome_token()
@@ -238,7 +238,7 @@ def volunteer_reset_password(slug):
     new_password = data.get('password', '')
 
     if not validate_password_strength(new_password, role='volunteer'):
-        return jsonify(error='Passwort zu schwach (mind. 6 Zeichen)'), 400
+        return jsonify(error='Passwort zu schwach (mind. 8 Zeichen)'), 400
 
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     volunteer = Volunteer.query.filter_by(

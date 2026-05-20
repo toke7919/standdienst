@@ -317,7 +317,7 @@ def update_profile(slug):
         volunteer.name = f'{volunteer.first_name or ""} {volunteer.last_name or ""}'.strip() or volunteer.name
     if 'password' in data and data['password']:
         if not validate_password_strength(data['password'], role='volunteer'):
-            return error('Passwort zu schwach (mind. 6 Zeichen)', 400)
+            return error('Passwort zu schwach (mind. 8 Zeichen)', 400)
         volunteer.set_password(data['password'])
         volunteer.rotate_jwt()
 

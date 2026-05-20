@@ -1,5 +1,6 @@
 """HTML-Whitelist-Sanitizer ohne externe Bibliothek."""
 import re
+import html as _html
 from html.parser import HTMLParser
 
 ALLOWED_TAGS = {
@@ -32,7 +33,7 @@ class _Sanitizer(HTMLParser):
         if tag not in ALLOWED_TAGS:
             return
         safe_attrs = self._filter_attrs(tag, dict(attrs))
-        attr_str = ''.join(f' {k}="{v}"' for k, v in safe_attrs.items())
+        attr_str = ''.join(f' {k}="{_html.escape(v, quote=True)}"' for k, v in safe_attrs.items())
         self.result.append(f'<{tag}{attr_str}>')
 
     def handle_endtag(self, tag):
@@ -51,6 +52,8 @@ class _Sanitizer(HTMLParser):
             if key in ('href', 'src') and not _URL_RE.match(value or ''):
                 continue
             result[key] = value
+        if result.get('target') == '_blank':
+            result['rel'] = 'noopener noreferrer'
         return result
 
 

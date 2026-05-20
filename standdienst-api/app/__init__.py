@@ -96,6 +96,16 @@ def _register_request_hooks(app):
             log.debug('%s %s → %d', request.method, request.path, response.status_code)
         return response
 
+    @app.after_request
+    def _security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
+        if not app.debug:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
+
 
 def _register_error_handlers(app):
     @app.errorhandler(400)
