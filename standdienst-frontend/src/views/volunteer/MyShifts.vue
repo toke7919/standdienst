@@ -4,35 +4,49 @@
       <h1 class="text-xl font-bold text-gray-900">Meine Schichten</h1>
       <a :href="icsUrl" class="btn-secondary text-sm">
         <CalendarIcon class="w-4 h-4" />
-        Als iCal herunterladen
+        iCal
       </a>
     </div>
 
     <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
 
-    <div v-else class="space-y-3">
-      <div
-        v-for="reg in registrations"
-        :key="reg.id"
-        class="card flex items-center justify-between p-4"
-      >
-        <div>
-          <p class="font-medium text-gray-900">{{ reg.stand_name }}</p>
-          <p class="text-sm text-gray-500">{{ reg.date_formatted }} · {{ reg.time_range }}</p>
+    <div v-else-if="grouped.length" class="space-y-6">
+      <div v-for="group in grouped" :key="group.date">
+        <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2 px-1">{{ group.date }}</p>
+
+        <div class="card overflow-hidden !p-0">
+          <div class="h-1 bg-primary-500 rounded-t-2xl" />
+          <div class="divide-y divide-gray-100">
+            <div
+              v-for="reg in group.items"
+              :key="reg.id"
+              class="flex items-center justify-between px-4 py-3 gap-3"
+            >
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-800 truncate">{{ reg.stand_name }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ reg.time_range }}</p>
+              </div>
+              <button
+                class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                title="Abmelden"
+                @click="cancel(reg)"
+              >
+                <XMarkIcon class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
-        <button class="text-sm text-red-600 hover:underline" @click="cancel(reg)">Abmelden</button>
       </div>
-      <p v-if="!registrations.length" class="text-center text-gray-400 py-12">
-        Noch keine Anmeldungen
-      </p>
     </div>
+
+    <p v-else class="text-center text-gray-400 py-12">Noch keine Anmeldungen</p>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { CalendarIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -43,6 +57,15 @@ const registrations = ref([])
 const loading = ref(true)
 
 const icsUrl = computed(() => `/api/volunteer/${route.params.slug}/my-registrations/ical`)
+
+const grouped = computed(() => {
+  const byDate = {}
+  for (const r of registrations.value) {
+    if (!byDate[r.date_formatted]) byDate[r.date_formatted] = []
+    byDate[r.date_formatted].push(r)
+  }
+  return Object.entries(byDate).map(([date, items]) => ({ date, items }))
+})
 
 onMounted(load)
 

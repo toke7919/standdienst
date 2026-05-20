@@ -30,7 +30,7 @@
                     'border-gray-100': !shift.is_registered && !shift.is_full,
                   }"
                 >
-                  <div class="flex-1" :class="{ 'opacity-50': !shift.is_registered && shift.is_full }">
+                  <div class="flex-1">
                     <p class="text-sm font-medium text-gray-700">{{ shift.time_range }}</p>
                     <div class="flex items-center gap-2 mt-1.5">
                       <div class="h-1.5 bg-gray-200 rounded-full w-24">

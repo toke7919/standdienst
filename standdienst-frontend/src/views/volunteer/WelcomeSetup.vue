@@ -1,59 +1,92 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-
-      <div v-if="loading" class="card text-center">
-        <LoadingSpinner size="lg" />
-        <p class="text-gray-500 mt-3 text-sm">Link wird geprüft…</p>
+  <div class="min-h-screen flex flex-col bg-gradient-to-b from-primary-800 to-primary-700">
+    <!-- Branding -->
+    <div class="flex-shrink-0 pt-16 pb-24 px-6 text-white text-center">
+      <img
+        v-if="settings?.logo_filename"
+        :src="`/uploads/${settings.logo_filename}`"
+        class="h-16 object-contain mx-auto mb-4 drop-shadow-lg"
+        alt="Logo"
+      />
+      <div v-else class="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/30">
+        <span class="text-white text-2xl font-bold">{{ settings?.site_title?.charAt(0) || 'S' }}</span>
       </div>
+      <h1 class="text-2xl font-bold tracking-tight">{{ settings?.site_title || 'Standdienst' }}</h1>
+      <p class="text-primary-200 mt-1.5 text-sm">Konto einrichten</p>
+    </div>
 
-      <div v-else-if="invalid" class="card text-center">
-        <p class="text-4xl mb-3">⚠️</p>
-        <p class="font-semibold text-gray-900">Ungültiger oder abgelaufener Link</p>
-        <p class="text-sm text-gray-500 mt-2">
-          Der Einrichtungslink ist nicht mehr gültig (max. 24 Stunden).<br />
-          Bitte registriere dich erneut oder wende dich an die Organisatoren.
-        </p>
-        <RouterLink :to="`/${slug}/register`" class="mt-5 btn-secondary inline-flex">
-          Zur Registrierung
-        </RouterLink>
-      </div>
+    <!-- Inhalt -->
+    <div class="flex-1 bg-white rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
+      <div class="max-w-md mx-auto">
 
-      <div v-else-if="done" class="card text-center text-green-800 bg-green-50">
-        <p class="font-semibold">Passwort eingerichtet!</p>
-        <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
-      </div>
-
-      <div v-else class="card">
-        <div class="text-center mb-6">
-          <h1 class="text-2xl font-bold text-gray-900">{{ settings?.site_title || 'Standdienst' }}</h1>
-          <p class="text-gray-500 mt-1">Hallo {{ volunteerName }}, richte dein Passwort ein</p>
+        <!-- Laden -->
+        <div v-if="loading" class="flex justify-center py-12">
+          <LoadingSpinner size="lg" />
         </div>
 
-        <form @submit.prevent="submit" class="space-y-4">
-          <div>
-            <label class="label">Passwort</label>
-            <input v-model="password" type="password" class="input" required
-                   autocomplete="new-password"
-                   placeholder="Mindestens 8 Zeichen" />
-            <p class="text-xs text-gray-400 mt-1">Mindestens 8 Zeichen</p>
+        <!-- Ungültiger Link -->
+        <div v-else-if="invalid" class="text-center space-y-4">
+          <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+            <ExclamationTriangleIcon class="w-7 h-7 text-amber-500" />
           </div>
-
           <div>
-            <label class="label">Passwort wiederholen</label>
-            <input v-model="passwordConfirm" type="password" class="input" required
-                   autocomplete="new-password" />
+            <p class="font-semibold text-gray-900">Ungültiger oder abgelaufener Link</p>
+            <p class="text-sm text-gray-500 mt-1">
+              Der Einrichtungslink ist nicht mehr gültig (max. 7 Tage).<br />
+              Bitte registriere dich erneut oder wende dich an die Organisatoren.
+            </p>
           </div>
+          <RouterLink :to="`/${slug}/register`" class="btn-secondary inline-flex">
+            Zur Registrierung
+          </RouterLink>
+        </div>
 
-          <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
+        <!-- Erfolgreich -->
+        <div v-else-if="done" class="rounded-2xl text-center text-green-800 bg-green-50 border border-green-200 p-5">
+          <p class="font-semibold">Passwort eingerichtet!</p>
+          <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
+        </div>
 
-          <button type="submit" class="btn-primary w-full" :disabled="submitting">
-            <LoadingSpinner v-if="submitting" size="sm" class="mr-2" />
-            Passwort einrichten & anmelden
-          </button>
-        </form>
+        <!-- Formular -->
+        <div v-else>
+          <p class="text-gray-700 mb-5">
+            Hallo <span class="font-semibold">{{ volunteerName }}</span>, richte jetzt dein Passwort ein.
+          </p>
+
+          <form @submit.prevent="submit" class="space-y-4">
+            <div>
+              <label class="label">Passwort</label>
+              <div class="relative">
+                <input
+                  v-model="password"
+                  :type="showPw ? 'text' : 'password'"
+                  class="input pr-10"
+                  required
+                  autocomplete="new-password"
+                  placeholder="Mindestens 8 Zeichen"
+                />
+                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" @click="showPw = !showPw">
+                  <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
+                  <EyeIcon v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">Passwort wiederholen</label>
+              <input v-model="passwordConfirm" type="password" class="input" required autocomplete="new-password" />
+            </div>
+
+            <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
+
+            <button type="submit" class="btn-primary w-full" :disabled="submitting">
+              <LoadingSpinner v-if="submitting" size="sm" class="mr-2" />
+              Passwort einrichten & anmelden
+            </button>
+          </form>
+        </div>
+
       </div>
-
     </div>
   </div>
 </template>
@@ -64,6 +97,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/stores/instance'
 import { useAuthStore } from '@/stores/auth'
 import { publicApi } from '@/api/public'
+import { EyeIcon, EyeSlashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const instanceStore = useInstanceStore()
@@ -72,7 +106,7 @@ const route = useRoute()
 const router = useRouter()
 const slug = computed(() => route.params.slug)
 const token = computed(() => route.params.token)
-const settings = computed(() => instanceStore.current?.settings)
+const settings = computed(() => instanceStore.current)
 
 const loading = ref(true)
 const invalid = ref(false)
@@ -81,10 +115,11 @@ const submitting = ref(false)
 const volunteerName = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+const showPw = ref(false)
 const errorMsg = ref('')
 
 onMounted(async () => {
-  if (!instanceStore.current) await instanceStore.loadInstance(slug.value)
+  await instanceStore.loadInstance(slug.value)
   try {
     const res = await publicApi.welcomeInfo(slug.value, token.value)
     volunteerName.value = res.data.data.name
