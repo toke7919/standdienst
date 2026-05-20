@@ -57,8 +57,8 @@
           <div
             v-for="d in t.donations"
             :key="d.id"
-            class="flex items-center justify-between rounded-xl px-3 py-2.5 gap-3"
-            :class="d.is_mine ? 'bg-primary-50' : 'bg-gray-50'"
+            class="flex items-center justify-between rounded-xl px-3 py-2.5 gap-3 border"
+            :class="d.is_mine ? 'bg-primary-50 border-primary-200' : 'bg-gray-50 border-transparent'"
           >
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium truncate" :class="d.is_mine ? 'text-primary-700' : 'text-gray-800'">

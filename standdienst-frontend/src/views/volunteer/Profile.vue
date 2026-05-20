@@ -29,6 +29,13 @@
             </button>
           </div>
         </div>
+        <div v-if="form.password">
+          <label class="label">Passwort bestätigen</label>
+          <input v-model="form.passwordConfirm" type="password" class="input" autocomplete="new-password" />
+          <p v-if="form.passwordConfirm && form.password !== form.passwordConfirm" class="text-xs text-red-500 mt-1">
+            Passwörter stimmen nicht überein
+          </p>
+        </div>
         <button type="submit" class="btn-primary" :disabled="saving">
           <LoadingSpinner v-if="saving" size="sm" class="mr-2" />
           Speichern
@@ -83,11 +90,16 @@ const form = ref({
   last_name: auth.user?.last_name || '',
   email: auth.user?.email || '',
   password: '',
+  passwordConfirm: '',
 })
 const saving = ref(false)
 const showPw = ref(false)
 
 async function save() {
+  if (form.value.password && form.value.password !== form.value.passwordConfirm) {
+    ui.err('Passwörter stimmen nicht überein')
+    return
+  }
   saving.value = true
   const data = { first_name: form.value.first_name, last_name: form.value.last_name, email: form.value.email }
   if (form.value.password) data.password = form.value.password
@@ -95,6 +107,7 @@ async function save() {
     await volunteerApi.updateProfile(route.params.slug, data)
     ui.success('Gespeichert')
     form.value.password = ''
+    form.value.passwordConfirm = ''
     await auth.fetchMe()
   } catch (e) {
     ui.err(e.response?.data?.error || 'Fehler beim Speichern')

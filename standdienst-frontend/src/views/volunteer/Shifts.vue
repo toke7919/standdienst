@@ -12,13 +12,17 @@
         </div>
 
         <div class="space-y-4 mt-3">
-          <div v-for="standGroup in group.stands" :key="standGroup.stand_name" class="card overflow-hidden !p-0">
+          <div v-for="standGroup in group.stands" :key="standGroup.stand_name">
+            <!-- Sticky Standname (unterhalb des Datumsheaders top-14 + ~2.25rem) -->
+            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 py-1.5 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+              <h3 class="text-sm font-semibold text-primary-700">{{ standGroup.stand_name }}</h3>
+            </div>
+
+            <div class="card overflow-hidden !p-0 mt-2">
             <!-- Farbiger Akzentstreifen -->
             <div class="h-1 bg-primary-500 rounded-t-2xl" />
 
             <div class="p-4">
-              <h3 class="text-base font-semibold text-gray-800 mb-3">{{ standGroup.stand_name }}</h3>
-
               <div class="space-y-2">
                 <div
                   v-for="shift in standGroup.shifts"
@@ -77,6 +81,7 @@
                 </div>
               </div>
             </div>
+            </div><!-- /card -->
           </div>
         </div>
       </div>
