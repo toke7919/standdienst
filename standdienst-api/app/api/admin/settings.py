@@ -121,7 +121,7 @@ def update_global_settings():
     if optimistic_lock_conflict(settings, raw.get('updated_at')):
         return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
-    for key in ('provider_impressum_html', 'landing_impressum_html'):
+    for key in ('provider_impressum_html',):
         if key in data and data[key]:
             data[key] = sanitize_html(data[key])
 

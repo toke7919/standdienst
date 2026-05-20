@@ -82,18 +82,6 @@
                   placeholder="HTML für das Betreiber-Impressum (§ 5 TMG)" />
       </div>
 
-      <div class="card">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold text-gray-800">Landing-Page Impressum (HTML)</h2>
-          <button type="button" class="btn-secondary text-xs py-1 px-2"
-                  @click="form.landing_impressum_html = impressumTemplate">
-            Vorlage einfügen
-          </button>
-        </div>
-        <textarea v-model="form.landing_impressum_html" class="input font-mono text-xs" rows="6"
-                  placeholder="HTML für das Impressum auf der Landing-Page" />
-      </div>
-
       <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
       <button type="submit" class="btn-primary" :disabled="saving">
         <LoadingSpinner v-if="saving" size="sm" />
