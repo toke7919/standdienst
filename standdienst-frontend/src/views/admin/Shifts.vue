@@ -5,37 +5,62 @@
       <button class="btn-primary" @click="openCreate">Neue Schicht</button>
     </div>
 
-    <div class="card overflow-hidden p-0">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
-          <tr>
-            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="stand_name" @sort="toggleSort">Stand</SortTh>
-            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="date_formatted" @sort="toggleSort">Datum</SortTh>
-            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="time_range" @sort="toggleSort">Zeit</SortTh>
-            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="current_count" @sort="toggleSort">Belegung</SortTh>
-            <th class="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="s in sortedShifts" :key="s.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium">{{ s.stand_name }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ s.date_formatted }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ s.time_range }}</td>
-            <td class="px-4 py-3">
-              <span :class="s.is_full ? 'badge-red' : 'badge-green'">
-                {{ s.current_count }}/{{ s.max_volunteers }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-right space-x-2">
-              <button class="text-xs text-primary-600 hover:underline" @click="openEdit(s)">Bearbeiten</button>
-              <button class="text-xs text-red-600 hover:underline" @click="deleteShift(s)">Löschen</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="loading" class="flex justify-center py-12">
+      <LoadingSpinner size="lg" />
     </div>
 
-    <Pagination v-model:page="page" :pages="pages" :total="total" :per-page="20" @update:page="load" />
+    <template v-else>
+      <!-- Eine Karte pro Stand, analog zu FoodDonations -->
+      <div class="space-y-4">
+        <div v-for="group in groupedShifts" :key="group.stand_name" class="card overflow-hidden !p-0">
+          <!-- Akzent-Streifen oben -->
+          <div class="h-1 bg-primary-500 rounded-t-2xl" />
+
+          <!-- Stand-Kopf -->
+          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <BuildingStorefrontIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+              <h2 class="font-semibold text-gray-900">{{ group.stand_name }}</h2>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">
+              {{ group.total }} {{ group.total === 1 ? 'Schicht' : 'Schichten' }}
+            </span>
+          </div>
+
+          <!-- Schichten gruppiert nach Datum -->
+          <div>
+            <template v-for="dg in group.dateGroups" :key="dg.date">
+              <!-- Datums-Unterheader -->
+              <div class="px-5 py-1.5 bg-gray-50 border-b border-gray-100">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ dg.date }}</span>
+              </div>
+              <!-- Schicht-Zeilen -->
+              <div
+                v-for="s in dg.shifts"
+                :key="s.id"
+                class="flex items-center px-5 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors duration-100"
+              >
+                <p class="text-sm font-medium text-gray-800 flex-1">{{ s.time_range }}</p>
+                <div class="flex items-center gap-4">
+                  <span :class="s.is_full ? 'badge-red' : 'badge-green'">
+                    {{ s.current_count }}/{{ s.max_volunteers }}
+                  </span>
+                  <button class="text-xs text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(s)">Bearbeiten</button>
+                  <button class="text-xs text-red-500 hover:text-red-700 font-medium" @click="deleteShift(s)">Löschen</button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div v-if="!groupedShifts.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
+          <ClockIcon class="w-10 h-10 text-gray-200 mx-auto mb-3" />
+          <p class="text-gray-400 text-sm">Noch keine Schichten angelegt</p>
+        </div>
+      </div>
+
+      <Pagination v-model:page="page" :pages="pages" :total="total" :per-page="perPage" @update:page="load" />
+    </template>
 
     <Modal v-model="showModal" :title="editing ? 'Schicht bearbeiten' : 'Neue Schicht'">
       <form @submit.prevent="save" class="space-y-4">
@@ -78,14 +103,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
-import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
 import Pagination from '@/components/Pagination.vue'
-import SortTh from '@/components/SortTh.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { BuildingStorefrontIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -95,22 +120,48 @@ const dates = ref([])
 const page = ref(1)
 const pages = ref(1)
 const total = ref(0)
-const { sortKey, sortDir, sorted: sortedShifts, toggleSort } = useSort(shifts, 'stand_name')
+const perPage = 50
+const loading = ref(true)
 
 const showModal = ref(false)
 const editing = ref(null)
 const form = ref({ stand_id: '', event_date_id: '', start_time: '08:00', end_time: '12:00', max_volunteers: 2 })
 const saveError = ref('')
 
+// Schichten nach Stand → Datum → Zeit gruppiert (analog FoodDonations)
+const groupedShifts = computed(() => {
+  const sorted = [...shifts.value].sort((a, b) => {
+    if (a.stand_name !== b.stand_name) return a.stand_name.localeCompare(b.stand_name, 'de')
+    if (a.date_formatted !== b.date_formatted) return a.date_formatted.localeCompare(b.date_formatted, 'de')
+    return (a.start_time || '').localeCompare(b.start_time || '')
+  })
+  const byStand = {}
+  for (const s of sorted) {
+    if (!byStand[s.stand_name]) byStand[s.stand_name] = {}
+    if (!byStand[s.stand_name][s.date_formatted]) byStand[s.stand_name][s.date_formatted] = []
+    byStand[s.stand_name][s.date_formatted].push(s)
+  }
+  return Object.entries(byStand).map(([stand_name, dateMap]) => ({
+    stand_name,
+    dateGroups: Object.entries(dateMap).map(([date, shifts]) => ({ date, shifts })),
+    total: Object.values(dateMap).reduce((n, arr) => n + arr.length, 0),
+  }))
+})
+
 onMounted(async () => {
   await Promise.all([load(), loadMeta()])
 })
 
 async function load() {
-  const res = await adminApi.getShifts(route.params.slug, { page: page.value, per_page: 20 })
-  shifts.value = res.data.data
-  pages.value = res.data.pages
-  total.value = res.data.total
+  loading.value = true
+  try {
+    const res = await adminApi.getShifts(route.params.slug, { page: page.value, per_page: perPage })
+    shifts.value = res.data.data
+    pages.value = res.data.pages
+    total.value = res.data.total
+  } finally {
+    loading.value = false
+  }
 }
 
 async function loadMeta() {

@@ -5,22 +5,30 @@
       <button class="btn-primary" @click="openCreate">Neuer Stand</button>
     </div>
 
-    <div class="card space-y-2">
+    <div class="space-y-2">
       <div
         v-for="stand in stands"
         :key="stand.id"
-        class="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50"
+        class="group bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
       >
-        <div>
-          <p class="font-medium text-gray-900">{{ stand.name }}</p>
-          <p v-if="stand.description" class="text-xs text-gray-500 mt-0.5">{{ stand.description }}</p>
+        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+          <BuildingStorefrontIcon class="w-5 h-5 text-primary-600" />
         </div>
-        <div class="flex gap-2">
-          <button class="text-xs text-primary-600 hover:underline" @click="openEdit(stand)">Bearbeiten</button>
-          <button class="text-xs text-red-600 hover:underline" @click="deleteStand(stand)">Löschen</button>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-gray-900">{{ stand.name }}</p>
+          <p v-if="stand.description" class="text-sm text-gray-500 mt-0.5 truncate">{{ stand.description }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(stand)">Bearbeiten</button>
+          <span class="text-gray-200">|</span>
+          <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteStand(stand)">Löschen</button>
         </div>
       </div>
-      <p v-if="!stands.length" class="text-center text-gray-400 py-8">Noch keine Stände</p>
+
+      <div v-if="!stands.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
+        <BuildingStorefrontIcon class="w-10 h-10 text-gray-200 mx-auto mb-3" />
+        <p class="text-gray-400 text-sm">Noch keine Stände angelegt</p>
+      </div>
     </div>
 
     <Modal v-model="showModal" :title="editing ? 'Stand bearbeiten' : 'Neuer Stand'">
@@ -49,6 +57,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
+import { BuildingStorefrontIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
