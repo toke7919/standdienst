@@ -81,7 +81,7 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
-import { isColorDark } from '@/utils/colorPalette'
+import { isColorDark, applyTheme } from '@/utils/colorPalette'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import {
   CalendarIcon, ClipboardDocumentListIcon, ShoppingBagIcon, UserCircleIcon,
@@ -136,6 +136,7 @@ onMounted(() => {
 
 watch(settings, (s) => {
   if (s?.site_title) document.title = s.site_title
+  if (s?.primary_color) applyTheme(s.primary_color)
   updateFavicon(s?.logo_filename || null, s?.primary_color || null)
 }, { immediate: true })
 

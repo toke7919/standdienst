@@ -6,7 +6,7 @@
 
     <div v-else>
       <!-- Hero-Streifen (hebt Layout-Padding auf, füllt bis zur Kante) -->
-      <div class="-mx-4 -mt-5 bg-gradient-to-br from-primary-700 to-primary-900 px-6 pt-12 pb-20 text-white">
+      <div class="-mx-4 -mt-5 bg-gradient-to-br from-primary-600 to-primary-900 px-6 pt-12 pb-20 text-white">
         <p class="text-primary-300 text-sm font-medium mb-1">{{ greeting }}</p>
         <h1 class="text-2xl font-bold tracking-tight">
           <span v-if="firstName">{{ firstName }}</span>
