@@ -52,10 +52,11 @@ export function generatePalette(hex) {
     700: darker(-9),
     800: darker(-20),
     900: darker(-33),
+    950: darker(-45),
   }
 }
 
-const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
 
 export function applyTheme(hex) {
   if (!hex || !/^#[0-9a-fA-F]{6}$/i.test(hex)) return
