@@ -145,6 +145,11 @@ def create_registration(slug):
     if shift.is_full:
         return error('Schicht ist bereits voll', 409)
 
+    stand     = shift.stand
+    date      = shift.event_date
+    time_str  = f'{shift.start_time.strftime("%H:%M")}–{shift.end_time.strftime("%H:%M")}'
+    detail    = f'{stand.name} · {date.date.strftime("%d.%m.%Y")} · {time_str} (Admin-Eintragung)'
+
     reg = Registration(
         shift_id=data['shift_id'],
         guest_name=data['guest_name'],
@@ -154,10 +159,10 @@ def create_registration(slug):
     db.session.add(reg)
     db.session.add(ActivityLog(
         instance_id=g.instance.id,
-        event_type=ActivityLog.AUDIT_DATA,
+        event_type=ActivityLog.SHIFT_REGISTER,
         volunteer_name=data['guest_name'],
         actor_type=getattr(g.current_user, 'role', 'admin'),
-        details=f'Admin-Eintragung (Gast): shift_id={data["shift_id"]}',
+        details=detail,
     ))
     try:
         db.session.commit()
@@ -179,7 +184,21 @@ def delete_registration(slug, reg_id):
         from flask import abort
         abort(404)
 
+    shift     = reg.shift
+    stand     = shift.stand
+    date      = shift.event_date
+    time_str  = f'{shift.start_time.strftime("%H:%M")}–{shift.end_time.strftime("%H:%M")}'
+    name      = reg.volunteer.name if reg.volunteer else reg.guest_name or '—'
+    detail    = f'{stand.name} · {date.date.strftime("%d.%m.%Y")} · {time_str}'
+
     db.session.delete(reg)
+    db.session.add(ActivityLog(
+        instance_id=g.instance.id,
+        event_type=ActivityLog.SHIFT_UNREGISTER,
+        volunteer_name=name,
+        actor_type=getattr(g.current_user, 'role', 'admin'),
+        details=detail + ' (Admin-Abmeldung)',
+    ))
     db.session.commit()
     return no_content()
 

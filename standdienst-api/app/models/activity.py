@@ -12,6 +12,8 @@ class ActivityLog(db.Model):
     LOGIN_SUCCESS    = 'login_success'
     LOGIN_FAIL       = 'login_fail'
     VOLUNTEER_REGISTER = 'volunteer_register'
+    VOLUNTEER_DELETE           = 'volunteer_delete'
+    VOLUNTEER_PERMANENT_DELETE = 'volunteer_permanent_delete'
     AUDIT_SETTINGS   = 'audit_settings'
     AUDIT_DATA       = 'audit_data'
     AUDIT_ORGANIZER  = 'audit_organizer'

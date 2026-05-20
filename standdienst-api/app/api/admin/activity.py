@@ -1,16 +1,14 @@
 from flask import request, g
 
 from . import admin_bp
-from ...models import ActivityLog
-from ...schemas.activity import ActivityLogSchema
-from ...utils.auth import require_admin, require_staff
+from ...extensions import db
+from ...models import ActivityLog, Instance
+from ...utils.auth import require_admin, require_instance_admin
 from ...utils.responses import paginated
 
-_many = ActivityLogSchema(many=True)
-
 _SORT_COLUMNS = {
-    'timestamp': ActivityLog.timestamp,
-    'event_type': ActivityLog.event_type,
+    'timestamp':      ActivityLog.timestamp,
+    'event_type':     ActivityLog.event_type,
     'volunteer_name': ActivityLog.volunteer_name,
 }
 
@@ -21,7 +19,6 @@ def _apply_sort(q, sort_param, dir_param):
 
 
 def _apply_type_filter(q, raw: str | None):
-    """Filtert nach einem oder mehreren kommaseparierten event_types."""
     if not raw:
         return q
     types = [t.strip() for t in raw.split(',') if t.strip()]
@@ -30,35 +27,64 @@ def _apply_type_filter(q, raw: str | None):
     return q
 
 
+def _serialize(entry, include_ip: bool = True, instance_map: dict | None = None) -> dict:
+    inst = instance_map.get(entry.instance_id) if instance_map and entry.instance_id else None
+    d = {
+        'id': entry.id,
+        'timestamp': entry.timestamp.isoformat() if entry.timestamp else None,
+        'event_type': entry.event_type,
+        'volunteer_name': entry.volunteer_name,
+        'details': entry.details,
+        'actor_type': entry.actor_type,
+        'instance_id': entry.instance_id,
+        'instance_name': inst.name if inst else None,
+        'instance_slug': inst.slug if inst else None,
+    }
+    if include_ip:
+        d['ip_address'] = entry.ip_address
+    return d
+
+
 @admin_bp.route('/activity', methods=['GET'])
 @require_admin
 def global_activity():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
-    sort = request.args.get('sort', 'timestamp')
-    direction = request.args.get('dir', 'desc')
+    page        = request.args.get('page', 1, type=int)
+    per_page    = request.args.get('per_page', 50, type=int)
+    sort        = request.args.get('sort', 'timestamp')
+    direction   = request.args.get('dir', 'desc')
     event_types = request.args.get('event_types')
+    instance_id = request.args.get('instance_id', type=int)
 
-    q = ActivityLog.query.filter(ActivityLog.instance_id.is_(None))
+    q = ActivityLog.query
+    if instance_id is not None:
+        q = q.filter(ActivityLog.instance_id == instance_id)
     q = _apply_type_filter(q, event_types)
     q = _apply_sort(q, sort, direction)
+
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
-    return paginated(_many.dump(items), total, page, per_page)
+
+    # Instanznamen einmalig laden
+    inst_ids = {e.instance_id for e in items if e.instance_id}
+    inst_map = {i.id: i for i in Instance.query.filter(Instance.id.in_(inst_ids)).all()} if inst_ids else {}
+
+    return paginated([_serialize(e, include_ip=True, instance_map=inst_map) for e in items],
+                     total, page, per_page)
 
 
 @admin_bp.route('/<slug>/activity', methods=['GET'])
-@require_staff
+@require_instance_admin
 def instance_activity(slug):
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
-    sort = request.args.get('sort', 'timestamp')
-    direction = request.args.get('dir', 'desc')
+    page        = request.args.get('page', 1, type=int)
+    per_page    = request.args.get('per_page', 50, type=int)
+    sort        = request.args.get('sort', 'timestamp')
+    direction   = request.args.get('dir', 'desc')
     event_types = request.args.get('event_types')
 
     q = ActivityLog.query.filter_by(instance_id=g.instance.id)
     q = _apply_type_filter(q, event_types)
     q = _apply_sort(q, sort, direction)
+
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
-    return paginated(_many.dump(items), total, page, per_page)
+    return paginated([_serialize(e, include_ip=False) for e in items], total, page, per_page)

@@ -12,6 +12,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isOrganizer = computed(() => user.value?.role === 'organizer')
   const isStaff = computed(() => isAdmin.value || isOrganizer.value)
   const isVolunteer = computed(() => user.value?.role === 'volunteer')
+  const isInstanceAdmin = computed(() =>
+    isAdmin.value || (isOrganizer.value && !!user.value?.is_instance_admin)
+  )
 
   async function fetchMe() {
     try {
@@ -69,7 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, loading,
-    isLoggedIn, isAdmin, isOrganizer, isStaff, isVolunteer,
+    isLoggedIn, isAdmin, isOrganizer, isStaff, isVolunteer, isInstanceAdmin,
     fetchMe, login, volunteerLogin, verify2fa, logout,
   }
 })
