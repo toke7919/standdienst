@@ -355,4 +355,6 @@ def _user_payload(user) -> dict:
         payload['totp_enabled'] = user.totp_enabled
     if hasattr(user, 'instance_id'):
         payload['instance_id'] = user.instance_id
+    if hasattr(user, 'is_instance_admin'):
+        payload['is_instance_admin'] = user.is_instance_admin
     return payload

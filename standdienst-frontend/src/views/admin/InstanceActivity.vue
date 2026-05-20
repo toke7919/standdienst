@@ -5,7 +5,7 @@
     <!-- Kategorie-Filter -->
     <div class="mb-4 flex flex-wrap gap-2">
       <button
-        v-for="cat in CATEGORIES"
+        v-for="cat in ACTIVITY_CATEGORIES"
         :key="cat.key"
         :class="[
           'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
@@ -14,9 +14,7 @@
             : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400',
         ]"
         @click="setCategory(cat.key)"
-      >
-        {{ cat.label }}
-      </button>
+      >{{ cat.label }}</button>
     </div>
 
     <div class="card overflow-hidden p-0">
@@ -31,13 +29,11 @@
         </thead>
         <tbody>
           <tr v-for="log in logs" :key="log.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{{ fmt(log.timestamp) }}</td>
+            <td class="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{{ fmtTime(log.timestamp) }}</td>
             <td class="px-4 py-3">
-              <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', badgeClass(log.event_type)]">
-                {{ EVENT_LABELS[log.event_type] || log.event_type }}
-              </span>
+              <EventBadge :type="log.event_type" />
             </td>
-            <td class="px-4 py-3 text-gray-500">{{ log.volunteer_name || '—' }}</td>
+            <td class="px-4 py-3 text-gray-600 text-xs">{{ log.volunteer_name || '—' }}</td>
             <td class="px-4 py-3 text-gray-500 text-xs max-w-xs truncate" :title="log.details">{{ log.details || '' }}</td>
           </tr>
           <tr v-if="!logs.length">
@@ -52,48 +48,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineComponent, h } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
+import { EVENT_META, ACTIVITY_CATEGORIES, fmtTime } from '@/utils/activityLog'
 import Pagination from '@/components/Pagination.vue'
 import SortTh from '@/components/SortTh.vue'
-
-const EVENT_LABELS = {
-  shift_register: 'Schicht angemeldet',
-  shift_unregister: 'Schicht abgemeldet',
-  food_register: 'Essensspende',
-  food_unregister: 'Essensspende storniert',
-  login_success: 'Login erfolgreich',
-  login_fail: 'Login fehlgeschlagen',
-  volunteer_register: 'Registrierung',
-  audit_settings: 'Einstellungen geändert',
-  audit_data: 'Datenverwaltung',
-  audit_organizer: 'Organizer verwaltet',
-  audit_admin: 'Admin verwaltet',
-}
-
-const BADGE_CLASSES = {
-  shift_register: 'bg-green-100 text-green-700',
-  shift_unregister: 'bg-orange-100 text-orange-700',
-  food_register: 'bg-teal-100 text-teal-700',
-  food_unregister: 'bg-orange-100 text-orange-700',
-  login_success: 'bg-blue-100 text-blue-700',
-  login_fail: 'bg-red-100 text-red-700',
-  volunteer_register: 'bg-purple-100 text-purple-700',
-  audit_settings: 'bg-yellow-100 text-yellow-700',
-  audit_data: 'bg-yellow-100 text-yellow-700',
-  audit_organizer: 'bg-indigo-100 text-indigo-700',
-  audit_admin: 'bg-indigo-100 text-indigo-700',
-}
-
-const CATEGORIES = [
-  { key: '',              label: 'Alle',          types: [] },
-  { key: 'dienste',       label: 'Dienste',        types: ['shift_register', 'shift_unregister'] },
-  { key: 'essensspenden', label: 'Essensspenden',  types: ['food_register', 'food_unregister'] },
-  { key: 'anmeldungen',   label: 'Anmeldungen',    types: ['volunteer_register', 'login_success'] },
-  { key: 'fehlversuche',  label: 'Fehlversuche',   types: ['login_fail'] },
-  { key: 'audit',         label: 'Auditprotokoll', types: ['audit_settings', 'audit_data', 'audit_organizer', 'audit_admin'] },
-]
 
 const route = useRoute()
 const logs = ref([])
@@ -103,6 +63,19 @@ const total = ref(0)
 const activeCategory = ref('')
 const sortKey = ref('timestamp')
 const sortDir = ref('desc')
+
+const EventBadge = defineComponent({
+  props: { type: String },
+  setup(props) {
+    return () => {
+      const meta = EVENT_META[props.type] || { icon: null, label: props.type, color: 'bg-gray-100 text-gray-600' }
+      return h('span', { class: `inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}` }, [
+        meta.icon ? h(meta.icon, { class: 'w-3 h-3 flex-shrink-0' }) : null,
+        h('span', meta.label),
+      ])
+    }
+  },
+})
 
 onMounted(load)
 
@@ -125,22 +98,11 @@ function toggleSort(key) {
 
 async function load() {
   const params = { page: page.value, per_page: 20, sort: sortKey.value, dir: sortDir.value }
-  const cat = CATEGORIES.find(c => c.key === activeCategory.value)
+  const cat = ACTIVITY_CATEGORIES.find(c => c.key === activeCategory.value)
   if (cat?.types.length) params.event_types = cat.types.join(',')
   const res = await adminApi.getInstanceActivity(route.params.slug, params)
   logs.value = res.data.data
   pages.value = res.data.pages
   total.value = res.data.total
-}
-
-function fmt(iso) {
-  return iso ? new Date(iso).toLocaleString('de-DE', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  }) : ''
-}
-
-function badgeClass(type) {
-  return BADGE_CLASSES[type] || 'bg-gray-100 text-gray-600'
 }
 </script>

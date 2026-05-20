@@ -69,26 +69,26 @@
         </div>
       </template>
 
-      <!-- Letzte Aktivitäten (beide Ansichten) -->
-      <div v-if="data.recent_activity?.length" class="card">
-        <h2 class="text-base font-semibold text-gray-800 mb-4">Letzte Aktivitäten</h2>
-        <div class="space-y-0">
-          <div
-            v-for="log in data.recent_activity"
-            :key="log.id"
-            class="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0"
-          >
-            <span class="text-xs text-gray-400 whitespace-nowrap w-28 flex-shrink-0">
-              {{ fmt(log.timestamp) }}
-            </span>
-            <span :class="['text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0', badgeClass(log.event_type)]">
-              {{ EVENT_LABELS[log.event_type] || log.event_type }}
-            </span>
-            <span v-if="log.volunteer_name" class="text-sm text-gray-500 truncate">
-              {{ log.volunteer_name }}
-            </span>
-          </div>
-        </div>
+      <!-- Letzte Aktivitäten (gefiltert auf Dienste + Essensspenden) -->
+      <div v-if="data.recent_activity?.length" class="card overflow-hidden p-0">
+        <h2 class="text-base font-semibold text-gray-800 px-4 pt-4 pb-3">Letzte Aktivitäten</h2>
+        <table class="w-full text-sm">
+          <tbody>
+            <tr v-for="log in data.recent_activity" :key="log.id"
+                class="border-t border-gray-50 hover:bg-gray-50">
+              <td class="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs w-32 flex-shrink-0">
+                {{ fmtTime(log.timestamp) }}
+              </td>
+              <td class="px-4 py-2.5">
+                <EventBadge :type="log.event_type" />
+              </td>
+              <td class="px-4 py-2.5 text-gray-600 text-xs">{{ log.volunteer_name || '—' }}</td>
+              <td class="px-4 py-2.5 text-gray-500 text-xs max-w-xs truncate" :title="log.details">
+                {{ log.details || '' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </template>
 
@@ -103,35 +103,8 @@ import { ref, computed, onMounted, watch, defineComponent, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
+import { EVENT_META, fmtTime } from '@/utils/activityLog'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-
-const EVENT_LABELS = {
-  shift_register: 'Schicht angemeldet',
-  shift_unregister: 'Schicht abgemeldet',
-  food_register: 'Essensspende',
-  food_unregister: 'Essensspende storniert',
-  login_success: 'Login erfolgreich',
-  login_fail: 'Login fehlgeschlagen',
-  volunteer_register: 'Registrierung',
-  audit_settings: 'Einstellungen geändert',
-  audit_data: 'Datenverwaltung',
-  audit_organizer: 'Organizer verwaltet',
-  audit_admin: 'Admin verwaltet',
-}
-
-const BADGE_CLASSES = {
-  shift_register: 'bg-green-100 text-green-700',
-  shift_unregister: 'bg-orange-100 text-orange-700',
-  food_register: 'bg-teal-100 text-teal-700',
-  food_unregister: 'bg-orange-100 text-orange-700',
-  login_success: 'bg-blue-100 text-blue-700',
-  login_fail: 'bg-red-100 text-red-700',
-  volunteer_register: 'bg-purple-100 text-purple-700',
-  audit_settings: 'bg-yellow-100 text-yellow-700',
-  audit_data: 'bg-yellow-100 text-yellow-700',
-  audit_organizer: 'bg-indigo-100 text-indigo-700',
-  audit_admin: 'bg-indigo-100 text-indigo-700',
-}
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -161,13 +134,18 @@ async function loadData() {
 onMounted(loadData)
 watch(slug, loadData)
 
-function fmt(iso) {
-  return iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : ''
-}
-
-function badgeClass(type) {
-  return BADGE_CLASSES[type] || 'bg-gray-100 text-gray-600'
-}
+const EventBadge = defineComponent({
+  props: { type: String },
+  setup(props) {
+    return () => {
+      const meta = EVENT_META[props.type] || { icon: null, label: props.type, color: 'bg-gray-100 text-gray-600' }
+      return h('span', { class: `inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}` }, [
+        meta.icon ? h(meta.icon, { class: 'w-3 h-3 flex-shrink-0' }) : null,
+        h('span', meta.label),
+      ])
+    }
+  },
+})
 
 function fillColor(rate) {
   if (rate >= 90) return 'bg-green-100 text-green-700'

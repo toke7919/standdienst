@@ -115,8 +115,20 @@ def update_volunteer(slug, volunteer_id):
 @require_instance_admin
 def delete_volunteer(slug, volunteer_id):
     volunteer = _get_or_404(volunteer_id, g.instance.id)
+    reg_count  = volunteer.registrations.count()
+    food_count = volunteer.food_donations.count()
+    name       = volunteer.name
     volunteer.soft_delete()
-    _log(g.instance.id, f'Helfer pseudonymisiert (ID={volunteer_id})', g.current_user)
+    details = f'Pseudonymisiert: {name}'
+    if reg_count or food_count:
+        details += f' ({reg_count} Schicht-Anm., {food_count} Spenden)'
+    db.session.add(ActivityLog(
+        instance_id=g.instance.id,
+        event_type=ActivityLog.VOLUNTEER_DELETE,
+        volunteer_name=name,
+        actor_type=getattr(g.current_user, 'role', 'admin'),
+        details=details,
+    ))
     db.session.commit()
     return no_content()
 
@@ -126,11 +138,22 @@ def delete_volunteer(slug, volunteer_id):
 def permanent_delete_volunteer(slug, volunteer_id):
     """Endgültiges Löschen – nur Global-Admins. Für DSGVO-Löschanfragen."""
     from flask import g as _g
-    # Instanz manuell auflösen (kein @require_instance_admin hier)
     from ...models import Instance
-    instance = Instance.query.filter_by(slug=slug).first_or_404()
+    instance  = Instance.query.filter_by(slug=slug).first_or_404()
     volunteer = _get_or_404(volunteer_id, instance.id)
-    _log(instance.id, f'Helfer endgültig gelöscht (ID={volunteer_id})', _g.current_user)
+    reg_count  = volunteer.registrations.count()
+    food_count = volunteer.food_donations.count()
+    name       = volunteer.name
+    details    = f'Endgültig gelöscht: {name}'
+    if reg_count or food_count:
+        details += f' ({reg_count} Schicht-Anm., {food_count} Spenden)'
+    db.session.add(ActivityLog(
+        instance_id=instance.id,
+        event_type=ActivityLog.VOLUNTEER_PERMANENT_DELETE,
+        volunteer_name=name,
+        actor_type=getattr(_g.current_user, 'role', 'admin'),
+        details=details,
+    ))
     db.session.delete(volunteer)
     db.session.commit()
     return no_content()

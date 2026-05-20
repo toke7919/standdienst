@@ -18,12 +18,8 @@ _ORGANIZER_TYPES = [
 @admin_bp.route('/<slug>/dashboard', methods=['GET'])
 @require_staff
 def dashboard(slug):
-    is_instance_admin = (
-        g.role == 'admin'
-        or (g.role == 'organizer' and g.current_user.is_instance_admin)
-    )
-    event_types = None if is_instance_admin else _ORGANIZER_TYPES
-    return ok(_instance_stats(g.instance.id, event_types=event_types))
+    # recent_activity im Dashboard immer auf operative Typen filtern (Punkt 9)
+    return ok(_instance_stats(g.instance.id, event_types=_ORGANIZER_TYPES))
 
 
 @admin_bp.route('/dashboard/global', methods=['GET'])
@@ -58,7 +54,7 @@ def global_dashboard():
     ]
 
     recent = (ActivityLog.query
-              .filter(ActivityLog.instance_id.is_(None))
+              .filter(ActivityLog.event_type.in_(_ORGANIZER_TYPES))
               .order_by(ActivityLog.timestamp.desc())
               .limit(10)
               .all())
@@ -122,4 +118,5 @@ def _log_dict(e) -> dict:
         'timestamp': e.timestamp.isoformat() if e.timestamp else None,
         'volunteer_name': e.volunteer_name,
         'details': e.details,
+        'instance_id': e.instance_id,
     }

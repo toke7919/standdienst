@@ -130,7 +130,7 @@ def register_shift(slug, shift_id):
 
     db.session.add(Registration(volunteer_id=g.current_user.id, shift_id=shift_id))
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_REGISTER, g.current_user,
-                             details=f'shift_id={shift_id}'))
+                             details=_shift_detail(shift)))
     db.session.commit()
     _publish_shift_update(current_app, slug, shift_id)
     return created({'shift_id': shift_id})
@@ -146,9 +146,10 @@ def unregister_shift(slug, shift_id):
     if not reg:
         return error('Nicht eingetragen', 404)
 
+    shift = Shift.query.get(shift_id)
     db.session.delete(reg)
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_UNREGISTER, g.current_user,
-                             details=f'shift_id={shift_id}'))
+                             details=_shift_detail(shift) if shift else f'shift_id={shift_id}'))
     db.session.commit()
     _publish_shift_update(current_app, slug, shift_id)
     return no_content()
@@ -270,7 +271,7 @@ def create_food_donation(slug):
     donation = FoodDonation(volunteer_id=g.current_user.id, **data)
     db.session.add(donation)
     db.session.add(_activity(g.instance.id, ActivityLog.FOOD_REGISTER, g.current_user,
-                             details=f'food_type_id={data["food_type_id"]}'))
+                             details=f'{food_type.name}: {data["description"]}'))
     db.session.commit()
     return created(FoodDonationSchema().dump(donation))
 
@@ -284,9 +285,10 @@ def delete_food_donation(slug, donation_id):
     if not donation:
         return error('Essensspende nicht gefunden', 404)
 
+    food_detail = f'{donation.food_type.name}: {donation.description}' if donation.food_type else donation.description
     db.session.delete(donation)
     db.session.add(_activity(g.instance.id, ActivityLog.FOOD_UNREGISTER, g.current_user,
-                             details=f'donation_id={donation_id}'))
+                             details=food_detail))
     db.session.commit()
     return no_content()
 
@@ -332,7 +334,21 @@ def update_profile(slug):
 @volunteer_bp.route('/<slug>/profile', methods=['DELETE'])
 @require_volunteer
 def delete_profile(slug):
-    g.current_user.soft_delete()
+    v          = g.current_user
+    reg_count  = v.registrations.count()
+    food_count = v.food_donations.count()
+    name       = v.name  # Namen vor soft_delete sichern
+    details    = 'DSGVO-Selbstlöschung'
+    if reg_count or food_count:
+        details += f' ({reg_count} Schicht-Anm., {food_count} Spenden)'
+    db.session.add(ActivityLog(
+        instance_id=g.instance.id,
+        event_type=ActivityLog.VOLUNTEER_DELETE,
+        volunteer_name=name,
+        actor_type='volunteer',
+        details=details,
+    ))
+    v.soft_delete()
     db.session.commit()
     return no_content()
 
@@ -436,6 +452,18 @@ def _publish_shift_update(app, slug: str, shift_id: int) -> None:
         r.close()
     except Exception:
         pass  # SSE ist Best-Effort – Fehler nicht an Client weitergeben
+
+
+def _shift_detail(shift) -> str:
+    """Lesbare Beschreibung einer Schicht für das Protokoll."""
+    if not shift:
+        return ''
+    stand = Stand.query.get(shift.stand_id)
+    date  = shift.event_date
+    stand_name = stand.name if stand else '?'
+    date_str   = date.date.strftime('%d.%m.%Y') if date else '?'
+    time_str   = f'{shift.start_time.strftime("%H:%M")}–{shift.end_time.strftime("%H:%M")}'
+    return f'{stand_name} · {date_str} · {time_str}'
 
 
 def _activity(instance_id, event_type, user, details=None) -> ActivityLog:
