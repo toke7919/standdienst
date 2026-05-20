@@ -50,11 +50,15 @@
                       >{{ name }}</span>
                     </div>
                   </div>
-                  <div class="ml-4">
+                  <div class="ml-4 flex-shrink-0">
+                    <span
+                      v-if="!shift.is_registered && shift.is_full"
+                      class="inline-flex items-center text-sm text-gray-400 font-medium px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 cursor-not-allowed select-none"
+                    >Dienst voll</span>
                     <button
-                      v-if="!shift.is_registered"
+                      v-else-if="!shift.is_registered"
                       class="btn-primary text-sm"
-                      :disabled="shift.is_full || toggling === shift.id"
+                      :disabled="toggling === shift.id"
                       @click="register(shift)"
                     >
                       <LoadingSpinner v-if="toggling === shift.id" size="sm" />
