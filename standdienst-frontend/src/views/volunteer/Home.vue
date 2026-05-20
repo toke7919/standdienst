@@ -4,33 +4,42 @@
       <LoadingSpinner size="lg" />
     </div>
 
-    <div v-else>
-      <p class="text-gray-500 mb-8">
-        Hallo{{ firstName ? ', ' + firstName : '' }}!
-        Was möchtest du heute tun?
-      </p>
+    <div v-else class="pt-1">
+      <!-- Begrüßung -->
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+          {{ greeting }}<span v-if="firstName">, {{ firstName }}</span>!
+        </h1>
+        <p class="text-gray-500 mt-1 text-sm">Was möchtest du heute tun?</p>
+      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <RouterLink
-          :to="`/${slug}/shifts`"
-          class="card p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow"
-        >
-          <div class="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-4">
-            <CalendarIcon class="w-7 h-7 text-primary-600" />
+      <!-- Aktionskacheln -->
+      <div class="space-y-3">
+        <RouterLink :to="`/${slug}/shifts`" class="card-interactive block">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0
+                        transition-colors duration-150 group-hover:bg-primary-200">
+              <CalendarIcon class="w-6 h-6 text-primary-600" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-gray-900">Schichten</p>
+              <p class="text-sm text-gray-500 mt-0.5">Dienste ansehen und dich einteilen</p>
+            </div>
+            <ChevronRightIcon class="w-5 h-5 text-gray-300 flex-shrink-0" />
           </div>
-          <h2 class="text-lg font-semibold text-gray-900 mb-1">Schichten</h2>
-          <p class="text-sm text-gray-500">Dienste ansehen und dich für eine Schicht einteilen</p>
         </RouterLink>
 
-        <RouterLink
-          :to="`/${slug}/food`"
-          class="card p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow"
-        >
-          <div class="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mb-4">
-            <ShoppingBagIcon class="w-7 h-7 text-primary-600" />
+        <RouterLink :to="`/${slug}/food`" class="card-interactive block">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <ShoppingBagIcon class="w-6 h-6 text-orange-500" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-gray-900">Essensspende</p>
+              <p class="text-sm text-gray-500 mt-0.5">Mitgebrachtes eintragen und Übersicht ansehen</p>
+            </div>
+            <ChevronRightIcon class="w-5 h-5 text-gray-300 flex-shrink-0" />
           </div>
-          <h2 class="text-lg font-semibold text-gray-900 mb-1">Essensspende</h2>
-          <p class="text-sm text-gray-500">Mitgebrachtes eintragen und die Übersicht aller Spenden sehen</p>
         </RouterLink>
       </div>
     </div>
@@ -43,7 +52,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import { CalendarIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, ShoppingBagIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const router = useRouter()
@@ -53,7 +62,13 @@ const instanceStore = useInstanceStore()
 const slug = computed(() => route.params.slug)
 const firstName = computed(() => auth.user?.first_name || auth.user?.name?.split(' ')[0] || '')
 
-// Sobald Instanz-Settings geladen: direkt zu /shifts, wenn Essensspenden deaktiviert
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 11) return 'Guten Morgen'
+  if (h < 17) return 'Hallo'
+  return 'Guten Abend'
+})
+
 watch(
   () => instanceStore.current,
   (settings) => {
