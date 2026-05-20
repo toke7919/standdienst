@@ -1,4 +1,6 @@
+from datetime import date as _date, timedelta
 from flask import g
+from sqlalchemy import func
 
 from . import admin_bp
 from ...models import (
@@ -120,6 +122,44 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
             'fill_rate': d_rate,
         })
 
+    # Gesamtkapazität (Summe aller Plätze über alle Schichten)
+    total_spots = sum(s.max_volunteers for s in shifts_all)
+
+    # Anmeldungen der letzten 7 Tage (für Trend-Sparkline)
+    today = _date.today()
+    seven_days_ago = today - timedelta(days=6)
+    _day_names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+    daily_q = (Registration.query
+               .join(Shift).join(Stand)
+               .filter(Stand.instance_id == instance_id,
+                       func.date(Registration.registered_at) >= seven_days_ago)
+               .with_entities(func.date(Registration.registered_at).label('day'),
+                              func.count().label('cnt'))
+               .group_by(func.date(Registration.registered_at))
+               .all())
+    daily_map = {}
+    for r in daily_q:
+        key = r.day.isoformat() if hasattr(r.day, 'isoformat') else str(r.day)
+        daily_map[key] = r.cnt
+    daily_registrations = [
+        {
+            'date': (seven_days_ago + timedelta(days=i)).isoformat(),
+            'day_short': _day_names[(seven_days_ago + timedelta(days=i)).weekday()],
+            'count': daily_map.get((seven_days_ago + timedelta(days=i)).isoformat(), 0),
+        }
+        for i in range(7)
+    ]
+
+    # Nächster anstehender Termin
+    next_event = None
+    upcoming = [d for d in dates_all if d.date >= today]
+    if upcoming:
+        n = upcoming[0]
+        next_event = {
+            'date_formatted': n.formatted,
+            'days_until': (n.date - today).days,
+        }
+
     recent_q = ActivityLog.query.filter_by(instance_id=instance_id)
     if event_types is not None:
         recent_q = recent_q.filter(ActivityLog.event_type.in_(event_types))
@@ -138,6 +178,9 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
         'registrations': registrations,
         'volunteers_without_shift': volunteers_without_shift,
         'food_donations': food_donations,
+        'total_spots': total_spots,
+        'daily_registrations': daily_registrations,
+        'next_event': next_event,
         'dates_fill': dates_fill,
         'recent_activity': [_log_dict(e) for e in recent],
     }
