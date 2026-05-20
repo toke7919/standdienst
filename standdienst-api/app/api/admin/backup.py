@@ -179,9 +179,9 @@ def restore_backup(name):
         _restore_from_bytes(sql_bytes)
         current_app.logger.warning('Datenbank aus Backup wiederhergestellt: %s', name)
         return ok(message='Datenbank wiederhergestellt')
-    except Exception as e:
+    except Exception:
         current_app.logger.exception('Restore fehlgeschlagen')
-        return error(f'Restore fehlgeschlagen: {e}', 500)
+        return error('Backup-Wiederherstellung fehlgeschlagen', 500)
 
 
 @admin_bp.route('/backup/<name>/download', methods=['GET'])

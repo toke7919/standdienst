@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+import re
 import tarfile
 import shutil
 import tempfile
@@ -21,11 +22,10 @@ def _api_root() -> str:
 
 
 def _installed_version() -> str:
-    ns: dict = {}
     try:
         with open(os.path.join(_api_root(), 'version.py')) as f:
-            exec(f.read(), ns)  # noqa: S102
-        return ns.get('VERSION', 'unbekannt')
+            m = re.search(r'^VERSION\s*=\s*["\']([^"\']+)["\']', f.read(), re.M)
+        return m.group(1) if m else 'unbekannt'
     except OSError:
         return 'unbekannt'
 
@@ -138,8 +138,9 @@ def check_update():
             'update_available': _is_newer(latest_version, current_version),
             'release_url': latest.get('html_url', ''),
         })
-    except Exception as e:
-        return error(f'Update-Check fehlgeschlagen: {e}', 500)
+    except Exception:
+        current_app.logger.exception('Update-Check fehlgeschlagen')
+        return error('Update-Check fehlgeschlagen', 500)
 
 
 @admin_bp.route('/update/apply', methods=['POST'])
@@ -164,9 +165,9 @@ def apply_update():
 
         return ok({'log': log, 'applied_at': datetime.now(timezone.utc).isoformat()},
                   'Update angewendet – Dienst wird neu gestartet')
-    except Exception as e:
+    except Exception:
         current_app.logger.exception('Update fehlgeschlagen')
-        return error(f'Update fehlgeschlagen: {e}', 500)
+        return error('Update fehlgeschlagen', 500)
 
 
 def _auto_backup(log: list, target_version: str | None = None):

@@ -36,7 +36,7 @@
             <input v-model="password" type="password" class="input" required
                    autocomplete="new-password"
                    placeholder="Mindestens 8 Zeichen" />
-            <p class="text-xs text-gray-400 mt-1">Mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen</p>
+            <p class="text-xs text-gray-400 mt-1">Mindestens 8 Zeichen</p>
           </div>
 
           <div>

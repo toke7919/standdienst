@@ -140,7 +140,7 @@ def require_volunteer(fn):
 def validate_password_strength(password: str, role: str = 'volunteer') -> bool:
     """Rollenabhängige Passwort-Validierung.
 
-    Volunteers:        mind. 6 Zeichen
+    Volunteers:        mind. 8 Zeichen
     Admins/Organizer:  mind. 12 Zeichen + Groß/Klein + Ziffer + Sonderzeichen
     """
     if role in ('admin', 'organizer'):
@@ -155,6 +155,6 @@ def validate_password_strength(password: str, role: str = 'volunteer') -> bool:
         if not re.search(r'[^a-zA-Z0-9]', password):
             return False
     else:
-        if len(password) < 6:
+        if len(password) < 8:
             return False
     return True
