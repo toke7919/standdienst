@@ -4,17 +4,19 @@
       <LoadingSpinner size="lg" />
     </div>
 
-    <div v-else class="pt-1">
-      <!-- Begrüßung -->
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
-          {{ greeting }}<span v-if="firstName">, {{ firstName }}</span>!
+    <div v-else>
+      <!-- Hero-Streifen (hebt Layout-Padding auf, füllt bis zur Kante) -->
+      <div class="-mx-4 -mt-5 bg-gradient-to-br from-primary-700 to-primary-900 px-6 pt-12 pb-20 text-white">
+        <p class="text-primary-300 text-sm font-medium mb-1">{{ greeting }}</p>
+        <h1 class="text-2xl font-bold tracking-tight">
+          <span v-if="firstName">{{ firstName }}</span>
+          <span v-else>Willkommen!</span>
         </h1>
-        <p class="text-gray-500 mt-1 text-sm">Was möchtest du heute tun?</p>
+        <p class="text-primary-200 mt-1 text-sm">Was möchtest du heute tun?</p>
       </div>
 
-      <!-- Aktionskacheln -->
-      <div class="space-y-3">
+      <!-- Aktionskacheln (überlappen den Hero) -->
+      <div class="relative z-10 -mt-12 space-y-3">
         <RouterLink :to="`/${slug}/shifts`" class="card-interactive block">
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0
@@ -31,8 +33,8 @@
 
         <RouterLink :to="`/${slug}/food`" class="card-interactive block">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <ShoppingBagIcon class="w-6 h-6 text-orange-500" />
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <ShoppingBagIcon class="w-6 h-6 text-amber-600" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-gray-900">Essensspende</p>

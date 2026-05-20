@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-gray-50 flex">
 
     <!-- ============================= DESKTOP SIDEBAR ============================= -->
-    <aside class="hidden md:flex flex-col bg-white border-r border-gray-200 w-64 fixed inset-y-0 z-40">
-      <div class="p-5 border-b border-gray-100 flex items-center gap-2">
+    <aside class="hidden md:flex flex-col bg-primary-950 w-64 fixed inset-y-0 z-40">
+      <div class="p-5 border-b border-white/10 flex items-center gap-2">
         <RouterLink :to="selectedSlug ? `/admin/${selectedSlug}/dashboard` : '/admin/dashboard'" class="flex items-center gap-2 min-w-0">
           <img
             v-if="instanceInfo?.logo_filename"
@@ -11,25 +11,25 @@
             class="h-8 w-8 object-contain rounded-lg flex-shrink-0"
             alt="Logo"
           />
-          <div v-else class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div v-else class="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center flex-shrink-0 border border-white/20">
             <span class="text-white text-sm font-bold">{{ instanceInitial }}</span>
           </div>
-          <span class="font-semibold text-gray-900 truncate">{{ instanceInfo?.site_title || 'Standdienst' }}</span>
+          <span class="font-semibold text-white truncate">{{ instanceInfo?.site_title || 'Standdienst' }}</span>
         </RouterLink>
       </div>
 
-      <div v-if="auth.isLoggedIn" class="p-3 border-b border-gray-100">
-        <select v-model="selectedSlug" class="input text-sm" @change="onInstanceChange">
-          <option value="">Alle Instanzen</option>
-          <option v-for="inst in instances" :key="inst.id" :value="inst.slug">{{ inst.name }}</option>
+      <div v-if="auth.isLoggedIn" class="p-3 border-b border-white/10">
+        <select v-model="selectedSlug" class="w-full text-sm text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none" @change="onInstanceChange">
+          <option value="" class="text-gray-900 bg-white">Alle Instanzen</option>
+          <option v-for="inst in instances" :key="inst.id" :value="inst.slug" class="text-gray-900 bg-white">{{ inst.name }}</option>
         </select>
       </div>
 
-      <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+      <nav class="flex-1 overflow-y-auto p-3 space-y-0.5">
         <NavItem :to="selectedSlug ? `/admin/${selectedSlug}/dashboard` : '/admin/dashboard'" :icon="HomeIcon">Dashboard</NavItem>
 
         <template v-if="selectedSlug">
-          <p class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3">Instanz</p>
+          <p class="px-3 pt-4 pb-1 text-[10px] font-semibold text-white/35 uppercase tracking-widest">Instanz</p>
           <NavItem :to="`/admin/${selectedSlug}/volunteers`" :icon="UsersIcon">Helfer</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/stands`" :icon="BuildingStorefrontIcon">Stände</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/dates`" :icon="CalendarIcon">Termine</NavItem>
@@ -43,7 +43,7 @@
         </template>
 
         <template v-if="auth.isAdmin">
-          <p class="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wide mt-3">Plattform</p>
+          <p class="px-3 pt-4 pb-1 text-[10px] font-semibold text-white/35 uppercase tracking-widest">Plattform</p>
           <NavItem to="/admin/instances" :icon="ServerIcon">Instanzen</NavItem>
           <NavItem to="/admin/organizers" :icon="UserGroupIcon">Organisatoren</NavItem>
           <NavItem to="/admin/admins" :icon="ShieldCheckIcon">Admins</NavItem>
@@ -55,11 +55,11 @@
         </template>
       </nav>
 
-      <div class="p-3 border-t border-gray-100 space-y-0.5">
+      <div class="p-3 border-t border-white/10 space-y-0.5">
         <NavItem to="/admin/profile/2fa" :icon="LockClosedIcon">2FA einrichten</NavItem>
         <NavItem to="/admin/profile/passkeys" :icon="KeyIcon">Passkeys</NavItem>
         <button
-          class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          class="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white rounded-lg transition-colors"
           @click="auth.logout"
         >
           <ArrowRightOnRectangleIcon class="w-4 h-4" />
@@ -69,7 +69,7 @@
     </aside>
 
     <!-- ============================= MOBILE HEADER ============================= -->
-    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-gray-200 h-14 flex items-center px-4 gap-3 shadow-sm">
+    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-primary-950 border-b border-white/10 h-14 flex items-center px-4 gap-3">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <img
           v-if="instanceInfo?.logo_filename"
@@ -77,10 +77,10 @@
           class="h-7 w-7 object-contain rounded-md flex-shrink-0"
           alt="Logo"
         />
-        <div v-else class="w-7 h-7 bg-primary-600 rounded-md flex items-center justify-center flex-shrink-0">
+        <div v-else class="w-7 h-7 bg-white/15 rounded-md flex items-center justify-center flex-shrink-0 border border-white/20">
           <span class="text-white text-xs font-bold">{{ instanceInitial }}</span>
         </div>
-        <span class="font-semibold text-gray-900 text-sm truncate">
+        <span class="font-semibold text-white text-sm truncate">
           {{ instanceInfo?.site_title || (mobileSlug ? (instances.find(i => i.slug === mobileSlug)?.name || mobileSlug) : 'Admin') }}
         </span>
       </div>
@@ -88,11 +88,11 @@
       <select
         v-if="auth.isLoggedIn && instances.length > 1"
         v-model="selectedSlug"
-        class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white max-w-[9rem] flex-shrink-0"
+        class="text-xs border border-white/20 rounded-lg px-2 py-1.5 bg-white/10 text-white max-w-[9rem] flex-shrink-0 focus:outline-none"
         @change="onInstanceChange"
       >
-        <option value="">Alle</option>
-        <option v-for="inst in instances" :key="inst.id" :value="inst.slug">{{ inst.name }}</option>
+        <option value="" class="text-gray-900 bg-white">Alle</option>
+        <option v-for="inst in instances" :key="inst.id" :value="inst.slug" class="text-gray-900 bg-white">{{ inst.name }}</option>
       </select>
     </header>
 
@@ -115,10 +115,11 @@
         <!-- Dashboard -->
         <RouterLink
           :to="mobileSlug ? `/admin/${mobileSlug}/dashboard` : '/admin/dashboard'"
-          class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
           :class="isTabActive('dashboard') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('dashboard') ? 'scale-x-100' : 'scale-x-0'" />
           <HomeIcon class="w-6 h-6" />
           <span class="text-[0.65rem] font-medium leading-none">Dashboard</span>
         </RouterLink>
@@ -127,20 +128,22 @@
         <RouterLink
           v-if="mobileSlug"
           :to="`/admin/${mobileSlug}/volunteers`"
-          class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
           :class="isTabActive('volunteers') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('volunteers') ? 'scale-x-100' : 'scale-x-0'" />
           <UsersIcon class="w-6 h-6" />
           <span class="text-[0.65rem] font-medium leading-none">Helfer</span>
         </RouterLink>
         <RouterLink
           v-else-if="auth.isAdmin"
           to="/admin/instances"
-          class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
           :class="isTabActive('instances') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('instances') ? 'scale-x-100' : 'scale-x-0'" />
           <ServerIcon class="w-6 h-6" />
           <span class="text-[0.65rem] font-medium leading-none">Instanzen</span>
         </RouterLink>
@@ -149,30 +152,33 @@
         <RouterLink
           v-if="mobileSlug"
           :to="`/admin/${mobileSlug}/registrations`"
-          class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
           :class="isTabActive('registrations') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('registrations') ? 'scale-x-100' : 'scale-x-0'" />
           <ClipboardDocumentListIcon class="w-6 h-6" />
           <span class="text-[0.65rem] font-medium leading-none">Anmeldungen</span>
         </RouterLink>
         <RouterLink
           v-else-if="auth.isAdmin"
           to="/admin/organizers"
-          class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
           :class="isTabActive('organizers') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('organizers') ? 'scale-x-100' : 'scale-x-0'" />
           <UserGroupIcon class="w-6 h-6" />
           <span class="text-[0.65rem] font-medium leading-none">Orgas</span>
         </RouterLink>
 
         <!-- Tab 4: Mehr -->
         <button
-          class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors active:scale-95"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 transition-colors active:scale-95"
           :class="moreOpen ? 'text-primary-600' : 'text-gray-400'"
           @click="moreOpen = !moreOpen"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="moreOpen ? 'scale-x-100' : 'scale-x-0'" />
           <EllipsisHorizontalCircleIcon class="w-6 h-6" />
           <span class="text-[0.65rem] font-medium leading-none">Mehr</span>
         </button>
@@ -370,7 +376,7 @@ export const NavItem = defineComponent({
   setup(props, { slots }) {
     return () => h(RouterLink, {
       to: props.to,
-      class: 'flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors [&.router-link-active]:bg-primary-50 [&.router-link-active]:text-primary-700 [&.router-link-active]:font-medium',
+      class: 'flex items-center gap-2.5 px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white rounded-lg transition-colors [&.router-link-active]:bg-white/15 [&.router-link-active]:text-white [&.router-link-active]:font-semibold',
     }, () => [
       props.icon ? h(props.icon, { class: 'w-4 h-4 flex-shrink-0' }) : null,
       slots.default?.(),

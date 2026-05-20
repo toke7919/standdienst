@@ -1,14 +1,17 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
+      <!-- Branding über der Karte -->
       <div class="text-center mb-8">
-        <div class="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm">
           <span class="text-white text-2xl font-bold">S</span>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900">Admin-Anmeldung</h1>
+        <h1 class="text-2xl font-bold text-white">Admin-Anmeldung</h1>
+        <p class="text-primary-300 mt-1 text-sm">Standdienst Verwaltung</p>
       </div>
 
-      <div class="card">
+      <!-- Weiße Karte -->
+      <div class="bg-white rounded-2xl shadow-2xl p-8">
         <form @submit.prevent="submit" class="space-y-4">
           <div>
             <label class="label">E-Mail</label>
@@ -25,7 +28,7 @@
           </button>
         </form>
 
-        <div class="relative my-4">
+        <div class="relative my-5">
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-gray-200"></div>
           </div>
@@ -46,7 +49,7 @@
         </button>
         <p v-if="passkeyError" class="mt-2 text-sm text-red-600 text-center">{{ passkeyError }}</p>
 
-        <div class="mt-4 text-center">
+        <div class="mt-5 text-center">
           <RouterLink to="/admin/forgot-password" class="text-sm text-primary-600 hover:underline">
             Passwort vergessen?
           </RouterLink>
@@ -54,7 +57,7 @@
       </div>
 
       <div class="mt-6 text-center">
-        <RouterLink to="/" class="text-sm text-gray-500 hover:text-gray-700">
+        <RouterLink to="/" class="text-sm text-primary-300 hover:text-white transition-colors">
           ← Zur Startseite
         </RouterLink>
       </div>

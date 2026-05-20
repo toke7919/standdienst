@@ -60,11 +60,11 @@
           v-for="link in bottomLinks"
           :key="link.to"
           :to="link.to"
-          class="flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 [&.router-link-active]:text-primary-600 transition-all duration-150 active:scale-90"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 [&.router-link-active]:text-primary-600 transition-all duration-150 active:scale-90"
         >
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 scale-x-0 [.router-link-active_&]:scale-x-100 transition-transform duration-200 origin-center" />
           <component :is="link.icon" class="w-6 h-6 transition-transform duration-150 [.router-link-active_&]:scale-110" />
           <span class="text-[0.65rem] font-medium leading-none">{{ link.label }}</span>
-          <span class="w-1 h-1 rounded-full bg-primary-600 opacity-0 [.router-link-active_&]:opacity-100 transition-opacity duration-150" />
         </RouterLink>
       </div>
     </nav>

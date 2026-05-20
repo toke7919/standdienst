@@ -11,27 +11,27 @@
     <template v-else-if="data">
       <!-- Instanz-Dashboard -->
       <template v-if="slug">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Helfer" :value="data.volunteers" color="blue" />
-          <StatCard label="Schichten" :value="data.shifts" color="green" />
-          <StatCard label="Anmeldungen" :value="data.registrations" color="purple" />
-          <StatCard label="Belegung" :value="`${data.fill_rate ?? 0}%`" color="orange" />
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <StatCard label="Helfer" :value="data.volunteers" color="blue" :icon="UsersIcon" />
+          <StatCard label="Schichten" :value="data.shifts" color="violet" :icon="ClockIcon" />
+          <StatCard label="Anmeldungen" :value="data.registrations" color="emerald" :icon="ClipboardDocumentListIcon" />
+          <StatCard label="Belegung" :value="`${data.fill_rate ?? 0}%`" color="amber" :icon="SignalIcon" />
         </div>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Stände" :value="data.stands" color="blue" />
-          <StatCard label="Termine" :value="data.dates" color="green" />
-          <StatCard label="Voll belegt" :value="data.shifts_full" color="purple" />
-          <StatCard label="Essensspenden" :value="data.food_donations" color="orange" />
+          <StatCard label="Stände" :value="data.stands" color="blue" :icon="BuildingStorefrontIcon" />
+          <StatCard label="Termine" :value="data.dates" color="violet" :icon="CalendarIcon" />
+          <StatCard label="Voll belegt" :value="data.shifts_full" color="emerald" :icon="CheckCircleIcon" />
+          <StatCard label="Essensspenden" :value="data.food_donations" color="amber" :icon="ShoppingBagIcon" />
         </div>
       </template>
 
       <!-- Globales Admin-Dashboard -->
       <template v-else>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Instanzen" :value="data.instance_count" color="blue" />
-          <StatCard label="Helfer gesamt" :value="data.total_volunteers" color="green" />
-          <StatCard label="Anmeldungen" :value="data.total_registrations" color="purple" />
-          <StatCard label="Essensspenden" :value="data.total_food_donations" color="orange" />
+          <StatCard label="Instanzen" :value="data.instance_count" color="blue" :icon="ServerIcon" />
+          <StatCard label="Helfer gesamt" :value="data.total_volunteers" color="emerald" :icon="UsersIcon" />
+          <StatCard label="Anmeldungen" :value="data.total_registrations" color="violet" :icon="ClipboardDocumentListIcon" />
+          <StatCard label="Essensspenden" :value="data.total_food_donations" color="amber" :icon="ShoppingBagIcon" />
         </div>
         <div v-if="data.instances?.length" class="card mb-8">
           <h2 class="text-base font-semibold text-gray-800 mb-4">Instanzübersicht</h2>
@@ -105,6 +105,11 @@ import { adminApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import { EVENT_META, fmtTime } from '@/utils/activityLog'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import {
+  UsersIcon, ClockIcon, ClipboardDocumentListIcon, SignalIcon,
+  BuildingStorefrontIcon, CalendarIcon, CheckCircleIcon, ShoppingBagIcon,
+  ServerIcon,
+} from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -154,17 +159,20 @@ function fillColor(rate) {
 }
 
 const StatCard = defineComponent({
-  props: { label: String, value: [String, Number], color: String },
+  props: { label: String, value: [String, Number], color: String, icon: Object },
   setup(props) {
-    const colors = {
-      blue: 'bg-blue-50 text-blue-700',
-      green: 'bg-green-50 text-green-700',
-      purple: 'bg-purple-50 text-purple-700',
-      orange: 'bg-orange-50 text-orange-700',
+    const iconColors = {
+      blue:    'bg-blue-100 text-blue-600',
+      emerald: 'bg-emerald-100 text-emerald-600',
+      violet:  'bg-violet-100 text-violet-600',
+      amber:   'bg-amber-100 text-amber-600',
     }
-    return () => h('div', { class: `rounded-xl p-5 ${colors[props.color] || colors.blue}` }, [
-      h('p', { class: 'text-sm font-medium opacity-70' }, props.label),
-      h('p', { class: 'text-3xl font-bold mt-1' }, String(props.value ?? '—')),
+    return () => h('div', { class: 'bg-white rounded-xl p-5 shadow-sm border border-gray-100' }, [
+      h('div', { class: `w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconColors[props.color] || iconColors.blue}` }, [
+        props.icon ? h(props.icon, { class: 'w-5 h-5' }) : null,
+      ]),
+      h('p', { class: 'text-3xl font-bold text-gray-900 tabular-nums' }, String(props.value ?? '—')),
+      h('p', { class: 'text-sm text-gray-500 mt-0.5' }, props.label),
     ])
   },
 })
