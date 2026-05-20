@@ -61,12 +61,18 @@
       <button class="btn-secondary w-full" @click="auth.logout">Abmelden</button>
     </div>
 
-    <div class="card border-red-200">
-      <h2 class="text-base font-semibold text-red-700 mb-2">Konto löschen</h2>
-      <p class="text-sm text-gray-500 mb-4">
-        Deine Daten werden pseudonymisiert und sind danach nicht mehr zugänglich (DSGVO-konformes Soft-Delete).
-      </p>
-      <button class="btn-danger" @click="deleteAccount">Konto löschen</button>
+    <div class="mt-8 pt-6 border-t-2 border-dashed border-red-100">
+      <div class="flex items-center gap-2 mb-4">
+        <ExclamationTriangleIcon class="w-4 h-4 text-red-400" />
+        <p class="text-xs font-bold uppercase tracking-widest text-red-400">Gefahrenzone</p>
+      </div>
+      <div class="card border-red-200">
+        <h2 class="text-base font-semibold text-red-700 mb-2">Konto löschen</h2>
+        <p class="text-sm text-gray-500 mb-4">
+          Deine Daten werden pseudonymisiert und sind danach nicht mehr zugänglich (DSGVO-konformes Soft-Delete).
+        </p>
+        <button class="btn-danger" @click="deleteAccount">Konto löschen</button>
+      </div>
     </div>
   </div>
 </template>
@@ -77,7 +83,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { volunteerApi } from '@/api/volunteer'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+import { EyeIcon, EyeSlashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()

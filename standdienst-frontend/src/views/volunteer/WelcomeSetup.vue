@@ -63,12 +63,20 @@
                   class="input pr-10"
                   required
                   autocomplete="new-password"
-                  placeholder="Mindestens 8 Zeichen"
+                  placeholder="Mindestens 6 Zeichen"
                 />
                 <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" @click="showPw = !showPw">
                   <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
                   <EyeIcon v-else class="w-4 h-4" />
                 </button>
+              </div>
+              <!-- Passwortstärke -->
+              <div v-if="password" class="mt-2 space-y-1">
+                <div class="flex gap-1">
+                  <div v-for="i in 4" :key="i" class="h-1 flex-1 rounded-full transition-colors duration-200"
+                    :class="i <= pwStrength.level ? pwStrength.barColor : 'bg-gray-200'" />
+                </div>
+                <p class="text-xs" :class="pwStrength.textColor">{{ pwStrength.label }}</p>
               </div>
             </div>
 
@@ -93,6 +101,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+
+function calcPwStrength(pw) {
+  const len = pw.length
+  const hasMixed = /[A-Z]/.test(pw) && /[a-z]/.test(pw)
+  const hasNum = /\d/.test(pw)
+  const hasSpecial = /[^A-Za-z0-9]/.test(pw)
+  const bonus = (hasMixed ? 1 : 0) + (hasNum ? 1 : 0) + (hasSpecial ? 1 : 0)
+  if (len < 6) return { level: 1, barColor: 'bg-red-400', textColor: 'text-red-500', label: 'Zu kurz (mind. 6 Zeichen)' }
+  if (len < 8 || bonus === 0) return { level: 2, barColor: 'bg-amber-400', textColor: 'text-amber-600', label: 'Schwach' }
+  if (len < 12 || bonus < 2) return { level: 3, barColor: 'bg-yellow-400', textColor: 'text-yellow-600', label: 'Mittel' }
+  return { level: 4, barColor: 'bg-green-500', textColor: 'text-green-600', label: 'Stark' }
+}
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/stores/instance'
 import { useAuthStore } from '@/stores/auth'
@@ -107,6 +127,8 @@ const router = useRouter()
 const slug = computed(() => route.params.slug)
 const token = computed(() => route.params.token)
 const settings = computed(() => instanceStore.current)
+
+const pwStrength = computed(() => calcPwStrength(password.value))
 
 const loading = ref(true)
 const invalid = ref(false)

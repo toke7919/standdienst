@@ -42,7 +42,11 @@
 
     <!-- ====== MAIN CONTENT ====== -->
     <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-5">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <Transition name="page" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </Transition>
+      </RouterView>
     </main>
 
     <!-- ====== DESKTOP FOOTER ====== -->
@@ -178,3 +182,9 @@ function updateFavicon(logoFilename, primaryColor) {
   appTitle.content = document.title
 }
 </script>
+
+<style scoped>
+.page-enter-active { transition: opacity 0.12s ease; }
+.page-leave-active { transition: opacity 0.08s ease; }
+.page-enter-from, .page-leave-to { opacity: 0; }
+</style>
