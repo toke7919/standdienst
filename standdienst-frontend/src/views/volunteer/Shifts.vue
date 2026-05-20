@@ -11,61 +11,66 @@
           <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">{{ group.date }}</h2>
         </div>
 
-        <div v-for="standGroup in group.stands" :key="standGroup.stand_name" class="mt-1">
-          <!-- Sticky Standheader (Datumsleiste ca. 2.25rem hoch → top = 3.5+2.25 = 5.75rem) -->
-          <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 py-2 bg-white border-b border-gray-100 shadow-sm">
-            <h3 class="text-base font-semibold text-gray-800">{{ standGroup.stand_name }}</h3>
-          </div>
+        <div class="space-y-4 mt-3">
+          <div v-for="standGroup in group.stands" :key="standGroup.stand_name" class="card overflow-hidden !p-0">
+            <!-- Farbiger Akzentstreifen -->
+            <div class="h-1 bg-primary-500 rounded-t-2xl" />
 
-          <div class="space-y-3 mt-3 mb-5">
-            <div
-              v-for="shift in standGroup.shifts"
-              :key="shift.id"
-              class="card flex items-center justify-between p-4 transition-all duration-150"
-              :class="{
-                'bg-green-50 border-green-200': shift.is_registered,
-                'opacity-55': !shift.is_registered && shift.is_full,
-              }"
-            >
-              <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700">{{ shift.time_range }}</p>
-                <div class="flex items-center gap-2 mt-1.5">
-                  <div class="h-1.5 bg-gray-200 rounded-full w-24">
-                    <div
-                      class="h-1.5 rounded-full"
-                      :class="shift.is_full ? 'bg-red-400' : 'bg-green-400'"
-                      :style="{ width: `${Math.min(100, (shift.current_count / shift.max_volunteers) * 100)}%` }"
-                    />
+            <div class="p-4">
+              <h3 class="text-base font-semibold text-gray-800 mb-3">{{ standGroup.stand_name }}</h3>
+
+              <div class="space-y-2">
+                <div
+                  v-for="shift in standGroup.shifts"
+                  :key="shift.id"
+                  class="rounded-xl border p-3 flex items-center justify-between transition-all duration-150"
+                  :class="{
+                    'bg-green-50 border-green-200': shift.is_registered,
+                    'border-gray-100 bg-gray-50/40': !shift.is_registered && shift.is_full,
+                    'border-gray-100': !shift.is_registered && !shift.is_full,
+                  }"
+                >
+                  <div class="flex-1" :class="{ 'opacity-50': !shift.is_registered && shift.is_full }">
+                    <p class="text-sm font-medium text-gray-700">{{ shift.time_range }}</p>
+                    <div class="flex items-center gap-2 mt-1.5">
+                      <div class="h-1.5 bg-gray-200 rounded-full w-24">
+                        <div
+                          class="h-1.5 rounded-full"
+                          :class="shift.is_full ? 'bg-red-400' : 'bg-green-400'"
+                          :style="{ width: `${Math.min(100, (shift.current_count / shift.max_volunteers) * 100)}%` }"
+                        />
+                      </div>
+                      <span class="text-xs text-gray-400">{{ shift.current_count }}/{{ shift.max_volunteers }}</span>
+                    </div>
+                    <div v-if="shift.registered_names?.length" class="mt-1.5 flex flex-wrap gap-1">
+                      <span
+                        v-for="name in shift.registered_names"
+                        :key="name"
+                        class="text-xs bg-primary-100 text-primary-700 rounded-full px-2 py-0.5"
+                      >{{ name }}</span>
+                    </div>
                   </div>
-                  <span class="text-xs text-gray-400">{{ shift.current_count }}/{{ shift.max_volunteers }}</span>
+                  <div class="ml-4">
+                    <button
+                      v-if="!shift.is_registered"
+                      class="btn-primary text-sm"
+                      :disabled="shift.is_full || toggling === shift.id"
+                      @click="register(shift)"
+                    >
+                      <LoadingSpinner v-if="toggling === shift.id" size="sm" />
+                      Eintragen
+                    </button>
+                    <button
+                      v-else
+                      class="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50"
+                      :disabled="toggling === shift.id"
+                      @click="unregister(shift)"
+                    >
+                      <LoadingSpinner v-if="toggling === shift.id" size="sm" />
+                      Austragen
+                    </button>
+                  </div>
                 </div>
-                <div v-if="shift.registered_names?.length" class="mt-1.5 flex flex-wrap gap-1">
-                  <span
-                    v-for="name in shift.registered_names"
-                    :key="name"
-                    class="text-xs bg-primary-100 text-primary-700 rounded-full px-2 py-0.5"
-                  >{{ name }}</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <button
-                  v-if="!shift.is_registered"
-                  class="btn-primary text-sm"
-                  :disabled="shift.is_full || toggling === shift.id"
-                  @click="register(shift)"
-                >
-                  <LoadingSpinner v-if="toggling === shift.id" size="sm" />
-                  Eintragen
-                </button>
-                <button
-                  v-else
-                  class="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50"
-                  :disabled="toggling === shift.id"
-                  @click="unregister(shift)"
-                >
-                  <LoadingSpinner v-if="toggling === shift.id" size="sm" />
-                  Austragen
-                </button>
               </div>
             </div>
           </div>
