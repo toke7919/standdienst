@@ -25,17 +25,25 @@ MAX_PASSKEYS = 5
 
 
 def _rp_config():
+    # Expliziter Override hat höchste Priorität (z.B. WEBAUTHN_ORIGIN=https://example.com)
+    explicit_origin = current_app.config.get('WEBAUTHN_ORIGIN', '')
+    if explicit_origin:
+        parsed_exp = urlparse(explicit_origin)
+        rp_id = current_app.config.get('WEBAUTHN_RP_ID') or (parsed_exp.hostname or '')
+        return rp_id, explicit_origin.rstrip('/')
+
     frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
     parsed = urlparse(frontend_url)
-    # Reverse-Proxy-Header berücksichtigen (HTTPS hinter Nginx/Traefik etc.)
+    # X-Forwarded-Proto wird NICHT für das Schema verwendet: Es beschreibt die
+    # Verbindung Proxy→Backend (oft HTTP), nicht die Client-seitige URL (HTTPS).
+    # Das Schema aus FRONTEND_URL ist autoritativ.
+    proto = parsed.scheme
     try:
         from flask import request as _req
-        fwd_proto = _req.headers.get('X-Forwarded-Proto', '').split(',')[0].strip()
         fwd_host = _req.headers.get('X-Forwarded-Host', '').split(',')[0].strip()
-        proto = fwd_proto if fwd_proto in ('http', 'https') else parsed.scheme
         host = fwd_host or parsed.netloc
     except RuntimeError:
-        proto, host = parsed.scheme, parsed.netloc
+        host = parsed.netloc
     rp_id = current_app.config.get('WEBAUTHN_RP_ID') or host.split(':')[0]
     origin = f'{proto}://{host}'
     return rp_id, origin

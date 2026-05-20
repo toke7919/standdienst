@@ -35,6 +35,8 @@ class Config:
     JWT_HEADER_TYPE = 'Bearer'
 
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+    WEBAUTHN_ORIGIN = os.getenv('WEBAUTHN_ORIGIN', '')
+    WEBAUTHN_RP_ID = os.getenv('WEBAUTHN_RP_ID', '')
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')
     BACKUP_DIR = os.getenv('BACKUP_DIR', 'backups')
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH_MB', 5)) * 1024 * 1024
