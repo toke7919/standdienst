@@ -20,4 +20,9 @@ def test_instance_info_not_found(client):
 def test_captcha(client, instance):
     rv = client.get(f'/api/public/{instance.slug}/captcha')
     assert rv.status_code == 200
-    assert 'question' in rv.get_json()
+    data = rv.get_json()
+    assert data['algorithm'] == 'SHA-256'
+    assert 'challenge' in data
+    assert 'salt' in data
+    assert 'signature' in data
+    assert 'maxnumber' in data

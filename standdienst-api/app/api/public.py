@@ -9,7 +9,7 @@ from ..models import Instance, SiteSettings, ActivityLog, Volunteer
 from ..schemas.volunteer import VolunteerRegisterSchema
 from ..utils.settings_cache import get_global_settings
 from ..utils.auth import validate_password_strength
-from ..utils.captcha import generate_captcha, verify_captcha
+from ..utils.captcha import generate_challenge, verify_solution
 from ..utils.mail import (
     is_mail_configured, send_mail,
     build_reset_email, build_welcome_email, build_registration_email,
@@ -48,7 +48,7 @@ def instance_info(slug):
 
 @public_bp.route('/<slug>/captcha', methods=['GET'])
 def captcha(slug):
-    return jsonify(generate_captcha()), 200
+    return jsonify(generate_challenge()), 200
 
 
 # ---------------------------------------------------------------------------
@@ -73,8 +73,8 @@ def register(slug):
     except ValidationError as e:
         return jsonify(error='Validierungsfehler', errors=e.messages), 422
 
-    if not verify_captcha(data['captcha_answer']):
-        return jsonify(error='Falsches CAPTCHA'), 400
+    if not verify_solution(data['altcha']):
+        return jsonify(error='CAPTCHA-Verifizierung fehlgeschlagen'), 400
 
     has_policy = bool(settings and settings.privacy_policy_html)
     if has_policy and not data.get('consent'):
