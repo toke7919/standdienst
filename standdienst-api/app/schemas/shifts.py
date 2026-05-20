@@ -47,6 +47,7 @@ class ShiftSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Shift
         load_instance = False
+        include_fk = True
 
     time_range = fields.Str(dump_only=True)
     current_count = fields.Int(dump_only=True)

@@ -223,28 +223,28 @@ def list_food_donations(slug):
     types = FoodDonationType.query.filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name).all()
     result = []
     for t in types:
-        donations = (
-            FoodDonation.query
-            .filter_by(food_type_id=t.id)
-            .join(Volunteer, FoodDonation.volunteer_id == Volunteer.id)
-            .order_by(Volunteer.name)
-            .all()
-        )
+        donations = FoodDonation.query.filter_by(food_type_id=t.id).all()
+        visible = []
+        for d in donations:
+            if d.volunteer_id is not None:
+                if not d.volunteer or d.volunteer.is_deleted:
+                    continue
+                name = d.volunteer.name
+            else:
+                name = d.guest_name or '–'
+            visible.append({
+                'id': d.id,
+                'description': d.description,
+                'needs_refrigeration': d.needs_refrigeration,
+                'volunteer_name': name,
+                'is_mine': d.volunteer_id == g.current_user.id,
+                'registered_at': d.registered_at.isoformat() if d.registered_at else None,
+            })
+        visible.sort(key=lambda x: x['volunteer_name'])
         result.append({
             'id': t.id,
             'name': t.name,
-            'donations': [
-                {
-                    'id': d.id,
-                    'description': d.description,
-                    'needs_refrigeration': d.needs_refrigeration,
-                    'volunteer_name': d.volunteer.name if d.volunteer else None,
-                    'is_mine': d.volunteer_id == g.current_user.id,
-                    'registered_at': d.registered_at.isoformat() if d.registered_at else None,
-                }
-                for d in donations
-                if d.volunteer and not d.volunteer.is_deleted
-            ],
+            'donations': visible,
         })
     return ok(result)
 

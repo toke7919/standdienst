@@ -111,17 +111,27 @@ def create_food_donation(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    volunteer = Volunteer.query.filter_by(
-        id=data['volunteer_id'], instance_id=g.instance.id
-    ).first()
     food_type = FoodDonationType.query.filter_by(
         id=data['food_type_id'], instance_id=g.instance.id
     ).first()
-    if not volunteer or not food_type:
-        return error('Helfer oder Essenspendenart nicht gefunden', 404)
+    if not food_type:
+        return error('Essenspendenart nicht gefunden', 404)
 
-    donation = FoodDonation(**data)
+    donation = FoodDonation(
+        volunteer_id=None,
+        guest_name=data['guest_name'],
+        food_type_id=data['food_type_id'],
+        description=data['description'],
+        needs_refrigeration=data.get('needs_refrigeration', False),
+    )
     db.session.add(donation)
+    db.session.add(ActivityLog(
+        instance_id=g.instance.id,
+        event_type=ActivityLog.FOOD_REGISTER,
+        volunteer_name=data['guest_name'],
+        actor_type=getattr(g.current_user, 'role', 'admin'),
+        details=f'{food_type.name}: {data["description"]} (Admin-Eintragung)',
+    ))
     db.session.commit()
     return created(_don_schema.dump(donation))
 
