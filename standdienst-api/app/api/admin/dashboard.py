@@ -72,12 +72,12 @@ def global_dashboard():
 
 def _instance_stats(instance_id: int, event_types=None) -> dict:
     volunteers = Volunteer.query.filter_by(instance_id=instance_id, deleted_at=None).count()
-    stands = Stand.query.filter_by(instance_id=instance_id).count()
-    dates = EventDate.query.filter_by(instance_id=instance_id).count()
 
     shifts_all = (Shift.query.join(Stand).filter(Stand.instance_id == instance_id).all())
     shifts = len(shifts_all)
     shifts_full = sum(1 for s in shifts_all if s.is_full)
+    shifts_empty = sum(1 for s in shifts_all if s.current_count == 0)
+    shifts_free = shifts - shifts_full
     fill_rate = round(shifts_full / shifts * 100) if shifts else 0
 
     registrations = (Registration.query
@@ -85,10 +85,40 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
                      .filter(Stand.instance_id == instance_id)
                      .count())
 
+    # Helfer ohne Schicht: aktive Volunteers mit 0 Anmeldungen
+    volunteers_with_shift = (Registration.query
+                             .join(Shift).join(Stand)
+                             .filter(Stand.instance_id == instance_id,
+                                     Registration.volunteer_id.isnot(None))
+                             .with_entities(Registration.volunteer_id)
+                             .distinct()
+                             .count())
+    volunteers_registered = (Volunteer.query
+                              .filter_by(instance_id=instance_id, deleted_at=None)
+                              .filter(Volunteer.email.isnot(None))
+                              .count())
+    volunteers_without_shift = max(0, volunteers_registered - volunteers_with_shift)
+
     food_donations = (FoodDonation.query
                       .join(FoodDonationType)
                       .filter(FoodDonationType.instance_id == instance_id)
                       .count())
+
+    # Auslastung je Termin
+    dates_all = EventDate.query.filter_by(instance_id=instance_id).order_by(EventDate.date).all()
+    dates_fill = []
+    for d in dates_all:
+        d_shifts = [s for s in shifts_all if s.event_date_id == d.id]
+        d_total = len(d_shifts)
+        d_full = sum(1 for s in d_shifts if s.is_full)
+        d_rate = round(d_full / d_total * 100) if d_total else 0
+        dates_fill.append({
+            'date_id': d.id,
+            'date_formatted': d.formatted,
+            'shifts': d_total,
+            'shifts_full': d_full,
+            'fill_rate': d_rate,
+        })
 
     recent_q = ActivityLog.query.filter_by(instance_id=instance_id)
     if event_types is not None:
@@ -100,13 +130,15 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
 
     return {
         'volunteers': volunteers,
-        'stands': stands,
-        'dates': dates,
         'shifts': shifts,
         'shifts_full': shifts_full,
+        'shifts_free': shifts_free,
+        'shifts_empty': shifts_empty,
         'fill_rate': fill_rate,
         'registrations': registrations,
+        'volunteers_without_shift': volunteers_without_shift,
         'food_donations': food_donations,
+        'dates_fill': dates_fill,
         'recent_activity': [_log_dict(e) for e in recent],
     }
 
