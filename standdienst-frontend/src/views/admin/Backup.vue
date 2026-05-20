@@ -31,11 +31,20 @@
           <div v-for="b in backups" :key="b.filename"
                class="border-b border-gray-100 last:border-0 hover:bg-gray-50 px-4 py-3">
             <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="font-mono text-xs text-gray-700 truncate">{{ b.filename }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">
-                  {{ fmt(b.created_at) }} &middot; {{ (b.size_bytes / 1024).toFixed(1) }} KB
-                </p>
+              <div class="min-w-0 flex items-start gap-2">
+                <span
+                  class="mt-0.5 flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                  :class="b.type === 'encrypted'
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'bg-gray-100 text-gray-500'"
+                  :title="b.type === 'encrypted' ? 'In-App-Backup (verschlüsselt, wiederherstellbar)' : 'Shell-Skript-Backup (SQL, nur Download)'"
+                >{{ b.type === 'encrypted' ? 'App' : 'Skript' }}</span>
+                <div class="min-w-0">
+                  <p class="font-mono text-xs text-gray-700 truncate">{{ b.filename }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">
+                    {{ fmt(b.created_at) }} &middot; {{ (b.size_bytes / 1024).toFixed(1) }} KB
+                  </p>
+                </div>
               </div>
               <div class="flex items-center gap-3 shrink-0">
                 <a
@@ -43,9 +52,11 @@
                   download
                   class="text-green-600 hover:underline text-xs whitespace-nowrap"
                 >Herunterladen</a>
-                <button class="text-indigo-600 hover:underline text-xs whitespace-nowrap" @click="restore(b.filename)">
-                  Wiederherstellen
-                </button>
+                <button
+                  v-if="b.type === 'encrypted'"
+                  class="text-indigo-600 hover:underline text-xs whitespace-nowrap"
+                  @click="restore(b.filename)"
+                >Wiederherstellen</button>
                 <button class="text-red-500 hover:underline text-xs" @click="del(b.filename)">
                   Löschen
                 </button>

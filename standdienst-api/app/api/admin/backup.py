@@ -67,12 +67,17 @@ def _sql_value(v) -> str:
 
 
 def _list_backups(backup_dir: Path) -> list[dict]:
-    files = sorted(backup_dir.glob('*.enc'), key=lambda f: f.stat().st_mtime, reverse=True)
+    files = sorted(
+        list(backup_dir.glob('*.enc')) + list(backup_dir.glob('*.sql.gz')),
+        key=lambda f: f.stat().st_mtime,
+        reverse=True,
+    )
     return [
         {
             'filename': f.name,
             'size_bytes': f.stat().st_size,
             'created_at': datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc).isoformat(),
+            'type': 'encrypted' if f.suffix == '.enc' else 'sql_gz',
         }
         for f in files
     ]
@@ -107,7 +112,9 @@ def _restore_from_bytes(sql_bytes: bytes) -> None:
 
 
 def _validate_filename(name: str) -> bool:
-    return bool(name) and '/' not in name and not name.startswith('.') and name.endswith('.enc')
+    if not name or '/' in name or name.startswith('.'):
+        return False
+    return name.endswith('.enc') or name.endswith('.sql.gz')
 
 
 def run_backup(label: str | None = None) -> str:
@@ -158,6 +165,8 @@ def delete_backup(name):
 def restore_backup(name):
     if not _validate_filename(name):
         return error('Ungültiger Dateiname', 400)
+    if not name.endswith('.enc'):
+        return error('Nur verschlüsselte .enc-Backups können wiederhergestellt werden', 400)
     f = _backup_dir() / name
     if not f.exists():
         return error('Backup nicht gefunden', 404)
