@@ -34,7 +34,6 @@ class GlobalSettings(db.Model):
     base_url = db.Column(db.String(500), nullable=True)
     copyright_text = db.Column(db.String(500), nullable=True)
     provider_impressum_html = db.Column(db.Text, nullable=True)
-    landing_impressum_html = db.Column(db.Text, nullable=True)
     log_retention_months = db.Column(db.Integer, nullable=False, default=3)
     smb_enabled = db.Column(db.Boolean, nullable=False, default=False)
     smb_server = db.Column(db.String(200), nullable=True)

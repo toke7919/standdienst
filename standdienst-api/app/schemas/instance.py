@@ -48,7 +48,6 @@ class GlobalSettingsUpdateSchema(Schema):
     base_url = fields.Str(validate=validate.Length(max=500), allow_none=True)
     copyright_text = fields.Str(validate=validate.Length(max=500), allow_none=True)
     provider_impressum_html = fields.Str(allow_none=True)
-    landing_impressum_html = fields.Str(allow_none=True)
     log_retention_months = fields.Int(validate=validate.Range(min=1, max=36))
     volunteer_retention_months = fields.Int(validate=validate.Range(min=1, max=120), allow_none=True)
     timezone = fields.Str(validate=validate.Length(max=100))
