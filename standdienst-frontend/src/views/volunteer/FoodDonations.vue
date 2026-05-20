@@ -7,8 +7,11 @@
     </p>
 
     <div class="space-y-6">
-      <div v-for="t in combinedTypes" :key="t.id" class="card">
+      <div v-for="t in combinedTypes" :key="t.id" class="card overflow-hidden !p-0">
+        <!-- farbiger Streifen oben -->
+        <div class="h-1 bg-primary-500 rounded-t-2xl" />
 
+        <div class="p-6">
         <!-- Typ-Kopf: Name + Zähler -->
         <div class="flex items-start justify-between mb-1">
           <h2 class="text-base font-semibold text-gray-900">{{ t.name }}</h2>
@@ -75,6 +78,7 @@
           Noch keine Eintragungen
         </p>
 
+        </div><!-- /p-6 -->
       </div>
     </div>
   </div>

@@ -21,7 +21,11 @@
             <div
               v-for="shift in standGroup.shifts"
               :key="shift.id"
-              class="card flex items-center justify-between p-4"
+              class="card flex items-center justify-between p-4 transition-all duration-150"
+              :class="{
+                'bg-green-50 border-green-200': shift.is_registered,
+                'opacity-55': !shift.is_registered && shift.is_full,
+              }"
             >
               <div class="flex-1">
                 <p class="text-sm font-medium text-gray-700">{{ shift.time_range }}</p>
