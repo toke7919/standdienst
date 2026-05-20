@@ -46,6 +46,7 @@
                   <span :class="s.is_full ? 'badge-red' : 'badge-green'">
                     {{ s.current_count }}/{{ s.max_volunteers }}
                   </span>
+                  <button class="text-xs text-gray-500 hover:text-gray-700 font-medium" @click="openDuplicate(s)">Duplizieren</button>
                   <button class="text-xs text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(s)">Bearbeiten</button>
                   <button class="text-xs text-red-500 hover:text-red-700 font-medium" @click="deleteShift(s)">Löschen</button>
                 </div>
@@ -194,11 +195,28 @@ function openEdit(s) {
   showModal.value = true
 }
 
+function openDuplicate(s) {
+  editing.value = null
+  form.value = {
+    stand_id: s.stand_id,
+    event_date_id: s.event_date_id,
+    start_time: (s.start_time || '').substring(0, 5),
+    end_time: (s.end_time || '').substring(0, 5),
+    max_volunteers: s.max_volunteers,
+  }
+  saveError.value = ''
+  showModal.value = true
+}
+
 async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateShift(route.params.slug, editing.value.id, form.value)
+      await adminApi.updateShift(route.params.slug, editing.value.id, {
+        start_time: form.value.start_time,
+        end_time: form.value.end_time,
+        max_volunteers: form.value.max_volunteers,
+      })
       ui.success('Schicht aktualisiert')
     } else {
       await adminApi.createShift(route.params.slug, form.value)

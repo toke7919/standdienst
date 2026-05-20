@@ -102,11 +102,11 @@
                   </div>
 
                   <!-- Angemeldete Namen -->
-                  <div class="px-2 mt-1.5 flex flex-wrap gap-1 overflow-hidden flex-1 content-start">
+                  <div class="px-2 mt-1.5 flex flex-wrap gap-1 overflow-hidden min-h-0 flex-1 content-start">
                     <span
                       v-for="reg in item.cell.registrations"
                       :key="reg.id"
-                      class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full leading-tight"
+                      class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full leading-tight"
                       :class="reg.by_admin
                         ? 'bg-white/80 text-gray-600 border border-gray-200'
                         : 'bg-primary-100 text-primary-700'"
