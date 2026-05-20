@@ -46,10 +46,12 @@
           </div>
 
           <!-- CAPTCHA -->
-          <div v-if="captcha">
-            <label class="label">Sicherheitsfrage: {{ captcha.question }}</label>
-            <input v-model="form.captcha_answer" type="number" class="input max-w-32" required />
-          </div>
+          <altcha-widget
+            :challengeurl="`/api/public/${slug}/captcha`"
+            hidefooter
+            hidelogo
+            @statechange="onAltchaStateChange"
+          />
 
           <!-- Datenschutz-Consent – nur wenn Policy konfiguriert -->
           <div v-if="hasPrivacyPolicy" class="flex items-start gap-2">
@@ -65,7 +67,7 @@
 
           <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
 
-          <button type="submit" class="btn-primary w-full" :disabled="loading || (hasPrivacyPolicy && !form.consent)">
+          <button type="submit" class="btn-primary w-full" :disabled="loading || !altchaPayload || (hasPrivacyPolicy && !form.consent)">
             <LoadingSpinner v-if="loading" size="sm" class="mr-2" />
             Registrieren
           </button>
@@ -99,21 +101,22 @@ const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current)
 const hasPrivacyPolicy = computed(() => instanceStore.current?.has_privacy_policy ?? false)
 
-const captcha = ref(null)
-const form = ref({ first_name: '', last_name: '', email: '', captcha_answer: '', consent: false })
+const altchaPayload = ref('')
+const form = ref({ first_name: '', last_name: '', email: '', consent: false })
 const loading = ref(false)
 const errorMsg = ref('')
 const loggedIn = ref(false)
 
 onMounted(async () => {
   await instanceStore.loadInstance(slug.value)
-  await loadCaptcha()
 })
 
-async function loadCaptcha() {
-  const res = await publicApi.getCaptcha(slug.value)
-  captcha.value = res.data
-  form.value.captcha_answer = ''
+function onAltchaStateChange(ev) {
+  if (ev.detail?.state === 'verified') {
+    altchaPayload.value = ev.detail.payload || ''
+  } else {
+    altchaPayload.value = ''
+  }
 }
 
 async function submit() {
@@ -123,12 +126,12 @@ async function submit() {
     const payload = {
       first_name: form.value.first_name,
       last_name: form.value.last_name,
-      captcha_answer: parseInt(form.value.captcha_answer),
+      altcha: altchaPayload.value,
       consent: form.value.consent,
     }
     if (form.value.email) payload.email = form.value.email
 
-    const res = await publicApi.register(slug.value, payload)
+    await publicApi.register(slug.value, payload)
 
     loggedIn.value = true
     await auth.fetchMe()
@@ -140,7 +143,6 @@ async function submit() {
     router.push(`/${slug.value}/shifts`)
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Registrierung fehlgeschlagen'
-    await loadCaptcha()
   } finally {
     loading.value = false
   }

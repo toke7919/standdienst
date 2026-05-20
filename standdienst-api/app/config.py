@@ -67,3 +67,4 @@ class TestingConfig(Config):
     LOG_LEVEL = 'WARNING'   # kein Info/Debug-Rauschen in der Testausgabe
     # Dummy-SMTP damit is_mail_configured()=True; send_mail() schlägt fehl, aber Tests fangen das ab
     MAIL_SERVER = 'localhost'
+    ALTCHA_MAX_NUMBER = 100  # schnelle Brute-Force-Lösung in Tests
