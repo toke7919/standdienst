@@ -80,16 +80,41 @@ exit(0 if a > b else 1)
 }
 
 # ---------------------------------------------------------------------------
-# GitHub-API-Abfrage
+# GitHub-API-Abfrage (mit DNS-Fallback über 8.8.8.8)
 # ---------------------------------------------------------------------------
+
+# Löst api.github.com auf; bei Ausfall des System-DNS wird 8.8.8.8 verwendet.
+_resolve_github_api_ip() {
+    local ip
+    # 1. Systemresolver (schnell, meist ausreichend)
+    ip=$(getent hosts api.github.com 2>/dev/null | awk '{print $1; exit}') && [ -n "$ip" ] && echo "$ip" && return
+    # 2. Externer DNS via dig
+    ip=$(dig +short +time=3 +tries=1 @8.8.8.8 api.github.com 2>/dev/null | grep -E '^[0-9]+\.[0-9]+' | head -1) && [ -n "$ip" ] && echo "$ip" && return
+    # 3. Externer DNS via nslookup
+    ip=$(nslookup api.github.com 8.8.8.8 2>/dev/null | awk '/^Address:/{ip=$2} END{print ip}' | grep -E '^[0-9]+\.[0-9]+') && [ -n "$ip" ] && echo "$ip" && return
+    return 1
+}
+
 _github_get() {
     local url="$1"
     local pat="${GITHUB_PAT:-}"
-    curl -fsSL \
-        -H "Accept: application/vnd.github+json" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        ${pat:+-H "Authorization: Bearer $pat"} \
-        "$url"
+    local args=(-fsSL -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" --connect-timeout 10)
+    [[ -n "$pat" ]] && args+=(-H "Authorization: Bearer $pat")
+
+    # Erst normaler Versuch
+    if curl "${args[@]}" "$url" 2>/dev/null; then
+        return 0
+    fi
+
+    # DNS-Fallback: IP über externen Resolver ermitteln
+    local ip
+    if ip=$(_resolve_github_api_ip 2>/dev/null) && [ -n "$ip" ]; then
+        warn "System-DNS für api.github.com fehlgeschlagen – Fallback via 8.8.8.8 ($ip)"
+        curl "${args[@]}" --resolve "api.github.com:443:$ip" "$url"
+        return $?
+    fi
+
+    return 1
 }
 
 _latest_release() {
@@ -101,7 +126,7 @@ _latest_release() {
     json="$(_github_get "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" 2>&1)" \
         || die "GitHub-API nicht erreichbar (GITHUB_REPO=$GITHUB_REPO).
   Prüfen: curl -fsSL https://api.github.com/repos/${GITHUB_REPO}/releases/latest
-  Fehler: $json"
+  DNS-Fix (falls Auflösung scheitert): echo '$(dig +short @8.8.8.8 api.github.com | head -1) api.github.com' >> /etc/hosts"
     echo "$json"
 }
 

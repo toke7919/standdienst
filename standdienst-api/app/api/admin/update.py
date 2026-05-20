@@ -50,17 +50,64 @@ def _git_repo_slug() -> str | None:
     return f'{parts[0]}/{parts[1]}' if len(parts) >= 2 else None
 
 
+def _resolve_github_api_ip() -> str | None:
+    """Löst api.github.com auf – bei Systemresolver-Ausfall via 8.8.8.8."""
+    import socket
+    import subprocess
+    # 1. Systemresolver
+    try:
+        return socket.getaddrinfo('api.github.com', 443, socket.AF_INET)[0][4][0]
+    except OSError:
+        pass
+    # 2. dig @8.8.8.8
+    try:
+        out = subprocess.run(
+            ['dig', '+short', '+time=3', '+tries=1', '@8.8.8.8', 'api.github.com'],
+            capture_output=True, text=True, timeout=5,
+        ).stdout.strip()
+        ip = next((l for l in out.splitlines() if l.count('.') == 3), None)
+        if ip:
+            return ip
+    except Exception:
+        pass
+    return None
+
+
 def _github_request(url: str, pat: str | None) -> dict | None:
-    req = urllib.request.Request(url, headers={
+    headers = {
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
-        **(({'Authorization': f'Bearer {pat}'}) if pat else {}),
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            return json.loads(resp.read())
-    except (urllib.error.URLError, ValueError):
-        return None
+    }
+    if pat:
+        headers['Authorization'] = f'Bearer {pat}'
+
+    def _fetch(target_url: str) -> dict | None:
+        req = urllib.request.Request(target_url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return json.loads(resp.read())
+        except (urllib.error.URLError, ValueError):
+            return None
+
+    result = _fetch(url)
+    if result is not None:
+        return result
+
+    # DNS-Fallback: IP über externen Resolver, URL-Host durch IP ersetzen
+    ip = _resolve_github_api_ip()
+    if ip:
+        fallback = url.replace('https://api.github.com', f'https://{ip}', 1)
+        import ssl
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False  # IP statt Hostname
+        ctx.verify_mode = ssl.CERT_NONE
+        req = urllib.request.Request(fallback, headers={**headers, 'Host': 'api.github.com'})
+        try:
+            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                return json.loads(resp.read())
+        except Exception:
+            pass
+    return None
 
 
 def _github_latest_release(repo_slug: str, pat: str | None) -> dict | None:
