@@ -1,34 +1,89 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-    <div class="card w-full max-w-sm">
-      <h1 class="text-xl font-semibold mb-6">Neues Passwort setzen</h1>
-      <form v-if="!done" @submit.prevent="submit" class="space-y-4">
-        <div>
-          <label class="label">Neues Passwort</label>
-          <input v-model="password" type="password" class="input" required autocomplete="new-password" />
+  <div class="min-h-screen flex flex-col bg-gradient-to-b from-primary-800 to-primary-700">
+    <!-- Branding -->
+    <div class="flex-shrink-0 pt-16 pb-24 px-6 text-white text-center">
+      <img
+        v-if="settings?.logo_filename"
+        :src="`/uploads/${settings.logo_filename}`"
+        class="h-16 object-contain mx-auto mb-4 drop-shadow-lg"
+        alt="Logo"
+      />
+      <div v-else class="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/30">
+        <span class="text-white text-2xl font-bold">{{ settings?.site_title?.charAt(0) || 'S' }}</span>
+      </div>
+      <h1 class="text-2xl font-bold tracking-tight">{{ settings?.site_title || 'Standdienst' }}</h1>
+      <p class="text-primary-200 mt-1.5 text-sm">Neues Passwort setzen</p>
+    </div>
+
+    <!-- Formular -->
+    <div class="flex-1 bg-white rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
+      <div class="max-w-md mx-auto">
+
+        <div v-if="!done" class="space-y-4">
+          <form @submit.prevent="submit" class="space-y-4">
+            <div>
+              <label class="label">Neues Passwort</label>
+              <div class="relative">
+                <input
+                  v-model="password"
+                  :type="showPw ? 'text' : 'password'"
+                  class="input pr-10"
+                  required
+                  autocomplete="new-password"
+                  placeholder="Mindestens 8 Zeichen"
+                />
+                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" @click="showPw = !showPw">
+                  <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
+                  <EyeIcon v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
+            <button type="submit" class="btn-primary w-full" :disabled="loading">
+              <LoadingSpinner v-if="loading" size="sm" class="mr-2" />
+              Passwort setzen
+            </button>
+          </form>
         </div>
-        <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
-        <button type="submit" class="btn-primary w-full" :disabled="loading">Passwort setzen</button>
-      </form>
-      <div v-else class="text-sm text-green-700 bg-green-50 rounded-lg p-4">
-        Passwort geändert.
-        <RouterLink :to="`/${slug}/login`" class="ml-1 underline">Zum Login</RouterLink>
+
+        <div v-else class="rounded-2xl text-sm text-green-800 bg-green-50 border border-green-200 p-5 text-center">
+          Passwort geändert.
+          <RouterLink :to="`/${slug}/login`" class="ml-1 underline font-medium">Zum Login</RouterLink>
+        </div>
+
+        <div class="mt-5 text-center">
+          <RouterLink :to="`/${slug}/login`" class="text-sm text-gray-400 hover:text-gray-600">
+            ← Zurück zum Login
+          </RouterLink>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useInstanceStore } from '@/stores/instance'
 import { publicApi } from '@/api/public'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
+const instanceStore = useInstanceStore()
 const slug = computed(() => route.params.slug)
+const settings = computed(() => instanceStore.current)
+
 const password = ref('')
+const showPw = ref(false)
 const loading = ref(false)
 const done = ref(false)
 const errorMsg = ref('')
+
+onMounted(() => {
+  instanceStore.loadInstance(slug.value)
+})
 
 async function submit() {
   loading.value = true

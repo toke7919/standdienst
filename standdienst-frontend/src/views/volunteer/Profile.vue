@@ -9,13 +9,30 @@
           <div><label class="label">Vorname</label><input v-model="form.first_name" class="input" required autocomplete="given-name" /></div>
           <div><label class="label">Nachname</label><input v-model="form.last_name" class="input" autocomplete="family-name" /></div>
         </div>
-        <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" /></div>
+        <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" autocomplete="email" /></div>
         <div>
-          <label class="label">Neues Passwort (leer lassen zum Beibehalten)</label>
-          <input v-model="form.password" type="password" class="input" autocomplete="new-password" />
+          <label class="label">Neues Passwort <span class="text-gray-400 font-normal text-xs">(leer lassen zum Beibehalten)</span></label>
+          <div class="relative">
+            <input
+              v-model="form.password"
+              :type="showPw ? 'text' : 'password'"
+              class="input pr-10"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              @click="showPw = !showPw"
+            >
+              <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
+              <EyeIcon v-else class="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <p v-if="saveMsg" class="text-sm" :class="saveOk ? 'text-green-700' : 'text-red-600'">{{ saveMsg }}</p>
-        <button type="submit" class="btn-primary" :disabled="saving">Speichern</button>
+        <button type="submit" class="btn-primary" :disabled="saving">
+          <LoadingSpinner v-if="saving" size="sm" class="mr-2" />
+          Speichern
+        </button>
       </form>
     </div>
 
@@ -31,7 +48,7 @@
       </button>
     </div>
 
-    <!-- Abmelden (nur mobil sichtbar, auf Desktop ist es im Header) -->
+    <!-- Abmelden (nur mobil sichtbar) -->
     <div class="card mb-6 md:hidden">
       <h2 class="text-base font-semibold text-gray-800 mb-3">Sitzung</h2>
       <button class="btn-secondary w-full" @click="auth.logout">Abmelden</button>
@@ -53,6 +70,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { volunteerApi } from '@/api/volunteer'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
@@ -67,22 +85,19 @@ const form = ref({
   password: '',
 })
 const saving = ref(false)
-const saveMsg = ref('')
-const saveOk = ref(true)
+const showPw = ref(false)
 
 async function save() {
   saving.value = true
-  saveMsg.value = ''
   const data = { first_name: form.value.first_name, last_name: form.value.last_name, email: form.value.email }
   if (form.value.password) data.password = form.value.password
   try {
     await volunteerApi.updateProfile(route.params.slug, data)
-    saveMsg.value = 'Gespeichert'
-    saveOk.value = true
+    ui.success('Gespeichert')
+    form.value.password = ''
     await auth.fetchMe()
   } catch (e) {
-    saveMsg.value = e.response?.data?.error || 'Fehler'
-    saveOk.value = false
+    ui.err(e.response?.data?.error || 'Fehler beim Speichern')
   } finally {
     saving.value = false
   }

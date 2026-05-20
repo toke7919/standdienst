@@ -136,5 +136,44 @@ onMounted(() => {
 
 watch(settings, (s) => {
   if (s?.site_title) document.title = s.site_title
-})
+  updateFavicon(s?.logo_filename || null, s?.primary_color || null)
+}, { immediate: true })
+
+function updateFavicon(logoFilename, primaryColor) {
+  const logoUrl = logoFilename ? `/uploads/${logoFilename}` : null
+
+  // Favicon + Apple Touch Icon
+  for (const rel of ['icon', 'apple-touch-icon']) {
+    let link = document.querySelector(`link[rel="${rel}"]`)
+    if (logoUrl) {
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = rel
+        document.head.appendChild(link)
+      }
+      link.href = logoUrl
+    } else if (link && rel !== 'icon') {
+      // Nur dynamisch hinzugefügte entfernen; den Standard-favicon.svg aus index.html behalten
+      link.remove()
+    }
+  }
+
+  // Theme-Color (Browser-Chrome-Farbe auf mobil)
+  let meta = document.querySelector('meta[name="theme-color"]')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'theme-color'
+    document.head.appendChild(meta)
+  }
+  meta.content = primaryColor || '#4f46e5'
+
+  // iOS Web-App-Titel
+  let appTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+  if (!appTitle) {
+    appTitle = document.createElement('meta')
+    appTitle.name = 'apple-mobile-web-app-title'
+    document.head.appendChild(appTitle)
+  }
+  appTitle.content = document.title
+}
 </script>
