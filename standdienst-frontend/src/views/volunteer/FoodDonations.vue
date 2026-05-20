@@ -2,11 +2,25 @@
   <div>
     <h1 class="text-xl font-bold text-gray-900 mb-6">Essensspende</h1>
 
-    <p v-if="loaded && !combinedTypes.length" class="text-center text-gray-400 py-8">
+    <!-- Skeleton -->
+    <div v-if="!loaded" class="space-y-6">
+      <div v-for="i in 2" :key="i" class="card overflow-hidden !p-0">
+        <div class="h-1 bg-gray-200 rounded-t-2xl" />
+        <div class="p-6 space-y-3">
+          <div class="h-4 w-40 bg-gray-100 rounded animate-pulse" />
+          <div class="h-3 w-56 bg-gray-100 rounded animate-pulse" />
+          <div class="border-t border-gray-100 my-1" />
+          <div class="h-10 bg-gray-100 rounded-lg animate-pulse" />
+          <div class="h-8 w-24 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+      </div>
+    </div>
+
+    <p v-else-if="!combinedTypes.length" class="text-center text-gray-400 py-8">
       Noch keine Spendenkategorien vorhanden
     </p>
 
-    <div class="space-y-6">
+    <div v-else class="space-y-6">
       <div v-for="t in combinedTypes" :key="t.id" class="card overflow-hidden !p-0">
         <!-- farbiger Streifen oben -->
         <div class="h-1 bg-primary-500 rounded-t-2xl" />

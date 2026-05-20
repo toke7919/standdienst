@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full">
+  <div class="fixed right-4 z-50 flex flex-col gap-2 max-w-sm w-full bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-4">
     <TransitionGroup name="toast">
       <div
         v-for="toast in ui.toasts"

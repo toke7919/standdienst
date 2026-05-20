@@ -102,7 +102,11 @@
       :class="mobileContentPad"
     >
       <main class="flex-1 p-4 md:p-6">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <Transition name="page" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </Transition>
+        </RouterView>
       </main>
     </div>
 
@@ -197,10 +201,13 @@
             class="relative bg-white rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col"
             style="padding-bottom: env(safe-area-inset-bottom, 0px)"
           >
-            <!-- Drag-Handle + Header -->
+            <!-- Header -->
             <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100 flex-shrink-0">
-              <span class="font-semibold text-gray-900">Navigation</span>
-              <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500" @click="moreOpen = false">
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-900 truncate">{{ auth.user?.first_name || auth.user?.name || 'Administrator' }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ auth.user?.email }}</p>
+              </div>
+              <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 flex-shrink-0 ml-3" @click="moreOpen = false">
                 <XMarkIcon class="w-5 h-5" />
               </button>
             </div>
@@ -402,6 +409,11 @@ export const MoreTile = defineComponent({
 </script>
 
 <style scoped>
+/* Page transitions */
+.page-enter-active { transition: opacity 0.12s ease; }
+.page-leave-active { transition: opacity 0.08s ease; }
+.page-enter-from, .page-leave-to { opacity: 0; }
+
 /* Bottom-Sheet Slide-up Animation */
 .sheet-enter-active,
 .sheet-leave-active {

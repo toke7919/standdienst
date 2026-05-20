@@ -86,6 +86,7 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
     volunteer_email = fields.Method('_volunteer_email', dump_only=True)
     stand_name = fields.Method('_stand_name', dump_only=True)
     date_formatted = fields.Method('_date_formatted', dump_only=True)
+    date_iso = fields.Method('_date_iso', dump_only=True)
     time_range = fields.Method('_time_range', dump_only=True)
 
     def _display_name(self, obj):
@@ -105,6 +106,11 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
         if not obj.shift or not obj.shift.event_date:
             return None
         return obj.shift.event_date.formatted
+
+    def _date_iso(self, obj):
+        if not obj.shift or not obj.shift.event_date:
+            return None
+        return obj.shift.event_date.date.isoformat()
 
     def _time_range(self, obj):
         return obj.shift.time_range if obj.shift else None

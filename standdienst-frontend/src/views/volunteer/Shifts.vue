@@ -2,7 +2,33 @@
   <div>
     <h1 class="text-xl font-bold text-gray-900 mb-4">Schichten</h1>
 
-    <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+    <!-- Skeleton -->
+    <div v-if="loading" class="space-y-6">
+      <div v-for="i in 2" :key="i" class="mb-2">
+        <div class="sticky top-14 -mx-4 px-4 py-2 bg-gray-50 border-b border-gray-200">
+          <div class="h-3 w-28 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div class="space-y-4 mt-3">
+          <div v-for="j in 2" :key="j">
+            <div class="sticky top-[5.75rem] -mx-4 px-4 py-1.5 bg-white/90 border-b border-gray-100">
+              <div class="h-3.5 w-36 bg-gray-100 rounded animate-pulse" />
+            </div>
+            <div class="card overflow-hidden !p-0 mt-2">
+              <div class="h-1 bg-gray-200 rounded-t-2xl" />
+              <div class="p-4 space-y-2">
+                <div v-for="k in 3" :key="k" class="rounded-xl border border-gray-100 p-3 flex items-center justify-between gap-4">
+                  <div class="flex-1 space-y-2">
+                    <div class="h-3.5 w-20 bg-gray-100 rounded animate-pulse" />
+                    <div class="h-2 w-32 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div class="h-8 w-20 bg-gray-100 rounded-lg animate-pulse flex-shrink-0" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div v-else>
       <div v-for="group in grouped" :key="group.date" class="mb-6">

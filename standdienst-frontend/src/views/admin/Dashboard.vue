@@ -16,7 +16,7 @@
           <StatCard label="Helfer" :value="data.volunteers" color="blue" :icon="UsersIcon" />
           <StatCard label="Schichten gesamt" :value="data.shifts" color="violet" :icon="ClockIcon" />
           <StatCard label="Anmeldungen" :value="data.registrations" color="emerald" :icon="ClipboardDocumentListIcon" />
-          <StatCard label="Belegung" :value="`${data.fill_rate ?? 0}%`" color="amber" :icon="SignalIcon" />
+          <StatCard label="Belegung" :value="`${data.fill_rate ?? 0}%`" :color="fillRateColor" :icon="SignalIcon" />
         </div>
         <!-- Zeile 2: Schicht-Belegung / freie Schichten / ohne Anmeldung / Helfer ohne Schicht -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -37,7 +37,7 @@
             label="Noch ohne Anmeldung"
             :value="data.shifts_empty"
             :sub="data.shifts_empty > 0 ? 'Schichten brauchen Helfer' : 'Alle Schichten besetzt'"
-            color="amber"
+            :color="data.shifts_empty === 0 ? 'emerald' : 'amber'"
             :icon="ExclamationCircleIcon"
           />
           <StatCard
@@ -182,6 +182,12 @@ const data = ref(null)
 const loading = ref(true)
 
 const slug = computed(() => route.params.slug || null)
+const fillRateColor = computed(() => {
+  const rate = data.value?.fill_rate ?? 0
+  if (rate >= 80) return 'emerald'
+  if (rate >= 50) return 'amber'
+  return 'red'
+})
 
 async function loadData() {
   loading.value = true
@@ -242,6 +248,7 @@ const StatCard = defineComponent({
       emerald: 'bg-emerald-100 text-emerald-600',
       violet:  'bg-violet-100 text-violet-600',
       amber:   'bg-amber-100 text-amber-600',
+      red:     'bg-red-100 text-red-600',
     }
     return () => h('div', { class: 'bg-white rounded-xl p-5 shadow-sm border border-gray-100' }, [
       h('div', { class: `w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconColors[props.color] || iconColors.blue}` }, [

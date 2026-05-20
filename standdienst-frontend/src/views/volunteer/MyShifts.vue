@@ -8,36 +8,89 @@
       </a>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
-
-    <div v-else-if="grouped.length" class="space-y-6">
-      <div v-for="group in grouped" :key="group.date">
-        <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2 px-1">{{ group.date }}</p>
-
+    <!-- Skeleton -->
+    <div v-if="loading" class="space-y-6">
+      <div v-for="i in 2" :key="i">
+        <div class="h-3 w-24 bg-gray-200 rounded animate-pulse mb-2 mx-1" />
         <div class="card overflow-hidden !p-0">
-          <div class="h-1 bg-primary-500 rounded-t-2xl" />
+          <div class="h-1 bg-gray-200 rounded-t-2xl" />
           <div class="divide-y divide-gray-100">
-            <div
-              v-for="reg in group.items"
-              :key="reg.id"
-              class="flex items-center justify-between px-4 py-3 gap-3"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-800 truncate">{{ reg.stand_name }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">{{ reg.time_range }}</p>
+            <div v-for="j in 3" :key="j" class="flex items-center justify-between px-4 py-3 gap-3">
+              <div class="flex-1 space-y-1.5">
+                <div class="h-3.5 w-32 bg-gray-100 rounded animate-pulse" />
+                <div class="h-3 w-20 bg-gray-100 rounded animate-pulse" />
               </div>
-              <button
-                class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
-                title="Abmelden"
-                @click="cancel(reg)"
-              >
-                <XMarkIcon class="w-5 h-5" />
-              </button>
+              <div class="h-5 w-5 bg-gray-100 rounded-full animate-pulse" />
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <template v-else-if="upcomingGroups.length || pastGroups.length">
+      <!-- Kommende Schichten -->
+      <div v-if="upcomingGroups.length" class="space-y-6">
+        <div v-for="group in upcomingGroups" :key="group.date">
+          <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2 px-1">{{ group.date }}</p>
+          <div class="card overflow-hidden !p-0">
+            <div class="h-1 bg-primary-500 rounded-t-2xl" />
+            <div class="divide-y divide-gray-100">
+              <div
+                v-for="reg in group.items"
+                :key="reg.id"
+                class="flex items-center justify-between px-4 py-3 gap-3"
+              >
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-800 truncate">{{ reg.stand_name }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">{{ reg.time_range }}</p>
+                </div>
+                <button
+                  class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                  title="Abmelden"
+                  @click="cancel(reg)"
+                >
+                  <XMarkIcon class="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p v-else class="text-center text-gray-400 py-8 text-sm">Keine kommenden Schichten</p>
+
+      <!-- Vergangene Schichten (einklappbar) -->
+      <div v-if="pastGroups.length" class="mt-8">
+        <button
+          class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600 mb-3 px-1 transition-colors"
+          @click="showPast = !showPast"
+        >
+          <ChevronDownIcon class="w-3.5 h-3.5 transition-transform duration-200" :class="showPast ? '' : '-rotate-90'" />
+          Vergangene Schichten ({{ totalPast }})
+        </button>
+
+        <div v-if="showPast" class="space-y-4 opacity-50">
+          <div v-for="group in pastGroups" :key="group.date">
+            <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2 px-1">{{ group.date }}</p>
+            <div class="card overflow-hidden !p-0">
+              <div class="h-1 bg-gray-300 rounded-t-2xl" />
+              <div class="divide-y divide-gray-100">
+                <div
+                  v-for="reg in group.items"
+                  :key="reg.id"
+                  class="flex items-center px-4 py-3 gap-3"
+                >
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-500 truncate">{{ reg.stand_name }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ reg.time_range }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <p v-else class="text-center text-gray-400 py-12">Noch keine Anmeldungen</p>
   </div>
@@ -46,26 +99,38 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { CalendarIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, XMarkIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
 const ui = useUiStore()
 const registrations = ref([])
 const loading = ref(true)
+const showPast = ref(false)
 
 const icsUrl = computed(() => `/api/volunteer/${route.params.slug}/my-registrations/ical`)
+
+const today = new Date()
+today.setHours(0, 0, 0, 0)
+
+function isPast(dateIso) {
+  if (!dateIso) return false
+  return new Date(dateIso) < today
+}
 
 const grouped = computed(() => {
   const byDate = {}
   for (const r of registrations.value) {
-    if (!byDate[r.date_formatted]) byDate[r.date_formatted] = []
-    byDate[r.date_formatted].push(r)
+    if (!byDate[r.date_formatted]) byDate[r.date_formatted] = { items: [], date_iso: r.date_iso }
+    byDate[r.date_formatted].items.push(r)
   }
-  return Object.entries(byDate).map(([date, items]) => ({ date, items }))
+  return Object.entries(byDate).map(([date, val]) => ({ date, items: val.items, date_iso: val.date_iso }))
 })
+
+const upcomingGroups = computed(() => grouped.value.filter(g => !isPast(g.date_iso)))
+const pastGroups = computed(() => grouped.value.filter(g => isPast(g.date_iso)))
+const totalPast = computed(() => pastGroups.value.reduce((s, g) => s + g.items.length, 0))
 
 onMounted(load)
 
