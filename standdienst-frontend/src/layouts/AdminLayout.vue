@@ -108,6 +108,7 @@
           </Transition>
         </RouterView>
       </main>
+      <AppFooter class="hidden md:block" :slug="selectedSlug" :copyright="instanceInfo?.copyright_text" />
     </div>
 
     <!-- ============================= MOBILE BOTTOM NAV ============================= -->
@@ -278,6 +279,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
 import { adminApi } from '@/api/admin'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import AppFooter from '@/components/AppFooter.vue'
 import {
   HomeIcon, UsersIcon, BuildingStorefrontIcon, CalendarIcon, ClockIcon,
   ClipboardDocumentListIcon, ShoppingBagIcon, ArrowDownTrayIcon, ArrowUpTrayIcon,

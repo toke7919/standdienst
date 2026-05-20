@@ -51,6 +51,40 @@
           <input v-model="form.is_active" type="checkbox" id="active" class="rounded" />
           <label for="active" class="text-sm text-gray-700">Aktiv</label>
         </div>
+
+        <div class="border-t border-gray-100 pt-4 space-y-3">
+          <h3 class="text-sm font-semibold text-gray-700">Kontaktdaten (Impressum / Datenschutz)</h3>
+          <p class="text-xs text-gray-400">
+            Werden als Platzhalter in die globalen Impressum- und Datenschutz-Vorlagen eingesetzt.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label text-xs">Organisation / Verein</label>
+              <input v-model="form.contact_organisation" class="input text-sm" placeholder="Musterverein e.V." />
+            </div>
+            <div>
+              <label class="label text-xs">Verantwortliche Person</label>
+              <input v-model="form.contact_person" class="input text-sm" placeholder="Max Mustermann" />
+            </div>
+            <div>
+              <label class="label text-xs">Straße &amp; Hausnummer</label>
+              <input v-model="form.contact_street" class="input text-sm" placeholder="Musterstraße 1" />
+            </div>
+            <div>
+              <label class="label text-xs">PLZ &amp; Ort</label>
+              <input v-model="form.contact_zip_city" class="input text-sm" placeholder="12345 Musterstadt" />
+            </div>
+            <div>
+              <label class="label text-xs">E-Mail</label>
+              <input v-model="form.contact_email" class="input text-sm" type="email" placeholder="kontakt@beispiel.de" />
+            </div>
+            <div>
+              <label class="label text-xs">Telefon</label>
+              <input v-model="form.contact_phone" class="input text-sm" type="tel" placeholder="+49 123 456789" />
+            </div>
+          </div>
+        </div>
+
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">
           <button type="button" class="btn-secondary" @click="showModal = false">Abbrechen</button>
@@ -74,7 +108,12 @@ const instances = ref([])
 const { sortKey, sortDir, sorted, toggleSort } = useSort(instances, 'name')
 const showModal = ref(false)
 const editing = ref(null)
-const form = ref({ name: '', slug: '', is_active: true })
+const _emptyForm = () => ({
+  name: '', slug: '', is_active: true,
+  contact_organisation: '', contact_person: '', contact_street: '',
+  contact_zip_city: '', contact_email: '', contact_phone: '',
+})
+const form = ref(_emptyForm())
 const saving = ref(false)
 const saveError = ref('')
 
@@ -87,14 +126,22 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', slug: '', is_active: true }
+  form.value = _emptyForm()
   saveError.value = ''
   showModal.value = true
 }
 
 function openEdit(inst) {
   editing.value = inst
-  form.value = { name: inst.name, slug: inst.slug, is_active: inst.is_active }
+  form.value = {
+    name: inst.name, slug: inst.slug, is_active: inst.is_active,
+    contact_organisation: inst.contact_organisation || '',
+    contact_person: inst.contact_person || '',
+    contact_street: inst.contact_street || '',
+    contact_zip_city: inst.contact_zip_city || '',
+    contact_email: inst.contact_email || '',
+    contact_phone: inst.contact_phone || '',
+  }
   saveError.value = ''
   showModal.value = true
 }

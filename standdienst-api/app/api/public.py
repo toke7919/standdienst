@@ -179,17 +179,58 @@ def welcome_setup(slug, raw_token):
 
 
 # ---------------------------------------------------------------------------
-# Datenschutzerklärung
+# Impressum + Datenschutz
 # ---------------------------------------------------------------------------
+
+@public_bp.route('/impressum', methods=['GET'])
+def platform_impressum():
+    gs = get_global_settings()
+    html = _render_template(
+        gs.impressum_template_html if gs else None,
+        _contact_vars(gs),
+    )
+    return jsonify(data={
+        'html': html,
+        'context': 'platform',
+    }), 200
+
+
+@public_bp.route('/<slug>/impressum', methods=['GET'])
+def instance_impressum(slug):
+    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    if not instance:
+        return jsonify(error='Instanz nicht gefunden'), 404
+    gs = get_global_settings()
+    html = _render_template(
+        gs.impressum_template_html if gs else None,
+        _contact_vars(instance),
+    )
+    operator_html = gs.provider_impressum_html if gs else None
+    return jsonify(data={
+        'html': html,
+        'operator_html': operator_html,
+        'instance_name': instance.name,
+        'slug': slug,
+        'context': 'instance',
+    }), 200
+
 
 @public_bp.route('/<slug>/datenschutz', methods=['GET'])
 def datenschutz(slug):
     instance = Instance.query.filter_by(slug=slug, is_active=True).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
+    gs = get_global_settings()
+    html = _render_template(
+        gs.datenschutz_template_html if gs else None,
+        _contact_vars(instance),
+    )
     settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+    # Fallback auf altes Feld wenn kein Template gesetzt
+    if not html and settings:
+        html = settings.privacy_policy_html
     return jsonify(data={
-        'privacy_policy_html': settings.privacy_policy_html if settings else None,
+        'privacy_policy_html': html,
         'instance_name': instance.name,
         'slug': slug,
     }), 200
@@ -302,3 +343,26 @@ def _merge_impressum(settings, global_settings) -> str:
     if settings and settings.instance_impressum_html:
         parts.append(settings.instance_impressum_html)
     return '\n'.join(parts)
+
+
+def _contact_vars(obj) -> dict:
+    """Extrahiert Kontakt-Platzhalter aus GlobalSettings oder Instance."""
+    if obj is None:
+        return {}
+    return {
+        'organisation': getattr(obj, 'contact_organisation', '') or '',
+        'person':       getattr(obj, 'contact_person', '') or '',
+        'adresse':      getattr(obj, 'contact_street', '') or '',
+        'plz_ort':      getattr(obj, 'contact_zip_city', '') or '',
+        'email':        getattr(obj, 'contact_email', '') or '',
+        'telefon':      getattr(obj, 'contact_phone', '') or '',
+    }
+
+
+def _render_template(template_html: str | None, vars: dict) -> str | None:
+    if not template_html:
+        return None
+    result = template_html
+    for key, value in vars.items():
+        result = result.replace('{{' + key + '}}', value)
+    return result
