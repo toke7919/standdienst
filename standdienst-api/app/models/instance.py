@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from ..extensions import db
+from ..utils.crypto import EncryptedStr
 
 
 organizer_instances = db.Table(
@@ -40,9 +41,9 @@ class GlobalSettings(db.Model):
     smb_share = db.Column(db.String(200), nullable=True)
     smb_path = db.Column(db.String(500), nullable=True)
     smb_username = db.Column(db.String(200), nullable=True)
-    smb_password = db.Column(db.String(500), nullable=True)
+    smb_password = db.Column(EncryptedStr(500), nullable=True)
     setup_complete = db.Column(db.Boolean, nullable=False, default=False)
-    github_pat = db.Column(db.String(500), nullable=True)
+    github_pat = db.Column(EncryptedStr(500), nullable=True)
     github_repo = db.Column(db.String(200), nullable=True)
     timezone = db.Column(db.String(100), nullable=False, default='Europe/Berlin')
     volunteer_retention_months = db.Column(db.Integer, nullable=True)
@@ -65,7 +66,7 @@ class MailSettings(db.Model):
     mail_port = db.Column(db.Integer, nullable=False, default=587)
     mail_use_tls = db.Column(db.Boolean, nullable=False, default=True)
     mail_username = db.Column(db.String(200), nullable=False, default='')
-    mail_password = db.Column(db.String(500), nullable=False, default='')
+    mail_password = db.Column(EncryptedStr(500), nullable=False, default='')
     mail_default_sender = db.Column(db.String(200), nullable=False, default='')
     mail_sender_name = db.Column(db.String(200), nullable=False, default='')
     updated_at = db.Column(

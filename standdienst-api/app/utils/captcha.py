@@ -1,4 +1,4 @@
-import random
+import secrets
 import time
 from flask import session
 
@@ -6,8 +6,8 @@ _TTL = 300  # Sekunden
 
 
 def generate_captcha() -> dict:
-    a = random.randint(1, 20)
-    b = random.randint(1, 20)
+    a = secrets.randbelow(90) + 10   # 10–99
+    b = secrets.randbelow(90) + 10   # 10–99
     session['captcha'] = {'answer': a + b, 'expires': time.time() + _TTL}
     return {'question': f'{a} + {b} = ?'}
 

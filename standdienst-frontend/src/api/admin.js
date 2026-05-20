@@ -123,7 +123,6 @@ export const adminApi = {
     }),
   deleteBackup: (name) => client.delete(`/admin/backup/${name}`),
   restoreBackup: (name, data) => client.post(`/admin/backup/${name}/restore`, data || {}),
-  exportBackupKey: () => client.get('/admin/backup/export-key'),
 
   // Update
   checkUpdate: () => client.get('/admin/update/check'),

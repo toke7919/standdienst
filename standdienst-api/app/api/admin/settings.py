@@ -24,7 +24,7 @@ _global_update = GlobalSettingsUpdateSchema()
 _mail_schema = MailSettingsSchema()
 _mail_update = MailSettingsUpdateSchema()
 
-_ALLOWED_LOGO = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
+_ALLOWED_LOGO = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 
 @admin_bp.route('/<slug>/settings', methods=['GET'])
@@ -70,12 +70,22 @@ def upload_logo(slug):
     file = request.files['logo']
     ext = (file.filename or '').rsplit('.', 1)[-1].lower()
     if ext not in _ALLOWED_LOGO:
-        return error(f'Ungültiges Dateiformat (erlaubt: {", ".join(_ALLOWED_LOGO)})', 400)
+        return error(f'Ungültiges Dateiformat (erlaubt: {", ".join(sorted(_ALLOWED_LOGO))})', 400)
+
+    raw = file.read()
+    try:
+        from PIL import Image
+        import io as _io
+        img = Image.open(_io.BytesIO(raw))
+        img.verify()
+    except Exception:
+        return error('Ungültige Bilddatei', 400)
 
     filename = secure_filename(f'logo_{g.instance.slug}.{ext}')
     upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
     os.makedirs(upload_dir, exist_ok=True)
-    file.save(os.path.join(upload_dir, filename))
+    with open(os.path.join(upload_dir, filename), 'wb') as fh:
+        fh.write(raw)
 
     settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
     settings.logo_filename = filename
@@ -169,10 +179,9 @@ def update_mail_settings():
 def send_test_mail():
     if not is_mail_configured(current_app):
         return error('E-Mail nicht konfiguriert', 503)
-    data = request.get_json() or {}
-    to = data.get('email') or getattr(g.current_user, 'email', None)
+    to = getattr(g.current_user, 'email', None)
     if not to:
-        return error('Empfänger-E-Mail fehlt', 400)
+        return error('Kein E-Mail-Konto für diesen Admin hinterlegt', 400)
     try:
         send_mail(
             to=to,
@@ -180,8 +189,9 @@ def send_test_mail():
             html='<p>Diese Testmail wurde erfolgreich über die konfigurierte SMTP-Verbindung gesendet.</p>',
         )
         return ok(message=f'Testmail an {to} gesendet')
-    except Exception as e:
-        return error(f'Versand fehlgeschlagen: {e}', 500)
+    except Exception:
+        current_app.logger.exception('Testmail-Versand fehlgeschlagen')
+        return error('E-Mail-Versand fehlgeschlagen', 500)
 
 
 def _log(instance_id, details, actor):
