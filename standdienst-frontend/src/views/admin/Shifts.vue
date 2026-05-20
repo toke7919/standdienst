@@ -132,8 +132,11 @@ function openCreate() {
 function openEdit(s) {
   editing.value = s
   form.value = {
-    stand_id: s.stand_id, event_date_id: s.event_date_id,
-    start_time: s.start_time, end_time: s.end_time, max_volunteers: s.max_volunteers,
+    stand_id: s.stand_id,
+    event_date_id: s.event_date_id,
+    start_time: (s.start_time || '').substring(0, 5),
+    end_time: (s.end_time || '').substring(0, 5),
+    max_volunteers: s.max_volunteers,
   }
   saveError.value = ''
   showModal.value = true

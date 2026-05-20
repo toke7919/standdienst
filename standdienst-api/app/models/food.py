@@ -41,13 +41,14 @@ class FoodDonation(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     volunteer_id = db.Column(
-        db.Integer, db.ForeignKey('volunteers.id', ondelete='CASCADE'),
-        nullable=False, index=True,
+        db.Integer, db.ForeignKey('volunteers.id', ondelete='SET NULL'),
+        nullable=True, index=True,
     )
     food_type_id = db.Column(
         db.Integer, db.ForeignKey('food_donation_types.id', ondelete='CASCADE'),
         nullable=False, index=True,
     )
+    guest_name = db.Column(db.String(100), nullable=True)
     description = db.Column(db.String(100), nullable=False)
     needs_refrigeration = db.Column(db.Boolean, default=False, nullable=False)
     registered_at = db.Column(db.DateTime(timezone=True),

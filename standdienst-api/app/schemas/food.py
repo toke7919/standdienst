@@ -38,12 +38,15 @@ class FoodDonationSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = FoodDonation
         load_instance = False
+        include_fk = True
 
     volunteer_name = fields.Method('_volunteer_name', dump_only=True)
     food_type_name = fields.Method('_food_type_name', dump_only=True)
 
     def _volunteer_name(self, obj):
-        return obj.volunteer.name if obj.volunteer else None
+        if obj.volunteer:
+            return obj.volunteer.name
+        return obj.guest_name
 
     def _food_type_name(self, obj):
         return obj.food_type.name if obj.food_type else None
@@ -56,7 +59,7 @@ class FoodDonationCreateSchema(Schema):
 
 
 class FoodDonationAdminCreateSchema(Schema):
-    volunteer_id = fields.Int(required=True)
+    guest_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     food_type_id = fields.Int(required=True)
     description = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     needs_refrigeration = fields.Bool(load_default=False)

@@ -25,7 +25,10 @@
       <p v-if="!foodTypes.length" class="text-center text-gray-400 py-4">Noch keine Kategorien</p>
     </div>
 
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">Angemeldete Spenden</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Angemeldete Spenden</h2>
+      <button class="btn-secondary text-sm" @click="openCreateDonation">Spende eintragen</button>
+    </div>
     <div class="card overflow-hidden p-0">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
@@ -55,6 +58,35 @@
         </tbody>
       </table>
     </div>
+
+    <Modal v-model="showDonationModal" title="Spende eintragen">
+      <form @submit.prevent="saveDonation" class="space-y-4">
+        <div>
+          <label class="label">Name des Spenders</label>
+          <input v-model="donationForm.guest_name" class="input" required maxlength="100" />
+        </div>
+        <div>
+          <label class="label">Kategorie</label>
+          <select v-model.number="donationForm.food_type_id" class="input" required @change="onTypeChange">
+            <option value="">Kategorie wählen …</option>
+            <option v-for="t in foodTypes" :key="t.id" :value="t.id">{{ t.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Beschreibung</label>
+          <input v-model="donationForm.description" class="input" required maxlength="100" />
+        </div>
+        <div v-if="selectedTypeRefrigeration" class="flex items-center gap-2">
+          <input v-model="donationForm.needs_refrigeration" type="checkbox" id="don-refrig" />
+          <label for="don-refrig" class="text-sm text-gray-700">Kühlung erforderlich</label>
+        </div>
+        <p v-if="donationError" class="text-sm text-red-600">{{ donationError }}</p>
+        <div class="flex gap-3 justify-end pt-2">
+          <button type="button" class="btn-secondary" @click="showDonationModal = false">Abbrechen</button>
+          <button type="submit" class="btn-primary">Speichern</button>
+        </div>
+      </form>
+    </Modal>
 
     <Modal v-model="showTypeModal" :title="editingType ? 'Kategorie bearbeiten' : 'Neue Kategorie'">
       <form @submit.prevent="saveType" class="space-y-4">
@@ -93,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
@@ -108,6 +140,14 @@ const showTypeModal = ref(false)
 const editingType = ref(null)
 const typeForm = ref({ event_date_id: '', name: '', delivery_datetime: '', delivery_location: '', notes: '', refrigeration_enabled: false })
 const typeError = ref('')
+
+const showDonationModal = ref(false)
+const donationForm = ref({ guest_name: '', food_type_id: '', description: '', needs_refrigeration: false })
+const donationError = ref('')
+const selectedTypeRefrigeration = computed(() => {
+  const t = foodTypes.value.find(t => t.id === donationForm.value.food_type_id)
+  return t?.refrigeration_enabled ?? false
+})
 
 onMounted(load)
 
@@ -171,6 +211,33 @@ async function deleteType(t) {
   if (!ok) return
   try { await adminApi.deleteFoodType(route.params.slug, t.id); await load() }
   catch (e) { ui.err(e.response?.data?.error || 'Fehler') }
+}
+
+function openCreateDonation() {
+  donationForm.value = { guest_name: '', food_type_id: '', description: '', needs_refrigeration: false }
+  donationError.value = ''
+  showDonationModal.value = true
+}
+
+function onTypeChange() {
+  donationForm.value.needs_refrigeration = false
+}
+
+async function saveDonation() {
+  donationError.value = ''
+  try {
+    await adminApi.createFoodDonation(route.params.slug, {
+      guest_name: donationForm.value.guest_name,
+      food_type_id: donationForm.value.food_type_id,
+      description: donationForm.value.description,
+      needs_refrigeration: donationForm.value.needs_refrigeration,
+    })
+    ui.success('Spende eingetragen')
+    showDonationModal.value = false
+    await load()
+  } catch (e) {
+    donationError.value = e.response?.data?.error || 'Fehler'
+  }
 }
 
 async function deleteDonation(d) {
