@@ -58,6 +58,7 @@ export const adminApi = {
   deleteFoodType: (slug, id) => client.delete(`${a(slug)}/food-types/${id}`),
   getFoodDonations: (slug, p) => client.get(`${a(slug)}/food-donations`, { params: p }),
   createFoodDonation: (slug, data) => client.post(`${a(slug)}/food-donations`, data),
+  updateFoodDonation: (slug, id, data) => client.put(`${a(slug)}/food-donations/${id}`, data),
   deleteFoodDonation: (slug, id) => client.delete(`${a(slug)}/food-donations/${id}`),
 
   // Organizers

@@ -63,3 +63,12 @@ class FoodDonationAdminCreateSchema(Schema):
     food_type_id = fields.Int(required=True)
     description = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     needs_refrigeration = fields.Bool(load_default=False)
+
+
+class FoodDonationAdminUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    guest_name = fields.Str(validate=validate.Length(min=1, max=100))
+    description = fields.Str(validate=validate.Length(min=1, max=100))
+    needs_refrigeration = fields.Bool()

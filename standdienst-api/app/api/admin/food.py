@@ -6,7 +6,7 @@ from ...extensions import db
 from ...models import FoodDonationType, FoodDonation, ActivityLog, Volunteer, EventDate
 from ...schemas.food import (
     FoodDonationTypeSchema, FoodDonationTypeCreateSchema, FoodDonationTypeUpdateSchema,
-    FoodDonationSchema, FoodDonationAdminCreateSchema,
+    FoodDonationSchema, FoodDonationAdminCreateSchema, FoodDonationAdminUpdateSchema,
 )
 from ...utils.auth import require_staff, require_instance_admin
 from ...utils.responses import ok, created, no_content, error, paginated
@@ -18,6 +18,7 @@ _type_update = FoodDonationTypeUpdateSchema()
 _don_schema = FoodDonationSchema()
 _don_many = FoodDonationSchema(many=True)
 _don_create = FoodDonationAdminCreateSchema()
+_don_update = FoodDonationAdminUpdateSchema()
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +135,26 @@ def create_food_donation(slug):
     ))
     db.session.commit()
     return created(_don_schema.dump(donation))
+
+
+@admin_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['PUT'])
+@require_instance_admin
+def update_food_donation(slug, donation_id):
+    donation = (FoodDonation.query
+                .join(FoodDonationType)
+                .filter(FoodDonation.id == donation_id,
+                        FoodDonationType.instance_id == g.instance.id)
+                .first_or_404())
+    try:
+        data = _don_update.load(request.get_json() or {})
+    except ValidationError as e:
+        return error('Validierungsfehler', 422, e.messages)
+
+    for key, value in data.items():
+        setattr(donation, key, value)
+
+    db.session.commit()
+    return ok(_don_schema.dump(donation))
 
 
 @admin_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['DELETE'])

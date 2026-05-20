@@ -38,7 +38,7 @@
           <input v-model="form.name" class="input" required />
         </div>
         <div>
-          <label class="label">Beschreibung</label>
+          <label class="label">Beschreibung <span class="font-normal text-gray-400 text-xs">(optional)</span></label>
           <input v-model="form.description" class="input" />
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>

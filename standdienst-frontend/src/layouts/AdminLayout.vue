@@ -20,7 +20,7 @@
 
       <div v-if="auth.isLoggedIn" class="p-3 border-b border-white/10">
         <select v-model="selectedSlug" class="w-full text-sm text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none" @change="onInstanceChange">
-          <option value="" class="text-gray-900 bg-white">Alle Instanzen</option>
+          <option value="" class="text-gray-900 bg-white">Plattform</option>
           <option v-for="inst in instances" :key="inst.id" :value="inst.slug" class="text-gray-900 bg-white">{{ inst.name }}</option>
         </select>
       </div>
@@ -42,7 +42,7 @@
           <NavItem v-if="auth.isInstanceAdmin" :to="`/admin/${selectedSlug}/activity`" :icon="DocumentTextIcon">Protokoll</NavItem>
         </template>
 
-        <template v-if="auth.isAdmin">
+        <template v-if="auth.isAdmin && !selectedSlug">
           <p class="px-3 pt-4 pb-1 text-[10px] font-semibold text-white/35 uppercase tracking-widest">Plattform</p>
           <NavItem to="/admin/instances" :icon="ServerIcon">Instanzen</NavItem>
           <NavItem to="/admin/organizers" :icon="UserGroupIcon">Organisatoren</NavItem>
@@ -91,7 +91,7 @@
         class="text-xs border border-white/20 rounded-lg px-2 py-1.5 bg-white/10 text-white max-w-[9rem] flex-shrink-0 focus:outline-none"
         @change="onInstanceChange"
       >
-        <option value="" class="text-gray-900 bg-white">Alle</option>
+        <option value="" class="text-gray-900 bg-white">Plattform</option>
         <option v-for="inst in instances" :key="inst.id" :value="inst.slug" class="text-gray-900 bg-white">{{ inst.name }}</option>
       </select>
     </header>
@@ -359,7 +359,7 @@ watch(instanceInfo, (info) => {
 function onInstanceChange() {
   moreOpen.value = false
   if (selectedSlug.value) {
-    router.push(`/admin/${selectedSlug.value}/volunteers`)
+    router.push(`/admin/${selectedSlug.value}/dashboard`)
   } else {
     router.push('/admin/dashboard')
   }
