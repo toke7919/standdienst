@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import hmac as _hmac
 import io
 import os
 from datetime import datetime, timezone
@@ -111,6 +112,32 @@ def _restore_from_bytes(sql_bytes: bytes) -> None:
             pass
 
 
+# Magisches Prefix zur Erkennung HMAC-signierter Backups
+_HMAC_MAGIC = b'SDHMAC'
+_HMAC_LEN = 32  # SHA-256
+
+
+def _sign_payload(sql_bytes: bytes, key: bytes) -> bytes:
+    """Hängt HMAC-SHA-256-Signatur mit Magic-Prefix vor die Nutzdaten."""
+    sig = _hmac.new(key, sql_bytes, hashlib.sha256).digest()
+    return _HMAC_MAGIC + sig + sql_bytes
+
+
+def _verify_payload(data: bytes, key: bytes) -> bytes:
+    """Gibt SQL-Bytes zurück. Wirft ValueError bei ungültiger Signatur."""
+    if not data.startswith(_HMAC_MAGIC):
+        # Altes Backup ohne Signatur – akzeptieren, Warnung im Log
+        current_app.logger.warning('Backup ohne HMAC-Signatur wird wiederhergestellt (altes Format)')
+        return data
+    offset = len(_HMAC_MAGIC)
+    sig_stored = data[offset:offset + _HMAC_LEN]
+    sql_bytes = data[offset + _HMAC_LEN:]
+    sig_expected = _hmac.new(key, sql_bytes, hashlib.sha256).digest()
+    if not _hmac.compare_digest(sig_stored, sig_expected):
+        raise ValueError('Backup-Signatur ungültig')
+    return sql_bytes
+
+
 def _validate_filename(name: str) -> bool:
     if not name or '/' in name or name.startswith('.'):
         return False
@@ -121,8 +148,10 @@ def run_backup(label: str | None = None) -> str:
     """Erstellt ein Backup und gibt den Dateinamen zurück. Wirft Exception bei Fehler."""
     d = _backup_dir()
     _autorotate(d)
+    key = _derive_aes_key()
     raw = _dump_database()
-    encrypted = _encrypt(raw, _derive_aes_key())
+    signed = _sign_payload(raw, key)
+    encrypted = _encrypt(signed, key)
     ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     suffix = f'_{label}' if label else ''
     name = f'standdienst_{ts}{suffix}.enc'
@@ -170,15 +199,24 @@ def restore_backup(name):
     f = _backup_dir() / name
     if not f.exists():
         return error('Backup nicht gefunden', 404)
+
+    data = request.get_json() or {}
+    admin_password = data.get('admin_password', '')
+    if not admin_password or not g.current_user.check_password(admin_password):
+        return error('Admin-Passwort ungültig', 403)
+
     try:
+        key = _derive_aes_key()
         encrypted = f.read_bytes()
-        data = request.get_json() or {}
-        key_b64 = data.get('key')
-        key = base64.b64decode(key_b64) if key_b64 else _derive_aes_key()
-        sql_bytes = _decrypt(encrypted, key)
+        signed = _decrypt(encrypted, key)
+        sql_bytes = _verify_payload(signed, key)
         _restore_from_bytes(sql_bytes)
-        current_app.logger.warning('Datenbank aus Backup wiederhergestellt: %s', name)
+        current_app.logger.warning('Datenbank aus Backup wiederhergestellt: %s (Admin: %s)',
+                                   name, getattr(g.current_user, 'email', '?'))
         return ok(message='Datenbank wiederhergestellt')
+    except ValueError as e:
+        current_app.logger.error('Restore abgebrochen: %s', e)
+        return error('Backup-Integrität konnte nicht verifiziert werden', 400)
     except Exception:
         current_app.logger.exception('Restore fehlgeschlagen')
         return error('Backup-Wiederherstellung fehlgeschlagen', 500)
@@ -211,8 +249,3 @@ def upload_backup():
     return ok({'backups': _list_backups(d)}, 'Backup hochgeladen')
 
 
-@admin_bp.route('/backup/export-key', methods=['GET'])
-@require_admin
-def export_backup_key():
-    key = _derive_aes_key()
-    return ok({'key': base64.b64encode(key).decode()})

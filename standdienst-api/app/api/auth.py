@@ -8,6 +8,7 @@ from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, get_jwt,
     set_access_cookies, set_refresh_cookies, unset_jwt_cookies,
+    verify_jwt_in_request,
 )
 from marshmallow import ValidationError
 
@@ -247,6 +248,17 @@ def refresh():
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
+    try:
+        verify_jwt_in_request(optional=True)
+        identity = get_jwt_identity()
+        if identity:
+            role = get_jwt().get('role')
+            user = _load_user_by_identity(identity, role)
+            if user and hasattr(user, 'rotate_jwt'):
+                user.rotate_jwt()
+                db.session.commit()
+    except Exception:
+        pass
     resp = jsonify(message='Abgemeldet')
     unset_jwt_cookies(resp)
     session.clear()

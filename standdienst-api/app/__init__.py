@@ -104,6 +104,9 @@ def _register_request_hooks(app):
         response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
         if not app.debug:
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        ct = response.content_type or ''
+        if 'json' in ct or 'text/plain' in ct:
+            response.headers['Content-Security-Policy'] = "default-src 'none'"
         return response
 
 

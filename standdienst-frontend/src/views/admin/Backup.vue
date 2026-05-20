@@ -13,9 +13,6 @@
           <input type="file" accept=".enc" class="hidden" @change="handleUpload" />
           Backup hochladen
         </label>
-        <button class="btn-secondary" @click="showKeyModal = true">
-          Schlüssel exportieren
-        </button>
         <p class="text-xs text-gray-400 ml-auto">
           Max. {{ maxBackups }} Backups – älteste werden automatisch gelöscht.
         </p>
@@ -67,24 +64,7 @@
       </div>
     </div>
 
-    <!-- Key-Export-Modal -->
-    <div v-if="showKeyModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-        <h2 class="text-lg font-semibold text-gray-900">Verschlüsselungsschlüssel</h2>
-        <p class="text-sm text-gray-600">
-          Bewahre diesen Schlüssel sicher auf. Er wird benötigt, um Backups auf einer anderen
-          Installation wiederherzustellen.
-        </p>
-        <div v-if="exportedKey">
-          <textarea class="input font-mono text-xs" rows="3" readonly :value="exportedKey" @click="$event.target.select()" />
-          <p class="text-xs text-gray-400 mt-1">Klicken zum Markieren</p>
-        </div>
-        <div v-else class="flex justify-center py-4"><LoadingSpinner size="lg" /></div>
-        <button class="btn-secondary w-full" @click="showKeyModal = false">Schließen</button>
-      </div>
-    </div>
-
-    <!-- Restore-mit-Schlüssel-Modal -->
+    <!-- Restore-Modal -->
     <div v-if="restoreTarget" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
         <h2 class="text-lg font-semibold text-gray-900">Datenbank wiederherstellen</h2>
@@ -95,13 +75,14 @@
           Alle aktuellen Daten werden überschrieben. Dieser Vorgang kann nicht rückgängig gemacht werden.
         </p>
         <div>
-          <label class="label">Schlüssel (nur bei Fremd-Backup)</label>
-          <input v-model="restoreKey" class="input font-mono text-xs"
-                 placeholder="Leer lassen = aktueller Schlüssel dieser Installation" />
+          <label class="label">Admin-Passwort zur Bestätigung</label>
+          <input v-model="adminPassword" type="password" class="input"
+                 placeholder="Dein aktuelles Passwort" autocomplete="current-password" />
         </div>
         <div class="flex gap-3">
           <button class="btn-secondary flex-1" @click="restoreTarget = null">Abbrechen</button>
-          <button class="btn-primary flex-1 bg-red-600 hover:bg-red-700" :disabled="restoring" @click="confirmRestore">
+          <button class="btn-primary flex-1 bg-red-600 hover:bg-red-700"
+                  :disabled="restoring || !adminPassword" @click="confirmRestore">
             <LoadingSpinner v-if="restoring" size="sm" />
             Wiederherstellen
           </button>
@@ -112,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -123,10 +104,8 @@ const creating = ref(false)
 const restoring = ref(false)
 const backups = ref([])
 const maxBackups = 10
-const showKeyModal = ref(false)
-const exportedKey = ref(null)
 const restoreTarget = ref(null)
-const restoreKey = ref('')
+const adminPassword = ref('')
 
 function fmt(iso) {
   if (!iso) return '—'
@@ -181,13 +160,13 @@ async function del(name) {
 
 function restore(name) {
   restoreTarget.value = name
-  restoreKey.value = ''
+  adminPassword.value = ''
 }
 
 async function confirmRestore() {
   restoring.value = true
   try {
-    await adminApi.restoreBackup(restoreTarget.value, restoreKey.value ? { key: restoreKey.value } : {})
+    await adminApi.restoreBackup(restoreTarget.value, { admin_password: adminPassword.value })
     ui.success('Datenbank wiederhergestellt – bitte Seite neu laden')
     restoreTarget.value = null
   } catch (e) {
@@ -211,16 +190,4 @@ async function handleUpload(event) {
   }
   event.target.value = ''
 }
-
-watch(showKeyModal, async (open) => {
-  if (!open) return
-  exportedKey.value = null
-  try {
-    const res = await adminApi.exportBackupKey()
-    exportedKey.value = res.data.data.key
-  } catch (e) {
-    ui.err('Schlüssel konnte nicht exportiert werden')
-    showKeyModal.value = false
-  }
-})
 </script>

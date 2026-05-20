@@ -22,9 +22,8 @@ def _real_ip() -> str:
     """
     return (
         request.environ.get('HTTP_X_REAL_IP')
-        or request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
         or request.remote_addr
-        or '127.0.0.1'
+        or 'unknown'
     )
 
 
