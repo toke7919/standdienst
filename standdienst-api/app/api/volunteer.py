@@ -209,7 +209,14 @@ def list_food_types(slug):
         return error('Essensspenden sind deaktiviert', 403)
 
     types = FoodDonationType.query.filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name).all()
-    return ok([{'id': t.id, 'name': t.name, 'refrigeration_enabled': t.refrigeration_enabled} for t in types])
+    return ok([{
+        'id': t.id,
+        'name': t.name,
+        'refrigeration_enabled': t.refrigeration_enabled,
+        'delivery_datetime': t.delivery_datetime.isoformat() if t.delivery_datetime else None,
+        'delivery_location': t.delivery_location,
+        'notes': t.notes,
+    } for t in types])
 
 
 @volunteer_bp.route('/<slug>/food-donations', methods=['GET'])
