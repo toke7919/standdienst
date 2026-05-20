@@ -10,33 +10,34 @@
     </div>
 
     <template v-else>
-      <!-- Eine Karte pro Stand, analog zu FoodDonations -->
+      <!-- Eine Karte pro Datum, Stände als Untergruppe -->
       <div class="space-y-4">
-        <div v-for="group in groupedShifts" :key="group.stand_name" class="card overflow-hidden !p-0">
+        <div v-for="group in groupedShifts" :key="group.date" class="card overflow-hidden !p-0">
           <!-- Akzent-Streifen oben -->
           <div class="h-1 bg-primary-500 rounded-t-2xl" />
 
-          <!-- Stand-Kopf -->
+          <!-- Datum-Kopf -->
           <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <BuildingStorefrontIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
-              <h2 class="font-semibold text-gray-900">{{ group.stand_name }}</h2>
+              <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+              <h2 class="font-semibold text-gray-900">{{ group.date }}</h2>
             </div>
             <span class="text-xs text-gray-400 flex-shrink-0">
               {{ group.total }} {{ group.total === 1 ? 'Schicht' : 'Schichten' }}
             </span>
           </div>
 
-          <!-- Schichten gruppiert nach Datum -->
+          <!-- Stände als Untergruppen innerhalb des Datums -->
           <div>
-            <template v-for="dg in group.dateGroups" :key="dg.date">
-              <!-- Datums-Unterheader -->
-              <div class="px-5 py-1.5 bg-gray-50 border-b border-gray-100">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ dg.date }}</span>
+            <template v-for="sg in group.standGroups" :key="sg.stand_name">
+              <!-- Stand-Subheader -->
+              <div class="px-5 py-1.5 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+                <BuildingStorefrontIcon class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <span class="text-xs font-semibold text-gray-500">{{ sg.stand_name }}</span>
               </div>
               <!-- Schicht-Zeilen -->
               <div
-                v-for="s in dg.shifts"
+                v-for="s in sg.shifts"
                 :key="s.id"
                 class="flex items-center px-5 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors duration-100"
               >
@@ -110,7 +111,7 @@ import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
 import Pagination from '@/components/Pagination.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import { BuildingStorefrontIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, BuildingStorefrontIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -128,23 +129,23 @@ const editing = ref(null)
 const form = ref({ stand_id: '', event_date_id: '', start_time: '08:00', end_time: '12:00', max_volunteers: 2 })
 const saveError = ref('')
 
-// Schichten nach Stand → Datum → Zeit gruppiert (analog FoodDonations)
+// Primär nach Datum, sekundär nach Stand, tertiär nach Uhrzeit
 const groupedShifts = computed(() => {
   const sorted = [...shifts.value].sort((a, b) => {
-    if (a.stand_name !== b.stand_name) return a.stand_name.localeCompare(b.stand_name, 'de')
     if (a.date_formatted !== b.date_formatted) return a.date_formatted.localeCompare(b.date_formatted, 'de')
+    if (a.stand_name !== b.stand_name) return a.stand_name.localeCompare(b.stand_name, 'de')
     return (a.start_time || '').localeCompare(b.start_time || '')
   })
-  const byStand = {}
+  const byDate = {}
   for (const s of sorted) {
-    if (!byStand[s.stand_name]) byStand[s.stand_name] = {}
-    if (!byStand[s.stand_name][s.date_formatted]) byStand[s.stand_name][s.date_formatted] = []
-    byStand[s.stand_name][s.date_formatted].push(s)
+    if (!byDate[s.date_formatted]) byDate[s.date_formatted] = {}
+    if (!byDate[s.date_formatted][s.stand_name]) byDate[s.date_formatted][s.stand_name] = []
+    byDate[s.date_formatted][s.stand_name].push(s)
   }
-  return Object.entries(byStand).map(([stand_name, dateMap]) => ({
-    stand_name,
-    dateGroups: Object.entries(dateMap).map(([date, shifts]) => ({ date, shifts })),
-    total: Object.values(dateMap).reduce((n, arr) => n + arr.length, 0),
+  return Object.entries(byDate).map(([date, standMap]) => ({
+    date,
+    standGroups: Object.entries(standMap).map(([stand_name, shifts]) => ({ stand_name, shifts })),
+    total: Object.values(standMap).reduce((n, arr) => n + arr.length, 0),
   }))
 })
 

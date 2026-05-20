@@ -1,11 +1,11 @@
 <template>
-  <!-- pb sorgt dafür, dass Inhalt nicht hinter der Bottom-Nav verschwindet -->
+  <!-- overflow-x-clip verhindert horizontales Scrollen durch negative Margins (Home-Hero etc.) -->
   <div
-    class="min-h-screen flex flex-col md:pb-0"
+    class="min-h-screen flex flex-col md:pb-0 overflow-x-clip"
     :class="bottomPad"
   >
-    <!-- ====== HEADER ====== -->
-    <header class="bg-primary-600 shadow-sm sticky top-0 z-20">
+    <!-- ====== HEADER (fixed statt sticky – zuverlässiger auf iOS Safari) ====== -->
+    <header class="bg-primary-600 shadow-sm fixed top-0 inset-x-0 z-20">
       <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <RouterLink :to="`/${slug}`" class="flex items-center gap-2 min-w-0">
           <img
@@ -36,6 +36,9 @@
         </nav>
       </div>
     </header>
+
+    <!-- Platzhalter für den fixed Header (h-14 = 3.5rem) -->
+    <div class="h-14 flex-shrink-0" />
 
     <!-- ====== MAIN CONTENT ====== -->
     <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-5">
@@ -92,13 +95,11 @@ const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current)
 
 const headerTextClass = computed(() => {
-  const color = settings.value?.primary_color || '#4f46e5'
+  const color = settings.value?.primary_color || '#7c3aed'
   return isColorDark(color) ? 'text-white' : 'text-gray-900'
 })
 
 // Padding-bottom für mobile: Höhe der Bottom-Nav + Safe Area
-// 4.25rem = h-[4.25rem]; safe-area wird per inline-style im <nav> gesetzt,
-// aber der Scrollbereich muss auch entsprechend Platz lassen.
 const bottomPad = computed(() =>
   'pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))]'
 )

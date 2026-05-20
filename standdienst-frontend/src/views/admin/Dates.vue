@@ -11,8 +11,8 @@
         :key="d.id"
         class="group bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
       >
-        <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
-          <CalendarIcon class="w-5 h-5 text-violet-600" />
+        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+          <CalendarIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-semibold text-gray-900">{{ d.formatted }}</p>
@@ -26,7 +26,7 @@
       </div>
 
       <div v-if="!dates.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
-        <CalendarIcon class="w-10 h-10 text-gray-200 mx-auto mb-3" />
+        <CalendarIcon class="w-10 h-10 text-primary-200 mx-auto mb-3" />
         <p class="text-gray-400 text-sm">Noch keine Termine angelegt</p>
       </div>
     </div>

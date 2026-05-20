@@ -5,99 +5,134 @@
       <button class="btn-primary" @click="openCreate(null)">Anmeldung hinzufügen</button>
     </div>
 
-    <div v-if="loading" class="text-center py-12 text-gray-400">Laden…</div>
+    <div v-if="loading" class="flex justify-center py-12">
+      <LoadingSpinner size="lg" />
+    </div>
 
-    <div v-else-if="!grid.length" class="card p-6 text-center text-gray-400">
+    <div v-else-if="!enrichedGrid.length" class="card p-6 text-center text-gray-400">
       Keine Schichten vorhanden.
     </div>
 
+    <!-- Stundenplan: ein Block pro Datum -->
     <div v-else class="space-y-8">
-      <div v-for="section in grid" :key="section.date_id">
-        <h2 class="text-lg font-semibold text-gray-700 mb-3">{{ section.date_formatted }}</h2>
-        <div class="card overflow-x-auto p-0">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th class="px-4 py-3 text-left text-gray-500 font-medium w-32 shrink-0">Zeit</th>
-                <th
-                  v-for="stand in section.stands"
-                  :key="stand.id"
-                  class="px-4 py-3 text-left text-gray-700 font-semibold min-w-[180px]"
-                >
-                  {{ stand.name }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in section.rows"
-                :key="row.time_range"
-                class="border-t border-gray-100"
+      <div v-for="section in enrichedGrid" :key="section.date_id">
+        <h2 class="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <CalendarIcon class="w-4 h-4 text-primary-500" />
+          {{ section.date_formatted }}
+        </h2>
+
+        <div class="card overflow-hidden !p-0">
+          <!-- Stand-Spaltenheader -->
+          <div class="flex border-b border-gray-100 bg-gray-50 overflow-x-auto">
+            <div class="w-14 flex-shrink-0 border-r border-gray-100" />
+            <div class="flex flex-1" :style="`min-width: ${section.stands.length * MIN_COL_PX}px`">
+              <div
+                v-for="stand in section.stands"
+                :key="stand.id"
+                class="flex-1 px-3 py-3 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0 min-w-0 truncate"
+                :style="`min-width: ${MIN_COL_PX}px`"
               >
-                <td class="px-4 py-3 text-gray-500 font-medium whitespace-nowrap align-top">
-                  {{ row.time_range }}
-                </td>
-                <td
-                  v-for="(cell, i) in row.cells"
-                  :key="i"
-                  class="px-4 py-3 align-top min-w-[180px]"
+                {{ stand.name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Timetable-Body -->
+          <div class="flex overflow-x-auto">
+            <!-- Zeitachse -->
+            <div
+              class="w-14 flex-shrink-0 relative border-r border-gray-100 bg-gray-50/50"
+              :style="`height: ${section.gridHeight}px`"
+            >
+              <div
+                v-for="h in section.hours"
+                :key="h.label"
+                class="absolute right-2 text-[10px] text-gray-400 -translate-y-1/2 whitespace-nowrap"
+                :style="`top: ${h.pct}%`"
+              >{{ h.label }}</div>
+            </div>
+
+            <!-- Stand-Spalten -->
+            <div
+              class="flex flex-1"
+              :style="`min-width: ${section.stands.length * MIN_COL_PX}px; height: ${section.gridHeight}px`"
+            >
+              <div
+                v-for="({ stand, shiftItems }) in section.standShifts"
+                :key="stand.id"
+                class="relative flex-1 border-r border-gray-100 last:border-r-0"
+                :style="`min-width: ${MIN_COL_PX}px`"
+              >
+                <!-- Stunden-Rasterlinien -->
+                <div
+                  v-for="h in section.hours"
+                  :key="h.label"
+                  class="absolute inset-x-0 border-t border-gray-100/70"
+                  :style="`top: ${h.pct}%`"
+                />
+
+                <!-- Schicht-Block -->
+                <div
+                  v-for="item in shiftItems"
+                  :key="item.cell.shift_id"
+                  class="absolute inset-x-1.5 rounded-xl border flex flex-col overflow-hidden"
+                  :class="item.cell.spots_left === 0
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-primary-50 border-primary-200'"
+                  :style="`top: calc(${item.startPct}% + 2px); height: calc(${item.heightPct}% - 4px); min-height: 2.5rem`"
                 >
-                  <template v-if="cell">
-                    <!-- Kopfzeile: Belegung links, Balloon rechts -->
-                    <div class="flex items-center justify-between mb-1.5 gap-2">
-                      <span class="text-xs text-gray-500 whitespace-nowrap">
-                        {{ occupied(cell) }}/{{ cell.max_volunteers }} Plätze
-                      </span>
-                      <span :class="['text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', spotBadgeClass(cell)]">
-                        {{ cell.spots_left === 0 ? 'Voll' : `${cell.spots_left} frei` }}
-                      </span>
-                    </div>
+                  <!-- Kopfzeile: Zeit + Badge -->
+                  <div class="flex items-start justify-between gap-1 px-2 pt-2 flex-shrink-0">
+                    <span class="text-[10px] font-semibold text-gray-700 leading-tight">{{ item.timeLabel }}</span>
+                    <span
+                      class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-tight flex-shrink-0"
+                      :class="spotBadgeClass(item.cell)"
+                    >
+                      {{ item.cell.spots_left === 0 ? 'Voll' : `${item.cell.spots_left} frei` }}
+                    </span>
+                  </div>
 
-                    <!-- Fortschrittsbalken -->
-                    <div class="w-full h-1.5 bg-gray-100 rounded-full mb-2.5 overflow-hidden">
-                      <div
-                        :class="['h-full rounded-full transition-all duration-300', fillBarClass(cell)]"
-                        :style="{ width: `${fillPct(cell)}%` }"
-                      />
-                    </div>
+                  <!-- Fortschrittsbalken -->
+                  <div class="mx-2 mt-1 h-1 bg-white/60 rounded-full overflow-hidden flex-shrink-0">
+                    <div
+                      class="h-full rounded-full transition-all duration-300"
+                      :class="fillBarClass(item.cell)"
+                      :style="`width: ${fillPct(item.cell)}%`"
+                    />
+                  </div>
 
-                    <!-- Anmeldungen -->
-                    <div v-if="cell.registrations.length" class="flex flex-wrap gap-1 mb-2">
-                      <span
-                        v-for="reg in cell.registrations"
-                        :key="reg.id"
-                        :class="['inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
-                          reg.by_admin
-                            ? 'bg-gray-100 text-gray-600'
-                            : 'bg-primary-100 text-primary-700'
-                        ]"
-                        :title="reg.by_admin ? 'Eingetragen durch Admin/Organisator' : 'Selbst angemeldet'"
-                      >
-                        <PencilSquareIcon v-if="reg.by_admin" class="w-3 h-3 shrink-0 opacity-60" />
-                        {{ reg.name }}
-                        <button
-                          type="button"
-                          class="opacity-50 hover:opacity-100 leading-none ml-0.5"
-                          @click="deleteReg(reg, cell.shift_id)"
-                        >×</button>
-                      </span>
-                    </div>
+                  <!-- Angemeldete Namen -->
+                  <div class="px-2 mt-1.5 flex flex-wrap gap-1 overflow-hidden flex-1 content-start">
+                    <span
+                      v-for="reg in item.cell.registrations"
+                      :key="reg.id"
+                      class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full leading-tight"
+                      :class="reg.by_admin
+                        ? 'bg-white/80 text-gray-600 border border-gray-200'
+                        : 'bg-primary-100 text-primary-700'"
+                      :title="reg.by_admin ? 'Eingetragen durch Admin/Organisator' : 'Selbst angemeldet'"
+                    >
+                      <PencilSquareIcon v-if="reg.by_admin" class="w-2.5 h-2.5 flex-shrink-0 opacity-60" />
+                      {{ reg.name }}
+                      <button
+                        type="button"
+                        class="opacity-50 hover:opacity-100 ml-0.5 leading-none text-xs"
+                        @click.stop="deleteReg(reg, item.cell.shift_id)"
+                      >×</button>
+                    </span>
+                  </div>
 
-                    <!-- Eintragen-Button -->
-                    <button
-                      v-if="cell.spots_left > 0"
-                      type="button"
-                      class="text-xs text-primary-600 hover:text-primary-800 font-medium"
-                      @click="openCreate(cell.shift_id)"
-                    >+ Eintragen</button>
-                  </template>
-                  <template v-else>
-                    <span class="text-gray-300 text-xs">–</span>
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  <!-- Eintragen-Link -->
+                  <button
+                    v-if="item.cell.spots_left > 0"
+                    type="button"
+                    class="text-[10px] text-primary-600 hover:text-primary-800 font-medium px-2 pb-1.5 mt-auto text-left flex-shrink-0"
+                    @click="openCreate(item.cell.shift_id)"
+                  >+ Eintragen</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -112,15 +147,15 @@
           <label class="label">Schicht</label>
           <select v-model="form.shift_id" class="input" required>
             <option value="">Bitte wählen</option>
-            <template v-for="section in grid" :key="section.date_id">
+            <template v-for="section in enrichedGrid" :key="section.date_id">
               <optgroup :label="section.date_formatted">
-                <template v-for="row in section.rows" :key="row.time_range">
-                  <template v-for="(cell, i) in row.cells" :key="i">
-                    <option
-                      v-if="cell && cell.spots_left > 0"
-                      :value="cell.shift_id"
-                    >{{ section.stands[i]?.name }} – {{ row.time_range }}</option>
-                  </template>
+                <template v-for="{ stand, shiftItems } in section.standShifts" :key="stand.id">
+                  <option
+                    v-for="item in shiftItems"
+                    :key="item.cell.shift_id"
+                    :value="item.cell.shift_id"
+                    :disabled="item.cell.spots_left === 0"
+                  >{{ stand.name }} – {{ item.timeLabel }}</option>
                 </template>
               </optgroup>
             </template>
@@ -137,12 +172,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { PencilSquareIcon } from '@heroicons/vue/24/outline'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { PencilSquareIcon, CalendarIcon } from '@heroicons/vue/24/outline'
+
+const MIN_COL_PX = 160
+const PX_PER_MIN = 2.5   // Höhe der Zeitachse: 2.5px pro Minute
 
 const route = useRoute()
 const ui = useUiStore()
@@ -151,6 +190,72 @@ const loading = ref(true)
 const showModal = ref(false)
 const form = ref({ guest_name: '', shift_id: '' })
 const saveError = ref('')
+
+// Extrahiert zwei Zeitangaben "HH:MM" aus einem time_range-String
+function parseTimeRange(range) {
+  const matches = (range || '').match(/(\d{2}:\d{2})/g)
+  return { start: matches?.[0] || '00:00', end: matches?.[1] || '00:00' }
+}
+
+function toMin(t) {
+  const [h, m] = (t || '00:00').split(':').map(Number)
+  return h * 60 + m
+}
+
+// Wandelt die Grid-Rohdaten in eine für den Stundenplan geeignete Struktur um
+const enrichedGrid = computed(() => {
+  return grid.value.map(section => {
+    // 1. Alle Zeitgrenzen sammeln
+    const timeSet = new Set()
+    for (const row of section.rows) {
+      const { start, end } = parseTimeRange(row.time_range)
+      timeSet.add(start)
+      timeSet.add(end)
+    }
+    const allTimes = [...timeSet].sort()
+    if (allTimes.length < 2) {
+      return { ...section, standShifts: [], hours: [], gridHeight: 120 }
+    }
+
+    const startMin = toMin(allTimes[0])
+    const endMin = toMin(allTimes[allTimes.length - 1])
+    const totalMins = endMin - startMin
+    const gridHeight = Math.max(120, totalMins * PX_PER_MIN)
+
+    // 2. Stunden-Markierungen für die Zeitachse
+    const startHour = Math.floor(startMin / 60)
+    const endHour = Math.ceil(endMin / 60)
+    const hours = []
+    for (let h = startHour; h <= endHour; h++) {
+      const pct = ((h * 60) - startMin) / totalMins * 100
+      if (pct >= 0 && pct <= 100) {
+        hours.push({ label: `${h}:00`, pct })
+      }
+    }
+
+    // 3. Pro Stand die Schicht-Blöcke mit prozentigen Position/Höhe
+    const standShifts = section.stands.map((stand, si) => {
+      const shiftItems = []
+      for (const row of section.rows) {
+        const cell = row.cells[si]
+        if (cell) {
+          const { start, end } = parseTimeRange(row.time_range)
+          const startPct = (toMin(start) - startMin) / totalMins * 100
+          const heightPct = (toMin(end) - toMin(start)) / totalMins * 100
+          shiftItems.push({
+            cell,
+            timeLabel: `${start}–${end}`,
+            startPct,
+            heightPct,
+          })
+        }
+      }
+      return { stand, shiftItems }
+    })
+
+    return { ...section, standShifts, hours, gridHeight }
+  })
+})
 
 onMounted(load)
 
