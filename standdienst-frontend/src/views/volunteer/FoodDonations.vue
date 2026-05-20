@@ -53,25 +53,32 @@
         </form>
 
         <!-- Vorhandene Spenden alphabetisch -->
-        <div v-if="t.donations.length" class="border-t border-gray-100 mt-4 pt-3 space-y-1.5">
+        <div v-if="t.donations.length" class="border-t border-gray-100 mt-4 pt-3 space-y-2">
           <div
             v-for="d in t.donations"
             :key="d.id"
-            class="flex items-center justify-between text-sm"
+            class="flex items-center justify-between rounded-xl px-3 py-2.5 gap-3"
+            :class="d.is_mine ? 'bg-primary-50' : 'bg-gray-50'"
           >
-            <span :class="d.is_mine ? 'text-primary-700 font-medium' : 'text-gray-700'">
-              {{ d.description }}
-              <span class="font-normal text-gray-500"> ({{ d.volunteer_name }})</span>
-              <span
-                v-if="d.needs_refrigeration"
-                class="ml-1.5 text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5"
-              >Kühlung</span>
-            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate" :class="d.is_mine ? 'text-primary-700' : 'text-gray-800'">
+                {{ d.description }}
+                <span
+                  v-if="d.needs_refrigeration"
+                  class="ml-1 text-sky-400"
+                  title="Kühlung erforderlich"
+                >❄</span>
+              </p>
+              <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.volunteer_name }}</p>
+            </div>
             <button
               v-if="d.is_mine"
-              class="ml-3 text-xs text-red-600 hover:underline flex-shrink-0"
+              class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+              title="Entfernen"
               @click="remove(d)"
-            >Entfernen</button>
+            >
+              <XMarkIcon class="w-4 h-4" />
+            </button>
           </div>
         </div>
         <p v-else class="border-t border-gray-100 mt-4 pt-3 text-xs text-gray-400">
@@ -89,6 +96,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
