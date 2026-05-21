@@ -22,8 +22,10 @@
             <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
             <h2 class="font-semibold text-gray-900">{{ section.date_formatted }}</h2>
           </div>
+          <!-- Gemeinsamer Scroll-Wrapper: Header + Body teilen eine Scrollleiste -->
+          <div class="overflow-x-auto">
           <!-- Stand-Spaltenheader -->
-          <div class="flex border-b border-gray-100 bg-gray-50 overflow-x-auto">
+          <div class="flex border-b border-gray-100 bg-gray-50">
             <div class="w-14 flex-shrink-0 border-r border-gray-100" />
             <div class="flex flex-1" :style="`min-width: ${section.stands.length * MIN_COL_PX}px`">
               <div
@@ -38,7 +40,7 @@
           </div>
 
           <!-- Timetable-Body -->
-          <div class="flex overflow-x-auto">
+          <div class="flex">
             <!-- Zeitachse -->
             <div
               class="w-14 flex-shrink-0 relative border-r border-gray-100 bg-gray-50/50"
@@ -133,6 +135,7 @@
               </div>
             </div>
           </div>
+          </div><!-- /overflow-x-auto -->
         </div>
       </div>
     </div>
