@@ -52,28 +52,6 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold text-gray-800">Impressum der Instanz (HTML)</h2>
-          <button type="button" class="btn-secondary text-xs py-1 px-2"
-                  @click="form.instance_impressum_html = impressumTemplate">
-            Vorlage einfügen
-          </button>
-        </div>
-        <textarea v-model="form.instance_impressum_html" class="input font-mono text-xs" rows="8" />
-      </div>
-
-      <div class="card">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold text-gray-800">Datenschutzerklärung (HTML)</h2>
-          <button type="button" class="btn-secondary text-xs py-1 px-2"
-                  @click="form.privacy_policy_html = datenschutzTemplate">
-            Vorlage einfügen
-          </button>
-        </div>
-        <textarea v-model="form.privacy_policy_html" class="input font-mono text-xs" rows="8" />
-      </div>
-
       <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
       <button type="submit" class="btn-primary" :disabled="saving">
         <LoadingSpinner v-if="saving" size="sm" />
@@ -120,41 +98,6 @@ const saveError = ref('')
 const form = ref({})
 
 const lockTemplate = 'Die Anmeldung ist derzeit geschlossen. Bitte versuche es später erneut oder wende dich an den Veranstalter.'
-
-const impressumTemplate = `<h2>Angaben gemäß § 5 TMG</h2>
-<p>
-  [Name des Veranstalters / Vereins]<br>
-  [Straße, Hausnummer]<br>
-  [PLZ Ort]
-</p>
-<h3>Vertreten durch</h3>
-<p>[Vorname Nachname, Funktion]</p>
-<h3>Kontakt</h3>
-<p>
-  Telefon: [+49 ...]<br>
-  E-Mail: [kontakt@beispiel.de]
-</p>`
-
-const datenschutzTemplate = `<h2>Datenschutzerklärung</h2>
-<h3>1. Verantwortlicher</h3>
-<p>
-  Verantwortlicher im Sinne der DSGVO ist:<br>
-  [Name / Organisation]<br>
-  [Adresse]<br>
-  E-Mail: [kontakt@beispiel.de]
-</p>
-<h3>2. Erhobene Daten und Zweck</h3>
-<p>Zur Nutzung dieser Plattform erheben wir folgende personenbezogene Daten:</p>
-<ul>
-  <li><strong>Name</strong> – zur Identifikation bei der Veranstaltung</li>
-  <li><strong>E-Mail-Adresse</strong> (optional) – für Anmeldebestätigungen und Passwort-Reset</li>
-  <li><strong>Schicht- und Spendenanmeldungen</strong> – zur Koordination des Standdienstes</li>
-</ul>
-<p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</p>
-<h3>3. Speicherdauer</h3>
-<p>Personenbezogene Daten werden nach Ende der Veranstaltung gelöscht. Auf Anfrage erfolgt eine sofortige Löschung (Art. 17 DSGVO).</p>
-<h3>4. Ihre Rechte</h3>
-<p>Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung (Art. 18), Datenübertragbarkeit (Art. 20). Kontakt: [kontakt@beispiel.de]</p>`
 
 onMounted(async () => {
   try {

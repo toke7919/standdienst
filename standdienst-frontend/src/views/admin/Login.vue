@@ -56,10 +56,13 @@
         </div>
       </div>
 
-      <div class="mt-6 text-center">
+      <div class="mt-6 text-center space-y-2">
         <RouterLink to="/" class="text-sm text-primary-300 hover:text-white transition-colors">
           ← Zur Startseite
         </RouterLink>
+        <div class="flex justify-center gap-4 text-xs text-primary-400">
+          <RouterLink to="/impressum" class="hover:text-white transition-colors">Impressum</RouterLink>
+        </div>
       </div>
     </div>
   </div>
