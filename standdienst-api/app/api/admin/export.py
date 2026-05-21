@@ -152,9 +152,12 @@ def export_ods_dienste(slug):
     color = _primary_color()
     doc = OpenDocumentSpreadsheet()
 
-    def make_style(name, bg, bold=False, color_txt='#111827'):
+    def make_style(name, bg, bold=False, color_txt='#111827', wrap=False):
         s = Style(name=name, family='table-cell')
-        s.addElement(TableCellProperties(backgroundcolor=bg))
+        cell_props = {'backgroundcolor': bg}
+        if wrap:
+            cell_props['wrapoption'] = 'wrap'
+        s.addElement(TableCellProperties(**cell_props))
         tp_attrs = {'color': color_txt}
         if bold:
             tp_attrs['fontweight'] = 'bold'
@@ -164,10 +167,17 @@ def export_ods_dienste(slug):
 
     hstyle = make_style('HeaderStyle', color, bold=True, color_txt='#ffffff')
     sstyle = make_style('StandStyle', '#f3f4f6', bold=True, color_txt='#1f2937')
+    wstyle = make_style('WrapStyle', '#ffffff', wrap=True)
 
     def add_cell(row, text, style=None):
         cell = TableCell(stylename=style)
         cell.addElement(P(text=str(text or '')))
+        row.addElement(cell)
+
+    def add_multiline_cell(row, lines, style=None):
+        cell = TableCell(stylename=style)
+        for line in (lines or ['—']):
+            cell.addElement(P(text=str(line)))
         row.addElement(cell)
 
     days = _dienste_by_day(g.instance.id)
@@ -189,18 +199,12 @@ def export_ods_dienste(slug):
 
             for shift in shifts:
                 regs = list(shift.registrations)
-                if not regs:
-                    row = TableRow()
-                    add_cell(row, '')
-                    add_cell(row, shift.time_range)
-                    add_cell(row, '—')
-                    sheet.addElement(row)
-                for reg in regs:
-                    row = TableRow()
-                    add_cell(row, '')
-                    add_cell(row, shift.time_range)
-                    add_cell(row, _vol_name(reg))
-                    sheet.addElement(row)
+                names = [_vol_name(r) for r in regs] if regs else []
+                row = TableRow()
+                add_cell(row, '')
+                add_cell(row, shift.time_range)
+                add_multiline_cell(row, names, wstyle)
+                sheet.addElement(row)
 
         doc.spreadsheet.addElement(sheet)
 
@@ -370,48 +374,31 @@ def export_pdf_dienste(slug):
     sections = ''
     for i, (ed, stands_map) in enumerate(days.items()):
         break_style = 'page-break-before: always;' if i > 0 else ''
+        stand_tables = ''
 
-        # Alle einzigartigen Zeitslots für diesen Tag (sortiert)
-        all_time_ranges = []
-        seen = set()
         for stand, shifts in stands_map.items():
+            rows = ''
             for sh in shifts:
-                if sh.time_range not in seen:
-                    all_time_ranges.append((sh.start_time, sh.time_range))
-                    seen.add(sh.time_range)
-        all_time_ranges.sort(key=lambda x: x[0])
+                regs = list(sh.registrations)
+                names = '<br>'.join(_vol_name(r) for r in regs) if regs else \
+                        '<span style="color:#9ca3af">—</span>'
+                rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
 
-        stand_list = list(stands_map.keys())
-
-        # Lookup: (time_range, stand_id) → [volunteer_names]
-        cell_data = defaultdict(list)
-        for stand, shifts in stands_map.items():
-            for sh in shifts:
-                for reg in sh.registrations:
-                    cell_data[(sh.time_range, stand.id)].append(_vol_name(reg))
-
-        # Tabellenkopf
-        stand_headers = ''.join(f'<th>{s.name}</th>' for s in stand_list)
-        head = f'<tr><th>Zeit</th>{stand_headers}</tr>'
-
-        rows = ''
-        for _, tr in all_time_ranges:
-            cells = ''
-            for stand in stand_list:
-                names = cell_data.get((tr, stand.id), [])
-                cell_content = '<br>'.join(names) if names else '<span style="color:#9ca3af">—</span>'
-                cells += f'<td>{cell_content}</td>'
-            rows += f'<tr><td class="time">{tr}</td>{cells}</tr>'
+            stand_tables += f'''
+            <div style="margin-bottom:16px;">
+              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{stand.name}</p>
+              <table>
+                <thead><tr><th>Uhrzeit</th><th>Helfer</th></tr></thead>
+                <tbody>{rows}</tbody>
+              </table>
+            </div>'''
 
         sections += f'''
         <div style="{break_style} margin-bottom: 2em;">
-          <h2 style="color:{color};margin:0 0 10px;font-size:14pt;font-weight:700;">
+          <h2 style="color:{color};margin:0 0 12px;font-size:14pt;font-weight:700;">
             {ed.formatted}
           </h2>
-          <table>
-            <thead>{head}</thead>
-            <tbody>{rows}</tbody>
-          </table>
+          {stand_tables}
         </div>'''
 
     if not sections:
@@ -423,10 +410,10 @@ def export_pdf_dienste(slug):
       h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; font-weight: 800; }}
       h2 {{ color: {color}; font-size: 14pt; font-weight: 700; }}
       p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 20px; }}
-      table {{ width: 100%; border-collapse: collapse; margin-bottom: 8px; }}
-      th {{ background: {color}; color: white; padding: 7px 10px; text-align: left;
-            font-size: 10pt; font-weight: 700; }}
-      td {{ padding: 8px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
+      table {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
+      th {{ background: {color}; color: white; padding: 6px 10px; text-align: left;
+            font-size: 9pt; font-weight: 700; }}
+      td {{ padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
             vertical-align: top; }}
       td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
                  width: 1%; }}

@@ -66,6 +66,89 @@
       </div>
     </div>
 
+    <!-- ===== VORSCHAU ===== -->
+    <div class="bg-black/20 border-y border-white/10 py-16">
+      <div class="max-w-5xl mx-auto px-6">
+        <h2 class="text-center text-white/70 text-sm font-semibold uppercase tracking-widest mb-12">Einblicke in die Anwendung</h2>
+
+        <div class="grid md:grid-cols-2 gap-8 items-start">
+
+          <!-- Dashboard Mockup -->
+          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-primary-700 px-4 py-2.5 flex items-center gap-1.5">
+              <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+              <span class="ml-2 text-xs text-white/60 font-medium truncate">Dashboard · Sportverein Beispielstadt</span>
+            </div>
+            <div class="p-4">
+              <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Übersicht</p>
+              <div class="grid grid-cols-2 gap-2.5 mb-4">
+                <div class="bg-primary-50 rounded-xl p-3 border border-primary-100">
+                  <p class="text-[10px] text-gray-400 mb-0.5">Registrierte Helfer</p>
+                  <p class="text-2xl font-bold text-primary-700">47</p>
+                </div>
+                <div class="bg-green-50 rounded-xl p-3 border border-green-100">
+                  <p class="text-[10px] text-gray-400 mb-0.5">Anmeldungen</p>
+                  <p class="text-2xl font-bold text-green-700">134</p>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-3 border border-amber-100">
+                  <p class="text-[10px] text-gray-400 mb-0.5">Essensspenden</p>
+                  <p class="text-2xl font-bold text-amber-700">28</p>
+                </div>
+                <div class="bg-sky-50 rounded-xl p-3 border border-sky-100">
+                  <p class="text-[10px] text-gray-400 mb-0.5">Offene Dienste</p>
+                  <p class="text-2xl font-bold text-sky-700">3</p>
+                </div>
+              </div>
+              <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Letzte Aktivitäten</p>
+              <div class="space-y-1.5">
+                <div v-for="(a, i) in mockActivity" :key="i" class="flex items-center gap-2 text-xs text-gray-500">
+                  <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" :class="a.color"></div>
+                  <span class="truncate">{{ a.text }}</span>
+                  <span class="ml-auto text-gray-300 flex-shrink-0">{{ a.time }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Helfer-Ansicht Mockup -->
+          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-primary-700 px-4 py-2.5 flex items-center gap-1.5">
+              <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+              <span class="ml-2 text-xs text-white/60 font-medium truncate">Dienste auswählen</span>
+            </div>
+            <div class="p-4">
+              <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Samstag, 14. Juni 2026</p>
+              <div class="space-y-2">
+                <div v-for="(s, i) in mockShifts" :key="i"
+                     class="rounded-xl border p-3 flex items-center justify-between gap-3"
+                     :class="s.registered ? 'bg-primary-50 border-primary-200' : 'border-gray-100'">
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">{{ s.stand }}</p>
+                    <p class="text-xs text-gray-400">{{ s.time }} · {{ s.spots }} Plätze frei</p>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <span v-if="s.registered"
+                          class="text-xs font-medium text-primary-600 bg-primary-100 rounded-lg px-2 py-1">
+                      Angemeldet
+                    </span>
+                    <span v-else
+                          class="text-xs font-medium text-gray-500 bg-gray-100 rounded-lg px-2 py-1">
+                      Anmelden
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     <!-- ===== KONTAKT ===== -->
     <div class="max-w-2xl mx-auto px-6 py-16 text-center">
       <h2 class="text-2xl font-bold text-white mb-4">Interesse geweckt?</h2>
@@ -107,6 +190,20 @@ import {
 import { publicApi } from '@/api/public'
 
 const copyrightText = ref('Standdienst')
+
+const mockActivity = [
+  { text: 'M. Schmidt hat sich für Einlass angemeldet', time: 'vor 2 Min.', color: 'bg-green-400' },
+  { text: 'T. Müller hat Schicht abgemeldet', time: 'vor 8 Min.', color: 'bg-red-400' },
+  { text: 'A. Weber hat Kuchen eingetragen', time: 'vor 15 Min.', color: 'bg-amber-400' },
+  { text: 'Neue Registrierung: S. Bauer', time: 'vor 22 Min.', color: 'bg-primary-400' },
+]
+
+const mockShifts = [
+  { stand: 'Einlasskontrolle Nord', time: '09:00–12:00', spots: 2, registered: true },
+  { stand: 'Getränkestand Mitte', time: '09:00–12:00', spots: 3, registered: false },
+  { stand: 'Einlasskontrolle Nord', time: '12:00–15:00', spots: 1, registered: false },
+  { stand: 'Infostand Haupteingang', time: '09:00–17:00', spots: 0, registered: false },
+]
 
 onMounted(async () => {
   try {

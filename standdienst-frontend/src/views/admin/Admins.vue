@@ -32,7 +32,12 @@
             </td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(a)">Bearbeiten</button>
-              <button class="text-xs text-red-600 hover:underline" @click="deleteAdmin(a)">Löschen</button>
+              <button
+                v-if="!a.is_primary"
+                class="text-xs text-red-600 hover:underline"
+                @click="deleteAdmin(a)"
+              >Löschen</button>
+              <span v-else class="text-xs text-gray-300" title="Primärer Admin ist löschgeschützt">Löschen</span>
             </td>
           </tr>
           <tr v-if="!admins.length">
@@ -61,7 +66,7 @@
         </div>
         <div class="flex items-center gap-2">
           <input v-model="form.is_primary" type="checkbox" id="primary" />
-          <label for="primary" class="text-sm text-gray-700">Primärer Admin (Kontaktformular-Empfänger)</label>
+          <label for="primary" class="text-sm text-gray-700">Primärer Admin (Löschschutz)</label>
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">

@@ -53,6 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function verify2fa(code) {
     const res = await authApi.verify2fa(code)
     user.value = res.data.user
+    return res.data
   }
 
   async function logout() {

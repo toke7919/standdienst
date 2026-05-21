@@ -7,6 +7,7 @@ from ...models import Organizer, Instance, ActivityLog
 from ...models.instance import organizer_instances
 from ...schemas.organizer import OrganizerSchema, OrganizerCreateSchema, OrganizerUpdateSchema
 from ...utils.auth import require_admin, validate_password_strength
+from ...utils.mail import is_mail_configured, send_mail, build_invite_email
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = OrganizerSchema()
@@ -61,6 +62,17 @@ def create_organizer():
 
     _log(f'Organisator angelegt: {organizer.email}', g.current_user)
     db.session.commit()
+
+    if is_mail_configured():
+        try:
+            from ..public import _base_url
+            base_url = _base_url()
+            login_url = f'{base_url}/admin/login'
+            send_mail(organizer.email, 'Dein Organisator-Konto bei Standdienst',
+                      build_invite_email(organizer.name or organizer.email, 'Organisator', login_url, base_url))
+        except Exception:
+            pass
+
     return created(_schema.dump(organizer))
 
 
