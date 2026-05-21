@@ -21,7 +21,18 @@ _register_schema = VolunteerRegisterSchema()
 
 
 def _base_url() -> str:
-    """Ermittelt die Basis-URL; respektiert X-Forwarded-Header bei Reverse-Proxy-Betrieb."""
+    """Ermittelt die Basis-URL.
+
+    Priorität: 1. GlobalSettings.base_url (Setup-Wizard)
+               2. FRONTEND_URL Umgebungsvariable
+               3. X-Forwarded-Host / Host-Header (Reverse-Proxy-Fallback)
+    """
+    try:
+        gs = get_global_settings()
+        if gs and gs.base_url:
+            return gs.base_url.rstrip('/')
+    except Exception:
+        pass
     cfg = current_app.config.get('FRONTEND_URL', '').rstrip('/')
     if cfg and 'localhost' not in cfg and '127.0.0.1' not in cfg:
         return cfg

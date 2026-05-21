@@ -93,6 +93,7 @@ def build_email_template(
             f'<p style="margin:0 0 8px;color:#6b7280;font-size:12px;">{copyright_text}</p>'
         )
 
+    datenschutz_url = None
     if slug:
         impressum_url = f'{base_url}/{slug}/impressum'
         datenschutz_url = f'{base_url}/{slug}/datenschutz'
@@ -106,8 +107,15 @@ def build_email_template(
             f'</p>'
         )
     else:
-        datenschutz_url = f'{base_url}/datenschutz'
         links_block = ''
+
+    datenschutz_info = ''
+    if datenschutz_url:
+        datenschutz_info = (
+            f'<br>Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer '
+            f'<a href="{datenschutz_url}" style="color:#6b7280;text-decoration:underline;">'
+            f'Datenschutzerklärung</a>.'
+        )
 
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -150,10 +158,7 @@ def build_email_template(
               {links_block}
               {copyright_block}
               <p style="margin:0;color:#9ca3af;font-size:11px;line-height:1.6;">
-                Diese E-Mail wurde automatisch versandt.<br>
-                Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer
-                <a href="{datenschutz_url}"
-                   style="color:#6b7280;text-decoration:underline;">Datenschutzerklärung</a>.
+                Diese E-Mail wurde automatisch versandt.{datenschutz_info}
               </p>
             </td>
           </tr>
@@ -296,6 +301,7 @@ def build_invite_email(
     base_url: str,
     primary_color: str = '#4f46e5',
 ) -> str:
+    """Einladungsmail wenn ein Passwort bereits gesetzt wurde (nur noch für Admin-Anlegen)."""
     content = f"""
     <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
     <p style="margin:0 0 16px;">
@@ -315,6 +321,76 @@ def build_invite_email(
     <p style="margin:0;color:#6b7280;font-size:13px;">
       Falls du diese E-Mail irrtümlich erhalten hast, kannst du sie ignorieren.
     </p>
+    """
+    return build_email_template(
+        content,
+        title='Standdienst',
+        base_url=base_url,
+        primary_color=primary_color,
+    )
+
+
+def build_organizer_invite_email(
+    name: str,
+    setup_url: str,
+    instances: list,
+    base_url: str,
+    primary_color: str = '#4f46e5',
+) -> str:
+    """Einladungsmail für neue Organisatoren ohne Passwort.
+
+    instances: [{'name': str, 'volunteer_url': str}]
+    """
+    cell = 'style="padding:8px 12px;font-size:13px;border-bottom:1px solid #f3f4f6;"'
+    head = ('style="padding:8px 12px;background-color:#f9fafb;font-size:12px;font-weight:600;'
+            'color:#6b7280;text-transform:uppercase;letter-spacing:.04em;'
+            'border-bottom:2px solid #e5e7eb;text-align:left;"')
+
+    instance_section = ''
+    if instances:
+        rows = ''.join(
+            f'<tr>'
+            f'<td {cell}>{inst["name"]}</td>'
+            f'<td {cell}><a href="{inst["volunteer_url"]}" '
+            f'style="color:{primary_color};word-break:break-all;">'
+            f'{inst["volunteer_url"]}</a></td>'
+            f'</tr>'
+            for inst in instances
+        )
+        instance_section = (
+            f'<h3 style="margin:24px 0 10px;font-size:14px;font-weight:600;color:#111827;">'
+            f'Deine Instanzen</h3>'
+            f'<table width="100%" cellpadding="0" cellspacing="0"'
+            f' style="border:1px solid #e5e7eb;border-radius:8px;border-collapse:collapse;">'
+            f'<tr><th {head}>Instanz</th><th {head}>Helfer-URL</th></tr>'
+            f'{rows}'
+            f'</table>'
+            f'<p style="margin:8px 0 0;color:#6b7280;font-size:12px;">'
+            f'Diese URLs können Helfern mitgeteilt werden, um sich anzumelden.</p>'
+        )
+
+    content = f"""
+    <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
+    <p style="margin:0 0 16px;">
+      ein Organisator-Konto bei Standdienst wurde für dich angelegt.
+    </p>
+    <p style="margin:0 0 28px;">
+      Bitte klicke auf den folgenden Button, um dein Passwort einzurichten
+      und dein Konto zu aktivieren:
+    </p>
+    <p style="margin:0 0 28px;text-align:center;">
+      <a href="{setup_url}"
+         style="background:{primary_color};color:#ffffff;padding:13px 30px;
+                border-radius:8px;text-decoration:none;font-weight:600;
+                font-size:15px;display:inline-block;">
+        Passwort einrichten
+      </a>
+    </p>
+    <p style="margin:0 0 0;color:#6b7280;font-size:13px;">
+      Der Link ist <strong>7 Tage</strong> gültig.
+      Falls du diese E-Mail irrtümlich erhalten hast, kannst du sie ignorieren.
+    </p>
+    {instance_section}
     """
     return build_email_template(
         content,

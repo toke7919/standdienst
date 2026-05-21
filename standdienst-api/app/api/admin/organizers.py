@@ -7,7 +7,7 @@ from ...models import Organizer, Instance, ActivityLog
 from ...models.instance import organizer_instances
 from ...schemas.organizer import OrganizerSchema, OrganizerCreateSchema, OrganizerUpdateSchema
 from ...utils.auth import require_admin, validate_password_strength
-from ...utils.mail import is_mail_configured, send_mail, build_invite_email
+from ...utils.mail import is_mail_configured, send_mail, build_organizer_invite_email
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = OrganizerSchema()
@@ -67,9 +67,23 @@ def create_organizer():
         try:
             from ..public import _base_url
             base_url = _base_url()
-            login_url = f'{base_url}/admin/login'
-            send_mail(organizer.email, 'Dein Organisator-Konto bei Standdienst',
-                      build_invite_email(organizer.name or organizer.email, 'Organisator', login_url, base_url))
+            raw_token = organizer.generate_reset_token(7 * 24 * 3600)
+            db.session.commit()
+            setup_url = f'{base_url}/admin/reset-password?token={raw_token}&type=organizer'
+            inst_list = [
+                {'name': inst.name, 'volunteer_url': f'{base_url}/{inst.slug}'}
+                for inst in organizer.instances.all()
+            ]
+            send_mail(
+                organizer.email,
+                'Dein Organisator-Konto bei Standdienst',
+                build_organizer_invite_email(
+                    organizer.name or organizer.email,
+                    setup_url,
+                    inst_list,
+                    base_url,
+                ),
+            )
         except Exception:
             pass
 

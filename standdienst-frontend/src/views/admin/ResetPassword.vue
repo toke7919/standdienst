@@ -34,7 +34,7 @@ async function submit() {
   loading.value = true
   errorMsg.value = ''
   try {
-    await authApi.resetPassword(route.query.token, password.value, 'admin')
+    await authApi.resetPassword(route.query.token, password.value, route.query.type || 'admin')
     done.value = true
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Fehler beim Zurücksetzen'
