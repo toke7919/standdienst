@@ -10,7 +10,31 @@
     </div>
 
     <div class="card overflow-hidden p-0">
-      <table class="w-full text-sm">
+      <!-- Mobile: gestapelte Liste -->
+      <div class="md:hidden divide-y divide-gray-50">
+        <div v-for="v in sortedVolunteers" :key="v.id" class="flex items-start gap-3 px-4 py-3">
+          <div class="flex-1 min-w-0">
+            <RouterLink
+              :to="`/admin/${route.params.slug}/volunteers/${v.id}`"
+              class="font-medium text-primary-600 hover:underline text-sm"
+            >{{ v.display_name || v.name }}</RouterLink>
+            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ v.email || '—' }}</p>
+            <div class="flex items-center gap-2 mt-1.5">
+              <span class="text-xs text-gray-400">{{ v.shift_count ?? 0 }} Schichten</span>
+              <span class="text-gray-200">·</span>
+              <span class="text-xs text-gray-400">{{ v.food_count ?? 0 }} Spenden</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
+            <button class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
+          </div>
+        </div>
+        <div v-if="!sortedVolunteers.length" class="px-4 py-8 text-center text-gray-400 text-sm">Keine Helfer</div>
+      </div>
+
+      <!-- Desktop: Tabelle -->
+      <table class="hidden md:table w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="name" @sort="toggleLocalSort">Name</SortTh>
@@ -23,7 +47,12 @@
         </thead>
         <tbody>
           <tr v-for="v in sortedVolunteers" :key="v.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">{{ v.display_name || v.name }}</td>
+            <td class="px-4 py-3 font-medium">
+              <RouterLink
+                :to="`/admin/${route.params.slug}/volunteers/${v.id}`"
+                class="text-primary-600 hover:underline"
+              >{{ v.display_name || v.name }}</RouterLink>
+            </td>
             <td class="px-4 py-3 text-gray-500">{{ v.email || '—' }}</td>
             <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ formatDate(v.created_at) }}</td>
             <td class="px-4 py-3 text-right text-gray-600 tabular-nums">{{ v.shift_count ?? 0 }}</td>
@@ -74,7 +103,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import { useSort } from '@/composables/useSort'

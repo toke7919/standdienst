@@ -98,6 +98,47 @@ def get_volunteer(slug, volunteer_id):
     return ok(_schema.dump(volunteer))
 
 
+@admin_bp.route('/<slug>/volunteers/<int:volunteer_id>/detail', methods=['GET'])
+@require_staff
+def get_volunteer_detail(slug, volunteer_id):
+    volunteer = _get_or_404(volunteer_id, g.instance.id)
+    registrations = []
+    for reg in volunteer.registrations.all():
+        shift = reg.shift
+        if not shift:
+            continue
+        registrations.append({
+            'id': reg.id,
+            'registered_at': reg.registered_at.isoformat() if reg.registered_at else None,
+            'registered_by_admin': reg.registered_by_admin,
+            'stand': shift.stand.name if shift.stand else '?',
+            'date': shift.event_date.formatted if shift.event_date else '?',
+            'date_raw': shift.event_date.date.isoformat() if shift.event_date else None,
+            'time_range': shift.time_range,
+            'start_time': shift.start_time.strftime('%H:%M') if shift.start_time else None,
+        })
+    registrations.sort(key=lambda r: (r['date_raw'] or '', r['start_time'] or ''))
+
+    food_donations = []
+    for fd in volunteer.food_donations.all():
+        food_donations.append({
+            'id': fd.id,
+            'food_type': fd.food_type.name if fd.food_type else '?',
+            'date': fd.food_type.event_date.formatted if (fd.food_type and fd.food_type.event_date) else '?',
+            'date_raw': fd.food_type.event_date.date.isoformat() if (fd.food_type and fd.food_type.event_date) else None,
+            'description': fd.description,
+            'needs_refrigeration': fd.needs_refrigeration,
+            'registered_at': fd.registered_at.isoformat() if fd.registered_at else None,
+        })
+    food_donations.sort(key=lambda f: f['date_raw'] or '')
+
+    return ok({
+        **_schema.dump(volunteer),
+        'registrations': registrations,
+        'food_donations': food_donations,
+    })
+
+
 @admin_bp.route('/<slug>/volunteers/<int:volunteer_id>', methods=['PUT'])
 @require_instance_admin
 def update_volunteer(slug, volunteer_id):

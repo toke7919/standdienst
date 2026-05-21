@@ -27,6 +27,7 @@ class VolunteerUpdateSchema(Schema):
     last_name = fields.Str(validate=validate.Length(max=100), allow_none=True)
     email = fields.Email(allow_none=True)
     password = fields.Str(validate=validate.Length(min=8), allow_none=True)
+    email_confirmation_enabled = fields.Bool()
 
 
 class VolunteerRegisterSchema(Schema):

@@ -50,6 +50,20 @@
           <label class="label">Anmeldeschluss</label>
           <input v-model="form.registration_deadline" type="datetime-local" class="input max-w-xs" />
         </div>
+        <div>
+          <label class="label">Abmeldeschluss (Stunden vor Schichtbeginn)</label>
+          <input
+            v-model.number="form.unregister_deadline_hours"
+            type="number"
+            min="1"
+            max="168"
+            class="input max-w-xs"
+            placeholder="Leer lassen = keine Einschränkung"
+          />
+          <p class="text-xs text-gray-400 mt-1">
+            Helfer können sich bis zu dieser Zeit vor Schichtbeginn abmelden. Leer lassen für keine Einschränkung.
+          </p>
+        </div>
       </div>
 
       <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>

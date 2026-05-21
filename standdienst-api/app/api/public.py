@@ -362,6 +362,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'impressum_html': _merge_impressum(settings, global_settings),
         'privacy_policy_html': settings.privacy_policy_html if settings else None,
         'copyright_text': global_settings.copyright_text if global_settings else '',
+        'unregister_deadline_hours': settings.unregister_deadline_hours if settings else None,
     }
 
 
