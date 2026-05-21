@@ -50,7 +50,34 @@
             </div>
             <span class="text-xs text-gray-400 flex-shrink-0">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
           </div>
-          <table class="w-full text-sm">
+          <!-- Mobile: gestapelte Liste -->
+          <div class="md:hidden divide-y divide-gray-50">
+            <div v-for="d in donationsByType(t.id)" :key="d.id" class="flex items-start gap-3 px-4 py-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-medium text-gray-900 text-sm">{{ d.volunteer_name }}</span>
+                  <span
+                    v-if="d.by_admin"
+                    class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200"
+                    title="Durch Admin/Organisator eingetragen"
+                  >
+                    <PencilSquareIcon class="w-2.5 h-2.5" />
+                    Admin
+                  </span>
+                </div>
+                <p v-if="d.description" class="text-xs text-gray-500 mt-0.5">{{ d.description }}</p>
+                <span v-if="d.needs_refrigeration" class="badge-blue mt-1 inline-flex">Kühlung</span>
+              </div>
+              <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <button class="text-xs text-primary-600 hover:underline" @click="openEditDonation(d)">Bearbeiten</button>
+                <button class="text-xs text-red-600 hover:underline" @click="deleteDonation(d)">Entfernen</button>
+              </div>
+            </div>
+            <div v-if="!donationsByType(t.id).length" class="px-4 py-5 text-center text-gray-400 text-xs">Keine Spenden</div>
+          </div>
+
+          <!-- Desktop: Tabelle -->
+          <table class="hidden md:table w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th class="px-4 py-2.5 text-left font-medium text-gray-500">Name</th>
@@ -78,9 +105,11 @@
                 <td class="px-4 py-3">
                   <span v-if="d.needs_refrigeration" class="badge-blue">Kühlung</span>
                 </td>
-                <td class="px-4 py-3 text-right flex items-center justify-end gap-3">
-                  <button class="text-xs text-primary-600 hover:underline" @click="openEditDonation(d)">Bearbeiten</button>
-                  <button class="text-xs text-red-600 hover:underline" @click="deleteDonation(d)">Entfernen</button>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex items-center justify-end gap-3">
+                    <button class="text-xs text-primary-600 hover:underline" @click="openEditDonation(d)">Bearbeiten</button>
+                    <button class="text-xs text-red-600 hover:underline" @click="deleteDonation(d)">Entfernen</button>
+                  </div>
                 </td>
               </tr>
               <tr v-if="!donationsByType(t.id).length">

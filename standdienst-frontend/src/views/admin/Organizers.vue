@@ -6,7 +6,32 @@
     </div>
 
     <div class="card overflow-hidden p-0">
-      <table class="w-full text-sm">
+      <!-- Mobile: gestapelte Liste -->
+      <div class="md:hidden divide-y divide-gray-50">
+        <div v-for="o in sorted" :key="o.id" class="flex items-start gap-3 px-4 py-3">
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-gray-900 text-sm">{{ o.name }}</p>
+            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ o.email }}</p>
+            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span
+                v-if="o.is_instance_admin"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700"
+              >Instanz-Admin</span>
+              <span v-else class="text-xs text-gray-400">Organisator</span>
+              <span class="text-gray-200">·</span>
+              <span class="text-xs text-gray-400">{{ o.instance_ids?.length ?? 0 }} Instanzen</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
+            <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
+          </div>
+        </div>
+        <div v-if="!sorted.length" class="px-4 py-8 text-center text-gray-400 text-sm">Keine Organisatoren</div>
+      </div>
+
+      <!-- Desktop: Tabelle -->
+      <table class="hidden md:table w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>

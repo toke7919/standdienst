@@ -42,11 +42,11 @@
                 class="flex items-center px-5 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors duration-100"
               >
                 <p class="text-sm font-medium text-gray-800 flex-1">{{ s.time_range }}</p>
-                <div class="flex items-center gap-4">
+                <div class="flex flex-wrap items-center gap-2">
                   <span :class="s.is_full ? 'badge-green' : 'badge-red'">
                     {{ s.current_count }}/{{ s.max_volunteers }}
                   </span>
-                  <button class="text-xs text-gray-500 hover:text-gray-700 font-medium" @click="openDuplicate(s)">Duplizieren</button>
+                  <button class="hidden sm:inline text-xs text-gray-500 hover:text-gray-700 font-medium" @click="openDuplicate(s)">Duplizieren</button>
                   <button class="text-xs text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(s)">Bearbeiten</button>
                   <button class="text-xs text-red-500 hover:text-red-700 font-medium" @click="deleteShift(s)">Löschen</button>
                 </div>
