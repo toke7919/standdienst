@@ -45,18 +45,31 @@
 
     <!-- E-Mail-Benachrichtigungen -->
     <div v-if="mailEnabled && form.email" class="card mb-6">
-      <h2 class="text-base font-semibold text-gray-800 mb-2">Benachrichtigungen</h2>
-      <p class="text-sm text-gray-500 mb-3">
-        Erhalte einen Tag vor deinem Dienst oder der Essensspenden-Abgabe eine Erinnerungsmail.
-      </p>
-      <label class="flex items-center gap-3 cursor-pointer">
-        <div class="relative">
-          <input type="checkbox" class="sr-only peer" v-model="form.notifications_enabled" @change="saveNotifications" />
-          <div class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
-          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
-        </div>
-        <span class="text-sm text-gray-700">Erinnerungsmails aktivieren</span>
-      </label>
+      <h2 class="text-base font-semibold text-gray-800 mb-3">Benachrichtigungen</h2>
+      <div class="space-y-3">
+        <label class="flex items-start gap-3 cursor-pointer">
+          <div class="relative flex-shrink-0 mt-0.5">
+            <input type="checkbox" class="sr-only peer" v-model="form.email_confirmation_enabled" @change="saveEmailConfirmation" />
+            <div class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+          </div>
+          <div>
+            <span class="text-sm text-gray-700">Anmeldebestätigung per E-Mail</span>
+            <p class="text-xs text-gray-400 mt-0.5">Nach jeder Schicht-Anmeldung eine Bestätigungsmail erhalten</p>
+          </div>
+        </label>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <div class="relative flex-shrink-0 mt-0.5">
+            <input type="checkbox" class="sr-only peer" v-model="form.notifications_enabled" @change="saveNotifications" />
+            <div class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+          </div>
+          <div>
+            <span class="text-sm text-gray-700">Erinnerungsmails aktivieren</span>
+            <p class="text-xs text-gray-400 mt-0.5">Einen Tag vor dem Dienst oder der Essensspenden-Abgabe erinnert werden</p>
+          </div>
+        </label>
+      </div>
     </div>
 
     <!-- DSGVO: Datenauskunft -->
@@ -118,6 +131,7 @@ const form = ref({
   password: '',
   passwordConfirm: '',
   notifications_enabled: auth.user?.notifications_enabled ?? false,
+  email_confirmation_enabled: auth.user?.email_confirmation_enabled ?? true,
 })
 const saving = ref(false)
 const showPw = ref(false)
@@ -133,6 +147,7 @@ async function save() {
     last_name: form.value.last_name,
     email: form.value.email,
     notifications_enabled: form.value.notifications_enabled,
+    email_confirmation_enabled: form.value.email_confirmation_enabled,
   }
   if (form.value.password) data.password = form.value.password
   try {
@@ -145,6 +160,19 @@ async function save() {
     ui.err(e.response?.data?.error || 'Fehler beim Speichern')
   } finally {
     saving.value = false
+  }
+}
+
+async function saveEmailConfirmation() {
+  try {
+    await volunteerApi.updateProfile(route.params.slug, {
+      email_confirmation_enabled: form.value.email_confirmation_enabled,
+    })
+    await auth.fetchMe()
+    ui.success(form.value.email_confirmation_enabled ? 'Bestätigungsmail aktiviert' : 'Bestätigungsmail deaktiviert')
+  } catch {
+    form.value.email_confirmation_enabled = !form.value.email_confirmation_enabled
+    ui.err('Fehler beim Speichern')
   }
 }
 

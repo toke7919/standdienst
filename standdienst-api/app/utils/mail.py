@@ -400,6 +400,65 @@ def build_organizer_invite_email(
     )
 
 
+def build_shift_confirmation_email(
+    name: str,
+    instance_title: str,
+    stand: str,
+    date: str,
+    time_range: str,
+    my_shifts_url: str,
+    base_url: str,
+    slug: str = None,
+    primary_color: str = '#4f46e5',
+    logo_url: str = None,
+    copyright_text: str = None,
+) -> str:
+    """Bestätigungsmail nach erfolgreicher Schicht-Anmeldung."""
+    content = f"""
+    <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
+    <p style="margin:0 0 16px;">
+      deine Anmeldung bei <strong>{instance_title}</strong> war erfolgreich.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0"
+           style="border:1px solid #e5e7eb;border-radius:8px;border-collapse:collapse;
+                  margin-bottom:24px;">
+      <tr>
+        <td style="padding:8px 12px;font-size:13px;color:#6b7280;
+                   border-bottom:1px solid #e5e7eb;width:40%;">Ort</td>
+        <td style="padding:8px 12px;font-size:13px;color:#374151;
+                   border-bottom:1px solid #e5e7eb;">{stand}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-size:13px;color:#6b7280;
+                   border-bottom:1px solid #e5e7eb;">Datum</td>
+        <td style="padding:8px 12px;font-size:13px;color:#374151;
+                   border-bottom:1px solid #e5e7eb;">{date}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-size:13px;color:#6b7280;">Zeit</td>
+        <td style="padding:8px 12px;font-size:13px;color:#374151;">{time_range}</td>
+      </tr>
+    </table>
+    <p style="margin:0 0 24px;text-align:center;">
+      <a href="{my_shifts_url}"
+         style="background:{primary_color};color:#ffffff;padding:13px 30px;
+                border-radius:8px;text-decoration:none;font-weight:600;
+                font-size:15px;display:inline-block;">
+        Meine Anmeldungen ansehen
+      </a>
+    </p>
+    """
+    return build_email_template(
+        content,
+        title=instance_title,
+        base_url=base_url,
+        slug=slug,
+        primary_color=primary_color,
+        logo_url=logo_url,
+        copyright_text=copyright_text,
+    )
+
+
 def build_daten_auskunft_email(
     name: str,
     data: dict,

@@ -65,6 +65,7 @@ const router = createRouter({
         { path: 'profile/passkeys', redirect: '/admin/profile' },
         // Instanz-spezifisch
         { path: ':slug/volunteers', component: () => import('@/views/admin/Volunteers.vue') },
+        { path: ':slug/volunteers/:id', component: () => import('@/views/admin/VolunteerDetail.vue') },
         { path: ':slug/stands', component: () => import('@/views/admin/Stands.vue') },
         { path: ':slug/dates', component: () => import('@/views/admin/Dates.vue') },
         { path: ':slug/shifts', component: () => import('@/views/admin/Shifts.vue') },

@@ -14,7 +14,10 @@ from ..models import (
 from ..schemas.shifts import ShiftSchema, RegistrationSchema
 from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
 from ..utils.auth import require_volunteer, validate_password_strength
-from ..utils.mail import is_mail_configured, send_mail, build_daten_auskunft_email
+from ..utils.mail import (
+    is_mail_configured, send_mail,
+    build_daten_auskunft_email, build_shift_confirmation_email,
+)
 from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 from ..utils.settings_cache import get_site_settings, get_global_settings
 
@@ -133,6 +136,7 @@ def register_shift(slug, shift_id):
                              details=_shift_detail(shift)))
     db.session.commit()
     _publish_shift_update(current_app, slug, shift_id)
+    _send_shift_confirmation(g.current_user, shift, g.instance, settings)
     return created({'shift_id': shift_id})
 
 
@@ -147,6 +151,12 @@ def unregister_shift(slug, shift_id):
         return error('Nicht eingetragen', 404)
 
     shift = Shift.query.get(shift_id)
+    settings = get_site_settings(g.instance.id)
+    if shift and settings and settings.unregister_deadline_hours:
+        deadline_err = _unregister_deadline_error(shift, settings.unregister_deadline_hours)
+        if deadline_err:
+            return deadline_err
+
     db.session.delete(reg)
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_UNREGISTER, g.current_user,
                              details=_shift_detail(shift) if shift else f'shift_id={shift_id}'))
@@ -329,6 +339,8 @@ def update_profile(slug):
         volunteer.rotate_jwt()
     if 'notifications_enabled' in data:
         volunteer.notifications_enabled = bool(data['notifications_enabled'])
+    if 'email_confirmation_enabled' in data:
+        volunteer.email_confirmation_enabled = bool(data['email_confirmation_enabled'])
 
     db.session.commit()
     return ok({
@@ -337,6 +349,7 @@ def update_profile(slug):
         'last_name': volunteer.last_name,
         'email': volunteer.email,
         'notifications_enabled': volunteer.notifications_enabled,
+        'email_confirmation_enabled': volunteer.email_confirmation_enabled,
         'updated_at': volunteer.updated_at.isoformat() if volunteer.updated_at else None,
     })
 
@@ -480,6 +493,59 @@ def _shift_detail(shift) -> str:
     date_str   = date.date.strftime('%d.%m.%Y') if date else '?'
     time_str   = f'{shift.start_time.strftime("%H:%M")}–{shift.end_time.strftime("%H:%M")}'
     return f'{stand_name} · {date_str} · {time_str}'
+
+
+def _unregister_deadline_error(shift, deadline_hours: int):
+    """Gibt einen error-Response zurück wenn der Abmeldeschluss überschritten ist, sonst None."""
+    from datetime import timedelta
+    import pytz
+    try:
+        from ..utils.settings_cache import get_global_settings
+        gs = get_global_settings()
+        tz = pytz.timezone(gs.timezone if gs and gs.timezone else 'Europe/Berlin')
+    except Exception:
+        tz = pytz.timezone('Europe/Berlin')
+
+    shift_start = datetime.combine(shift.event_date.date, shift.start_time)
+    shift_start_aware = tz.localize(shift_start)
+    deadline = shift_start_aware - timedelta(hours=deadline_hours)
+    now = datetime.now(tz)
+    if now >= deadline:
+        return error(f'Abmeldeschluss überschritten (mindestens {deadline_hours} h vorher)', 403)
+    return None
+
+
+def _send_shift_confirmation(volunteer, shift, instance, settings):
+    """Sendet Bestätigungsmail nach Schicht-Anmeldung (fire-and-forget)."""
+    if not (volunteer.email and volunteer.email_confirmation_enabled and is_mail_configured()):
+        return
+    try:
+        base_url = current_app.config.get('FRONTEND_URL', '')
+        title = settings.site_title if settings else instance.name
+        primary_color = settings.primary_color if settings else '#4f46e5'
+        logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
+                    if settings and settings.logo_filename else None)
+        from ..utils.settings_cache import get_global_settings
+        global_settings = get_global_settings()
+        copyright_text = global_settings.copyright_text if global_settings else None
+        my_shifts_url = f'{base_url}/{instance.slug}/my-shifts'
+        stand = Stand.query.get(shift.stand_id)
+        html = build_shift_confirmation_email(
+            name=volunteer.display_name,
+            instance_title=title,
+            stand=stand.name if stand else '?',
+            date=shift.event_date.formatted,
+            time_range=shift.time_range,
+            my_shifts_url=my_shifts_url,
+            base_url=base_url,
+            slug=instance.slug,
+            primary_color=primary_color,
+            logo_url=logo_url,
+            copyright_text=copyright_text,
+        )
+        send_mail(volunteer.email, f'Anmeldung bestätigt – {title}', html, sender_name=title)
+    except Exception as exc:
+        current_app.logger.warning('Bestätigungsmail fehlgeschlagen: %s', exc)
 
 
 def _activity(instance_id, event_type, user, details=None) -> ActivityLog:
