@@ -61,7 +61,19 @@
             </thead>
             <tbody>
               <tr v-for="d in donationsByType(t.id)" :key="d.id" class="border-b border-gray-50 hover:bg-gray-50">
-                <td class="px-4 py-3">{{ d.volunteer_name }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1.5">
+                    {{ d.volunteer_name }}
+                    <span
+                      v-if="d.by_admin"
+                      class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200"
+                      title="Durch Admin/Organisator eingetragen"
+                    >
+                      <PencilSquareIcon class="w-2.5 h-2.5" />
+                      Admin
+                    </span>
+                  </span>
+                </td>
                 <td class="px-4 py-3 text-gray-500">{{ d.description }}</td>
                 <td class="px-4 py-3">
                   <span v-if="d.needs_refrigeration" class="badge-blue">Kühlung</span>
@@ -153,7 +165,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { CalendarIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()

@@ -130,11 +130,18 @@ const editing = ref(null)
 const form = ref({ stand_id: '', event_date_id: '', start_time: '08:00', end_time: '12:00', max_volunteers: 2 })
 const saveError = ref('')
 
-// Primär nach Datum, sekundär nach Stand, tertiär nach Uhrzeit
+// Primär nach Datum, sekundär nach Stand-Sortierung, tertiär nach Uhrzeit
+const standOrderMap = computed(() => {
+  const map = {}
+  stands.value.forEach(s => { map[s.id] = s.sort_order ?? 0 })
+  return map
+})
+
 const groupedShifts = computed(() => {
   const sorted = [...shifts.value].sort((a, b) => {
     if (a.date_formatted !== b.date_formatted) return a.date_formatted.localeCompare(b.date_formatted, 'de')
-    if (a.stand_name !== b.stand_name) return a.stand_name.localeCompare(b.stand_name, 'de')
+    const orderDiff = (standOrderMap.value[a.stand_id] ?? 999) - (standOrderMap.value[b.stand_id] ?? 999)
+    if (orderDiff !== 0) return orderDiff
     return (a.start_time || '').localeCompare(b.start_time || '')
   })
   const byDate = {}

@@ -42,6 +42,7 @@ class FoodDonationSchema(SQLAlchemyAutoSchema):
 
     volunteer_name = fields.Method('_volunteer_name', dump_only=True)
     food_type_name = fields.Method('_food_type_name', dump_only=True)
+    by_admin = fields.Method('_by_admin', dump_only=True)
 
     def _volunteer_name(self, obj):
         if obj.volunteer:
@@ -50,6 +51,9 @@ class FoodDonationSchema(SQLAlchemyAutoSchema):
 
     def _food_type_name(self, obj):
         return obj.food_type.name if obj.food_type else None
+
+    def _by_admin(self, obj):
+        return obj.guest_name is not None
 
 
 class FoodDonationCreateSchema(Schema):
