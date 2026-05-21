@@ -33,8 +33,8 @@
 
         <RouterLink :to="`/${slug}/food`" class="card-interactive block">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <ShoppingBagIcon class="w-6 h-6 text-amber-600" />
+            <div class="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0 transition-colors duration-150">
+              <ShoppingBagIcon class="w-6 h-6 text-primary-600" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-gray-900">Essensspende</p>
