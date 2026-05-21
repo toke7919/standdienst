@@ -388,6 +388,8 @@ def _user_payload(user) -> dict:
         payload['is_instance_admin'] = user.is_instance_admin
     if hasattr(user, 'notifications_enabled'):
         payload['notifications_enabled'] = user.notifications_enabled
+    if hasattr(user, 'email_confirmation_enabled'):
+        payload['email_confirmation_enabled'] = user.email_confirmation_enabled
     if hasattr(user, 'role') and user.role in ('admin', 'organizer'):
         from ..models import PasskeyCredential
         if user.role == 'admin':
