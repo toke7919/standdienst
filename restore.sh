@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-ENV_FILE="${INSTALL_DIR}/standdienst-api/.env"
+ENV_FILE="${INSTALL_DIR}/.env"
 [[ -f "${ENV_FILE}" ]] || { echo "Fehler: .env nicht gefunden: ${ENV_FILE}" >&2; exit 1; }
 
 set -a
@@ -30,10 +30,10 @@ _BACKUP_DIR_RAW="${BACKUP_DIR:-backups}"
 if [[ "${_BACKUP_DIR_RAW}" == /* ]]; then
     BACKUP_DIR="${_BACKUP_DIR_RAW}"
 else
-    BACKUP_DIR="${INSTALL_DIR}/standdienst-api/${_BACKUP_DIR_RAW}"
+    BACKUP_DIR="${INSTALL_DIR}/${_BACKUP_DIR_RAW}"
 fi
 
-PYTHON="${INSTALL_DIR}/standdienst-api/.venv/bin/python3"
+PYTHON="${INSTALL_DIR}/.venv/bin/python3"
 
 [[ -x "${PYTHON}" ]]         || { echo "Fehler: Python-Venv nicht gefunden: ${PYTHON}" >&2; exit 1; }
 [[ -n "${SECRET_KEY:-}" ]]   || { echo "Fehler: SECRET_KEY fehlt in .env" >&2; exit 1; }
