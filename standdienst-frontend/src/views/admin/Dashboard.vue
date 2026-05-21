@@ -19,10 +19,10 @@
 
           <!-- Belegungsring -->
           <div class="card flex flex-col items-center">
-            <p class="self-start text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Dienstbelegung</p>
+            <p class="self-start text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 lg:mb-5">Dienstbelegung</p>
 
             <!-- SVG Donut -->
-            <div class="relative w-36 h-36 mb-5">
+            <div class="relative w-28 h-28 lg:w-36 lg:h-36 mb-3 lg:mb-5">
               <svg viewBox="0 0 100 100" class="w-full h-full">
                 <circle cx="50" cy="50" r="36" fill="none" stroke="#f3f4f6" stroke-width="11" />
                 <circle
@@ -81,16 +81,16 @@
 
           <!-- Nächster Termin -->
           <div class="card flex flex-col">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Nächster Termin</p>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Nächster Termin</p>
 
             <div v-if="data.next_event" class="flex-1 flex flex-col items-center justify-center py-2">
               <template v-if="data.next_event.days_until === 0">
-                <p class="text-5xl font-black text-emerald-500 mb-2">Heute!</p>
+                <p class="text-4xl lg:text-5xl font-black text-emerald-500 mb-2">Heute!</p>
               </template>
               <template v-else>
                 <div class="flex items-end gap-2 mb-2">
                   <span
-                    class="text-7xl font-black tabular-nums leading-none"
+                    class="text-5xl lg:text-7xl font-black tabular-nums leading-none"
                     :class="data.next_event.days_until <= 2 ? 'text-amber-500' : 'text-primary-600'"
                   >{{ data.next_event.days_until }}</span>
                   <span class="text-xl font-semibold text-gray-300 mb-2 leading-none">
@@ -123,10 +123,10 @@
 
           <!-- Gesamtkapazität -->
           <div class="card flex flex-col">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Gesamtkapazität</p>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Gesamtkapazität</p>
 
-            <div class="flex items-end gap-1.5 mb-5">
-              <span class="text-5xl font-black tabular-nums leading-none text-gray-900">{{ data.registrations }}</span>
+            <div class="flex items-end gap-1.5 mb-3 lg:mb-5">
+              <span class="text-4xl lg:text-5xl font-black tabular-nums leading-none text-gray-900">{{ data.registrations }}</span>
               <span class="text-xl text-gray-300 mb-1">/</span>
               <span class="text-xl font-semibold text-gray-400 mb-1">{{ data.total_spots }}</span>
               <span class="text-sm text-gray-400 mb-1.5">Plätze</span>
@@ -212,7 +212,7 @@
 
           <!-- Leere Schichten – Alert-Karte -->
           <div
-            :class="['rounded-2xl shadow-sm border p-6 transition-colors duration-300',
+            :class="['rounded-2xl shadow-sm border p-4 lg:p-6 transition-colors duration-300',
                      data.shifts_empty > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100']"
           >
             <div class="flex items-start justify-between mb-3">
@@ -243,6 +243,7 @@
         <!-- ── Auslastung je Termin ──────────────────────────────────── -->
         <div v-if="data.dates_fill?.length" class="card overflow-hidden !p-0 mb-8">
           <h2 class="text-base font-semibold text-gray-800 px-4 pt-4 pb-3">Auslastung je Termin</h2>
+          <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-gray-100 bg-gray-50">
@@ -278,6 +279,7 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </template>
 
@@ -330,7 +332,27 @@
       <!-- ── Letzte Aktivitäten (beide Dashboards) ──────────────────── -->
       <div v-if="data.recent_activity?.length" class="card overflow-hidden !p-0">
         <h2 class="text-base font-semibold text-gray-800 px-4 pt-4 pb-3">Letzte Aktivitäten</h2>
-        <table class="w-full text-sm">
+
+        <!-- Mobile: gestapelte Liste (kein horizontales Overflow) -->
+        <div class="md:hidden divide-y divide-gray-50">
+          <div
+            v-for="log in data.recent_activity"
+            :key="log.id"
+            class="flex items-start gap-3 px-4 py-3"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                <EventBadge :type="log.event_type" />
+                <span class="text-xs text-gray-600 truncate">{{ log.volunteer_name || '—' }}</span>
+              </div>
+              <p v-if="log.details" class="text-xs text-gray-400 truncate">{{ log.details }}</p>
+            </div>
+            <span class="text-xs text-gray-300 flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
+          </div>
+        </div>
+
+        <!-- Desktop: Tabelle -->
+        <table class="hidden md:table w-full text-sm">
           <tbody>
             <tr
               v-for="log in data.recent_activity"
@@ -479,11 +501,11 @@ const StatCard = defineComponent({
       amber:   'bg-amber-100 text-amber-600',
       red:     'bg-red-100 text-red-600',
     }
-    return () => h('div', { class: 'bg-white rounded-2xl p-6 shadow-sm border border-gray-100' }, [
-      h('div', { class: `w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconColors[props.color] || iconColors.blue}` }, [
-        props.icon ? h(props.icon, { class: 'w-5 h-5' }) : null,
+    return () => h('div', { class: 'bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100' }, [
+      h('div', { class: `w-9 h-9 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center mb-2 lg:mb-3 ${iconColors[props.color] || iconColors.blue}` }, [
+        props.icon ? h(props.icon, { class: 'w-4 h-4 lg:w-5 lg:h-5' }) : null,
       ]),
-      h('p', { class: 'text-3xl font-bold text-gray-900 tabular-nums' }, String(props.value ?? '—')),
+      h('p', { class: 'text-2xl lg:text-3xl font-bold text-gray-900 tabular-nums' }, String(props.value ?? '—')),
       h('p', { class: 'text-sm text-gray-500 mt-0.5' }, props.label),
       props.sub ? h('p', { class: 'text-xs text-gray-400 mt-1 leading-tight' }, props.sub) : null,
     ])
