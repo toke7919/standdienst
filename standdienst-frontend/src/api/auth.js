@@ -23,4 +23,5 @@ export const authApi = {
     client.post('/auth/passkey/authenticate/complete', credential),
   passkeyList: () => client.get('/auth/passkey/credentials'),
   passkeyDelete: (id) => client.delete(`/auth/passkey/credentials/${id}`),
+  updateProfile: (data) => client.put('/auth/profile', data),
 }

@@ -33,7 +33,7 @@
           <NavItem :to="`/admin/${selectedSlug}/volunteers`" :icon="UsersIcon">Helfer</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/stands`" :icon="BuildingStorefrontIcon">Stände</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/dates`" :icon="CalendarIcon">Termine</NavItem>
-          <NavItem :to="`/admin/${selectedSlug}/shifts`" :icon="ClockIcon">Schichten</NavItem>
+          <NavItem :to="`/admin/${selectedSlug}/shifts`" :icon="ClockIcon">Dienste</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/registrations`" :icon="ClipboardDocumentListIcon">Anmeldungen</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/food`" :icon="ShoppingBagIcon">Essensspenden</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/export`" :icon="ArrowDownTrayIcon">Export</NavItem>
@@ -56,8 +56,12 @@
       </nav>
 
       <div class="p-3 border-t border-white/10 space-y-0.5">
-        <NavItem to="/admin/profile/2fa" :icon="LockClosedIcon">2FA einrichten</NavItem>
-        <NavItem to="/admin/profile/passkeys" :icon="KeyIcon">Passkeys</NavItem>
+        <NavItem to="/admin/profile" :icon="UserCircleIcon">
+          <span class="flex items-center gap-1.5">
+            Profil
+            <span v-if="showSecurityHint" class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" title="Sicherheit einrichten" />
+          </span>
+        </NavItem>
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white rounded-lg transition-colors"
           @click="auth.logout"
@@ -223,7 +227,7 @@
                   <div class="grid grid-cols-3 gap-2">
                     <MoreTile :to="`/admin/${mobileSlug}/stands`" :icon="BuildingStorefrontIcon" @nav="moreOpen = false">Stände</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/dates`" :icon="CalendarIcon" @nav="moreOpen = false">Termine</MoreTile>
-                    <MoreTile :to="`/admin/${mobileSlug}/shifts`" :icon="ClockIcon" @nav="moreOpen = false">Schichten</MoreTile>
+                    <MoreTile :to="`/admin/${mobileSlug}/shifts`" :icon="ClockIcon" @nav="moreOpen = false">Dienste</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/food`" :icon="ShoppingBagIcon" @nav="moreOpen = false">Essen</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/export`" :icon="ArrowDownTrayIcon" @nav="moreOpen = false">Export</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/import`" :icon="ArrowUpTrayIcon" @nav="moreOpen = false">Import</MoreTile>
@@ -250,8 +254,7 @@
               <div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Konto</p>
                 <div class="grid grid-cols-3 gap-2">
-                  <MoreTile to="/admin/profile/2fa" :icon="LockClosedIcon" @nav="moreOpen = false">2FA</MoreTile>
-                  <MoreTile to="/admin/profile/passkeys" :icon="KeyIcon" @nav="moreOpen = false">Passkeys</MoreTile>
+                  <MoreTile to="/admin/profile" :icon="UserCircleIcon" @nav="moreOpen = false">Profil</MoreTile>
                   <button
                     class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-colors active:scale-95 min-h-[4rem]"
                     @click="auth.logout"
@@ -262,6 +265,38 @@
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Sicherheitswarnung: weder 2FA noch Passkey konfiguriert -->
+    <Teleport to="body">
+      <Transition name="sheet">
+        <div v-if="showSecurityModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50" />
+          <div class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <ExclamationTriangleIcon class="w-5 h-5 text-amber-600" />
+              </div>
+              <h2 class="text-base font-semibold text-gray-900">Konto nicht ausreichend gesichert</h2>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">
+              Dein Konto ist weder durch 2FA noch durch einen Passkey geschützt. Richte jetzt eine
+              zusätzliche Anmeldesicherung ein, um dein Konto zu schützen.
+            </p>
+            <div class="flex gap-3">
+              <RouterLink
+                to="/admin/profile"
+                class="btn-primary flex-1 text-center text-sm"
+                @click="securityWarningDismissed = true"
+              >Jetzt einrichten</RouterLink>
+              <button
+                class="btn-secondary text-sm"
+                @click="securityWarningDismissed = true"
+              >Später</button>
             </div>
           </div>
         </div>
@@ -286,7 +321,7 @@ import {
   CogIcon, DocumentTextIcon, ServerIcon, UserGroupIcon, ShieldCheckIcon,
   AdjustmentsHorizontalIcon, EnvelopeIcon, CloudArrowUpIcon, ArrowPathIcon,
   LockClosedIcon, ArrowRightOnRectangleIcon, KeyIcon, XMarkIcon,
-  EllipsisHorizontalCircleIcon,
+  EllipsisHorizontalCircleIcon, UserCircleIcon, ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
@@ -297,6 +332,14 @@ const instances = ref([])
 const selectedSlug = ref('')
 const moreOpen = ref(false)
 const globalCopyright = ref('')
+const securityWarningDismissed = ref(false)
+
+const showSecurityHint = computed(() =>
+  auth.isStaff && auth.user?.totp_enabled === false && !auth.user?.has_passkey
+)
+const showSecurityModal = computed(() =>
+  showSecurityHint.value && !securityWarningDismissed.value
+)
 
 // Aktueller Slug aus Route oder selectedSlug
 const mobileSlug = computed(() => route.params.slug || selectedSlug.value || '')
