@@ -27,6 +27,10 @@
 
   html, body {
     overscroll-behavior: none;
+  }
+  /* overflow-x nur auf body – nicht auf html, da html sonst zum Scroll-Container wird
+     (CSS-Spec: overflow-x:hidden auf html macht overflow-y computed zu 'auto') */
+  body {
     overflow-x: hidden;
   }
 
