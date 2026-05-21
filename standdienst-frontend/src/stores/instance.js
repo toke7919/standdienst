@@ -9,6 +9,7 @@ export const useInstanceStore = defineStore('instance', () => {
   const list = ref([])
   const loading = ref(false)
   const notFound = ref(false)
+  const globalInfo = ref(null)
 
   async function loadInstance(slug) {
     if (slug === currentSlug.value && current.value) return
@@ -34,6 +35,14 @@ export const useInstanceStore = defineStore('instance', () => {
     list.value = res.data.data
   }
 
+  async function loadGlobalInfo() {
+    if (globalInfo.value) return
+    try {
+      const res = await publicApi.getPlatformInfo()
+      globalInfo.value = res.data.data
+    } catch { /* ignore */ }
+  }
+
   function clear() {
     current.value = null
     currentSlug.value = null
@@ -45,5 +54,5 @@ export const useInstanceStore = defineStore('instance', () => {
     currentSlug.value = null
   }
 
-  return { current, currentSlug, list, loading, notFound, loadInstance, loadList, clear, invalidateCache }
+  return { current, currentSlug, list, loading, notFound, globalInfo, loadInstance, loadList, loadGlobalInfo, clear, invalidateCache }
 })

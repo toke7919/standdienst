@@ -16,7 +16,7 @@ from ...extensions import db
 from ...utils.auth import require_admin
 from ...utils.responses import ok, error
 
-MAX_BACKUPS = 10
+MAX_BACKUPS = 20
 
 
 def _backup_dir() -> Path:

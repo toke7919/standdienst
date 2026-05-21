@@ -30,6 +30,15 @@ def _base_url() -> str:
     return f'{proto}://{host}'
 
 
+@public_bp.route('/platform-info', methods=['GET'])
+def platform_info():
+    gs = get_global_settings()
+    return jsonify(data={
+        'copyright_text': gs.copyright_text if gs else '',
+        'has_impressum': bool(gs and gs.provider_impressum_html) if gs else True,
+    }), 200
+
+
 @public_bp.route('/instances', methods=['GET'])
 def list_instances():
     instances = Instance.query.filter_by(is_active=True).order_by(Instance.name).all()

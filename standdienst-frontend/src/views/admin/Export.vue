@@ -35,25 +35,6 @@
         </div>
       </div>
 
-      <!-- CSV & iCal -->
-      <div class="card">
-        <h2 class="text-base font-semibold text-gray-800 mb-1">Weitere Formate</h2>
-        <p class="text-sm text-gray-500 mb-4">CSV-Exporte und Kalender-Abo.</p>
-        <div class="flex flex-wrap gap-3">
-          <a :href="adminApi.exportUrl(slug, 'csv/registrations')" class="btn-secondary">
-            <ArrowDownTrayIcon class="w-4 h-4" />
-            Anmeldungen CSV
-          </a>
-          <a :href="adminApi.exportUrl(slug, 'csv/volunteers')" class="btn-secondary">
-            <ArrowDownTrayIcon class="w-4 h-4" />
-            Helfer CSV
-          </a>
-          <a :href="adminApi.exportIcalUrl(slug)" class="btn-secondary">
-            <ArrowDownTrayIcon class="w-4 h-4" />
-            Kalender (iCal)
-          </a>
-        </div>
-      </div>
     </div>
   </div>
 </template>

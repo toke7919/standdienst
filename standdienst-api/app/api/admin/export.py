@@ -1,5 +1,6 @@
 import csv
 import io
+from collections import defaultdict
 from datetime import date, datetime, timezone
 
 from flask import g, request, send_file, current_app
@@ -21,19 +22,9 @@ def _vol_name(reg):
     return v.name if v else (reg.guest_name or '—')
 
 
-def _vol_email(reg):
-    v = reg.volunteer
-    return v.email or '' if v else ''
-
-
 def _food_name(don):
     v = don.volunteer
     return v.name if v else (don.guest_name or '—')
-
-
-def _food_email(don):
-    v = don.volunteer
-    return v.email or '' if v else ''
 
 
 def _primary_color():
@@ -61,12 +52,13 @@ def export_csv_registrations(slug):
 
     for shift in shifts:
         for reg in shift.registrations:
+            v = reg.volunteer
             writer.writerow([
                 shift.stand.name,
                 shift.event_date.formatted,
                 shift.time_range,
                 _vol_name(reg),
-                _vol_email(reg),
+                v.email or '' if v else '',
                 reg.registered_at.strftime('%d.%m.%Y %H:%M') if reg.registered_at else '',
             ])
 
@@ -113,7 +105,37 @@ def export_csv_volunteers(slug):
 
 
 # ---------------------------------------------------------------------------
-# ODS – Dienste (eine Tabelle je Tag)
+# Hilfsfunktionen für Dienste-Exports
+# ---------------------------------------------------------------------------
+
+def _dienste_by_day(instance_id):
+    """Gibt {EventDate: {Stand: [Shift]}} zurück, geordnet nach Datum + sort_order."""
+    event_dates = (EventDate.query
+                   .join(Shift, Shift.event_date_id == EventDate.id)
+                   .join(Stand, Stand.id == Shift.stand_id)
+                   .filter(Stand.instance_id == instance_id)
+                   .distinct()
+                   .order_by(EventDate.date)
+                   .all())
+
+    result = {}
+    for ed in event_dates:
+        stands_map = {}
+        shifts = (Shift.query
+                  .join(Stand, Stand.id == Shift.stand_id)
+                  .filter(Stand.instance_id == instance_id,
+                          Shift.event_date_id == ed.id)
+                  .order_by(Stand.sort_order, Shift.start_time)
+                  .all())
+        for shift in shifts:
+            stands_map.setdefault(shift.stand, []).append(shift)
+        if stands_map:
+            result[ed] = stands_map
+    return result
+
+
+# ---------------------------------------------------------------------------
+# ODS – Dienste (je Tag ein Blatt, je Blatt nach Ständen gruppiert)
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/ods/dienste', methods=['GET'])
@@ -130,69 +152,60 @@ def export_ods_dienste(slug):
     color = _primary_color()
     doc = OpenDocumentSpreadsheet()
 
-    def make_header_style():
-        s = Style(name='HeaderStyle', family='table-cell')
-        s.addElement(TableCellProperties(backgroundcolor=color))
-        s.addElement(TextProperties(fontweight='bold', color='#ffffff'))
+    def make_style(name, bg, bold=False, color_txt='#111827'):
+        s = Style(name=name, family='table-cell')
+        s.addElement(TableCellProperties(backgroundcolor=bg))
+        tp_attrs = {'color': color_txt}
+        if bold:
+            tp_attrs['fontweight'] = 'bold'
+        s.addElement(TextProperties(**tp_attrs))
         doc.styles.addElement(s)
         return s
 
-    hstyle = make_header_style()
+    hstyle = make_style('HeaderStyle', color, bold=True, color_txt='#ffffff')
+    sstyle = make_style('StandStyle', '#f3f4f6', bold=True, color_txt='#1f2937')
 
     def add_cell(row, text, style=None):
         cell = TableCell(stylename=style)
         cell.addElement(P(text=str(text or '')))
         row.addElement(cell)
 
-    event_dates = (EventDate.query
-                   .join(Shift, Shift.event_date_id == EventDate.id)
-                   .join(Stand, Stand.id == Shift.stand_id)
-                   .filter(Stand.instance_id == g.instance.id)
-                   .distinct()
-                   .order_by(EventDate.date)
-                   .all())
+    days = _dienste_by_day(g.instance.id)
 
-    if not event_dates:
-        event_dates_fallback = (EventDate.query
-                                .filter_by(instance_id=g.instance.id)
-                                .order_by(EventDate.date)
-                                .all())
-        event_dates = event_dates_fallback
+    for ed, stands_map in days.items():
+        sheet = Table(name=ed.date.strftime('%d.%m.%Y'))
 
-    for ed in event_dates:
-        sheet_name = ed.date.strftime('%d.%m.%Y')
-        sheet = Table(name=sheet_name)
+        hr = TableRow()
+        for col in ['Stand', 'Uhrzeit', 'Helfer']:
+            add_cell(hr, col, hstyle)
+        sheet.addElement(hr)
 
-        header_row = TableRow()
-        for col in ['Stand', 'Uhrzeit', 'Helfer', 'E-Mail']:
-            add_cell(header_row, col, hstyle)
-        sheet.addElement(header_row)
+        for stand, shifts in stands_map.items():
+            sr = TableRow()
+            add_cell(sr, stand.name, sstyle)
+            add_cell(sr, '', sstyle)
+            add_cell(sr, '', sstyle)
+            sheet.addElement(sr)
 
-        shifts = (Shift.query
-                  .join(Stand, Stand.id == Shift.stand_id)
-                  .filter(Stand.instance_id == g.instance.id,
-                          Shift.event_date_id == ed.id)
-                  .order_by(Stand.sort_order, Shift.start_time)
-                  .all())
-
-        for shift in shifts:
-            regs = list(shift.registrations)
-            if not regs:
-                row = TableRow()
-                add_cell(row, shift.stand.name)
-                add_cell(row, shift.time_range)
-                add_cell(row, '—')
-                add_cell(row, '')
-                sheet.addElement(row)
-            for reg in regs:
-                row = TableRow()
-                add_cell(row, shift.stand.name)
-                add_cell(row, shift.time_range)
-                add_cell(row, _vol_name(reg))
-                add_cell(row, _vol_email(reg))
-                sheet.addElement(row)
+            for shift in shifts:
+                regs = list(shift.registrations)
+                if not regs:
+                    row = TableRow()
+                    add_cell(row, '')
+                    add_cell(row, shift.time_range)
+                    add_cell(row, '—')
+                    sheet.addElement(row)
+                for reg in regs:
+                    row = TableRow()
+                    add_cell(row, '')
+                    add_cell(row, shift.time_range)
+                    add_cell(row, _vol_name(reg))
+                    sheet.addElement(row)
 
         doc.spreadsheet.addElement(sheet)
+
+    if not days:
+        doc.spreadsheet.addElement(Table(name='Dienste'))
 
     buf = io.BytesIO()
     doc.save(buf)
@@ -203,7 +216,7 @@ def export_ods_dienste(slug):
 
 
 # ---------------------------------------------------------------------------
-# ODS – Essensspenden (eine Tabelle je Spendenart)
+# ODS – Essensspenden (je Spendenart ein Blatt, ohne E-Mail)
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/ods/essen', methods=['GET'])
@@ -240,13 +253,12 @@ def export_ods_essen(slug):
                   .all())
 
     for ft in food_types:
-        sheet_name = ft.name[:28]
-        sheet = Table(name=sheet_name)
+        sheet = Table(name=ft.name[:28])
 
-        header_row = TableRow()
-        for col in ['Helfer', 'E-Mail', 'Was wird mitgebracht', 'Kühlpflichtig']:
-            add_cell(header_row, col, hstyle)
-        sheet.addElement(header_row)
+        hr = TableRow()
+        for col in ['Helfer', 'Was wird mitgebracht', 'Kühlpflichtig']:
+            add_cell(hr, col, hstyle)
+        sheet.addElement(hr)
 
         donations = list(ft.donations.order_by(FoodDonation.registered_at))
         if not donations:
@@ -254,12 +266,10 @@ def export_ods_essen(slug):
             add_cell(row, '—')
             add_cell(row, '')
             add_cell(row, '')
-            add_cell(row, '')
             sheet.addElement(row)
         for don in donations:
             row = TableRow()
             add_cell(row, _food_name(don))
-            add_cell(row, _food_email(don))
             add_cell(row, don.description)
             add_cell(row, 'Ja' if don.needs_refrigeration else 'Nein')
             sheet.addElement(row)
@@ -267,8 +277,7 @@ def export_ods_essen(slug):
         doc.spreadsheet.addElement(sheet)
 
     if not food_types:
-        sheet = Table(name='Essensspenden')
-        doc.spreadsheet.addElement(sheet)
+        doc.spreadsheet.addElement(Table(name='Essensspenden'))
 
     buf = io.BytesIO()
     doc.save(buf)
@@ -279,7 +288,7 @@ def export_ods_essen(slug):
 
 
 # ---------------------------------------------------------------------------
-# ODS – Alle Anmeldungen (Legacy, eine Tabelle)
+# ODS – Alle Anmeldungen (Legacy)
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/ods', methods=['GET'])
@@ -324,12 +333,13 @@ def export_ods(slug):
 
     for shift in shifts:
         for reg in shift.registrations:
+            v = reg.volunteer
             row = TableRow()
             add_cell(row, shift.stand.name)
             add_cell(row, shift.event_date.formatted)
             add_cell(row, shift.time_range)
             add_cell(row, _vol_name(reg))
-            add_cell(row, _vol_email(reg))
+            add_cell(row, v.email or '' if v else '')
             add_cell(row, reg.registered_at.strftime('%d.%m.%Y %H:%M') if reg.registered_at else '')
             sheet.addElement(row)
 
@@ -343,7 +353,7 @@ def export_ods(slug):
 
 
 # ---------------------------------------------------------------------------
-# PDF – Dienste (eine Seite je Tag)
+# PDF – Dienste (Stundenplan-Stil: je Tag Tabelle mit Stand × Helfer)
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/pdf/dienste', methods=['GET'])
@@ -355,54 +365,71 @@ def export_pdf_dienste(slug):
         return error('WeasyPrint nicht installiert', 500)
 
     color = _primary_color()
-
-    event_dates = (EventDate.query
-                   .join(Shift, Shift.event_date_id == EventDate.id)
-                   .join(Stand, Stand.id == Shift.stand_id)
-                   .filter(Stand.instance_id == g.instance.id)
-                   .distinct()
-                   .order_by(EventDate.date)
-                   .all())
+    days = _dienste_by_day(g.instance.id)
 
     sections = ''
-    for i, ed in enumerate(event_dates):
+    for i, (ed, stands_map) in enumerate(days.items()):
         break_style = 'page-break-before: always;' if i > 0 else ''
 
-        shifts = (Shift.query
-                  .join(Stand, Stand.id == Shift.stand_id)
-                  .filter(Stand.instance_id == g.instance.id,
-                          Shift.event_date_id == ed.id)
-                  .order_by(Stand.sort_order, Shift.start_time)
-                  .all())
+        # Alle einzigartigen Zeitslots für diesen Tag (sortiert)
+        all_time_ranges = []
+        seen = set()
+        for stand, shifts in stands_map.items():
+            for sh in shifts:
+                if sh.time_range not in seen:
+                    all_time_ranges.append((sh.start_time, sh.time_range))
+                    seen.add(sh.time_range)
+        all_time_ranges.sort(key=lambda x: x[0])
+
+        stand_list = list(stands_map.keys())
+
+        # Lookup: (time_range, stand_id) → [volunteer_names]
+        cell_data = defaultdict(list)
+        for stand, shifts in stands_map.items():
+            for sh in shifts:
+                for reg in sh.registrations:
+                    cell_data[(sh.time_range, stand.id)].append(_vol_name(reg))
+
+        # Tabellenkopf
+        stand_headers = ''.join(f'<th>{s.name}</th>' for s in stand_list)
+        head = f'<tr><th>Zeit</th>{stand_headers}</tr>'
 
         rows = ''
-        for shift in shifts:
-            regs = list(shift.registrations)
-            if not regs:
-                rows += (f'<tr><td>{shift.stand.name}</td><td>{shift.time_range}</td>'
-                         f'<td>—</td><td></td></tr>')
-            for reg in regs:
-                rows += (f'<tr><td>{shift.stand.name}</td><td>{shift.time_range}</td>'
-                         f'<td>{_vol_name(reg)}</td><td>{_vol_email(reg)}</td></tr>')
+        for _, tr in all_time_ranges:
+            cells = ''
+            for stand in stand_list:
+                names = cell_data.get((tr, stand.id), [])
+                cell_content = '<br>'.join(names) if names else '<span style="color:#9ca3af">—</span>'
+                cells += f'<td>{cell_content}</td>'
+            rows += f'<tr><td class="time">{tr}</td>{cells}</tr>'
 
         sections += f'''
-        <div style="{break_style}">
-          <h2 style="color:{color};margin:0 0 12px;font-size:14pt;">{ed.formatted}</h2>
+        <div style="{break_style} margin-bottom: 2em;">
+          <h2 style="color:{color};margin:0 0 10px;font-size:14pt;font-weight:700;">
+            {ed.formatted}
+          </h2>
           <table>
-            <tr><th>Stand</th><th>Uhrzeit</th><th>Helfer</th><th>E-Mail</th></tr>
-            {rows}
+            <thead>{head}</thead>
+            <tbody>{rows}</tbody>
           </table>
         </div>'''
+
+    if not sections:
+        sections = '<p>Keine Dienste vorhanden.</p>'
 
     html_content = f'''
     <html><head><style>
       body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
-      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; }}
-      h2 {{ color: {color}; margin: 0 0 12px; font-size: 14pt; }}
+      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; font-weight: 800; }}
+      h2 {{ color: {color}; font-size: 14pt; font-weight: 700; }}
       p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 20px; }}
-      table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
-      th {{ background: {color}; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }}
-      td {{ padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 9pt; }}
+      table {{ width: 100%; border-collapse: collapse; margin-bottom: 8px; }}
+      th {{ background: {color}; color: white; padding: 7px 10px; text-align: left;
+            font-size: 10pt; font-weight: 700; }}
+      td {{ padding: 8px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
+            vertical-align: top; }}
+      td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
+                 width: 1%; }}
       tr:nth-child(even) td {{ background: #f9fafb; }}
     </style></head><body>
       <h1>Dienstplan – {g.instance.name}</h1>
@@ -418,7 +445,7 @@ def export_pdf_dienste(slug):
 
 
 # ---------------------------------------------------------------------------
-# PDF – Essensspenden (eine Seite je Spendenart)
+# PDF – Essensspenden (je Spendenart eine Seite, ohne E-Mail)
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/pdf/essen', methods=['GET'])
@@ -458,10 +485,10 @@ def export_pdf_essen(slug):
         donations = list(ft.donations.order_by(FoodDonation.registered_at))
         rows = ''
         if not donations:
-            rows = '<tr><td>—</td><td></td><td></td><td></td></tr>'
+            rows = '<tr><td>—</td><td></td><td></td></tr>'
         for don in donations:
             refrig = 'Ja' if don.needs_refrigeration else 'Nein'
-            rows += (f'<tr><td>{_food_name(don)}</td><td>{_food_email(don)}</td>'
+            rows += (f'<tr><td>{_food_name(don)}</td>'
                      f'<td>{don.description}</td><td>{refrig}</td></tr>')
 
         info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
@@ -471,7 +498,7 @@ def export_pdf_essen(slug):
           <h2 style="color:{color};margin:0 0 4px;font-size:14pt;">{ft.name}</h2>
           {info_line}
           <table>
-            <tr><th>Helfer</th><th>E-Mail</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
+            <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
             {rows}
           </table>
         </div>'''
@@ -503,7 +530,7 @@ def export_pdf_essen(slug):
 
 
 # ---------------------------------------------------------------------------
-# PDF – Alle Anmeldungen (Legacy, eine Tabelle)
+# PDF – Alle Anmeldungen (Legacy)
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/pdf', methods=['GET'])
@@ -527,8 +554,10 @@ def export_pdf(slug):
             rows_html += _pdf_row(shift.stand.name, shift.event_date.formatted,
                                    shift.time_range, '—', '')
         for reg in regs:
+            v = reg.volunteer
             rows_html += _pdf_row(shift.stand.name, shift.event_date.formatted,
-                                   shift.time_range, _vol_name(reg), _vol_email(reg))
+                                   shift.time_range, _vol_name(reg),
+                                   v.email or '' if v else '')
 
     html_content = f'''
     <html><head><style>
