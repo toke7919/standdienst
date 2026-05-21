@@ -54,7 +54,7 @@
               Alle kopieren
             </button>
           </div>
-          <button class="btn-primary w-full" @click="backupCodes = []">
+          <button class="btn-primary w-full" @click="finishSetup">
             Fertig – Codes gesichert
           </button>
         </template>
@@ -114,14 +114,20 @@ async function confirm() {
     const res = await authApi.confirm2fa(code.value)
     backupCodes.value = res.data.backup_codes || []
     ui.success('2FA aktiviert')
-    await auth.fetchMe()
-    setupData.value = null
+    // fetchMe erst nach "Fertig" – sonst setzt totp_enabled=true und
+    // versteckt den Backup-Code-Block bevor er angezeigt wurde
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Ungültiger Code'
     code.value = ''
   } finally {
     confirming.value = false
   }
+}
+
+async function finishSetup() {
+  backupCodes.value = []
+  setupData.value = null
+  await auth.fetchMe()
 }
 
 async function copyAll() {

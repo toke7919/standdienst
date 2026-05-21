@@ -53,8 +53,11 @@
         </div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" required /></div>
         <div v-if="!editing">
-          <label class="label">Passwort</label>
-          <input v-model="form.password" type="password" class="input" required />
+          <label class="label">Passwort <span class="text-xs font-normal text-gray-400">(optional)</span></label>
+          <input v-model="form.password" type="password" class="input" autocomplete="new-password" />
+          <p class="text-xs text-gray-400 mt-1">
+            Leer lassen → Einladungsmail mit Passwort-Einrichtungslink (7 Tage gültig)
+          </p>
         </div>
         <div class="flex items-center gap-3">
           <input v-model="form.is_instance_admin" type="checkbox" id="is_instance_admin" class="rounded" />
