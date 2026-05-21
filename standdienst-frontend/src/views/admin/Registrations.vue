@@ -78,9 +78,7 @@
                   v-for="item in shiftItems"
                   :key="item.cell.shift_id"
                   class="absolute inset-x-1.5 rounded-xl border flex flex-col overflow-hidden"
-                  :class="item.cell.spots_left === 0
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-primary-50 border-primary-200'"
+                  :class="shiftBlockClass(item.cell)"
                   :style="`top: calc(${item.startPct}% + 2px); height: calc(${item.heightPct}% - 4px); min-height: 2.5rem`"
                 >
                   <!-- Kopfzeile: Zeit + Badge -->
@@ -279,6 +277,14 @@ function occupied(cell) {
 function fillPct(cell) {
   if (!cell.max_volunteers) return 0
   return Math.round((occupied(cell) / cell.max_volunteers) * 100)
+}
+
+function shiftBlockClass(cell) {
+  if (cell.spots_left === 0) return 'bg-green-50 border-green-200'
+  const pct = fillPct(cell)
+  if (pct >= 75) return 'bg-orange-50 border-orange-200'
+  if (pct >= 50) return 'bg-yellow-50 border-yellow-200'
+  return 'bg-red-50 border-red-200'
 }
 
 function spotBadgeClass(cell) {
