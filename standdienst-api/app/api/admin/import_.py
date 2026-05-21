@@ -150,6 +150,39 @@ def import_shifts_ods(slug):
 
 
 # ---------------------------------------------------------------------------
+# Hilfsfunktionen: robustes Datum- und Zeitparsing
+# ---------------------------------------------------------------------------
+
+_DATE_FORMATS = [
+    '%d.%m.%Y',   # 23.05.2026
+    '%d.%m.%y',   # 23.05.26 → 2-stelliges Jahr
+    '%Y-%m-%d',   # 2026-05-23
+    '%d/%m/%Y',   # 23/05/2026
+    '%d/%m/%y',   # 23/05/26
+]
+
+
+def _parse_date(s: str):
+    """Parst ein Datum tolerant; expandiert 2-stellige Jahreszahlen auf 4 Stellen."""
+    s = s.strip()
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
+    raise ValueError(f"Unbekanntes Datumsformat: '{s}'")
+
+
+def _parse_time(s: str):
+    """Parst eine Uhrzeit; schneidet Sekunden und Bruchteile ab (z.B. 08:00:00 → 08:00)."""
+    s = s.strip()
+    parts = s.split(':')
+    if len(parts) >= 2:
+        s = f'{parts[0].zfill(2)}:{parts[1].zfill(2)}'
+    return time.fromisoformat(s)
+
+
+# ---------------------------------------------------------------------------
 # Gemeinsame Verarbeitungslogik
 # ---------------------------------------------------------------------------
 
@@ -169,9 +202,9 @@ def _process_shift_rows(rows, instance_id):
             if not any([stand_name, date_str, start_str, end_str]):
                 continue
 
-            event_date_obj = datetime.strptime(date_str, '%d.%m.%Y').date()
-            start_time = time.fromisoformat(start_str)
-            end_time = time.fromisoformat(end_str)
+            event_date_obj = _parse_date(date_str)
+            start_time = _parse_time(start_str)
+            end_time = _parse_time(end_str)
             max_volunteers = int(max_str) if max_str.isdigit() else 2
 
             stand = Stand.query.filter_by(instance_id=instance_id, name=stand_name).first()
