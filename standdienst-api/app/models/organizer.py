@@ -33,6 +33,7 @@ class Organizer(db.Model):
                            default=lambda: datetime.now(timezone.utc))
     totp_secret = db.Column(db.String(64), nullable=True)
     totp_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    totp_backup_codes = db.Column(db.JSON, nullable=True)
     is_instance_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     instances = db.relationship(

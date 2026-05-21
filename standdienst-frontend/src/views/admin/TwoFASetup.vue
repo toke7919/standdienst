@@ -14,7 +14,7 @@
           </button>
         </template>
 
-        <template v-else>
+        <template v-else-if="!backupCodes.length">
           <div>
             <p class="text-sm font-medium text-gray-700 mb-2">QR-Code scannen:</p>
             <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-gray-200 rounded-lg" />
@@ -34,6 +34,29 @@
               Bestätigen
             </button>
           </form>
+        </template>
+
+        <!-- Backup-Codes anzeigen -->
+        <template v-else>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p class="text-sm font-semibold text-amber-900 mb-1">Backup-Codes sichern</p>
+            <p class="text-xs text-amber-700 mb-3">
+              Verwende diese Codes, wenn du keinen Zugriff auf deine Authenticator-App hast.
+              Jeder Code kann nur einmal verwendet werden.
+            </p>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <code
+                v-for="c in backupCodes" :key="c"
+                class="text-xs bg-white border border-amber-200 rounded px-2 py-1 font-mono text-amber-900 text-center"
+              >{{ c }}</code>
+            </div>
+            <button type="button" class="text-xs text-amber-700 underline hover:text-amber-900" @click="copyAll">
+              Alle kopieren
+            </button>
+          </div>
+          <button class="btn-primary w-full" @click="backupCodes = []">
+            Fertig – Codes gesichert
+          </button>
         </template>
       </template>
 
@@ -62,6 +85,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 const auth = useAuthStore()
 const ui = useUiStore()
 const setupData = ref(null)
+const backupCodes = ref([])
 const code = ref('')
 const loading = ref(false)
 const confirming = ref(false)
@@ -87,7 +111,8 @@ async function confirm() {
   confirming.value = true
   errorMsg.value = ''
   try {
-    await authApi.confirm2fa(code.value)
+    const res = await authApi.confirm2fa(code.value)
+    backupCodes.value = res.data.backup_codes || []
     ui.success('2FA aktiviert')
     await auth.fetchMe()
     setupData.value = null
@@ -97,6 +122,13 @@ async function confirm() {
   } finally {
     confirming.value = false
   }
+}
+
+async function copyAll() {
+  try {
+    await navigator.clipboard.writeText(backupCodes.value.join('\n'))
+    ui.success('Codes kopiert')
+  } catch { /* ignore */ }
 }
 
 async function disable() {

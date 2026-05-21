@@ -227,6 +227,6 @@ function deliveryText(t) {
   const loc = t.delivery_location || null
   if (time && loc) return `Bitte am ${time} bei ${loc} abgeben.`
   if (time) return `Bitte am ${time} abgeben.`
-  return `Bitte bei ${loc} abgeben.`
+  return `Bitte am/bei ${loc} abgeben.`
 }
 </script>

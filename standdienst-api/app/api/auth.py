@@ -142,7 +142,7 @@ def verify_2fa():
     if not pending:
         return jsonify(error='Keine ausstehende 2FA-Verifizierung'), 400
 
-    code = (request.get_json() or {}).get('code', '').strip()
+    code = (request.get_json() or {}).get('code', '').strip().upper()
     role, user_id = pending['type'], pending['id']
     user = (Admin if role == 'admin' else Organizer).query.get(user_id)
 
@@ -150,13 +150,25 @@ def verify_2fa():
         return jsonify(error='Benutzer nicht gefunden'), 404
 
     totp = pyotp.TOTP(user.totp_secret)
-    if not totp.verify(code, valid_window=1):
-        return jsonify(error='Ungültiger Code'), 401
+    backup_used = False
+    if totp.verify(code, valid_window=1):
+        pass  # TOTP ok
+    else:
+        code_hash = hashlib.sha256(code.encode()).hexdigest()
+        stored = list(user.totp_backup_codes or [])
+        if code_hash not in stored:
+            return jsonify(error='Ungültiger Code'), 401
+        stored.remove(code_hash)
+        user.totp_backup_codes = stored
+        backup_used = True
 
     access, refresh = _issue_tokens(user)
     _log_activity(ActivityLog.LOGIN_SUCCESS, request.remote_addr,
                   user_name=user.email, actor_type=role)
-    resp = jsonify(user=_user_payload(user))
+    if backup_used:
+        db.session.commit()
+    resp = jsonify(user=_user_payload(user), backup_code_used=backup_used,
+                   remaining_backup_codes=len(user.totp_backup_codes or []))
     return _set_token_cookies(resp, access, refresh)
 
 
@@ -192,10 +204,14 @@ def confirm_2fa():
     if not secret or not pyotp.TOTP(secret).verify(code, valid_window=1):
         return jsonify(error='Ungültiger Code'), 401
 
+    import secrets as _secrets
+    raw_codes = [_secrets.token_hex(4).upper() for _ in range(8)]
+    code_hashes = [hashlib.sha256(c.encode()).hexdigest() for c in raw_codes]
     user.totp_secret = secret
     user.totp_enabled = True
+    user.totp_backup_codes = code_hashes
     db.session.commit()
-    return jsonify(message='2FA aktiviert'), 200
+    return jsonify(message='2FA aktiviert', backup_codes=raw_codes), 200
 
 
 @auth_bp.route('/2fa/disable', methods=['POST'])
@@ -208,6 +224,7 @@ def disable_2fa():
 
     user.totp_secret = None
     user.totp_enabled = False
+    user.totp_backup_codes = None
     db.session.commit()
     return jsonify(message='2FA deaktiviert'), 200
 

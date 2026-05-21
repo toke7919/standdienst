@@ -25,6 +25,7 @@ class Admin(db.Model):
                            default=lambda: datetime.now(timezone.utc))
     totp_secret = db.Column(db.String(64), nullable=True)
     totp_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    totp_backup_codes = db.Column(db.JSON, nullable=True)
     reset_token = db.Column(db.String(64), unique=True, nullable=True, index=True)
     reset_token_expires = db.Column(db.DateTime(timezone=True), nullable=True)
     jwt_version = db.Column(db.Integer, nullable=False, default=1)

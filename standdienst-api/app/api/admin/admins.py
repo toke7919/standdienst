@@ -6,6 +6,7 @@ from ...extensions import db
 from ...models import Admin, ActivityLog
 from ...schemas.admin import AdminSchema, AdminCreateSchema, AdminUpdateSchema
 from ...utils.auth import require_admin, validate_password_strength
+from ...utils.mail import is_mail_configured, send_mail, build_invite_email
 from ...utils.responses import ok, created, no_content, error
 
 _schema = AdminSchema()
@@ -48,6 +49,17 @@ def create_admin():
     db.session.add(admin)
     _log(f'Admin angelegt: {admin.email}', g.current_user)
     db.session.commit()
+
+    if is_mail_configured():
+        try:
+            from ..public import _base_url
+            base_url = _base_url()
+            login_url = f'{base_url}/admin/login'
+            send_mail(admin.email, 'Dein Admin-Konto bei Standdienst',
+                      build_invite_email(admin.name or admin.email, 'Administrator', login_url, base_url))
+        except Exception:
+            pass
+
     return created(_schema.dump(admin))
 
 
@@ -95,6 +107,8 @@ def delete_admin(admin_id):
     admin = Admin.query.get_or_404(admin_id)
     if admin.id == g.current_user.id:
         return error('Eigenes Konto kann nicht gelöscht werden', 400)
+    if admin.is_primary:
+        return error('Primärer Admin kann nicht gelöscht werden', 400)
     if Admin.query.count() <= 1:
         return error('Letzter Admin kann nicht gelöscht werden', 400)
     _log(f'Admin gelöscht: {admin.email}', g.current_user)

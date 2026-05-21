@@ -73,11 +73,17 @@ def build_email_template(
     """Bettet content_html in ein vollständiges, responsives HTML-E-Mail-Template ein."""
 
     logo_block = ''
-    if logo_url:
+    _is_public_url = (
+        logo_url
+        and logo_url.startswith(('http://', 'https://'))
+        and 'localhost' not in logo_url
+        and '127.0.0.1' not in logo_url
+    )
+    if _is_public_url:
         logo_block = (
             f'<div style="margin-bottom:12px;">'
-            f'<img src="{logo_url}" alt="{title}" '
-            f'style="max-height:48px;max-width:180px;object-fit:contain;">'
+            f'<img src="{logo_url}" alt="{title}" width="180" height="48" '
+            f'style="max-height:48px;max-width:180px;object-fit:contain;display:block;margin:0 auto;">'
             f'</div>'
         )
 
@@ -141,8 +147,8 @@ def build_email_template(
           <tr>
             <td style="background-color:#f9fafb;border:1px solid #e5e7eb;border-top:none;
                        border-radius:0 0 12px 12px;padding:20px 32px;text-align:center;">
-              {copyright_block}
               {links_block}
+              {copyright_block}
               <p style="margin:0;color:#9ca3af;font-size:11px;line-height:1.6;">
                 Diese E-Mail wurde automatisch versandt.<br>
                 Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer
@@ -280,6 +286,41 @@ def build_registration_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+    )
+
+
+def build_invite_email(
+    name: str,
+    role_label: str,
+    login_url: str,
+    base_url: str,
+    primary_color: str = '#4f46e5',
+) -> str:
+    content = f"""
+    <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
+    <p style="margin:0 0 16px;">
+      ein Admin-Konto mit der Rolle <strong>{role_label}</strong> wurde für dich angelegt.
+    </p>
+    <p style="margin:0 0 28px;">
+      Du kannst dich jetzt mit deiner E-Mail-Adresse und dem dir mitgeteilten Passwort anmelden:
+    </p>
+    <p style="margin:0 0 28px;text-align:center;">
+      <a href="{login_url}"
+         style="background:{primary_color};color:#ffffff;padding:13px 30px;
+                border-radius:8px;text-decoration:none;font-weight:600;
+                font-size:15px;display:inline-block;">
+        Zum Login
+      </a>
+    </p>
+    <p style="margin:0;color:#6b7280;font-size:13px;">
+      Falls du diese E-Mail irrtümlich erhalten hast, kannst du sie ignorieren.
+    </p>
+    """
+    return build_email_template(
+        content,
+        title='Standdienst',
+        base_url=base_url,
+        primary_color=primary_color,
     )
 
 
