@@ -31,7 +31,7 @@ export const adminApi = {
   createStand: (slug, data) => client.post(`${a(slug)}/stands`, data),
   updateStand: (slug, id, data) => client.put(`${a(slug)}/stands/${id}`, data),
   deleteStand: (slug, id) => client.delete(`${a(slug)}/stands/${id}`),
-  reorderStands: (slug, ids) => client.put(`${a(slug)}/stands/reorder`, { ids }),
+  reorderStands: (slug, ids) => client.put(`${a(slug)}/stands/reorder`, { order: ids }),
 
   // Dates
   getDates: (slug) => client.get(`${a(slug)}/dates`),

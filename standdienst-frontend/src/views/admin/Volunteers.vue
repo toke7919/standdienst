@@ -16,6 +16,8 @@
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="name" @sort="toggleLocalSort">Name</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="email" @sort="toggleLocalSort">E-Mail</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="created_at" @sort="toggleLocalSort">Angemeldet</SortTh>
+            <th class="px-4 py-3 text-xs font-medium text-gray-500 text-right">Schichten</th>
+            <th class="px-4 py-3 text-xs font-medium text-gray-500 text-right">Spenden</th>
             <th class="px-4 py-3" />
           </tr>
         </thead>
@@ -24,6 +26,8 @@
             <td class="px-4 py-3 font-medium text-gray-900">{{ v.display_name || v.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ v.email || '—' }}</td>
             <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ formatDate(v.created_at) }}</td>
+            <td class="px-4 py-3 text-right text-gray-600 tabular-nums">{{ v.shift_count ?? 0 }}</td>
+            <td class="px-4 py-3 text-right text-gray-600 tabular-nums">{{ v.food_count ?? 0 }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
               <button class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
