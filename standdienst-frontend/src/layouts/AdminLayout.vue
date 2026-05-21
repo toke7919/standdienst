@@ -130,20 +130,20 @@
         >
           <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('dashboard') ? 'scale-x-100' : 'scale-x-0'" />
           <HomeIcon class="w-6 h-6" />
-          <span class="text-[0.65rem] font-medium leading-none">Dashboard</span>
+          <span class="text-xs font-medium leading-none">Dashboard</span>
         </RouterLink>
 
-        <!-- Tab 2: Helfer (Instanz) oder Instanzen (global) -->
+        <!-- Tab 2: Anmeldungen (Instanz) oder Instanzen (global) -->
         <RouterLink
           v-if="mobileSlug"
-          :to="`/admin/${mobileSlug}/volunteers`"
+          :to="`/admin/${mobileSlug}/registrations`"
           class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
-          :class="isTabActive('volunteers') ? 'text-primary-600' : ''"
+          :class="isTabActive('registrations') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
-          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('volunteers') ? 'scale-x-100' : 'scale-x-0'" />
-          <UsersIcon class="w-6 h-6" />
-          <span class="text-[0.65rem] font-medium leading-none">Helfer</span>
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('registrations') ? 'scale-x-100' : 'scale-x-0'" />
+          <ClipboardDocumentListIcon class="w-6 h-6" />
+          <span class="text-xs font-medium leading-none">Anmeldungen</span>
         </RouterLink>
         <RouterLink
           v-else-if="auth.isAdmin"
@@ -154,20 +154,20 @@
         >
           <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('instances') ? 'scale-x-100' : 'scale-x-0'" />
           <ServerIcon class="w-6 h-6" />
-          <span class="text-[0.65rem] font-medium leading-none">Instanzen</span>
+          <span class="text-xs font-medium leading-none">Instanzen</span>
         </RouterLink>
 
-        <!-- Tab 3: Anmeldungen (Instanz) oder Organisatoren (global Admin) -->
+        <!-- Tab 3: Essen (Instanz) oder Organisatoren (global Admin) -->
         <RouterLink
           v-if="mobileSlug"
-          :to="`/admin/${mobileSlug}/registrations`"
+          :to="`/admin/${mobileSlug}/food`"
           class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 transition-colors active:scale-95"
-          :class="isTabActive('registrations') ? 'text-primary-600' : ''"
+          :class="isTabActive('food') ? 'text-primary-600' : ''"
           @click="moreOpen = false"
         >
-          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('registrations') ? 'scale-x-100' : 'scale-x-0'" />
-          <ClipboardDocumentListIcon class="w-6 h-6" />
-          <span class="text-[0.65rem] font-medium leading-none">Anmeldungen</span>
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('food') ? 'scale-x-100' : 'scale-x-0'" />
+          <ShoppingBagIcon class="w-6 h-6" />
+          <span class="text-xs font-medium leading-none">Essen</span>
         </RouterLink>
         <RouterLink
           v-else-if="auth.isAdmin"
@@ -178,7 +178,7 @@
         >
           <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="isTabActive('organizers') ? 'scale-x-100' : 'scale-x-0'" />
           <UserGroupIcon class="w-6 h-6" />
-          <span class="text-[0.65rem] font-medium leading-none">Orgas</span>
+          <span class="text-xs font-medium leading-none">Orgas</span>
         </RouterLink>
 
         <!-- Tab 4: Mehr -->
@@ -189,7 +189,7 @@
         >
           <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 transition-transform duration-200 origin-center" :class="moreOpen ? 'scale-x-100' : 'scale-x-0'" />
           <EllipsisHorizontalCircleIcon class="w-6 h-6" />
-          <span class="text-[0.65rem] font-medium leading-none">Mehr</span>
+          <span class="text-xs font-medium leading-none">Mehr</span>
         </button>
       </div>
     </nav>
@@ -225,6 +225,7 @@
                 <div>
                   <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Instanz</p>
                   <div class="grid grid-cols-3 gap-2">
+                    <MoreTile :to="`/admin/${mobileSlug}/volunteers`" :icon="UsersIcon" @nav="moreOpen = false">Helfer</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/stands`" :icon="BuildingStorefrontIcon" @nav="moreOpen = false">Stände</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/dates`" :icon="CalendarIcon" @nav="moreOpen = false">Termine</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/shifts`" :icon="ClockIcon" @nav="moreOpen = false">Dienste</MoreTile>
@@ -237,8 +238,8 @@
                 </div>
               </template>
 
-              <!-- Plattform-Bereich (nur Global-Admins) -->
-              <div v-if="auth.isAdmin">
+              <!-- Plattform-Bereich (nur Global-Admins, nur ohne aktive Instanz) -->
+              <div v-if="auth.isAdmin && !mobileSlug">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Plattform</p>
                 <div class="grid grid-cols-3 gap-2">
                   <MoreTile to="/admin/admins" :icon="ShieldCheckIcon" @nav="moreOpen = false">Admins</MoreTile>
@@ -365,6 +366,7 @@ function isTabActive(key) {
     case 'registrations': return path.includes('/registrations')
     case 'instances': return path === '/admin/instances' || path.startsWith('/admin/instances/')
     case 'organizers': return path === '/admin/organizers' || path.startsWith('/admin/organizers/')
+    case 'food': return path.includes('/food')
     default: return false
   }
 }
