@@ -121,10 +121,13 @@ def register(slug):
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
         primary_color = settings.primary_color if settings else '#4f46e5'
         logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
+        global_settings = get_global_settings()
+        copyright_text = global_settings.copyright_text if global_settings else None
         try:
             send_mail(email, f'Willkommen bei {title}',
                       build_welcome_email(volunteer.name, title, setup_url, base_url,
-                                          primary_color=primary_color, logo_url=logo_url),
+                                          primary_color=primary_color, logo_url=logo_url,
+                                          slug=slug, copyright_text=copyright_text),
                       sender_name=title)
         except Exception:
             pass
@@ -257,9 +260,15 @@ def volunteer_forgot_password(slug):
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
         settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
         title = settings.site_title if settings else instance.name
+        primary_color = settings.primary_color if settings else '#4f46e5'
+        logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
+        global_settings = get_global_settings()
+        copyright_text = global_settings.copyright_text if global_settings else None
         try:
             send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(volunteer.name, reset_url, base_url),
+                      build_reset_email(volunteer.name, reset_url, base_url,
+                                        title=title, slug=slug, primary_color=primary_color,
+                                        logo_url=logo_url, copyright_text=copyright_text),
                       sender_name=title)
         except Exception:
             pass

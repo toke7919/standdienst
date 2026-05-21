@@ -94,6 +94,14 @@
           </form>
         </div>
 
+        <footer class="mt-8 text-center text-xs text-gray-400 space-y-1">
+          <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
+          <div class="flex justify-center gap-4">
+            <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
+            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+          </div>
+        </footer>
+
       </div>
     </div>
   </div>
@@ -163,7 +171,7 @@ async function submit() {
     await publicApi.welcomeSetup(slug.value, token.value, password.value)
     done.value = true
     await auth.fetchMe()
-    router.push(`/${slug.value}/shifts`)
+    router.push(`/${slug.value}`)
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Fehler beim Einrichten des Passworts'
   } finally {

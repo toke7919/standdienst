@@ -159,7 +159,7 @@ async function submit() {
       ui.info('Wir haben dir einen Link zur Passwort-Einrichtung geschickt.')
     }
 
-    router.push(`/${slug.value}/shifts`)
+    router.push(`/${slug.value}`)
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Registrierung fehlgeschlagen'
   } finally {

@@ -16,7 +16,7 @@ from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
 from ..utils.auth import require_volunteer, validate_password_strength
 from ..utils.mail import is_mail_configured, send_mail, build_daten_auskunft_email
 from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
-from ..utils.settings_cache import get_site_settings
+from ..utils.settings_cache import get_site_settings, get_global_settings
 
 volunteer_bp = Blueprint('volunteer', __name__)
 
@@ -384,8 +384,14 @@ def meine_daten_export(slug):
     settings = get_site_settings(g.instance.id)
     title = settings.site_title if settings else g.instance.name
     base_url = current_app.config.get('FRONTEND_URL', '')
+    primary_color = settings.primary_color if settings else '#4f46e5'
+    logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
+    global_settings = get_global_settings()
+    copyright_text = global_settings.copyright_text if global_settings else None
     send_mail(v.email, f'Ihre Daten bei {title}',
-              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url),
+              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url,
+                                         slug=g.instance.slug, primary_color=primary_color,
+                                         logo_url=logo_url, copyright_text=copyright_text),
               sender_name=title)
     return ok({'message': 'Daten wurden an Ihre E-Mail-Adresse gesendet'})
 

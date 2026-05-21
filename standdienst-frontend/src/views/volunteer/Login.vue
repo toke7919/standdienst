@@ -142,7 +142,7 @@ async function submit() {
   loading.value = true
   try {
     await auth.volunteerLogin(slug.value, form.value.email, form.value.password)
-    router.push(`/${slug.value}/shifts`)
+    router.push(`/${slug.value}`)
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Anmeldung fehlgeschlagen'
   } finally {
