@@ -1,9 +1,10 @@
 from flask import request, g, current_app
 from marshmallow import ValidationError
+from sqlalchemy import func
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Volunteer, ActivityLog, GlobalSettings
+from ...models import Volunteer, ActivityLog, GlobalSettings, Registration, FoodDonation
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
 from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
 from ...utils.mail import is_mail_configured, send_mail, build_welcome_email
@@ -29,7 +30,24 @@ def list_volunteers(slug):
 
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items
-    return paginated(_many.dump(items), total, page, per_page)
+
+    vol_ids = [v.id for v in items]
+    reg_counts = dict(
+        db.session.query(Registration.volunteer_id, func.count(Registration.id))
+        .filter(Registration.volunteer_id.in_(vol_ids))
+        .group_by(Registration.volunteer_id).all()
+    ) if vol_ids else {}
+    food_counts = dict(
+        db.session.query(FoodDonation.volunteer_id, func.count(FoodDonation.id))
+        .filter(FoodDonation.volunteer_id.in_(vol_ids))
+        .group_by(FoodDonation.volunteer_id).all()
+    ) if vol_ids else {}
+
+    dumped = _many.dump(items)
+    for item in dumped:
+        item['shift_count'] = reg_counts.get(item['id'], 0)
+        item['food_count'] = food_counts.get(item['id'], 0)
+    return paginated(dumped, total, page, per_page)
 
 
 @admin_bp.route('/<slug>/volunteers', methods=['POST'])

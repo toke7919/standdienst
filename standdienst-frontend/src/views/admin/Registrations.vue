@@ -77,7 +77,7 @@
                   :key="item.cell.shift_id"
                   class="absolute inset-x-1.5 rounded-xl border flex flex-col overflow-hidden"
                   :class="item.cell.spots_left === 0
-                    ? 'bg-red-50 border-red-200'
+                    ? 'bg-green-50 border-green-200'
                     : 'bg-primary-50 border-primary-200'"
                   :style="`top: calc(${item.startPct}% + 2px); height: calc(${item.heightPct}% - 4px); min-height: 2.5rem`"
                 >
@@ -279,19 +279,19 @@ function fillPct(cell) {
 }
 
 function spotBadgeClass(cell) {
-  if (cell.spots_left === 0) return 'bg-red-100 text-red-700'
+  if (cell.spots_left === 0) return 'bg-green-100 text-green-700'
   const pct = fillPct(cell)
   if (pct >= 75) return 'bg-orange-100 text-orange-700'
   if (pct >= 50) return 'bg-yellow-100 text-yellow-700'
-  return 'bg-green-100 text-green-700'
+  return 'bg-red-100 text-red-700'
 }
 
 function fillBarClass(cell) {
-  if (cell.spots_left === 0) return 'bg-red-400'
+  if (cell.spots_left === 0) return 'bg-green-400'
   const pct = fillPct(cell)
   if (pct >= 75) return 'bg-orange-400'
   if (pct >= 50) return 'bg-yellow-400'
-  return 'bg-green-400'
+  return 'bg-red-400'
 }
 
 function openCreate(shiftId) {

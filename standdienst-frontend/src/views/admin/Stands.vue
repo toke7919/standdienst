@@ -7,10 +7,19 @@
 
     <div class="space-y-2">
       <div
-        v-for="stand in stands"
+        v-for="(stand, idx) in stands"
         :key="stand.id"
+        draggable="true"
+        @dragstart="onDragStart(idx)"
+        @dragover.prevent="onDragOver(idx)"
+        @drop.prevent="onDrop"
+        @dragend="onDragEnd"
         class="group bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
+        :class="dragOver === idx ? 'border-primary-400 bg-primary-50/50' : ''"
       >
+        <div class="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 flex-shrink-0 touch-none" title="Ziehen zum Sortieren">
+          <Bars3Icon class="w-5 h-5" />
+        </div>
         <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
           <BuildingStorefrontIcon class="w-5 h-5 text-primary-600" />
         </div>
@@ -57,7 +66,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { BuildingStorefrontIcon } from '@heroicons/vue/24/outline'
+import { BuildingStorefrontIcon, Bars3Icon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -67,11 +76,46 @@ const editing = ref(null)
 const form = ref({ name: '', description: '' })
 const saveError = ref('')
 
+// Drag-and-drop state
+const dragIdx = ref(null)
+const dragOver = ref(null)
+
 onMounted(load)
 
 async function load() {
   const res = await adminApi.getStands(route.params.slug)
   stands.value = res.data.data
+}
+
+function onDragStart(idx) {
+  dragIdx.value = idx
+}
+
+function onDragOver(idx) {
+  dragOver.value = idx
+}
+
+function onDrop() {
+  if (dragIdx.value === null || dragOver.value === null || dragIdx.value === dragOver.value) return
+  const arr = [...stands.value]
+  const [moved] = arr.splice(dragIdx.value, 1)
+  arr.splice(dragOver.value, 0, moved)
+  stands.value = arr
+  saveOrder()
+}
+
+function onDragEnd() {
+  dragIdx.value = null
+  dragOver.value = null
+}
+
+async function saveOrder() {
+  try {
+    await adminApi.reorderStands(route.params.slug, stands.value.map(s => s.id))
+  } catch {
+    ui.err('Reihenfolge konnte nicht gespeichert werden')
+    await load()
+  }
 }
 
 function openCreate() {
