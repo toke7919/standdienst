@@ -247,7 +247,7 @@ def list_food_donations(slug):
                 'is_mine': d.volunteer_id == g.current_user.id,
                 'registered_at': d.registered_at.isoformat() if d.registered_at else None,
             })
-        visible.sort(key=lambda x: x['volunteer_name'])
+        visible.sort(key=lambda x: (x['description'] or '').lower())
         result.append({
             'id': t.id,
             'name': t.name,

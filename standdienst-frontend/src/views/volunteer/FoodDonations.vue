@@ -32,16 +32,9 @@
         </div>
 
         <!-- Abgabe-Info -->
-        <div v-if="t.delivery_datetime || t.delivery_location" class="flex flex-wrap gap-2 mb-3">
-          <span v-if="t.delivery_datetime" class="inline-flex items-center gap-1.5 text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100 px-2.5 py-1 rounded-full">
-            <ClockIcon class="w-3.5 h-3.5 flex-shrink-0" />
-            {{ fmtDt(t.delivery_datetime) }}
-          </span>
-          <span v-if="t.delivery_location" class="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded-full">
-            <MapPinIcon class="w-3.5 h-3.5 flex-shrink-0" />
-            {{ t.delivery_location }}
-          </span>
-        </div>
+        <p v-if="t.delivery_datetime || t.delivery_location" class="text-sm text-primary-700 font-medium mb-3">
+          {{ deliveryText(t) }}
+        </p>
 
         <!-- Hinweistext -->
         <p v-if="t.notes" class="text-sm text-gray-500 italic mb-3">{{ t.notes }}</p>
@@ -144,7 +137,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
-import { XMarkIcon, ChevronDownIcon, ClockIcon, MapPinIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
@@ -166,7 +159,7 @@ const combinedTypes = computed(() =>
         ...t,
         donations,
         myDonations: donations.filter(d => d.is_mine),
-        otherDonations: donations.filter(d => !d.is_mine).sort((a, b) => (a.volunteer_name || '').localeCompare(b.volunteer_name || '', 'de')),
+        otherDonations: donations.filter(d => !d.is_mine).sort((a, b) => (a.description || '').localeCompare(b.description || '', 'de')),
       }
     })
     .sort((a, b) => {
@@ -227,5 +220,13 @@ async function remove(d) {
 
 function fmtDt(iso) {
   return iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : ''
+}
+
+function deliveryText(t) {
+  const time = t.delivery_datetime ? fmtDt(t.delivery_datetime) : null
+  const loc = t.delivery_location || null
+  if (time && loc) return `Bitte am ${time} bei ${loc} abgeben.`
+  if (time) return `Bitte am ${time} abgeben.`
+  return `Bitte bei ${loc} abgeben.`
 }
 </script>

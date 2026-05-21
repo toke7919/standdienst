@@ -48,14 +48,17 @@
             <p class="text-xs text-gray-400 mt-1">Ohne E-Mail wirst du direkt eingeloggt (anonymer Zugang).</p>
           </div>
 
-          <altcha-widget
-            :challengeurl="`/api/public/${slug}/captcha`"
-            workerurl="/altcha-worker.js"
-            :hidefooter="true"
-            :hidelogo="true"
-            :strings="altchaStrings"
-            @statechange="onAltchaStateChange"
-          />
+          <div>
+            <altcha-widget
+              :challengeurl="`/api/public/${slug}/captcha`"
+              workerurl="/altcha-worker.js"
+              :hidefooter="true"
+              :hidelogo="true"
+              :strings="altchaStrings"
+              class="altcha-field"
+              @statechange="onAltchaStateChange"
+            />
+          </div>
 
           <div v-if="hasPrivacyPolicy" class="flex items-start gap-2">
             <input v-model="form.consent" type="checkbox" id="consent" class="mt-1" />
@@ -94,6 +97,18 @@
     </div>
   </div>
 </template>
+
+<style>
+/* ALTCHA-Widget: Schriftgröße und Einrückung an umliegende Formularfelder anpassen */
+.altcha-field {
+  --altcha-font-size: 0.875rem;
+  --altcha-max-width: 100%;
+  --altcha-padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  display: block;
+}
+</style>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'

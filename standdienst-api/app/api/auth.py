@@ -397,6 +397,8 @@ def update_profile():
         user.first_name = (data['first_name'] or '').strip()
     if 'last_name' in data:
         user.last_name = (data['last_name'] or '').strip()
+    if 'first_name' in data or 'last_name' in data:
+        user.name = f'{user.first_name or ""} {user.last_name or ""}'.strip() or user.name
     if 'email' in data:
         email = (data['email'] or '').strip().lower()
         if email and email != user.email:
