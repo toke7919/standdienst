@@ -1,8 +1,20 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">
-      {{ slug ? 'Dashboard' : 'Plattform-Dashboard' }}
-    </h1>
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">
+        {{ slug ? 'Dashboard' : 'Plattform-Dashboard' }}
+      </h1>
+      <a
+        v-if="slug"
+        :href="volunteerUrl"
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 hover:underline mt-1"
+      >
+        <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5 flex-shrink-0" />
+        {{ volunteerUrl }}
+      </a>
+    </div>
 
     <div v-if="loading" class="flex justify-center py-12">
       <LoadingSpinner size="lg" />
@@ -391,7 +403,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import {
   UsersIcon, ClockIcon, ClipboardDocumentListIcon,
   CheckCircleIcon, ShoppingBagIcon, ServerIcon,
-  ExclamationCircleIcon, CalendarDaysIcon,
+  ExclamationCircleIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon,
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
@@ -399,6 +411,7 @@ const route = useRoute()
 const data = ref(null)
 const loading = ref(true)
 const slug = computed(() => route.params.slug || null)
+const volunteerUrl = computed(() => slug.value ? `${window.location.origin}/${slug.value}` : '')
 
 // ── SVG Donut ──────────────────────────────────────────────────────
 const RING_R = 36

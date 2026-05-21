@@ -18,7 +18,27 @@
     </div>
 
     <div class="card overflow-hidden p-0">
-      <table class="w-full text-sm">
+      <!-- Mobile: gestapelte Liste -->
+      <div class="md:hidden divide-y divide-gray-50">
+        <div
+          v-for="log in logs"
+          :key="log.id"
+          class="flex items-start gap-3 px-4 py-3"
+        >
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <EventBadge :type="log.event_type" />
+              <span class="text-xs text-gray-600 truncate">{{ log.volunteer_name || '—' }}</span>
+            </div>
+            <p v-if="log.details" class="text-xs text-gray-400 truncate">{{ log.details }}</p>
+          </div>
+          <span class="text-xs text-gray-300 flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
+        </div>
+        <div v-if="!logs.length" class="px-4 py-8 text-center text-gray-400 text-sm">Keine Einträge</div>
+      </div>
+
+      <!-- Desktop: Tabelle -->
+      <table class="hidden md:table w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="timestamp" @sort="toggleSort">Zeit</SortTh>
