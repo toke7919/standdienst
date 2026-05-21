@@ -108,10 +108,17 @@
         <!-- Footer -->
         <footer class="mt-10 text-center text-xs text-gray-400 space-y-1">
           <div class="flex justify-center gap-4">
-            <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
-            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+            <RouterLink
+              :to="instanceStore.notFound ? '/impressum' : `/${slug}/impressum`"
+              class="hover:text-gray-600"
+            >Impressum</RouterLink>
+            <RouterLink
+              v-if="!instanceStore.notFound && settings?.has_privacy_policy"
+              :to="`/${slug}/datenschutz`"
+              class="hover:text-gray-600"
+            >Datenschutz</RouterLink>
           </div>
-          <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
+          <p v-if="footerCopyright">{{ footerCopyright }}</p>
         </footer>
       </div>
     </div>
@@ -119,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
@@ -137,8 +144,18 @@ const form = ref({ email: '', password: '' })
 const errorMsg = ref('')
 const loading = ref(false)
 
+const footerCopyright = computed(() =>
+  instanceStore.notFound
+    ? (instanceStore.globalInfo?.copyright_text || '')
+    : (settings.value?.copyright_text || '')
+)
+
 onMounted(() => {
   instanceStore.loadInstance(slug.value)
+})
+
+watch(() => instanceStore.notFound, (val) => {
+  if (val) instanceStore.loadGlobalInfo()
 })
 
 async function submit() {
