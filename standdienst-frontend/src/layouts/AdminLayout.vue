@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 flex overflow-x-hidden">
 
     <!-- ============================= DESKTOP SIDEBAR ============================= -->
     <aside class="hidden lg:flex flex-col bg-primary-950 w-64 fixed inset-y-0 z-40">
@@ -38,7 +38,7 @@
           <NavItem :to="`/admin/${selectedSlug}/food`" :icon="ShoppingBagIcon">Essensspenden</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/export`" :icon="ArrowDownTrayIcon">Export</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/import`" :icon="ArrowUpTrayIcon">Import</NavItem>
-          <NavItem :to="`/admin/${selectedSlug}/settings`" :icon="CogIcon">Einstellungen</NavItem>
+          <NavItem v-if="auth.isInstanceAdmin" :to="`/admin/${selectedSlug}/settings`" :icon="CogIcon">Einstellungen</NavItem>
           <NavItem v-if="auth.isInstanceAdmin" :to="`/admin/${selectedSlug}/activity`" :icon="DocumentTextIcon">Protokoll</NavItem>
         </template>
 
@@ -102,7 +102,7 @@
 
     <!-- ============================= MAIN CONTENT ============================= -->
     <div
-      class="flex-1 lg:ml-64 flex flex-col min-h-screen"
+      class="flex-1 lg:ml-64 flex flex-col min-h-screen overflow-x-hidden"
       :class="mobileContentPad"
     >
       <main class="flex-1 p-4 lg:p-6">
@@ -118,7 +118,7 @@
     <!-- ============================= MOBILE BOTTOM NAV ============================= -->
     <nav
       class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200"
-      style="padding-bottom: env(safe-area-inset-bottom, 0px)"
+      style="padding-bottom: env(safe-area-inset-bottom, 0px); transform: translateZ(0); -webkit-transform: translateZ(0)"
     >
       <div class="flex items-stretch h-[4.25rem]">
         <!-- Dashboard -->
@@ -232,7 +232,7 @@
                     <MoreTile :to="`/admin/${mobileSlug}/food`" :icon="ShoppingBagIcon" @nav="moreOpen = false">Essen</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/export`" :icon="ArrowDownTrayIcon" @nav="moreOpen = false">Export</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/import`" :icon="ArrowUpTrayIcon" @nav="moreOpen = false">Import</MoreTile>
-                    <MoreTile :to="`/admin/${mobileSlug}/settings`" :icon="CogIcon" @nav="moreOpen = false">Einst.</MoreTile>
+                    <MoreTile v-if="auth.isInstanceAdmin" :to="`/admin/${mobileSlug}/settings`" :icon="CogIcon" @nav="moreOpen = false">Einst.</MoreTile>
                     <MoreTile v-if="auth.isInstanceAdmin" :to="`/admin/${mobileSlug}/activity`" :icon="DocumentTextIcon" @nav="moreOpen = false">Protokoll</MoreTile>
                   </div>
                 </div>

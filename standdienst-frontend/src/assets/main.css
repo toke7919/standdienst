@@ -27,6 +27,7 @@
 
   html, body {
     overscroll-behavior: none;
+    overflow-x: hidden;
   }
 
   /* Dezenter WebKit-Scrollbalken */
