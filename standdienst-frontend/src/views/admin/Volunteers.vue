@@ -14,7 +14,10 @@
       <div class="md:hidden divide-y divide-gray-50">
         <div v-for="v in sortedVolunteers" :key="v.id" class="flex items-start gap-3 px-4 py-3">
           <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900 text-sm">{{ v.display_name || v.name }}</p>
+            <RouterLink
+              :to="`/admin/${route.params.slug}/volunteers/${v.id}`"
+              class="font-medium text-primary-600 hover:underline text-sm"
+            >{{ v.display_name || v.name }}</RouterLink>
             <p class="text-xs text-gray-500 mt-0.5 truncate">{{ v.email || '—' }}</p>
             <div class="flex items-center gap-2 mt-1.5">
               <span class="text-xs text-gray-400">{{ v.shift_count ?? 0 }} Schichten</span>
@@ -44,7 +47,12 @@
         </thead>
         <tbody>
           <tr v-for="v in sortedVolunteers" :key="v.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">{{ v.display_name || v.name }}</td>
+            <td class="px-4 py-3 font-medium">
+              <RouterLink
+                :to="`/admin/${route.params.slug}/volunteers/${v.id}`"
+                class="text-primary-600 hover:underline"
+              >{{ v.display_name || v.name }}</RouterLink>
+            </td>
             <td class="px-4 py-3 text-gray-500">{{ v.email || '—' }}</td>
             <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ formatDate(v.created_at) }}</td>
             <td class="px-4 py-3 text-right text-gray-600 tabular-nums">{{ v.shift_count ?? 0 }}</td>
@@ -95,7 +103,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import { useSort } from '@/composables/useSort'

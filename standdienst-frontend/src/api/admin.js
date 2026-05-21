@@ -18,6 +18,7 @@ export const adminApi = {
   // Volunteers
   getVolunteers: (slug, p) => client.get(`${a(slug)}/volunteers`, { params: p }),
   getVolunteer: (slug, id) => client.get(`${a(slug)}/volunteers/${id}`),
+  getVolunteerDetail: (slug, id) => client.get(`${a(slug)}/volunteers/${id}/detail`),
   createVolunteer: (slug, data) => client.post(`${a(slug)}/volunteers`, data),
   updateVolunteer: (slug, id, data) => client.put(`${a(slug)}/volunteers/${id}`, data),
   deleteVolunteer: (slug, id) => client.delete(`${a(slug)}/volunteers/${id}`),
