@@ -32,11 +32,16 @@
         </div>
 
         <!-- Abgabe-Info -->
-        <p v-if="t.delivery_datetime || t.delivery_location" class="text-sm text-gray-500 mb-1">
-          <span v-if="t.delivery_datetime">Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
-          <span v-if="t.delivery_datetime && t.delivery_location"> · </span>
-          <span v-if="t.delivery_location">{{ t.delivery_location }}</span>
-        </p>
+        <div v-if="t.delivery_datetime || t.delivery_location" class="flex flex-wrap gap-2 mb-3">
+          <span v-if="t.delivery_datetime" class="inline-flex items-center gap-1.5 text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100 px-2.5 py-1 rounded-full">
+            <ClockIcon class="w-3.5 h-3.5 flex-shrink-0" />
+            {{ fmtDt(t.delivery_datetime) }}
+          </span>
+          <span v-if="t.delivery_location" class="inline-flex items-center gap-1.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded-full">
+            <MapPinIcon class="w-3.5 h-3.5 flex-shrink-0" />
+            {{ t.delivery_location }}
+          </span>
+        </div>
 
         <!-- Hinweistext -->
         <p v-if="t.notes" class="text-sm text-gray-500 italic mb-3">{{ t.notes }}</p>
@@ -139,7 +144,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
-import { XMarkIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ChevronDownIcon, ClockIcon, MapPinIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()

@@ -55,10 +55,26 @@
       </button>
     </div>
 
+    <!-- E-Mail-Benachrichtigungen -->
+    <div v-if="mailEnabled && form.email" class="card mb-6">
+      <h2 class="text-base font-semibold text-gray-800 mb-2">Benachrichtigungen</h2>
+      <p class="text-sm text-gray-500 mb-3">
+        Erhalte einen Tag vor deinem Dienst oder der Essensspenden-Abgabe eine Erinnerungsmail.
+      </p>
+      <label class="flex items-center gap-3 cursor-pointer">
+        <div class="relative">
+          <input type="checkbox" class="sr-only peer" v-model="form.notifications_enabled" @change="saveNotifications" />
+          <div class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+        </div>
+        <span class="text-sm text-gray-700">Erinnerungsmails aktivieren</span>
+      </label>
+    </div>
+
     <!-- Abmelden (nur mobil sichtbar) -->
     <div class="card mb-6 md:hidden">
       <h2 class="text-base font-semibold text-gray-800 mb-3">Sitzung</h2>
-      <button class="btn-secondary w-full" @click="auth.logout">Abmelden</button>
+      <button class="btn-secondary w-full" @click="auth.volunteerLogout(route.params.slug)">Abmelden</button>
     </div>
 
     <div class="mt-8 pt-6 border-t-2 border-dashed border-red-100">
@@ -78,9 +94,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useInstanceStore } from '@/stores/instance'
 import { useUiStore } from '@/stores/ui'
 import { volunteerApi } from '@/api/volunteer'
 import { EyeIcon, EyeSlashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
@@ -89,7 +106,10 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const instanceStore = useInstanceStore()
 const ui = useUiStore()
+
+const mailEnabled = computed(() => instanceStore.current?.mail_enabled ?? false)
 
 const form = ref({
   first_name: auth.user?.first_name || auth.user?.name || '',
@@ -97,6 +117,7 @@ const form = ref({
   email: auth.user?.email || '',
   password: '',
   passwordConfirm: '',
+  notifications_enabled: auth.user?.notifications_enabled ?? false,
 })
 const saving = ref(false)
 const showPw = ref(false)
@@ -107,7 +128,12 @@ async function save() {
     return
   }
   saving.value = true
-  const data = { first_name: form.value.first_name, last_name: form.value.last_name, email: form.value.email }
+  const data = {
+    first_name: form.value.first_name,
+    last_name: form.value.last_name,
+    email: form.value.email,
+    notifications_enabled: form.value.notifications_enabled,
+  }
   if (form.value.password) data.password = form.value.password
   try {
     await volunteerApi.updateProfile(route.params.slug, data)
@@ -119,6 +145,19 @@ async function save() {
     ui.err(e.response?.data?.error || 'Fehler beim Speichern')
   } finally {
     saving.value = false
+  }
+}
+
+async function saveNotifications() {
+  try {
+    await volunteerApi.updateProfile(route.params.slug, {
+      notifications_enabled: form.value.notifications_enabled,
+    })
+    await auth.fetchMe()
+    ui.success(form.value.notifications_enabled ? 'Erinnerungen aktiviert' : 'Erinnerungen deaktiviert')
+  } catch {
+    form.value.notifications_enabled = !form.value.notifications_enabled
+    ui.err('Fehler beim Speichern')
   }
 }
 
@@ -152,7 +191,7 @@ async function deleteAccount() {
   if (!ok) return
   try {
     await volunteerApi.deleteAccount(route.params.slug)
-    await auth.logout()
+    await auth.volunteerLogout(route.params.slug)
   } catch (e) {
     ui.err(e.response?.data?.error || 'Fehler')
   }

@@ -56,6 +56,12 @@ def init_scheduler(app):
         id='purge_volunteers',
         replace_existing=True,
     )
+    _scheduler.add_job(
+        lambda: _send_reminders(app),
+        CronTrigger(hour=8, minute=0),  # täglich 08:00 – Erinnerungsmails
+        id='send_reminders',
+        replace_existing=True,
+    )
 
     _scheduler.start()
     log.info('APScheduler gestartet')
@@ -142,6 +148,120 @@ def _purge_old_volunteers(app):
                          count, gs.volunteer_retention_months)
         except Exception:
             log.exception('DSGVO-Volunteer-Bereinigung fehlgeschlagen')
+
+
+def _send_reminders(app):
+    """Sendet täglich um 08:00 Erinnerungsmails an Volunteers mit aktivierten Benachrichtigungen."""
+    if not _redis_lock(app, 'send_reminders', ttl=86000):
+        return
+    with app.app_context():
+        try:
+            import pytz
+            from ..extensions import db
+            from ..models import (
+                Volunteer, Registration, Shift, EventDate,
+                FoodDonation, FoodDonationType, Instance,
+            )
+            from ..utils.mail import is_mail_configured, send_mail, build_reminder_email
+            from ..utils.settings_cache import get_global_settings, get_site_settings
+
+            if not is_mail_configured():
+                return
+
+            gs = get_global_settings()
+            tz_name = gs.timezone if gs and gs.timezone else 'Europe/Berlin'
+            tz = pytz.timezone(tz_name)
+            now_local = datetime.now(tz)
+            tomorrow = (now_local + timedelta(days=1)).date()
+
+            # UTC-Grenzen für den morgigen Tag (für delivery_datetime-Vergleich)
+            tomorrow_start = tz.localize(
+                datetime(tomorrow.year, tomorrow.month, tomorrow.day, 0, 0, 0)
+            ).astimezone(timezone.utc)
+            tomorrow_end = tz.localize(
+                datetime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, 59)
+            ).astimezone(timezone.utc)
+
+            base_url = app.config.get('FRONTEND_URL', '')
+            copyright_text = gs.copyright_text if gs else None
+
+            volunteers = Volunteer.query.filter(
+                Volunteer.notifications_enabled.is_(True),
+                Volunteer.email.isnot(None),
+                Volunteer.deleted_at.is_(None),
+            ).all()
+
+            for v in volunteers:
+                shifts_tomorrow = (
+                    Registration.query
+                    .join(Shift, Registration.shift_id == Shift.id)
+                    .join(EventDate, Shift.event_date_id == EventDate.id)
+                    .filter(
+                        Registration.volunteer_id == v.id,
+                        EventDate.date == tomorrow,
+                    )
+                    .all()
+                )
+
+                food_tomorrow = (
+                    FoodDonation.query
+                    .join(FoodDonationType, FoodDonation.food_type_id == FoodDonationType.id)
+                    .filter(
+                        FoodDonation.volunteer_id == v.id,
+                        FoodDonationType.delivery_datetime >= tomorrow_start,
+                        FoodDonationType.delivery_datetime <= tomorrow_end,
+                    )
+                    .all()
+                )
+
+                if not shifts_tomorrow and not food_tomorrow:
+                    continue
+
+                settings = get_site_settings(v.instance_id)
+                instance = Instance.query.get(v.instance_id)
+                title = settings.site_title if settings else (instance.name if instance else 'Standdienst')
+                primary_color = settings.primary_color if settings else '#4f46e5'
+                logo_url = (
+                    f'{base_url}/uploads/{settings.logo_filename}'
+                    if settings and settings.logo_filename else None
+                )
+                slug = instance.slug if instance else ''
+
+                shift_data = [
+                    {
+                        'stand': r.shift.stand.name,
+                        'time': f'{r.shift.start_time.strftime("%H:%M")}–{r.shift.end_time.strftime("%H:%M")}',
+                    }
+                    for r in shifts_tomorrow
+                ]
+                food_data = [
+                    {
+                        'name': d.food_type.name,
+                        'description': d.description,
+                        'delivery_time': (
+                            d.food_type.delivery_datetime.astimezone(tz).strftime('%H:%M')
+                            if d.food_type.delivery_datetime else None
+                        ),
+                        'delivery_location': d.food_type.delivery_location,
+                    }
+                    for d in food_tomorrow
+                ]
+
+                try:
+                    send_mail(
+                        v.email,
+                        f'Erinnerung für morgen – {title}',
+                        build_reminder_email(v.name, shift_data, food_data, title, base_url,
+                                             slug=slug, primary_color=primary_color,
+                                             logo_url=logo_url, copyright_text=copyright_text),
+                        sender_name=title,
+                    )
+                    log.info('Erinnerungsmail gesendet: volunteer_id=%d', v.id)
+                except Exception:
+                    log.exception('Erinnerungsmail fehlgeschlagen: volunteer_id=%d', v.id)
+
+        except Exception:
+            log.exception('Erinnerungs-Job fehlgeschlagen')
 
 
 def _run_smb_backup(app):

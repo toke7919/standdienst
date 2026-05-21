@@ -64,6 +64,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function volunteerLogout(slug) {
+    try {
+      await authApi.logout()
+    } finally {
+      user.value = null
+      router.push(slug ? `/${slug}/login` : '/')
+    }
+  }
+
   // Listen for forced logout (token refresh failure)
   window.addEventListener('auth:logout', () => {
     user.value = null
@@ -73,6 +82,6 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user, loading,
     isLoggedIn, isAdmin, isOrganizer, isStaff, isVolunteer, isInstanceAdmin,
-    fetchMe, login, volunteerLogin, verify2fa, logout,
+    fetchMe, login, volunteerLogin, verify2fa, logout, volunteerLogout,
   }
 })

@@ -327,6 +327,8 @@ def update_profile(slug):
             return error('Passwort zu schwach (mind. 8 Zeichen)', 400)
         volunteer.set_password(data['password'])
         volunteer.rotate_jwt()
+    if 'notifications_enabled' in data:
+        volunteer.notifications_enabled = bool(data['notifications_enabled'])
 
     db.session.commit()
     return ok({
@@ -334,6 +336,7 @@ def update_profile(slug):
         'first_name': volunteer.first_name,
         'last_name': volunteer.last_name,
         'email': volunteer.email,
+        'notifications_enabled': volunteer.notifications_enabled,
         'updated_at': volunteer.updated_at.isoformat() if volunteer.updated_at else None,
     })
 

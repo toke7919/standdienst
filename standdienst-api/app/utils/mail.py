@@ -392,3 +392,82 @@ def build_daten_auskunft_email(
         logo_url=logo_url,
         copyright_text=copyright_text,
     )
+
+
+def build_reminder_email(
+    name: str,
+    shifts: list,
+    food_items: list,
+    instance_title: str,
+    base_url: str,
+    slug: str = None,
+    primary_color: str = '#4f46e5',
+    logo_url: str = None,
+    copyright_text: str = None,
+) -> str:
+    """Erinnerungsmail: morgen anstehende Dienste und/oder Essensspenden."""
+
+    cell = ('style="padding:8px 12px;border-bottom:1px solid #e5e7eb;'
+            'font-size:13px;color:#374151;"')
+    head = ('style="padding:8px 12px;background-color:#f9fafb;font-size:12px;'
+            'font-weight:600;color:#6b7280;text-transform:uppercase;'
+            'letter-spacing:.04em;border-bottom:2px solid #e5e7eb;"')
+    table_attrs = ('width="100%" cellpadding="0" cellspacing="0" '
+                   'style="border:1px solid #e5e7eb;border-radius:8px;'
+                   'border-collapse:collapse;overflow:hidden;margin-bottom:24px;"')
+
+    sections = ''
+
+    if shifts:
+        rows = ''.join(
+            f'<tr><td {cell}>{s["stand"]}</td><td {cell}>{s["time"]}</td></tr>'
+            for s in shifts
+        )
+        sections += (
+            f'<h3 style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">'
+            f'Dienste morgen</h3>'
+            f'<table {table_attrs}>'
+            f'<tr><th {head}>Ort</th><th {head}>Zeit</th></tr>'
+            f'{rows}</table>'
+        )
+
+    if food_items:
+        rows = ''.join(
+            f'<tr><td {cell}>{f["name"]}</td>'
+            f'<td {cell}>{f["description"]}</td>'
+            f'<td {cell}>{f["delivery_time"] or "–"}{(" · " + f["delivery_location"]) if f.get("delivery_location") else ""}</td></tr>'
+            for f in food_items
+        )
+        sections += (
+            f'<h3 style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">'
+            f'Essensspenden morgen</h3>'
+            f'<table {table_attrs}>'
+            f'<tr><th {head}>Kategorie</th><th {head}>Was du mitbringst</th><th {head}>Abgabe</th></tr>'
+            f'{rows}</table>'
+        )
+
+    login_url = f'{base_url}/{slug}' if slug else base_url
+    content = f"""
+    <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
+    <p style="margin:0 0 24px;">
+      das ist deine Erinnerung für morgen bei <strong>{instance_title}</strong>:
+    </p>
+    {sections}
+    <p style="margin:0;text-align:center;">
+      <a href="{login_url}"
+         style="background:{primary_color};color:#ffffff;padding:13px 30px;
+                border-radius:8px;text-decoration:none;font-weight:600;
+                font-size:15px;display:inline-block;">
+        Zur Übersicht
+      </a>
+    </p>
+    """
+    return build_email_template(
+        content,
+        title=instance_title,
+        base_url=base_url,
+        slug=slug,
+        primary_color=primary_color,
+        logo_url=logo_url,
+        copyright_text=copyright_text,
+    )
