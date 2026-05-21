@@ -60,8 +60,9 @@ const router = createRouter({
         { path: 'activity', component: () => import('@/views/admin/ActivityLog.vue') },
         { path: 'backup', component: () => import('@/views/admin/Backup.vue') },
         { path: 'update', component: () => import('@/views/admin/Update.vue') },
-        { path: 'profile/2fa', component: () => import('@/views/admin/TwoFASetup.vue') },
-        { path: 'profile/passkeys', component: () => import('@/views/admin/PasskeySettings.vue') },
+        { path: 'profile', component: () => import('@/views/admin/AdminProfile.vue') },
+        { path: 'profile/2fa', redirect: '/admin/profile' },
+        { path: 'profile/passkeys', redirect: '/admin/profile' },
         // Instanz-spezifisch
         { path: ':slug/volunteers', component: () => import('@/views/admin/Volunteers.vue') },
         { path: ':slug/stands', component: () => import('@/views/admin/Stands.vue') },

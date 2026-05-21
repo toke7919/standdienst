@@ -371,4 +371,46 @@ def _user_payload(user) -> dict:
         payload['is_instance_admin'] = user.is_instance_admin
     if hasattr(user, 'notifications_enabled'):
         payload['notifications_enabled'] = user.notifications_enabled
+    if hasattr(user, 'role') and user.role in ('admin', 'organizer'):
+        from ..models import PasskeyCredential
+        if user.role == 'admin':
+            has_pk = PasskeyCredential.query.filter_by(admin_id=user.id).first() is not None
+        else:
+            has_pk = PasskeyCredential.query.filter_by(organizer_id=user.id).first() is not None
+        payload['has_passkey'] = has_pk
     return payload
+
+
+@auth_bp.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_profile():
+    claims = get_jwt()
+    identity = get_jwt_identity()
+    role = claims.get('role')
+    user = _load_user_by_identity(identity, role)
+    if not user or role not in ('admin', 'organizer'):
+        return jsonify(error='Nicht erlaubt'), 403
+
+    data = request.get_json() or {}
+
+    if 'first_name' in data:
+        user.first_name = (data['first_name'] or '').strip()
+    if 'last_name' in data:
+        user.last_name = (data['last_name'] or '').strip()
+    if 'email' in data:
+        email = (data['email'] or '').strip().lower()
+        if email and email != user.email:
+            duplicate = (Admin if role == 'admin' else Organizer).query.filter_by(email=email).first()
+            if duplicate:
+                return jsonify(error='E-Mail bereits vergeben'), 409
+            user.email = email
+    if data.get('password'):
+        err = validate_password_strength(data['password'], role='admin')
+        if err:
+            return jsonify(error=err), 400
+        user.set_password(data['password'])
+        user.rotate_jwt()
+
+    db.session.commit()
+    from ..utils.responses import ok
+    return ok(_user_payload(user))

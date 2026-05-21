@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Schichten</h1>
-      <button class="btn-primary" @click="openCreate">Neue Schicht</button>
+      <h1 class="text-2xl font-bold text-gray-900">Dienste</h1>
+      <button class="btn-primary" @click="openCreate">Neuer Dienst</button>
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -23,7 +23,7 @@
               <h2 class="font-semibold text-gray-900">{{ group.date }}</h2>
             </div>
             <span class="text-xs text-gray-400 flex-shrink-0">
-              {{ group.total }} {{ group.total === 1 ? 'Schicht' : 'Schichten' }}
+              {{ group.total }} {{ group.total === 1 ? 'Dienst' : 'Dienste' }}
             </span>
           </div>
 
@@ -57,14 +57,14 @@
 
         <div v-if="!groupedShifts.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
           <ClockIcon class="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p class="text-gray-400 text-sm">Noch keine Schichten angelegt</p>
+          <p class="text-gray-400 text-sm">Noch keine Dienste angelegt</p>
         </div>
       </div>
 
       <Pagination v-model:page="page" :pages="pages" :total="total" :per-page="perPage" @update:page="load" />
     </template>
 
-    <Modal v-model="showModal" :title="editing ? 'Schicht bearbeiten' : 'Neue Schicht'">
+    <Modal v-model="showModal" :title="editing ? 'Dienst bearbeiten' : 'Neuer Dienst'">
       <form @submit.prevent="save" class="space-y-4">
         <div>
           <label class="label">Stand</label>
@@ -224,10 +224,10 @@ async function save() {
         end_time: form.value.end_time,
         max_volunteers: form.value.max_volunteers,
       })
-      ui.success('Schicht aktualisiert')
+      ui.success('Dienst aktualisiert')
     } else {
       await adminApi.createShift(route.params.slug, form.value)
-      ui.success('Schicht erstellt')
+      ui.success('Dienst erstellt')
     }
     showModal.value = false
     await load()
@@ -238,7 +238,7 @@ async function save() {
 
 async function deleteShift(s) {
   const ok = await ui.confirm({
-    title: 'Schicht löschen', message: 'Schicht und alle Anmeldungen löschen?',
+    title: 'Dienst löschen', message: 'Dienst und alle Anmeldungen löschen?',
     confirmText: 'Löschen', danger: true,
   })
   if (!ok) return

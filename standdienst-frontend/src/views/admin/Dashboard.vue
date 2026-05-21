@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="text-2xl font-bold text-gray-900 mb-6">
-      {{ slug ? `Dashboard – ${slug}` : 'Plattform-Dashboard' }}
+      {{ slug ? 'Dashboard' : 'Plattform-Dashboard' }}
     </h1>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -19,7 +19,7 @@
 
           <!-- Belegungsring -->
           <div class="card flex flex-col items-center">
-            <p class="self-start text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Schichtbelegung</p>
+            <p class="self-start text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Dienstbelegung</p>
 
             <!-- SVG Donut -->
             <div class="relative w-36 h-36 mb-5">
@@ -179,7 +179,7 @@
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium"
             >
               <ExclamationCircleIcon class="w-3 h-3 flex-shrink-0" />
-              {{ data.volunteers_without_shift }} ohne Schicht
+              {{ data.volunteers_without_shift }} ohne Dienst
             </span>
             <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
               <CheckCircleIcon class="w-3 h-3 flex-shrink-0" />
@@ -221,7 +221,7 @@
                   class="text-2xl font-black tabular-nums"
                   :class="data.shifts_empty > 0 ? 'text-red-600' : 'text-gray-900'"
                 >{{ data.shifts_empty }}</p>
-                <p class="text-sm text-gray-500 mt-0.5">Schichten leer</p>
+                <p class="text-sm text-gray-500 mt-0.5">Dienste leer</p>
               </div>
               <div
                 class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -247,7 +247,7 @@
             <thead>
               <tr class="border-b border-gray-100 bg-gray-50">
                 <th class="text-left px-4 py-2 font-medium text-gray-500">Datum</th>
-                <th class="text-right px-4 py-2 font-medium text-gray-500">Schichten</th>
+                <th class="text-right px-4 py-2 font-medium text-gray-500">Dienste</th>
                 <th class="text-right px-4 py-2 font-medium text-gray-500">Vollbelegt</th>
                 <th class="text-right px-4 py-2 font-medium text-gray-500 pr-5">Belegung</th>
               </tr>
@@ -299,7 +299,7 @@
                 <tr class="border-b border-gray-100">
                   <th class="text-left py-2 pr-4 font-medium text-gray-500">Instanz</th>
                   <th class="text-right py-2 px-3 font-medium text-gray-500">Helfer</th>
-                  <th class="text-right py-2 px-3 font-medium text-gray-500">Schichten</th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-500">Dienste</th>
                   <th class="text-right py-2 px-3 font-medium text-gray-500">Anmeldungen</th>
                   <th class="text-right py-2 px-3 font-medium text-gray-500">Belegung</th>
                 </tr>

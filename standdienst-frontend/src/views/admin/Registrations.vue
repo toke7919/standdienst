@@ -10,7 +10,7 @@
     </div>
 
     <div v-else-if="!enrichedGrid.length" class="card p-6 text-center text-gray-400">
-      Keine Schichten vorhanden.
+      Keine Dienste vorhanden.
     </div>
 
     <!-- Stundenplan: ein Block pro Datum – ein gemeinsamer Scroll-Container -->
@@ -49,8 +49,8 @@
               <div
                 v-for="h in section.hours"
                 :key="h.label"
-                class="absolute right-2 text-[10px] text-gray-400 -translate-y-1/2 whitespace-nowrap"
-                :style="`top: ${h.pct}%`"
+                class="absolute right-2 text-[10px] text-gray-400 whitespace-nowrap"
+                :style="`top: ${h.pct}%; transform: translateY(${h.ty}%)`"
               >{{ h.label }}</div>
             </div>
 
@@ -145,7 +145,7 @@
           <input v-model="form.guest_name" class="input" required placeholder="Vor- und Nachname" maxlength="100" />
         </div>
         <div>
-          <label class="label">Schicht</label>
+          <label class="label">Dienst</label>
           <select v-model="form.shift_id" class="input" required>
             <option value="">Bitte wählen</option>
             <template v-for="section in enrichedGrid" :key="section.date_id">
@@ -233,6 +233,9 @@ const enrichedGrid = computed(() => {
         hours.push({ label: `${h}:00`, pct })
       }
     }
+    hours.forEach((h, i) => {
+      h.ty = i === 0 ? 0 : i === hours.length - 1 ? -100 : -50
+    })
 
     // 3. Pro Stand die Schicht-Blöcke mit prozentigen Position/Höhe
     const standShifts = section.stands.map((stand, si) => {
@@ -327,7 +330,7 @@ async function save() {
 async function deleteReg(reg, shiftId) {
   const ok = await ui.confirm({
     title: 'Anmeldung entfernen',
-    message: `${reg.name} aus der Schicht entfernen?`,
+    message: `${reg.name} aus dem Dienst entfernen?`,
     confirmText: 'Entfernen',
     danger: true,
   })

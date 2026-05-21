@@ -166,7 +166,7 @@ const combinedTypes = computed(() =>
         ...t,
         donations,
         myDonations: donations.filter(d => d.is_mine),
-        otherDonations: donations.filter(d => !d.is_mine),
+        otherDonations: donations.filter(d => !d.is_mine).sort((a, b) => (a.volunteer_name || '').localeCompare(b.volunteer_name || '', 'de')),
       }
     })
     .sort((a, b) => {

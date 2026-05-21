@@ -20,4 +20,4 @@ def upgrade():
 
 
 def downgrade():
-    pass
+    op.drop_column('volunteers', 'notifications_enabled')
