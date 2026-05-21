@@ -16,8 +16,8 @@
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="name" @sort="toggleLocalSort">Name</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="email" @sort="toggleLocalSort">E-Mail</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="created_at" @sort="toggleLocalSort">Angemeldet</SortTh>
-            <th class="px-4 py-3 text-xs font-medium text-gray-500 text-right">Schichten</th>
-            <th class="px-4 py-3 text-xs font-medium text-gray-500 text-right">Spenden</th>
+            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="shift_count" @sort="toggleLocalSort" class="text-right">Schichten</SortTh>
+            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="food_count" @sort="toggleLocalSort" class="text-right">Spenden</SortTh>
             <th class="px-4 py-3" />
           </tr>
         </thead>
