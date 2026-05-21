@@ -95,6 +95,8 @@ export const adminApi = {
   // Export URLs (direct downloads)
   exportUrl: (slug, format) => `/api/admin/${slug}/export/${format}`,
   exportIcalUrl: (slug) => `/api/admin/${slug}/export/ical`,
+  exportDiensteUrl: (slug, format) => `/api/admin/${slug}/export/${format}/dienste`,
+  exportEssenUrl: (slug, format) => `/api/admin/${slug}/export/${format}/essen`,
 
   // Import
   importShiftsCsv: (slug, formData) =>

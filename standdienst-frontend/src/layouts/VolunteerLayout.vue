@@ -1,7 +1,7 @@
 <template>
   <!-- overflow-x-clip verhindert horizontales Scrollen durch negative Margins (Home-Hero etc.) -->
   <div
-    class="min-h-screen flex flex-col md:pb-0 overflow-x-clip"
+    class="min-h-screen flex flex-col lg:pb-0 overflow-x-clip"
     :class="bottomPad"
   >
     <!-- ====== HEADER (fixed statt sticky – zuverlässiger auf iOS Safari) ====== -->
@@ -20,7 +20,7 @@
         </RouterLink>
 
         <!-- Desktop-Navigation -->
-        <nav class="hidden md:flex items-center gap-1">
+        <nav class="hidden lg:flex items-center gap-1">
           <RouterLink
             v-for="link in navLinks"
             :key="link.to"
@@ -50,11 +50,11 @@
     </main>
 
     <!-- ====== DESKTOP FOOTER ====== -->
-    <AppFooter class="hidden md:block" :slug="slug" :copyright="settings?.copyright_text" />
+    <AppFooter class="hidden lg:block" :slug="slug" :copyright="settings?.copyright_text" />
 
     <!-- ====== MOBILE BOTTOM NAVIGATION ====== -->
     <nav
-      class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-40"
+      class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-40"
       style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     >
       <div class="flex items-stretch h-[4.25rem]">
