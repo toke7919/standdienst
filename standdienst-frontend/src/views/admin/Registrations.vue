@@ -13,17 +13,17 @@
       Keine Schichten vorhanden.
     </div>
 
-    <!-- Stundenplan: ein Block pro Datum -->
-    <div v-else class="space-y-8">
+    <!-- Stundenplan: ein Block pro Datum – ein gemeinsamer Scroll-Container -->
+    <div v-else class="overflow-x-auto">
+    <div class="min-w-max space-y-8">
       <div v-for="section in enrichedGrid" :key="section.date_id">
-        <div class="card overflow-hidden !p-0">
+        <!-- [overflow:clip] clippt Inhalte auf die Rundungen, ohne Scroll-Container zu erzeugen -->
+        <div class="card [overflow:clip] !p-0">
           <div class="h-1 bg-primary-500 rounded-t-2xl" />
           <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
             <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
             <h2 class="font-semibold text-gray-900">{{ section.date_formatted }}</h2>
           </div>
-          <!-- Gemeinsamer Scroll-Wrapper: Header + Body teilen eine Scrollleiste -->
-          <div class="overflow-x-auto">
           <!-- Stand-Spaltenheader -->
           <div class="flex border-b border-gray-100 bg-gray-50">
             <div class="w-14 flex-shrink-0 border-r border-gray-100" />
@@ -135,9 +135,9 @@
               </div>
             </div>
           </div>
-          </div><!-- /overflow-x-auto -->
         </div>
       </div>
+    </div>
     </div>
 
     <Modal v-model="showModal" title="Anmeldung hinzufügen">
