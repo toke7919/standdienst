@@ -38,10 +38,15 @@ def _rp_config():
         from flask import request as _req
         fwd_host = _req.headers.get('X-Forwarded-Host', '').split(',')[0].strip()
         host = fwd_host or parsed.netloc
-        # X-Forwarded-Proto wird von nginx auf das Client-seitige Protokoll gesetzt
-        # (proxy_set_header X-Forwarded-Proto $scheme) – authoritative für WebAuthn-Origin
         fwd_proto = _req.headers.get('X-Forwarded-Proto', '').split(',')[0].strip()
-        proto = fwd_proto or parsed.scheme
+        # FRONTEND_URL-Schema ist autoritativ wenn es 'https' ist: Ein lokales nginx kann
+        # X-Forwarded-Proto auf 'http' setzen (proxy_set_header … $scheme), obwohl der
+        # Client HTTPS verwendet. FRONTEND_URL kennt das echte öffentliche Protokoll.
+        # X-Forwarded-Proto hat Vorrang wenn FRONTEND_URL kein Schema angibt (localhost).
+        if parsed.scheme == 'https':
+            proto = 'https'
+        else:
+            proto = fwd_proto or parsed.scheme
     except RuntimeError:
         host = parsed.netloc
         proto = parsed.scheme
