@@ -31,7 +31,7 @@
           <button
             class="ml-2 px-3 py-1.5 text-sm rounded-lg hover:bg-white/20 transition-colors"
             :class="headerTextClass"
-            @click="auth.logout"
+            @click="auth.volunteerLogout(slug)"
           >Abmelden</button>
         </nav>
       </div>

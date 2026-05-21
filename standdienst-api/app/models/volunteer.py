@@ -39,6 +39,7 @@ class Volunteer(db.Model):
     consent_given_at = db.Column(db.DateTime(timezone=True), nullable=True)
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
     jwt_version = db.Column(db.Integer, nullable=False, default=1)
+    notifications_enabled = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
 
     registrations = db.relationship(
         'Registration', backref='volunteer', lazy='dynamic', cascade='all, delete-orphan'

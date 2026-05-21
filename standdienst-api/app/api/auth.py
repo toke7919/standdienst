@@ -369,4 +369,6 @@ def _user_payload(user) -> dict:
         payload['instance_id'] = user.instance_id
     if hasattr(user, 'is_instance_admin'):
         payload['is_instance_admin'] = user.is_instance_admin
+    if hasattr(user, 'notifications_enabled'):
+        payload['notifications_enabled'] = user.notifications_enabled
     return payload

@@ -44,9 +44,10 @@
             <!-- Sticky Kartenheader: Akzentstreifen + Standname integriert -->
             <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-gray-50">
               <div class="rounded-t-2xl overflow-hidden border border-b-0 border-gray-100">
-                <div class="h-1 bg-primary-500" />
-                <div class="bg-white px-4 py-2">
-                  <h3 class="text-sm font-semibold text-primary-700">{{ standGroup.stand_name }}</h3>
+                <div class="h-1 transition-colors" :class="standGroup.allFull ? 'bg-gray-300' : 'bg-primary-500'" />
+                <div class="bg-white px-4 py-2 flex items-center justify-between">
+                  <h3 class="text-sm font-semibold transition-colors" :class="standGroup.allFull ? 'text-gray-400' : 'text-primary-700'">{{ standGroup.stand_name }}</h3>
+                  <span v-if="standGroup.allFull" class="text-xs text-gray-400 font-medium">Alle Dienste voll</span>
                 </div>
               </div>
             </div>
@@ -145,7 +146,11 @@ const grouped = computed(() => {
   }
   return Object.entries(byDate).map(([date, stands]) => ({
     date,
-    stands: Object.entries(stands).map(([stand_name, shifts]) => ({ stand_name, shifts })),
+    stands: Object.entries(stands).map(([stand_name, shifts]) => ({
+      stand_name,
+      shifts,
+      allFull: shifts.every(s => s.is_full && !s.is_registered),
+    })),
   }))
 })
 
