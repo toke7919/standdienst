@@ -3,16 +3,54 @@
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Export</h1>
 
     <div class="grid gap-4 max-w-2xl">
+      <!-- Dienste -->
       <div class="card">
-        <h2 class="text-base font-semibold text-gray-800 mb-4">Anmeldungen</h2>
+        <h2 class="text-base font-semibold text-gray-800 mb-1">Dienste</h2>
+        <p class="text-sm text-gray-500 mb-4">Alle Anmeldungen, je Tag auf einer eigenen Seite / Tabelle.</p>
         <div class="flex flex-wrap gap-3">
-          <a :href="adminApi.exportUrl(slug, 'ods')" class="btn-secondary">
+          <a :href="adminApi.exportDiensteUrl(slug, 'ods')" class="btn-secondary">
             <ArrowDownTrayIcon class="w-4 h-4" />
             ODS herunterladen
           </a>
-          <a :href="adminApi.exportUrl(slug, 'pdf')" class="btn-secondary">
+          <a :href="adminApi.exportDiensteUrl(slug, 'pdf')" class="btn-secondary">
             <ArrowDownTrayIcon class="w-4 h-4" />
             PDF herunterladen
+          </a>
+        </div>
+      </div>
+
+      <!-- Essensspenden -->
+      <div class="card">
+        <h2 class="text-base font-semibold text-gray-800 mb-1">Essensspenden</h2>
+        <p class="text-sm text-gray-500 mb-4">Alle Spenden, je Spendenart auf einer eigenen Seite / Tabelle.</p>
+        <div class="flex flex-wrap gap-3">
+          <a :href="adminApi.exportEssenUrl(slug, 'ods')" class="btn-secondary">
+            <ArrowDownTrayIcon class="w-4 h-4" />
+            ODS herunterladen
+          </a>
+          <a :href="adminApi.exportEssenUrl(slug, 'pdf')" class="btn-secondary">
+            <ArrowDownTrayIcon class="w-4 h-4" />
+            PDF herunterladen
+          </a>
+        </div>
+      </div>
+
+      <!-- CSV & iCal -->
+      <div class="card">
+        <h2 class="text-base font-semibold text-gray-800 mb-1">Weitere Formate</h2>
+        <p class="text-sm text-gray-500 mb-4">CSV-Exporte und Kalender-Abo.</p>
+        <div class="flex flex-wrap gap-3">
+          <a :href="adminApi.exportUrl(slug, 'csv/registrations')" class="btn-secondary">
+            <ArrowDownTrayIcon class="w-4 h-4" />
+            Anmeldungen CSV
+          </a>
+          <a :href="adminApi.exportUrl(slug, 'csv/volunteers')" class="btn-secondary">
+            <ArrowDownTrayIcon class="w-4 h-4" />
+            Helfer CSV
+          </a>
+          <a :href="adminApi.exportIcalUrl(slug)" class="btn-secondary">
+            <ArrowDownTrayIcon class="w-4 h-4" />
+            Kalender (iCal)
           </a>
         </div>
       </div>

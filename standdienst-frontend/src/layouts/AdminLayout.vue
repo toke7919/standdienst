@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 flex">
 
     <!-- ============================= DESKTOP SIDEBAR ============================= -->
-    <aside class="hidden md:flex flex-col bg-primary-950 w-64 fixed inset-y-0 z-40">
+    <aside class="hidden lg:flex flex-col bg-primary-950 w-64 fixed inset-y-0 z-40">
       <div class="p-5 border-b border-white/10 flex items-center gap-2">
         <RouterLink :to="selectedSlug ? `/admin/${selectedSlug}/dashboard` : '/admin/dashboard'" class="flex items-center gap-2 min-w-0">
           <img
@@ -73,7 +73,7 @@
     </aside>
 
     <!-- ============================= MOBILE HEADER ============================= -->
-    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-primary-950 border-b border-white/10 h-14 flex items-center px-4 gap-3">
+    <header class="lg:hidden fixed top-0 inset-x-0 z-30 bg-primary-950 border-b border-white/10 h-14 flex items-center px-4 gap-3">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <img
           v-if="instanceInfo?.logo_filename"
@@ -102,22 +102,22 @@
 
     <!-- ============================= MAIN CONTENT ============================= -->
     <div
-      class="flex-1 md:ml-64 flex flex-col min-h-screen"
+      class="flex-1 lg:ml-64 flex flex-col min-h-screen"
       :class="mobileContentPad"
     >
-      <main class="flex-1 p-4 md:p-6">
+      <main class="flex-1 p-4 lg:p-6">
         <RouterView v-slot="{ Component }">
           <Transition name="page" mode="out-in">
             <component :is="Component" :key="route.path" />
           </Transition>
         </RouterView>
       </main>
-      <AppFooter class="hidden md:block" :slug="selectedSlug" :copyright="instanceInfo?.copyright_text || globalCopyright" />
+      <AppFooter class="hidden lg:block" :slug="selectedSlug" :copyright="instanceInfo?.copyright_text || globalCopyright" />
     </div>
 
     <!-- ============================= MOBILE BOTTOM NAV ============================= -->
     <nav
-      class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200"
+      class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200"
       style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     >
       <div class="flex items-stretch h-[4.25rem]">
@@ -197,7 +197,7 @@
     <!-- ============================= „MEHR" BOTTOM SHEET ============================= -->
     <Teleport to="body">
       <Transition name="sheet">
-        <div v-if="moreOpen" class="fixed inset-0 z-50 flex flex-col justify-end md:hidden">
+        <div v-if="moreOpen" class="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
           <!-- Overlay -->
           <div class="absolute inset-0 bg-black/40" @click="moreOpen = false" />
 
@@ -353,7 +353,7 @@ const instanceInitial = computed(() => {
 
 // Padding für den Content-Bereich auf Mobile (Header 56px + BottomNav ~88px)
 const mobileContentPad = computed(() =>
-  'pt-14 pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:pt-0 md:pb-0'
+  'pt-14 pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] lg:pt-0 lg:pb-0'
 )
 
 // Prüft ob ein Tab aktiv ist (anhand des aktuellen Pfads)

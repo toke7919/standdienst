@@ -22,8 +22,15 @@
     <div class="flex-1 bg-white rounded-t-[2rem] shadow-2xl -mt-20 overflow-y-auto">
       <div class="max-w-md mx-auto px-6 pt-8 pb-10">
 
+        <!-- Instanz nicht gefunden -->
+        <div v-if="instanceStore.notFound" class="rounded-2xl text-center text-red-800 bg-red-50 border border-red-200 p-6">
+          <p class="font-semibold text-base mb-1">Seite nicht gefunden</p>
+          <p class="text-sm text-red-700">Die aufgerufene Seite existiert nicht.</p>
+          <RouterLink to="/" class="inline-block mt-4 text-sm text-red-600 hover:text-red-800 underline">← Zur Startseite</RouterLink>
+        </div>
+
         <!-- Gesperrt -->
-        <div v-if="settings?.site_locked" class="rounded-2xl text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
+        <div v-else-if="settings?.site_locked" class="rounded-2xl text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
           <p class="font-semibold">Anmeldung gesperrt</p>
           <p v-if="settings.lock_message" class="text-sm mt-1">{{ settings.lock_message }}</p>
         </div>
@@ -100,14 +107,11 @@
 
         <!-- Footer -->
         <footer class="mt-10 text-center text-xs text-gray-400 space-y-1">
-          <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
           <div class="flex justify-center gap-4">
             <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
             <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
           </div>
-          <div>
-            <RouterLink to="/" class="hover:text-gray-600">← Startseite</RouterLink>
-          </div>
+          <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
         </footer>
       </div>
     </div>
