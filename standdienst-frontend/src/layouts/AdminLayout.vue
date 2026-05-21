@@ -108,7 +108,7 @@
           </Transition>
         </RouterView>
       </main>
-      <AppFooter class="hidden md:block" :slug="selectedSlug" :copyright="instanceInfo?.copyright_text" />
+      <AppFooter class="hidden md:block" :slug="selectedSlug" :copyright="instanceInfo?.copyright_text || globalCopyright" />
     </div>
 
     <!-- ============================= MOBILE BOTTOM NAV ============================= -->
@@ -296,6 +296,7 @@ const route = useRoute()
 const instances = ref([])
 const selectedSlug = ref('')
 const moreOpen = ref(false)
+const globalCopyright = ref('')
 
 // Aktueller Slug aus Route oder selectedSlug
 const mobileSlug = computed(() => route.params.slug || selectedSlug.value || '')
@@ -335,6 +336,12 @@ onMounted(async () => {
         router.push(`/admin/${selectedSlug.value}/volunteers`)
       }
     } catch { /* ignore */ }
+    if (auth.isAdmin) {
+      try {
+        const gs = await adminApi.getGlobalSettings()
+        globalCopyright.value = gs.data.data.copyright_text || ''
+      } catch { /* ignore */ }
+    }
   }
 })
 

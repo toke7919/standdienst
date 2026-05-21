@@ -34,16 +34,20 @@ def _rp_config():
 
     frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
     parsed = urlparse(frontend_url)
-    # X-Forwarded-Proto wird NICHT für das Schema verwendet: Es beschreibt die
-    # Verbindung Proxy→Backend (oft HTTP), nicht die Client-seitige URL (HTTPS).
-    # Das Schema aus FRONTEND_URL ist autoritativ.
-    proto = parsed.scheme
     try:
         from flask import request as _req
         fwd_host = _req.headers.get('X-Forwarded-Host', '').split(',')[0].strip()
         host = fwd_host or parsed.netloc
+        # X-Forwarded-Proto wird von nginx auf das Client-seitige Protokoll gesetzt
+        # (proxy_set_header X-Forwarded-Proto $scheme) – authoritative für WebAuthn-Origin
+        fwd_proto = _req.headers.get('X-Forwarded-Proto', '').split(',')[0].strip()
+        proto = fwd_proto or parsed.scheme
     except RuntimeError:
         host = parsed.netloc
+        proto = parsed.scheme
+    # Standard-Ports entfernen, damit origin exakt übereinstimmt
+    if (proto == 'https' and host.endswith(':443')) or (proto == 'http' and host.endswith(':80')):
+        host = host.rsplit(':', 1)[0]
     rp_id = current_app.config.get('WEBAUTHN_RP_ID') or host.split(':')[0]
     origin = f'{proto}://{host}'
     return rp_id, origin

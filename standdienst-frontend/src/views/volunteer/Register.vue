@@ -53,6 +53,7 @@
             workerurl="/altcha-worker.js"
             :hidefooter="true"
             :hidelogo="true"
+            :strings="altchaStrings"
             @statechange="onAltchaStateChange"
           />
 
@@ -81,6 +82,14 @@
           </RouterLink>
         </div>
 
+        <footer class="mt-8 text-center text-xs text-gray-400 space-y-1">
+          <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
+          <div class="flex justify-center gap-4">
+            <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
+            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+          </div>
+        </footer>
+
       </div>
     </div>
   </div>
@@ -103,6 +112,13 @@ const router = useRouter()
 const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current)
 const hasPrivacyPolicy = computed(() => instanceStore.current?.has_privacy_policy ?? false)
+
+const altchaStrings = JSON.stringify({
+  label: 'Ich bin kein Roboter',
+  verified: 'Verifiziert',
+  verifying: 'Bitte warten …',
+  error: 'Überprüfung fehlgeschlagen',
+})
 
 const altchaPayload = ref('')
 const form = ref({ first_name: '', last_name: '', email: '', consent: false })

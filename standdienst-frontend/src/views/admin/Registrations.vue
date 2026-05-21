@@ -16,12 +16,12 @@
     <!-- Stundenplan: ein Block pro Datum -->
     <div v-else class="space-y-8">
       <div v-for="section in enrichedGrid" :key="section.date_id">
-        <h2 class="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <CalendarIcon class="w-4 h-4 text-primary-500" />
-          {{ section.date_formatted }}
-        </h2>
-
         <div class="card overflow-hidden !p-0">
+          <div class="h-1 bg-primary-500 rounded-t-2xl" />
+          <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
+            <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+            <h2 class="font-semibold text-gray-900">{{ section.date_formatted }}</h2>
+          </div>
           <!-- Stand-Spaltenheader -->
           <div class="flex border-b border-gray-100 bg-gray-50 overflow-x-auto">
             <div class="w-14 flex-shrink-0 border-r border-gray-100" />

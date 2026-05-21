@@ -36,12 +36,20 @@
 
     <div v-else class="space-y-6">
       <div v-for="t in foodTypes" :key="`don-${t.id}`">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="font-semibold text-gray-800 text-sm">{{ t.name }}</span>
-          <span class="text-xs text-gray-400">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
-        </div>
-
         <div class="card overflow-hidden !p-0">
+          <div class="h-1 bg-primary-500 rounded-t-2xl" />
+          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+              <div>
+                <p class="font-semibold text-gray-900 text-sm">{{ t.name }}</p>
+                <p v-if="t.event_date_label || t.delivery_datetime" class="text-xs text-gray-400 mt-0.5">
+                  {{ t.event_date_label }}<span v-if="t.delivery_datetime"> · Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
+                </p>
+              </div>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
+          </div>
           <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
               <tr>
@@ -145,6 +153,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
+import { CalendarIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
