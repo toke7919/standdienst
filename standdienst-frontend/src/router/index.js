@@ -144,7 +144,7 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresStaff && !auth.isStaff) return '/admin/login'
-  if (to.meta.requiresVolunteer && !auth.isVolunteer) return `/${to.params.slug}/register`
+  if (to.meta.requiresVolunteer && !auth.isVolunteer) return `/${to.params.slug}/login`
 
   // Instanz-Farbschema zurücksetzen wenn keine Slug-Route aufgerufen wird
   if (!to.params.slug && !to.path.startsWith('/admin')) {
