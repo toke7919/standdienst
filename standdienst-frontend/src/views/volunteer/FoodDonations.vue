@@ -26,12 +26,9 @@
         <div class="h-1 bg-primary-500 rounded-t-2xl" />
 
         <div class="p-6">
-        <!-- Typ-Kopf: Name + Zähler -->
-        <div class="flex items-start justify-between mb-1">
+        <!-- Typ-Kopf: Name -->
+        <div class="mb-1">
           <h2 class="text-base font-semibold text-gray-900">{{ t.name }}</h2>
-          <span class="text-xs text-gray-400 mt-0.5 ml-2 flex-shrink-0">
-            {{ t.donations.length }} {{ t.donations.length === 1 ? 'Eintragung' : 'Eintragungen' }}
-          </span>
         </div>
 
         <!-- Abgabe-Info -->
@@ -66,38 +63,70 @@
           </button>
         </form>
 
-        <!-- Vorhandene Spenden alphabetisch -->
-        <div v-if="t.donations.length" class="border-t border-gray-100 mt-4 pt-3 space-y-2">
-          <div
-            v-for="d in t.donations"
-            :key="d.id"
-            class="flex items-center justify-between rounded-xl px-3 py-2.5 gap-3 border"
-            :class="d.is_mine ? 'bg-primary-50 border-primary-200' : 'bg-gray-50 border-transparent'"
-          >
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate" :class="d.is_mine ? 'text-primary-700' : 'text-gray-800'">
-                {{ d.description }}
-                <span
-                  v-if="d.needs_refrigeration"
-                  class="ml-1 text-sky-400"
-                  title="Kühlung erforderlich"
-                >❄</span>
-              </p>
-              <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.volunteer_name }}</p>
-            </div>
-            <button
-              v-if="d.is_mine"
-              class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
-              title="Entfernen"
-              @click="remove(d)"
+        <!-- Vorhandene Spenden -->
+        <div class="border-t border-gray-100 mt-4 pt-3">
+
+          <!-- Eigene Spenden: immer sichtbar -->
+          <div v-if="t.myDonations.length" class="space-y-2" :class="t.otherDonations.length ? 'mb-3' : ''">
+            <div
+              v-for="d in t.myDonations"
+              :key="d.id"
+              class="flex items-center justify-between rounded-xl px-3 py-2.5 gap-3 border bg-primary-50 border-primary-200"
             >
-              <XMarkIcon class="w-4 h-4" />
-            </button>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-primary-700 truncate">
+                  {{ d.description }}
+                  <span v-if="d.needs_refrigeration" class="ml-1 text-sky-400" title="Kühlung erforderlich">❄</span>
+                </p>
+                <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.volunteer_name }}</p>
+              </div>
+              <button
+                class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                title="Entfernen"
+                @click="remove(d)"
+              >
+                <XMarkIcon class="w-4 h-4" />
+              </button>
+            </div>
           </div>
+
+          <!-- Fremde Spenden: einklappbar -->
+          <template v-if="t.otherDonations.length">
+            <button
+              type="button"
+              class="flex items-center justify-between w-full text-left gap-2"
+              @click="donationsOpen[t.id] = !donationsOpen[t.id]"
+            >
+              <span class="text-xs text-gray-500 font-medium">
+                {{ t.otherDonations.length }}
+                {{ t.myDonations.length ? 'weitere' : '' }}
+                {{ t.otherDonations.length === 1 ? 'Eintragung' : 'Eintragungen' }}
+              </span>
+              <ChevronDownIcon
+                class="w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-200"
+                :class="donationsOpen[t.id] ? '' : '-rotate-90'"
+              />
+            </button>
+            <div v-if="donationsOpen[t.id]" class="mt-2 space-y-2">
+              <div
+                v-for="d in t.otherDonations"
+                :key="d.id"
+                class="flex items-center rounded-xl px-3 py-2.5 gap-3 border bg-gray-50 border-transparent"
+              >
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-800 truncate">
+                    {{ d.description }}
+                    <span v-if="d.needs_refrigeration" class="ml-1 text-sky-400" title="Kühlung erforderlich">❄</span>
+                  </p>
+                  <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.volunteer_name }}</p>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Leerzustand -->
+          <p v-if="!t.donations.length" class="text-xs text-gray-400">Noch keine Eintragungen</p>
         </div>
-        <p v-else class="border-t border-gray-100 mt-4 pt-3 text-xs text-gray-400">
-          Noch keine Eintragungen
-        </p>
 
         </div><!-- /p-6 -->
       </div>
@@ -110,7 +139,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
@@ -119,14 +148,28 @@ const foodTypes = ref([])
 const grouped = ref([])
 const forms = ref({})
 const errors = ref({})
+const donationsOpen = ref({})
 const submitting = ref(null)
 const loaded = ref(false)
 
 const combinedTypes = computed(() =>
-  foodTypes.value.map(t => {
-    const group = grouped.value.find(g => g.id === t.id)
-    return { ...t, donations: group?.donations || [] }
-  })
+  foodTypes.value
+    .map(t => {
+      const group = grouped.value.find(g => g.id === t.id)
+      const donations = group?.donations || []
+      return {
+        ...t,
+        donations,
+        myDonations: donations.filter(d => d.is_mine),
+        otherDonations: donations.filter(d => !d.is_mine),
+      }
+    })
+    .sort((a, b) => {
+      if (!a.delivery_datetime && !b.delivery_datetime) return 0
+      if (!a.delivery_datetime) return 1
+      if (!b.delivery_datetime) return -1
+      return new Date(a.delivery_datetime) - new Date(b.delivery_datetime)
+    })
 )
 
 onMounted(load)
@@ -141,6 +184,7 @@ async function load() {
   for (const t of foodTypes.value) {
     if (!forms.value[t.id]) forms.value[t.id] = { description: '', needs_refrigeration: false }
     if (errors.value[t.id] === undefined) errors.value[t.id] = ''
+    if (donationsOpen.value[t.id] === undefined) donationsOpen.value[t.id] = false
   }
   loaded.value = true
 }

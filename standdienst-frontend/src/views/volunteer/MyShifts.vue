@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-bold text-gray-900">Meine Schichten</h1>
+      <h1 class="text-xl font-bold text-gray-900">Meine Dienste</h1>
       <a :href="icsUrl" class="btn-secondary text-sm">
         <CalendarIcon class="w-4 h-4" />
-        iCal
+        In Kalender exportieren
       </a>
     </div>
 
@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <p v-else class="text-center text-gray-400 py-8 text-sm">Keine kommenden Schichten</p>
+      <p v-else class="text-center text-gray-400 py-8 text-sm">Keine kommenden Dienste</p>
 
       <!-- Vergangene Schichten (einklappbar) -->
       <div v-if="pastGroups.length" class="mt-8">
@@ -66,7 +66,7 @@
           @click="showPast = !showPast"
         >
           <ChevronDownIcon class="w-3.5 h-3.5 transition-transform duration-200" :class="showPast ? '' : '-rotate-90'" />
-          Vergangene Schichten ({{ totalPast }})
+          Vergangene Dienste ({{ totalPast }})
         </button>
 
         <div v-if="showPast" class="space-y-4 opacity-50">
@@ -125,7 +125,9 @@ const grouped = computed(() => {
     if (!byDate[r.date_formatted]) byDate[r.date_formatted] = { items: [], date_iso: r.date_iso }
     byDate[r.date_formatted].items.push(r)
   }
-  return Object.entries(byDate).map(([date, val]) => ({ date, items: val.items, date_iso: val.date_iso }))
+  return Object.entries(byDate)
+    .map(([date, val]) => ({ date, items: val.items, date_iso: val.date_iso }))
+    .sort((a, b) => a.date_iso.localeCompare(b.date_iso))
 })
 
 const upcomingGroups = computed(() => grouped.value.filter(g => !isPast(g.date_iso)))
@@ -146,7 +148,7 @@ async function load() {
 
 async function cancel(reg) {
   const ok = await ui.confirm({
-    title: 'Abmelden', message: `Von der Schicht ${reg.stand_name} abmelden?`, confirmText: 'Abmelden', danger: true,
+    title: 'Abmelden', message: `Von dem Dienst ${reg.stand_name} abmelden?`, confirmText: 'Abmelden', danger: true,
   })
   if (!ok) return
   try {
