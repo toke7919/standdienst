@@ -106,9 +106,9 @@ const bottomPad = computed(() =>
 
 const navLinks = computed(() => {
   const s = slug.value
-  const links = [{ to: `/${s}/shifts`, label: 'Schichten' }]
+  const links = [{ to: `/${s}/shifts`, label: 'Dienste' }]
   if (settings.value?.shifts_enabled !== false) {
-    links.push({ to: `/${s}/my-shifts`, label: 'Meine Schichten' })
+    links.push({ to: `/${s}/my-shifts`, label: 'Meine Dienste' })
   }
   if (settings.value?.food_donations_enabled) {
     links.push({ to: `/${s}/food`, label: 'Essensspende' })
@@ -119,7 +119,7 @@ const navLinks = computed(() => {
 
 const bottomLinks = computed(() => {
   const s = slug.value
-  const links = [{ to: `/${s}/shifts`, label: 'Schichten', icon: CalendarIcon }]
+  const links = [{ to: `/${s}/shifts`, label: 'Dienste', icon: CalendarIcon }]
   if (settings.value?.shifts_enabled !== false) {
     links.push({ to: `/${s}/my-shifts`, label: 'Meine', icon: ClipboardDocumentListIcon })
   }

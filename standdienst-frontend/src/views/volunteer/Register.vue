@@ -61,7 +61,7 @@
             <input v-model="form.consent" type="checkbox" id="consent" class="mt-1" />
             <label for="consent" class="text-sm text-gray-600">
               Ich habe die
-              <RouterLink :to="`/${slug}/datenschutz`" class="text-primary-600 underline" target="_blank">
+              <RouterLink :to="`/${slug}/datenschutz`" class="text-primary-600 underline">
                 Datenschutzerklärung
               </RouterLink>
               gelesen und stimme der Verarbeitung meiner Daten zu.

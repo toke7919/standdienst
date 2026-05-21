@@ -24,7 +24,7 @@
               <CalendarIcon class="w-6 h-6 text-primary-600" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-gray-900">Schichten</p>
+              <p class="font-semibold text-gray-900">Dienste</p>
               <p class="text-sm text-gray-500 mt-0.5">Dienste ansehen und dich einteilen</p>
             </div>
             <ChevronRightIcon class="w-5 h-5 text-gray-300 flex-shrink-0" />

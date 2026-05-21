@@ -38,7 +38,7 @@
             >
               <div class="text-left">
                 <p class="font-semibold text-base leading-tight">Jetzt registrieren</p>
-                <p class="text-primary-200 text-xs mt-0.5">Kostenlos anmelden &amp; Schichten wählen</p>
+                <p class="text-primary-200 text-xs mt-0.5">Kostenlos anmelden &amp; Dienste wählen</p>
               </div>
               <ChevronRightIcon class="w-5 h-5 text-primary-200 flex-shrink-0" />
             </RouterLink>
