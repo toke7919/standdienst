@@ -43,18 +43,6 @@
       </form>
     </div>
 
-    <!-- DSGVO: Datenauskunft -->
-    <div class="card mb-6">
-      <h2 class="text-base font-semibold text-gray-800 mb-2">Meine Daten (DSGVO Art. 20)</h2>
-      <p class="text-sm text-gray-500 mb-4">
-        Lade eine maschinenlesbare Kopie aller über dich gespeicherten Daten herunter.
-      </p>
-      <button class="btn-secondary" :disabled="exportLoading" @click="exportData">
-        <LoadingSpinner v-if="exportLoading" size="sm" class="mr-2" />
-        Daten exportieren (JSON)
-      </button>
-    </div>
-
     <!-- E-Mail-Benachrichtigungen -->
     <div v-if="mailEnabled && form.email" class="card mb-6">
       <h2 class="text-base font-semibold text-gray-800 mb-2">Benachrichtigungen</h2>
@@ -69,6 +57,18 @@
         </div>
         <span class="text-sm text-gray-700">Erinnerungsmails aktivieren</span>
       </label>
+    </div>
+
+    <!-- DSGVO: Datenauskunft -->
+    <div class="card mb-6">
+      <h2 class="text-base font-semibold text-gray-800 mb-2">Meine Daten (DSGVO Art. 20)</h2>
+      <p class="text-sm text-gray-500 mb-4">
+        Lade eine maschinenlesbare Kopie aller über dich gespeicherten Daten herunter.
+      </p>
+      <button class="btn-secondary" :disabled="exportLoading" @click="exportData">
+        <LoadingSpinner v-if="exportLoading" size="sm" class="mr-2" />
+        Daten exportieren (JSON)
+      </button>
     </div>
 
     <!-- Abmelden (nur mobil sichtbar) -->
