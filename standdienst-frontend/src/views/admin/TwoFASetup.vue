@@ -4,6 +4,7 @@
 
     <div class="card space-y-6">
       <template v-if="!auth.user?.totp_enabled">
+        <!-- Schritt 1: Noch nicht eingerichtet -->
         <template v-if="!setupData">
           <p class="text-sm text-gray-600">
             2FA schützt dein Konto durch einen zusätzlichen Code aus einer Authenticator-App (z.B. Google Authenticator, Authy).
@@ -14,7 +15,8 @@
           </button>
         </template>
 
-        <template v-else-if="!backupCodes.length">
+        <!-- Schritt 2: QR-Code + Bestätigungscode -->
+        <template v-else>
           <div>
             <p class="text-sm font-medium text-gray-700 mb-2">QR-Code scannen:</p>
             <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-gray-200 rounded-lg" />
@@ -26,7 +28,7 @@
           <form @submit.prevent="confirm" class="space-y-3">
             <div>
               <label class="label">Code aus der App</label>
-              <input v-model="code" type="text" inputmode="numeric" maxlength="6" class="input" required />
+              <input v-model="code" type="text" inputmode="numeric" maxlength="6" class="input" required autocomplete="one-time-code" />
             </div>
             <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
             <button type="submit" class="btn-primary" :disabled="confirming || code.length < 6">
@@ -35,31 +37,9 @@
             </button>
           </form>
         </template>
-
-        <!-- Backup-Codes anzeigen -->
-        <template v-else>
-          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <p class="text-sm font-semibold text-amber-900 mb-1">Backup-Codes sichern</p>
-            <p class="text-xs text-amber-700 mb-3">
-              Verwende diese Codes, wenn du keinen Zugriff auf deine Authenticator-App hast.
-              Jeder Code kann nur einmal verwendet werden.
-            </p>
-            <div class="grid grid-cols-2 gap-2 mb-3">
-              <code
-                v-for="c in backupCodes" :key="c"
-                class="text-xs bg-white border border-amber-200 rounded px-2 py-1 font-mono text-amber-900 text-center"
-              >{{ c }}</code>
-            </div>
-            <button type="button" class="text-xs text-amber-700 underline hover:text-amber-900" @click="copyAll">
-              Alle kopieren
-            </button>
-          </div>
-          <button class="btn-primary w-full" @click="finishSetup">
-            Fertig – Codes gesichert
-          </button>
-        </template>
       </template>
 
+      <!-- 2FA bereits aktiv -->
       <template v-else>
         <div class="flex items-center gap-2 text-green-700">
           <ShieldCheckIcon class="w-5 h-5" />
@@ -71,21 +51,60 @@
         </button>
       </template>
     </div>
+
+    <!-- Backup-Codes Modal (persistent – schließt nur über den Fertig-Button) -->
+    <Modal v-model="showBackupModal" title="Backup-Codes sichern" size="sm" persistent>
+      <div class="space-y-4">
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p class="text-sm font-semibold text-amber-900 mb-1">Jetzt sichern!</p>
+          <p class="text-xs text-amber-700 leading-relaxed">
+            Mit diesen Codes kannst du dich anmelden, wenn du keinen Zugriff auf deine
+            Authenticator-App hast. Jeder Code kann nur <strong>einmal</strong> verwendet werden.
+            Nach dem Schließen sind die Codes nicht mehr einsehbar.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <code
+            v-for="c in backupCodes"
+            :key="c"
+            class="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-mono text-gray-800 text-center tracking-widest"
+          >{{ c }}</code>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" class="btn-secondary flex-1" @click="copyAll">
+            <ClipboardDocumentListIcon class="w-4 h-4" />
+            Kopieren
+          </button>
+          <button type="button" class="btn-secondary flex-1" @click="printCodes">
+            <PrinterIcon class="w-4 h-4" />
+            Drucken
+          </button>
+        </div>
+
+        <button class="btn-primary w-full" @click="finishSetup">
+          Codes gesichert – Fertig
+        </button>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { ShieldCheckIcon } from '@heroicons/vue/24/outline'
+import { ShieldCheckIcon, ClipboardDocumentListIcon, PrinterIcon } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { authApi } from '@/api/auth'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import Modal from '@/components/Modal.vue'
 
 const auth = useAuthStore()
 const ui = useUiStore()
 const setupData = ref(null)
 const backupCodes = ref([])
+const showBackupModal = ref(false)
 const code = ref('')
 const loading = ref(false)
 const confirming = ref(false)
@@ -113,9 +132,7 @@ async function confirm() {
   try {
     const res = await authApi.confirm2fa(code.value)
     backupCodes.value = res.data.backup_codes || []
-    ui.success('2FA aktiviert')
-    // fetchMe erst nach "Fertig" – sonst setzt totp_enabled=true und
-    // versteckt den Backup-Code-Block bevor er angezeigt wurde
+    showBackupModal.value = true
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Ungültiger Code'
     code.value = ''
@@ -125,6 +142,7 @@ async function confirm() {
 }
 
 async function finishSetup() {
+  showBackupModal.value = false
   backupCodes.value = []
   setupData.value = null
   await auth.fetchMe()
@@ -137,9 +155,33 @@ async function copyAll() {
   } catch { /* ignore */ }
 }
 
+function printCodes() {
+  const w = window.open('', '_blank', 'width=420,height=560')
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>2FA Backup-Codes</title>
+<style>
+  body { font-family: monospace; padding: 30px; color: #111; }
+  h2 { font-size: 18px; margin-bottom: 6px; }
+  p { font-size: 12px; color: #555; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .code { border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; font-size: 14px;
+          text-align: center; letter-spacing: 0.1em; background: #f9f9f9; }
+  .hint { font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 14px; }
+</style></head><body>
+<h2>2FA Backup-Codes</h2>
+<p>Jeder Code kann nur einmal verwendet werden. Sicher verwahren!</p>
+<div class="grid">${backupCodes.value.map(c => `<div class="code">${c}</div>`).join('')}</div>
+<p class="hint">Erstellt am ${new Date().toLocaleDateString('de-DE')}</p>
+</body></html>`)
+  w.document.close()
+  w.focus()
+  w.print()
+}
+
 async function disable() {
   const ok = await ui.confirm({
-    title: '2FA deaktivieren', message: '2FA wirklich deaktivieren? Dein Konto wird weniger sicher.', danger: true,
+    title: '2FA deaktivieren',
+    message: '2FA wirklich deaktivieren? Dein Konto wird weniger sicher.',
+    danger: true,
   })
   if (!ok) return
   disabling.value = true
