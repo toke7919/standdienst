@@ -78,16 +78,30 @@ def upload_logo(slug):
         import io as _io
         img = Image.open(_io.BytesIO(raw))
         img.verify()
+        img = Image.open(_io.BytesIO(raw))  # erneut öffnen nach verify()
+        png_buf = _io.BytesIO()
+        img.convert('RGBA').save(png_buf, format='PNG', optimize=True)
+        png_bytes = png_buf.getvalue()
     except Exception:
         return error('Ungültige Bilddatei', 400)
 
-    filename = secure_filename(f'logo_{g.instance.slug}.{ext}')
+    filename = f'logo_{g.instance.slug}.png'
     upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
     os.makedirs(upload_dir, exist_ok=True)
-    with open(os.path.join(upload_dir, filename), 'wb') as fh:
-        fh.write(raw)
 
+    # Alte Datei mit ggf. anderem Format entfernen
     settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+    old = settings.logo_filename
+    if old and old != filename:
+        old_path = os.path.join(upload_dir, old)
+        try:
+            os.unlink(old_path)
+        except OSError:
+            pass
+
+    with open(os.path.join(upload_dir, filename), 'wb') as fh:
+        fh.write(png_bytes)
+
     settings.logo_filename = filename
     db.session.commit()
     return ok({'logo_filename': filename})
