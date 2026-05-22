@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from sqlalchemy import text
 
 from . import admin_bp
-from ...extensions import db
+from ...extensions import db, limiter
 from ...utils.auth import require_admin
 from ...utils.responses import ok, error
 
@@ -191,6 +191,7 @@ def delete_backup(name):
 
 @admin_bp.route('/backup/<name>/restore', methods=['POST'])
 @require_admin
+@limiter.limit('5 per minute')
 def restore_backup(name):
     if not _validate_filename(name):
         return error('Ungültiger Dateiname', 400)

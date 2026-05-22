@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, current_app
 from marshmallow import ValidationError
 
-from ..extensions import db, limiter
+from ..extensions import db, limiter, _real_ip
 from ..models import Instance, SiteSettings, ActivityLog, Volunteer
 from ..schemas.volunteer import VolunteerRegisterSchema
 from ..utils.settings_cache import get_global_settings
@@ -127,7 +127,7 @@ def register(slug):
         instance_id=instance.id,
         event_type=ActivityLog.VOLUNTEER_REGISTER,
         volunteer_name=full_name,
-        ip_address=request.remote_addr,
+        ip_address=_real_ip(),
         actor_type='volunteer',
         user_agent=request.headers.get('User-Agent', '')[:500],
     ))
