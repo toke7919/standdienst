@@ -3,12 +3,8 @@
 
     <!-- ===== HERO ===== -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center">
-      <!-- Icon -->
-      <div class="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mb-8 border border-white/20 shadow-xl">
-        <CalendarDaysIcon class="w-10 h-10 text-white" />
-      </div>
-
-      <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">Standdienst</h1>
+      <!-- Logo -->
+      <img src="/logo.svg" alt="Standdienst" class="h-16 md:h-20 mb-8 drop-shadow-xl" />
       <p class="text-primary-200 text-lg md:text-xl max-w-2xl leading-relaxed mb-10">
         Die Plattform für Freiwilligenkoordination bei Vereinen und Veranstaltungen.
         Schichten planen, Helfer einteilen und Essensspenden verwalten – einfach, digital und DSGVO-konform.
