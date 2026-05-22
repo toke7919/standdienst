@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 72">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="30%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ── Icon mark (72 × 72) ── -->
+  <rect width="72" height="72" rx="16" fill="url(#g)"/>
+  <rect width="72" height="72" rx="16" fill="url(#shine)"/>
+
+  <!-- Person head -->
+  <circle cx="34" cy="26" r="8.6" fill="white"/>
+
+  <!-- Person shoulders -->
+  <path d="M 14 55 C 14 39 23 37 34 37 C 45 37 55 40 55 55 Z" fill="white"/>
+
+  <!-- Badge shadow -->
+  <circle cx="55" cy="17" r="12.5" fill="#065f46" opacity="0.3"/>
+  <!-- Badge -->
+  <circle cx="55" cy="17" r="11" fill="#10b981"/>
+
+  <!-- Check -->
+  <path d="M 49 17 L 54 22.5 L 61 11"
+        fill="none" stroke="white" stroke-width="2.6"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ── Wordmark ── -->
+  <!-- "Stand" — heavier -->
+  <text x="86" y="46"
+        font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"
+        font-size="28" font-weight="800" fill="white"
+        letter-spacing="-0.5">Stand</text>
+  <!-- "dienst" — lighter -->
+  <text x="183" y="46"
+        font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"
+        font-size="28" font-weight="400" fill="white"
+        fill-opacity="0.85" letter-spacing="-0.5">dienst</text>
+</svg>

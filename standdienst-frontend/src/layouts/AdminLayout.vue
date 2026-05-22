@@ -11,9 +11,7 @@
             class="h-8 w-8 object-contain rounded-lg flex-shrink-0"
             alt="Logo"
           />
-          <div v-else class="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center flex-shrink-0 border border-white/20">
-            <span class="text-white text-sm font-bold">{{ instanceInitial }}</span>
-          </div>
+          <img v-else src="/favicon.svg" class="w-8 h-8 rounded-lg flex-shrink-0" alt="Standdienst" />
           <span class="font-semibold text-white truncate">{{ instanceInfo?.site_title || 'Standdienst' }}</span>
         </RouterLink>
       </div>
@@ -81,9 +79,7 @@
           class="h-7 w-7 object-contain rounded-md flex-shrink-0"
           alt="Logo"
         />
-        <div v-else class="w-7 h-7 bg-white/15 rounded-md flex items-center justify-center flex-shrink-0 border border-white/20">
-          <span class="text-white text-xs font-bold">{{ instanceInitial }}</span>
-        </div>
+        <img v-else src="/favicon.svg" class="w-7 h-7 rounded-md flex-shrink-0" alt="Standdienst" />
         <span class="font-semibold text-white text-sm truncate">
           {{ instanceInfo?.site_title || (mobileSlug ? (instances.find(i => i.slug === mobileSlug)?.name || mobileSlug) : 'Admin') }}
         </span>

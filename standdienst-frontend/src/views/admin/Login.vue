@@ -3,11 +3,8 @@
     <div class="w-full max-w-md">
       <!-- Branding über der Karte -->
       <div class="text-center mb-8">
-        <div class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20 backdrop-blur-sm">
-          <span class="text-white text-2xl font-bold">S</span>
-        </div>
+        <img src="/logo.svg" alt="Standdienst" class="h-12 mx-auto mb-4 drop-shadow-lg" />
         <h1 class="text-2xl font-bold text-white">Admin-Anmeldung</h1>
-        <p class="text-primary-300 mt-1 text-sm">Standdienst Verwaltung</p>
       </div>
 
       <!-- Weiße Karte -->
