@@ -401,7 +401,8 @@ def meine_daten_export(slug):
     title = settings.site_title if settings else g.instance.name
     base_url = current_app.config.get('FRONTEND_URL', '')
     primary_color = settings.primary_color if settings else '#4f46e5'
-    logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
+    logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
+                if settings and settings.logo_filename else f'{base_url}/logo.png')
     global_settings = get_global_settings()
     copyright_text = global_settings.copyright_text if global_settings else None
     send_mail(v.email, f'Ihre Daten bei {title}',
@@ -524,7 +525,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         title = settings.site_title if settings else instance.name
         primary_color = settings.primary_color if settings else '#4f46e5'
         logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
-                    if settings and settings.logo_filename else None)
+                    if settings and settings.logo_filename else f'{base_url}/logo.png')
         from ..utils.settings_cache import get_global_settings
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
