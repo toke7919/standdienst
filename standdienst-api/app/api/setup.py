@@ -2,7 +2,7 @@
 import os
 from flask import Blueprint, request, jsonify
 
-from ..extensions import db
+from ..extensions import db, _real_ip
 from ..models import Admin, GlobalSettings, MailSettings
 
 setup_bp = Blueprint('setup', __name__)
@@ -21,7 +21,7 @@ def _check_setup_ip():
     if not allowed_env.strip():
         return None  # keine Einschränkung – jede IP darf Setup aufrufen
     allowed = _LOOPBACK | {ip.strip() for ip in allowed_env.split(',') if ip.strip()}
-    ip = request.remote_addr or ''
+    ip = _real_ip()
     if ip not in allowed:
         return jsonify(error='Setup-Zugriff von dieser IP nicht erlaubt'), 403
     return None

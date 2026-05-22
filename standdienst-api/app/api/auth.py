@@ -12,7 +12,7 @@ from flask_jwt_extended import (
 )
 from marshmallow import ValidationError
 
-from ..extensions import db, limiter
+from ..extensions import db, limiter, _real_ip
 from ..models import Admin, Organizer, Instance, ActivityLog
 from ..utils.auth import validate_password_strength
 from ..utils.mail import send_mail, build_reset_email
@@ -78,7 +78,7 @@ def login():
     data = request.get_json() or {}
     email = (data.get('email') or '').strip().lower()
     password = data.get('password', '')
-    ip = request.remote_addr
+    ip = _real_ip()
 
     user = (Admin.query.filter_by(email=email).first()
             or Organizer.query.filter_by(email=email).first())
@@ -110,7 +110,7 @@ def volunteer_login():
     slug = (data.get('slug') or '').strip()
     email = (data.get('email') or '').strip().lower()
     password = data.get('password', '')
-    ip = request.remote_addr
+    ip = _real_ip()
 
     instance = Instance.query.filter_by(slug=slug, is_active=True).first()
     if not instance:
@@ -163,7 +163,7 @@ def verify_2fa():
         backup_used = True
 
     access, refresh = _issue_tokens(user)
-    _log_activity(ActivityLog.LOGIN_SUCCESS, request.remote_addr,
+    _log_activity(ActivityLog.LOGIN_SUCCESS, _real_ip(),
                   user_name=user.email, actor_type=role)
     if backup_used:
         db.session.commit()
