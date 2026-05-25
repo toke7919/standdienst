@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">
+      <h1 class="text-2xl font-bold text-ink">
         {{ slug ? 'Dashboard' : 'Plattform-Dashboard' }}
       </h1>
       <a
@@ -31,12 +31,12 @@
 
           <!-- Belegungsring -->
           <div class="card flex flex-col items-center">
-            <p class="self-start text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 lg:mb-5">Dienstbelegung</p>
+            <p class="self-start text-xs font-semibold text-muted uppercase tracking-wider mb-3 lg:mb-5">Dienstbelegung</p>
 
             <!-- SVG Donut -->
             <div class="relative w-28 h-28 lg:w-36 lg:h-36 mb-3 lg:mb-5">
               <svg viewBox="0 0 100 100" class="w-full h-full">
-                <circle cx="50" cy="50" r="36" fill="none" stroke="#f3f4f6" stroke-width="11" />
+                <circle cx="50" cy="50" r="36" fill="none" stroke="var(--color-sand, #e5e0d8)" stroke-width="11" />
                 <circle
                   cx="50" cy="50" r="36"
                   fill="none"
@@ -52,7 +52,7 @@
                 <span class="text-2xl font-black tabular-nums leading-none" :style="`color:${ringColor}`">
                   {{ data.fill_rate }}%
                 </span>
-                <span class="text-[11px] text-gray-400 mt-0.5 font-medium">Belegung</span>
+                <span class="text-[11px] text-muted mt-0.5 font-medium">Belegung</span>
               </div>
             </div>
 
@@ -73,18 +73,18 @@
             <div class="w-full space-y-1.5">
               <div class="flex items-center gap-2 text-xs">
                 <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                <span class="text-gray-500 flex-1">Vollbesetzt</span>
-                <span class="font-bold tabular-nums text-gray-700">{{ data.shifts_full }}</span>
+                <span class="text-muted flex-1">Vollbesetzt</span>
+                <span class="font-bold tabular-nums text-ink/80">{{ data.shifts_full }}</span>
               </div>
               <div class="flex items-center gap-2 text-xs">
                 <div class="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0" />
-                <span class="text-gray-500 flex-1">Teilbesetzt</span>
-                <span class="font-bold tabular-nums text-gray-700">{{ data.shifts_free - data.shifts_empty }}</span>
+                <span class="text-muted flex-1">Teilbesetzt</span>
+                <span class="font-bold tabular-nums text-ink/80">{{ data.shifts_free - data.shifts_empty }}</span>
               </div>
               <div class="flex items-center gap-2 text-xs">
                 <div class="w-2.5 h-2.5 rounded-full bg-red-300 flex-shrink-0" />
-                <span class="text-gray-500 flex-1">Leer</span>
-                <span class="font-bold tabular-nums" :class="data.shifts_empty > 0 ? 'text-red-500' : 'text-gray-400'">
+                <span class="text-muted flex-1">Leer</span>
+                <span class="font-bold tabular-nums" :class="data.shifts_empty > 0 ? 'text-red-500' : 'text-muted'">
                   {{ data.shifts_empty }}
                 </span>
               </div>
@@ -93,7 +93,7 @@
 
           <!-- Nächster Termin -->
           <div class="card flex flex-col">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Nächster Termin</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Nächster Termin</p>
 
             <div v-if="data.next_event" class="flex-1 flex flex-col items-center justify-center py-2">
               <template v-if="data.next_event.days_until === 0">
@@ -105,13 +105,13 @@
                     class="text-5xl lg:text-7xl font-black tabular-nums leading-none"
                     :class="data.next_event.days_until <= 2 ? 'text-amber-500' : 'text-primary-600'"
                   >{{ data.next_event.days_until }}</span>
-                  <span class="text-xl font-semibold text-gray-300 mb-2 leading-none">
+                  <span class="text-xl font-semibold text-sand mb-2 leading-none">
                     {{ data.next_event.days_until === 1 ? 'Tag' : 'Tage' }}
                   </span>
                 </div>
               </template>
 
-              <p class="text-sm font-medium text-gray-600 text-center leading-snug">
+              <p class="text-sm font-medium text-ink/80 text-center leading-snug">
                 {{ data.next_event.date_formatted }}
               </p>
               <div
@@ -127,25 +127,25 @@
               </div>
             </div>
 
-            <div v-else class="flex-1 flex flex-col items-center justify-center text-gray-200 py-4">
+            <div v-else class="flex-1 flex flex-col items-center justify-center text-sand py-4">
               <CalendarDaysIcon class="w-16 h-16 mb-3" />
-              <p class="text-sm text-gray-400">Keine anstehenden Termine</p>
+              <p class="text-sm text-muted">Keine anstehenden Termine</p>
             </div>
           </div>
 
           <!-- Gesamtkapazität -->
           <div class="card flex flex-col">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Gesamtkapazität</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Gesamtkapazität</p>
 
             <div class="flex items-end gap-1.5 mb-3 lg:mb-5">
-              <span class="text-4xl lg:text-5xl font-black tabular-nums leading-none text-gray-900">{{ data.registrations }}</span>
-              <span class="text-xl text-gray-300 mb-1">/</span>
-              <span class="text-xl font-semibold text-gray-400 mb-1">{{ data.total_spots }}</span>
-              <span class="text-sm text-gray-400 mb-1.5">Plätze</span>
+              <span class="text-4xl lg:text-5xl font-black tabular-nums leading-none text-ink">{{ data.registrations }}</span>
+              <span class="text-xl text-sand mb-1">/</span>
+              <span class="text-xl font-semibold text-muted mb-1">{{ data.total_spots }}</span>
+              <span class="text-sm text-muted mb-1.5">Plätze</span>
             </div>
 
             <!-- Gradient progress bar -->
-            <div class="h-3 bg-gray-100 rounded-full overflow-hidden mb-1.5">
+            <div class="h-3 bg-bg-brand rounded-full overflow-hidden mb-1.5">
               <div
                 class="h-full rounded-full transition-all duration-700"
                 :class="capacityBarClass"
@@ -153,20 +153,20 @@
               />
             </div>
             <div class="flex justify-between items-center mb-5">
-              <span class="text-xs text-gray-400">{{ data.registrations }} belegt</span>
+              <span class="text-xs text-muted">{{ data.registrations }} belegt</span>
               <span class="text-sm font-bold tabular-nums" :class="capacityRateTextClass">{{ capacityRate }}%</span>
             </div>
 
             <!-- Freie Plätze sub-stat -->
-            <div class="mt-auto pt-4 border-t border-gray-50 flex items-center gap-3">
+            <div class="mt-auto pt-4 border-t border-sand flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                 <ClockIcon class="w-4 h-4 text-blue-500" />
               </div>
               <div>
-                <p class="text-lg font-black tabular-nums text-gray-800 leading-none">
+                <p class="text-lg font-black tabular-nums text-ink leading-none">
                   {{ Math.max(0, (data.total_spots || 0) - data.registrations) }}
                 </p>
-                <p class="text-xs text-gray-400">freie Plätze</p>
+                <p class="text-xs text-muted">freie Plätze</p>
               </div>
             </div>
           </div>
@@ -179,8 +179,8 @@
           <div class="card">
             <div class="flex items-start justify-between mb-3">
               <div>
-                <p class="text-2xl font-black tabular-nums text-gray-900">{{ data.volunteers }}</p>
-                <p class="text-sm text-gray-500 mt-0.5">Helfer</p>
+                <p class="text-2xl font-black tabular-nums text-ink">{{ data.volunteers }}</p>
+                <p class="text-sm text-muted mt-0.5">Helfer</p>
               </div>
               <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <UsersIcon class="w-5 h-5 text-blue-600" />
@@ -203,8 +203,8 @@
           <div class="card">
             <div class="flex items-start justify-between mb-3">
               <div>
-                <p class="text-2xl font-black tabular-nums text-gray-900">{{ data.registrations }}</p>
-                <p class="text-sm text-gray-500 mt-0.5">Anmeldungen</p>
+                <p class="text-2xl font-black tabular-nums text-ink">{{ data.registrations }}</p>
+                <p class="text-sm text-muted mt-0.5">Anmeldungen</p>
               </div>
               <div class="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
                 <ClipboardDocumentListIcon class="w-5 h-5 text-violet-600" />
@@ -219,21 +219,21 @@
                 :style="`height:${sparkBarPx(d.count)}px`"
               />
             </div>
-            <p class="text-xs text-gray-400 mt-1">7-Tage-Trend</p>
+            <p class="text-xs text-muted mt-1">7-Tage-Trend</p>
           </div>
 
           <!-- Leere Schichten – Alert-Karte -->
           <div
-            :class="['rounded-2xl shadow-sm border p-4 lg:p-6 transition-colors duration-300',
-                     data.shifts_empty > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100']"
+            :class="['rounded-md shadow-sm border p-4 lg:p-6 transition-colors duration-300',
+                     data.shifts_empty > 0 ? 'bg-red-50 border-red-200' : 'bg-soft border-sand']"
           >
             <div class="flex items-start justify-between mb-3">
               <div>
                 <p
                   class="text-2xl font-black tabular-nums"
-                  :class="data.shifts_empty > 0 ? 'text-red-600' : 'text-gray-900'"
+                  :class="data.shifts_empty > 0 ? 'text-red-600' : 'text-ink'"
                 >{{ data.shifts_empty }}</p>
-                <p class="text-sm text-gray-500 mt-0.5">Dienste leer</p>
+                <p class="text-sm text-muted mt-0.5">Dienste leer</p>
               </div>
               <div
                 class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -254,29 +254,29 @@
 
         <!-- ── Auslastung je Termin ──────────────────────────────────── -->
         <div v-if="data.dates_fill?.length" class="card overflow-hidden !p-0 mb-8">
-          <h2 class="text-base font-semibold text-gray-800 px-4 pt-4 pb-3">Auslastung je Termin</h2>
+          <h2 class="text-base font-semibold text-ink px-4 pt-4 pb-3">Auslastung je Termin</h2>
           <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50">
-                <th class="text-left px-4 py-2 font-medium text-gray-500">Datum</th>
-                <th class="text-right px-4 py-2 font-medium text-gray-500">Dienste</th>
-                <th class="text-right px-4 py-2 font-medium text-gray-500">Vollbelegt</th>
-                <th class="text-right px-4 py-2 font-medium text-gray-500 pr-5">Belegung</th>
+              <tr class="border-b border-sand bg-bg-brand">
+                <th class="text-left px-4 py-2 font-medium text-muted">Datum</th>
+                <th class="text-right px-4 py-2 font-medium text-muted">Dienste</th>
+                <th class="text-right px-4 py-2 font-medium text-muted">Vollbelegt</th>
+                <th class="text-right px-4 py-2 font-medium text-muted pr-5">Belegung</th>
               </tr>
             </thead>
             <tbody>
               <tr
                 v-for="d in data.dates_fill"
                 :key="d.date_id"
-                class="border-b border-gray-50 last:border-0 hover:bg-gray-50"
+                class="border-b border-sand last:border-0 hover:bg-bg-warm"
               >
-                <td class="px-4 py-2.5 font-medium text-gray-900">{{ d.date_formatted }}</td>
-                <td class="px-4 py-2.5 text-right text-gray-600">{{ d.shifts }}</td>
-                <td class="px-4 py-2.5 text-right text-gray-600">{{ d.shifts_full }}</td>
+                <td class="px-4 py-2.5 font-medium text-ink">{{ d.date_formatted }}</td>
+                <td class="px-4 py-2.5 text-right text-ink/80">{{ d.shifts }}</td>
+                <td class="px-4 py-2.5 text-right text-ink/80">{{ d.shifts_full }}</td>
                 <td class="px-4 py-2.5 text-right pr-5">
                   <div class="inline-flex items-center gap-2">
-                    <div class="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="w-20 h-2 bg-bg-brand rounded-full overflow-hidden">
                       <div
                         class="h-full rounded-full"
                         :class="fillBarColor(d.fill_rate)"
@@ -306,29 +306,29 @@
           <StatCard label="Essensspenden" :value="data.total_food_donations" color="amber" :icon="ShoppingBagIcon" />
         </div>
         <div v-if="data.instances?.length" class="card mb-8">
-          <h2 class="text-base font-semibold text-gray-800 mb-4">Instanzübersicht</h2>
+          <h2 class="text-base font-semibold text-ink mb-4">Instanzübersicht</h2>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
-                <tr class="border-b border-gray-100">
-                  <th class="text-left py-2 pr-4 font-medium text-gray-500">Instanz</th>
-                  <th class="text-right py-2 px-3 font-medium text-gray-500">Helfer</th>
-                  <th class="text-right py-2 px-3 font-medium text-gray-500">Dienste</th>
-                  <th class="text-right py-2 px-3 font-medium text-gray-500">Anmeldungen</th>
-                  <th class="text-right py-2 px-3 font-medium text-gray-500">Belegung</th>
+                <tr class="border-b border-sand">
+                  <th class="text-left py-2 pr-4 font-medium text-muted">Instanz</th>
+                  <th class="text-right py-2 px-3 font-medium text-muted">Helfer</th>
+                  <th class="text-right py-2 px-3 font-medium text-muted">Dienste</th>
+                  <th class="text-right py-2 px-3 font-medium text-muted">Anmeldungen</th>
+                  <th class="text-right py-2 px-3 font-medium text-muted">Belegung</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="inst in data.instances"
                   :key="inst.id"
-                  class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+                  class="border-b border-sand hover:bg-bg-warm cursor-pointer"
                   @click="$router.push(`/admin/${inst.slug}/dashboard`)"
                 >
-                  <td class="py-2 pr-4 font-medium text-gray-900">{{ inst.name }}</td>
-                  <td class="py-2 px-3 text-right text-gray-600">{{ inst.volunteers }}</td>
-                  <td class="py-2 px-3 text-right text-gray-600">{{ inst.shifts }}</td>
-                  <td class="py-2 px-3 text-right text-gray-600">{{ inst.registrations }}</td>
+                  <td class="py-2 pr-4 font-medium text-ink">{{ inst.name }}</td>
+                  <td class="py-2 px-3 text-right text-ink/80">{{ inst.volunteers }}</td>
+                  <td class="py-2 px-3 text-right text-ink/80">{{ inst.shifts }}</td>
+                  <td class="py-2 px-3 text-right text-ink/80">{{ inst.registrations }}</td>
                   <td class="py-2 px-3 text-right">
                     <span :class="fillBadgeColor(inst.fill_rate)" class="text-xs font-semibold px-2 py-0.5 rounded-full">
                       {{ inst.fill_rate }}%
@@ -343,10 +343,10 @@
 
       <!-- ── Letzte Aktivitäten (beide Dashboards) ──────────────────── -->
       <div v-if="data.recent_activity?.length" class="card overflow-hidden !p-0">
-        <h2 class="text-base font-semibold text-gray-800 px-4 pt-4 pb-3">Letzte Aktivitäten</h2>
+        <h2 class="text-base font-semibold text-ink px-4 pt-4 pb-3">Letzte Aktivitäten</h2>
 
         <!-- Mobile: gestapelte Liste (kein horizontales Overflow) -->
-        <div class="md:hidden divide-y divide-gray-50">
+        <div class="md:hidden divide-y divide-sand">
           <div
             v-for="log in data.recent_activity"
             :key="log.id"
@@ -355,11 +355,11 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-0.5 flex-wrap">
                 <EventBadge :type="log.event_type" />
-                <span class="text-xs text-gray-600 truncate">{{ log.volunteer_name || '—' }}</span>
+                <span class="text-xs text-ink/80 truncate">{{ log.volunteer_name || '—' }}</span>
               </div>
-              <p v-if="log.details" class="text-xs text-gray-400 truncate">{{ log.details }}</p>
+              <p v-if="log.details" class="text-xs text-muted truncate">{{ log.details }}</p>
             </div>
-            <span class="text-xs text-gray-300 flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
+            <span class="text-xs text-sand flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
           </div>
         </div>
 
@@ -369,16 +369,16 @@
             <tr
               v-for="log in data.recent_activity"
               :key="log.id"
-              class="border-t border-gray-50 hover:bg-gray-50"
+              class="border-t border-sand hover:bg-bg-warm"
             >
-              <td class="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs w-32 flex-shrink-0">
+              <td class="px-4 py-2.5 text-muted whitespace-nowrap text-xs w-32 flex-shrink-0">
                 {{ fmtTime(log.timestamp) }}
               </td>
               <td class="px-4 py-2.5">
                 <EventBadge :type="log.event_type" />
               </td>
-              <td class="px-4 py-2.5 text-gray-600 text-xs">{{ log.volunteer_name || '—' }}</td>
-              <td class="px-4 py-2.5 text-gray-500 text-xs max-w-xs truncate" :title="log.details">
+              <td class="px-4 py-2.5 text-ink/80 text-xs">{{ log.volunteer_name || '—' }}</td>
+              <td class="px-4 py-2.5 text-muted text-xs max-w-xs truncate" :title="log.details">
                 {{ log.details || '' }}
               </td>
             </tr>
@@ -387,7 +387,7 @@
       </div>
     </template>
 
-    <div v-else class="text-center text-gray-400 py-16">
+    <div v-else class="text-center text-muted py-16">
       Bitte eine Instanz auswählen, um das Dashboard anzuzeigen.
     </div>
   </div>
@@ -492,7 +492,7 @@ const EventBadge = defineComponent({
   props: { type: String },
   setup(props) {
     return () => {
-      const meta = EVENT_META[props.type] || { icon: null, label: props.type, color: 'bg-gray-100 text-gray-600' }
+      const meta = EVENT_META[props.type] || { icon: null, label: props.type, color: 'bg-bg-brand text-ink/80' }
       return h('span', {
         class: `inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}`,
       }, [
@@ -514,13 +514,13 @@ const StatCard = defineComponent({
       amber:   'bg-amber-100 text-amber-600',
       red:     'bg-red-100 text-red-600',
     }
-    return () => h('div', { class: 'bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100' }, [
+    return () => h('div', { class: 'bg-soft rounded-md p-4 lg:p-6 shadow-sm border border-sand' }, [
       h('div', { class: `w-9 h-9 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center mb-2 lg:mb-3 ${iconColors[props.color] || iconColors.blue}` }, [
         props.icon ? h(props.icon, { class: 'w-4 h-4 lg:w-5 lg:h-5' }) : null,
       ]),
-      h('p', { class: 'text-2xl lg:text-3xl font-bold text-gray-900 tabular-nums' }, String(props.value ?? '—')),
-      h('p', { class: 'text-sm text-gray-500 mt-0.5' }, props.label),
-      props.sub ? h('p', { class: 'text-xs text-gray-400 mt-1 leading-tight' }, props.sub) : null,
+      h('p', { class: 'text-2xl lg:text-3xl font-bold text-ink tabular-nums' }, String(props.value ?? '—')),
+      h('p', { class: 'text-sm text-muted mt-0.5' }, props.label),
+      props.sub ? h('p', { class: 'text-xs text-muted mt-1 leading-tight' }, props.sub) : null,
     ])
   },
 })
@@ -537,6 +537,6 @@ function fillTextColor(rate) {
 function fillBadgeColor(rate) {
   return rate >= 90 ? 'bg-emerald-100 text-emerald-700'
        : rate >= 50 ? 'bg-amber-100 text-amber-700'
-       : 'bg-gray-100 text-gray-500'
+       : 'bg-bg-brand text-muted'
 }
 </script>

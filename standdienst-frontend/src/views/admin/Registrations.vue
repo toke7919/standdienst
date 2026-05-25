@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Anmeldungen</h1>
+      <h1 class="text-2xl font-bold text-ink">Anmeldungen</h1>
       <button class="btn-primary" @click="openCreate(null)">Anmeldung hinzufügen</button>
     </div>
 
@@ -9,7 +9,7 @@
       <LoadingSpinner size="lg" />
     </div>
 
-    <div v-else-if="!enrichedGrid.length" class="card p-6 text-center text-gray-400">
+    <div v-else-if="!enrichedGrid.length" class="card p-6 text-center text-muted">
       Keine Dienste vorhanden.
     </div>
 
@@ -19,19 +19,19 @@
       <div v-for="section in enrichedGrid" :key="section.date_id">
         <!-- [overflow:clip] clippt Inhalte auf die Rundungen, ohne Scroll-Container zu erzeugen -->
         <div class="card [overflow:clip] !p-0">
-          <div class="h-1 bg-primary-500 rounded-t-2xl" />
-          <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
+          <div class="h-1 bg-primary-500 rounded-t-md" />
+          <div class="px-5 py-4 border-b border-sand flex items-center gap-2.5">
             <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
-            <h2 class="font-semibold text-gray-900">{{ section.date_formatted }}</h2>
+            <h2 class="font-semibold text-ink">{{ section.date_formatted }}</h2>
           </div>
           <!-- Stand-Spaltenheader -->
-          <div class="flex border-b border-gray-100 bg-gray-50">
-            <div class="w-14 flex-shrink-0 border-r border-gray-100" />
+          <div class="flex border-b border-sand bg-bg-brand">
+            <div class="w-14 flex-shrink-0 border-r border-sand" />
             <div class="flex flex-1" :style="`min-width: ${section.stands.length * MIN_COL_PX}px`">
               <div
                 v-for="stand in section.stands"
                 :key="stand.id"
-                class="flex-1 px-3 py-3 text-sm font-semibold text-gray-700 border-r border-gray-100 last:border-r-0 min-w-0 truncate"
+                class="flex-1 px-3 py-3 text-sm font-semibold text-ink/80 border-r border-sand last:border-r-0 min-w-0 truncate"
                 :style="`min-width: ${MIN_COL_PX}px`"
               >
                 {{ stand.name }}
@@ -43,13 +43,13 @@
           <div class="flex">
             <!-- Zeitachse -->
             <div
-              class="w-14 flex-shrink-0 relative border-r border-gray-100 bg-gray-50/50"
+              class="w-14 flex-shrink-0 relative border-r border-sand bg-bg-brand/50"
               :style="`height: ${section.gridHeight}px`"
             >
               <div
                 v-for="h in section.hours"
                 :key="h.label"
-                class="absolute right-2 text-[10px] text-gray-400 whitespace-nowrap"
+                class="absolute right-2 text-[10px] text-muted whitespace-nowrap"
                 :style="`top: ${h.pct}%; transform: translateY(${h.ty}%)`"
               >{{ h.label }}</div>
             </div>
@@ -62,14 +62,14 @@
               <div
                 v-for="({ stand, shiftItems }) in section.standShifts"
                 :key="stand.id"
-                class="relative flex-1 border-r border-gray-100 last:border-r-0"
+                class="relative flex-1 border-r border-sand last:border-r-0"
                 :style="`min-width: ${MIN_COL_PX}px`"
               >
                 <!-- Stunden-Rasterlinien -->
                 <div
                   v-for="h in section.hours"
                   :key="h.label"
-                  class="absolute inset-x-0 border-t border-gray-100/70"
+                  class="absolute inset-x-0 border-t border-sand/70"
                   :style="`top: ${h.pct}%`"
                 />
 
@@ -83,7 +83,7 @@
                 >
                   <!-- Kopfzeile: Zeit + Badge -->
                   <div class="flex items-start justify-between gap-1 px-2 pt-2 flex-shrink-0">
-                    <span class="text-[10px] font-semibold text-gray-700 leading-tight">{{ item.timeLabel }}</span>
+                    <span class="text-[10px] font-semibold text-ink/80 leading-tight">{{ item.timeLabel }}</span>
                     <span
                       class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-tight flex-shrink-0"
                       :class="spotBadgeClass(item.cell)"
@@ -108,7 +108,7 @@
                       :key="reg.id"
                       class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full leading-tight"
                       :class="reg.by_admin
-                        ? 'bg-white/80 text-gray-600 border border-gray-200'
+                        ? 'bg-white/80 text-ink/80 border border-sand'
                         : 'bg-primary-100 text-primary-700'"
                       :title="reg.by_admin ? 'Eingetragen durch Admin/Organisator' : 'Selbst angemeldet'"
                     >

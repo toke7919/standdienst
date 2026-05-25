@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Dienste</h1>
+      <h1 class="text-2xl font-bold text-ink">Dienste</h1>
       <button class="btn-primary" @click="openCreate">Neuer Dienst</button>
     </div>
 
@@ -14,15 +14,15 @@
       <div class="space-y-4">
         <div v-for="group in groupedShifts" :key="group.date" class="card overflow-hidden !p-0">
           <!-- Akzent-Streifen oben -->
-          <div class="h-1 bg-primary-500 rounded-t-2xl" />
+          <div class="h-1 bg-primary-500 rounded-t-md" />
 
           <!-- Datum-Kopf -->
-          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="px-5 py-4 border-b border-sand flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
-              <h2 class="font-semibold text-gray-900">{{ group.date }}</h2>
+              <h2 class="font-semibold text-ink">{{ group.date }}</h2>
             </div>
-            <span class="text-xs text-gray-400 flex-shrink-0">
+            <span class="text-xs text-muted flex-shrink-0">
               {{ group.total }} {{ group.total === 1 ? 'Dienst' : 'Dienste' }}
             </span>
           </div>
@@ -31,22 +31,22 @@
           <div>
             <template v-for="sg in group.standGroups" :key="sg.stand_name">
               <!-- Stand-Subheader -->
-              <div class="px-5 py-1.5 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-                <BuildingStorefrontIcon class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span class="text-xs font-semibold text-gray-500">{{ sg.stand_name }}</span>
+              <div class="px-5 py-1.5 bg-bg-brand border-b border-sand flex items-center gap-2">
+                <BuildingStorefrontIcon class="w-3.5 h-3.5 text-muted flex-shrink-0" />
+                <span class="text-xs font-semibold text-muted">{{ sg.stand_name }}</span>
               </div>
               <!-- Schicht-Zeilen -->
               <div
                 v-for="s in sg.shifts"
                 :key="s.id"
-                class="flex items-center px-5 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors duration-100"
+                class="flex items-center px-5 py-3 border-b border-sand last:border-0 hover:bg-bg-warm transition-colors duration-100"
               >
-                <p class="text-sm font-medium text-gray-800 flex-1">{{ s.time_range }}</p>
+                <p class="text-sm font-medium text-ink flex-1">{{ s.time_range }}</p>
                 <div class="flex flex-wrap items-center gap-2">
                   <span :class="s.is_full ? 'badge-green' : 'badge-red'">
                     {{ s.current_count }}/{{ s.max_volunteers }}
                   </span>
-                  <button class="hidden sm:inline text-xs text-gray-500 hover:text-gray-700 font-medium" @click="openDuplicate(s)">Duplizieren</button>
+                  <button class="hidden sm:inline text-xs text-muted hover:text-ink/80 font-medium" @click="openDuplicate(s)">Duplizieren</button>
                   <button class="text-xs text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(s)">Bearbeiten</button>
                   <button class="text-xs text-red-500 hover:text-red-700 font-medium" @click="deleteShift(s)">Löschen</button>
                 </div>
@@ -55,9 +55,9 @@
           </div>
         </div>
 
-        <div v-if="!groupedShifts.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
-          <ClockIcon class="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p class="text-gray-400 text-sm">Noch keine Dienste angelegt</p>
+        <div v-if="!groupedShifts.length" class="bg-soft rounded-md border border-sand shadow-sm py-16 text-center">
+          <ClockIcon class="w-10 h-10 text-sand mx-auto mb-3" />
+          <p class="text-muted text-sm">Noch keine Dienste angelegt</p>
         </div>
       </div>
 

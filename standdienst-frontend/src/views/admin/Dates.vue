@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Termine</h1>
+      <h1 class="text-2xl font-bold text-ink">Termine</h1>
       <button class="btn-primary" @click="openCreate">Neuer Termin</button>
     </div>
 
@@ -9,25 +9,25 @@
       <div
         v-for="d in dates"
         :key="d.id"
-        class="group bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
+        class="group bg-soft rounded-md border border-sand shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
       >
         <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
           <CalendarIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-gray-900">{{ d.formatted }}</p>
-          <p v-if="d.label" class="text-sm text-gray-500 mt-0.5">{{ d.label }}</p>
+          <p class="font-semibold text-ink">{{ d.formatted }}</p>
+          <p v-if="d.label" class="text-sm text-muted mt-0.5">{{ d.label }}</p>
         </div>
         <div class="flex items-center gap-3">
           <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(d)">Bearbeiten</button>
-          <span class="text-gray-200">|</span>
+          <span class="text-sand">|</span>
           <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteDate(d)">Löschen</button>
         </div>
       </div>
 
-      <div v-if="!dates.length" class="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
+      <div v-if="!dates.length" class="bg-soft rounded-md border border-sand shadow-sm py-16 text-center">
         <CalendarIcon class="w-10 h-10 text-primary-200 mx-auto mb-3" />
-        <p class="text-gray-400 text-sm">Noch keine Termine angelegt</p>
+        <p class="text-muted text-sm">Noch keine Termine angelegt</p>
       </div>
     </div>
 

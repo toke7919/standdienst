@@ -1,18 +1,18 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Essensspenden</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Essensspenden</h1>
 
     <!-- ── Kategorien ──────────────────────────────────────────────── -->
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-800">Kategorien</h2>
+      <h2 class="text-lg font-semibold text-ink">Kategorien</h2>
       <button class="btn-secondary text-sm" @click="openCreateType">Neue Kategorie</button>
     </div>
 
     <div class="card mb-8 space-y-2">
-      <div v-for="t in foodTypes" :key="t.id" class="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50">
+      <div v-for="t in foodTypes" :key="t.id" class="flex items-center justify-between p-3 rounded-lg border border-sand bg-bg-brand">
         <div>
-          <p class="font-medium text-gray-900">{{ t.name }}</p>
-          <p class="text-xs text-gray-500">
+          <p class="font-medium text-ink">{{ t.name }}</p>
+          <p class="text-xs text-muted">
             {{ t.event_date_label || '' }}
             <span v-if="t.delivery_datetime"> · Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
             <span v-if="t.delivery_location"> · {{ t.delivery_location }}</span>
@@ -23,49 +23,49 @@
           <button class="text-xs text-red-600 hover:underline" @click="deleteType(t)">Löschen</button>
         </div>
       </div>
-      <p v-if="!foodTypes.length" class="text-center text-gray-400 py-4">Noch keine Kategorien</p>
+      <p v-if="!foodTypes.length" class="text-center text-muted py-4">Noch keine Kategorien</p>
     </div>
 
     <!-- ── Angemeldete Spenden je Kategorie ───────────────────────── -->
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-800">Angemeldete Spenden</h2>
+      <h2 class="text-lg font-semibold text-ink">Angemeldete Spenden</h2>
       <button class="btn-secondary text-sm" @click="openCreateDonation(null)">Spende eintragen</button>
     </div>
 
-    <div v-if="!foodTypes.length" class="card p-6 text-center text-gray-400">Noch keine Kategorien angelegt.</div>
+    <div v-if="!foodTypes.length" class="card p-6 text-center text-muted">Noch keine Kategorien angelegt.</div>
 
     <div v-else class="space-y-6">
       <div v-for="t in foodTypes" :key="`don-${t.id}`">
         <div class="card overflow-hidden !p-0">
-          <div class="h-1 bg-primary-500 rounded-t-2xl" />
-          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div class="h-1 bg-primary-500 rounded-t-md" />
+          <div class="px-5 py-4 border-b border-sand flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
               <div>
-                <p class="font-semibold text-gray-900 text-sm">{{ t.name }}</p>
-                <p v-if="t.event_date_label || t.delivery_datetime" class="text-xs text-gray-400 mt-0.5">
+                <p class="font-semibold text-ink text-sm">{{ t.name }}</p>
+                <p v-if="t.event_date_label || t.delivery_datetime" class="text-xs text-muted mt-0.5">
                   {{ t.event_date_label }}<span v-if="t.delivery_datetime"> · Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
                 </p>
               </div>
             </div>
-            <span class="text-xs text-gray-400 flex-shrink-0">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
+            <span class="text-xs text-muted flex-shrink-0">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
           </div>
           <!-- Mobile: gestapelte Liste -->
-          <div class="md:hidden divide-y divide-gray-50">
+          <div class="md:hidden divide-y divide-sand">
             <div v-for="d in donationsByType(t.id)" :key="d.id" class="flex items-start gap-3 px-4 py-3">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="font-medium text-gray-900 text-sm">{{ d.volunteer_name }}</span>
+                  <span class="font-medium text-ink text-sm">{{ d.volunteer_name }}</span>
                   <span
                     v-if="d.by_admin"
-                    class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200"
+                    class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-bg-brand text-muted border border-sand"
                     title="Durch Admin/Organisator eingetragen"
                   >
                     <PencilSquareIcon class="w-2.5 h-2.5" />
                     Admin
                   </span>
                 </div>
-                <p v-if="d.description" class="text-xs text-gray-500 mt-0.5">{{ d.description }}</p>
+                <p v-if="d.description" class="text-xs text-muted mt-0.5">{{ d.description }}</p>
                 <span v-if="d.needs_refrigeration" class="badge-blue mt-1 inline-flex">Kühlung</span>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -73,27 +73,27 @@
                 <button class="text-xs text-red-600 hover:underline" @click="deleteDonation(d)">Entfernen</button>
               </div>
             </div>
-            <div v-if="!donationsByType(t.id).length" class="px-4 py-5 text-center text-gray-400 text-xs">Keine Spenden</div>
+            <div v-if="!donationsByType(t.id).length" class="px-4 py-5 text-center text-muted text-xs">Keine Spenden</div>
           </div>
 
           <!-- Desktop: Tabelle -->
           <table class="hidden md:table w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-100">
+            <thead class="bg-bg-brand border-b border-sand">
               <tr>
-                <th class="px-4 py-2.5 text-left font-medium text-gray-500">Name</th>
-                <th class="px-4 py-2.5 text-left font-medium text-gray-500">Beschreibung</th>
-                <th class="px-4 py-2.5 text-left font-medium text-gray-500">Kühlung</th>
+                <th class="px-4 py-2.5 text-left font-medium text-muted">Name</th>
+                <th class="px-4 py-2.5 text-left font-medium text-muted">Beschreibung</th>
+                <th class="px-4 py-2.5 text-left font-medium text-muted">Kühlung</th>
                 <th class="px-4 py-2.5" />
               </tr>
             </thead>
             <tbody>
-              <tr v-for="d in donationsByType(t.id)" :key="d.id" class="border-b border-gray-50 hover:bg-gray-50">
+              <tr v-for="d in donationsByType(t.id)" :key="d.id" class="border-b border-sand hover:bg-bg-warm">
                 <td class="px-4 py-3">
                   <span class="inline-flex items-center gap-1.5">
                     {{ d.volunteer_name }}
                     <span
                       v-if="d.by_admin"
-                      class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200"
+                      class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-bg-brand text-muted border border-sand"
                       title="Durch Admin/Organisator eingetragen"
                     >
                       <PencilSquareIcon class="w-2.5 h-2.5" />
@@ -101,7 +101,7 @@
                     </span>
                   </span>
                 </td>
-                <td class="px-4 py-3 text-gray-500">{{ d.description }}</td>
+                <td class="px-4 py-3 text-muted">{{ d.description }}</td>
                 <td class="px-4 py-3">
                   <span v-if="d.needs_refrigeration" class="badge-blue">Kühlung</span>
                 </td>
@@ -113,7 +113,7 @@
                 </td>
               </tr>
               <tr v-if="!donationsByType(t.id).length">
-                <td colspan="4" class="px-4 py-5 text-center text-gray-400 text-xs">Keine Spenden</td>
+                <td colspan="4" class="px-4 py-5 text-center text-muted text-xs">Keine Spenden</td>
               </tr>
             </tbody>
           </table>
@@ -141,7 +141,7 @@
         </div>
         <div v-if="editingDonation || selectedTypeRefrigeration" class="flex items-center gap-2">
           <input v-model="donationForm.needs_refrigeration" type="checkbox" id="don-refrig" />
-          <label for="don-refrig" class="text-sm text-gray-700">Kühlung erforderlich</label>
+          <label for="don-refrig" class="text-sm text-ink/80">Kühlung erforderlich</label>
         </div>
         <p v-if="donationError" class="text-sm text-red-600">{{ donationError }}</p>
         <div class="flex gap-3 justify-end pt-2">
@@ -163,20 +163,20 @@
         </div>
         <div><label class="label">Name</label><input v-model="typeForm.name" class="input" required /></div>
         <div>
-          <label class="label">Abgabezeitpunkt <span class="font-normal text-gray-400 text-xs">(optional)</span></label>
+          <label class="label">Abgabezeitpunkt <span class="font-normal text-muted text-xs">(optional)</span></label>
           <input v-model="typeForm.delivery_datetime" type="datetime-local" class="input" />
         </div>
         <div>
-          <label class="label">Abgabeort <span class="font-normal text-gray-400 text-xs">(optional)</span></label>
+          <label class="label">Abgabeort <span class="font-normal text-muted text-xs">(optional)</span></label>
           <input v-model="typeForm.delivery_location" class="input" maxlength="200" />
         </div>
         <div>
-          <label class="label">Hinweise <span class="font-normal text-gray-400 text-xs">(optional)</span></label>
+          <label class="label">Hinweise <span class="font-normal text-muted text-xs">(optional)</span></label>
           <textarea v-model="typeForm.notes" class="input" rows="2" />
         </div>
         <div class="flex items-center gap-2">
           <input v-model="typeForm.refrigeration_enabled" type="checkbox" id="refrig" />
-          <label for="refrig" class="text-sm text-gray-700">Kühlung-Option für Helfer anzeigen</label>
+          <label for="refrig" class="text-sm text-ink/80">Kühlung-Option für Helfer anzeigen</label>
         </div>
         <p v-if="typeError" class="text-sm text-red-600">{{ typeError }}</p>
         <div class="flex gap-3 justify-end pt-2">
