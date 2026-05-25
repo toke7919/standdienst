@@ -244,7 +244,7 @@ async function sendAuskunft() {
     await adminApi.sendDsgvoAuskunft(route.params.slug, volunteer.value.id)
     ui.success('Datenauskunft wurde versendet')
   } catch (e) {
-    ui.error(e.response?.data?.error || 'Versand fehlgeschlagen')
+    ui.err(e.response?.data?.error || 'Versand fehlgeschlagen')
   } finally {
     auskunftLoading.value = false
   }
@@ -263,7 +263,7 @@ async function softDelete() {
     ui.success('Helfer pseudonymisiert')
     await load()
   } catch (e) {
-    ui.error(e.response?.data?.error || 'Fehler')
+    ui.err(e.response?.data?.error || 'Fehler')
   } finally {
     deleteLoading.value = false
   }
