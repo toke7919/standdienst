@@ -26,26 +26,26 @@ def upgrade():
 
     with op.batch_alter_table('organizer_instances', schema=None) as batch_op:
         batch_op.add_column(sa.Column('is_instance_admin', sa.Boolean(), nullable=False,
-                                      server_default=sa.text('0')))
+                                      server_default=sa.false()))
 
     # Datenmigration: is_instance_admin aus Organizer-Tabelle in die Join-Tabelle übernehmen
     conn = op.get_bind()
     admins = conn.execute(
-        sa.text("SELECT id FROM organizers WHERE is_instance_admin = 1")
+        sa.text("SELECT id FROM organizers WHERE is_instance_admin = true")
     ).fetchall()
     if admins:
         admin_ids = [row[0] for row in admins]
         for oid in admin_ids:
             conn.execute(
                 sa.text(
-                    "UPDATE organizer_instances SET is_instance_admin = 1 WHERE organizer_id = :oid"
+                    "UPDATE organizer_instances SET is_instance_admin = true WHERE organizer_id = :oid"
                 ),
                 {"oid": oid},
             )
 
     with op.batch_alter_table('organizers', schema=None) as batch_op:
         batch_op.add_column(sa.Column('notifications_enabled', sa.Boolean(), nullable=False,
-                                      server_default=sa.text('1')))
+                                      server_default=sa.true()))
 
 
 def downgrade():
