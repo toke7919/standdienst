@@ -206,8 +206,8 @@
                 <p class="text-2xl font-black tabular-nums text-ink">{{ data.registrations }}</p>
                 <p class="text-sm text-muted mt-0.5">Anmeldungen</p>
               </div>
-              <div class="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
-                <ClipboardDocumentListIcon class="w-5 h-5 text-violet-600" />
+              <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                <ClipboardDocumentListIcon class="w-5 h-5 text-primary-600" />
               </div>
             </div>
             <div v-if="data.daily_registrations?.length" class="flex items-end gap-px h-8">
@@ -215,7 +215,7 @@
                 v-for="d in data.daily_registrations"
                 :key="d.date"
                 class="flex-1 rounded-t-[2px] transition-all duration-500"
-                :class="isToday(d.date) ? 'bg-violet-500' : 'bg-violet-200'"
+                :class="isToday(d.date) ? 'bg-primary-500' : 'bg-primary-200'"
                 :style="`height:${sparkBarPx(d.count)}px`"
               />
             </div>
@@ -510,7 +510,7 @@ const StatCard = defineComponent({
     const iconColors = {
       blue:    'bg-blue-100 text-blue-600',
       emerald: 'bg-emerald-100 text-emerald-600',
-      violet:  'bg-violet-100 text-violet-600',
+      violet:  'bg-primary-100 text-primary-600',
       amber:   'bg-amber-100 text-amber-600',
       red:     'bg-red-100 text-red-600',
     }

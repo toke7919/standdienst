@@ -51,7 +51,7 @@
             <div v-for="r in volunteer.registrations" :key="r.id" class="px-4 py-3">
               <p class="font-medium text-sm text-ink">{{ r.stand }}</p>
               <p class="text-xs text-muted mt-0.5">{{ r.date }} · {{ r.time_range }}</p>
-              <span v-if="r.registered_by_admin" class="inline-block mt-1 text-xs text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Admin</span>
+              <span v-if="r.registered_by_admin" class="inline-block mt-1 text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Admin</span>
             </div>
           </div>
           <!-- Desktop -->
@@ -72,7 +72,7 @@
                 <td class="px-4 py-3 text-ink/80 whitespace-nowrap">{{ r.time_range }}</td>
                 <td class="px-4 py-3 text-muted whitespace-nowrap">{{ formatDate(r.registered_at) }}</td>
                 <td class="px-4 py-3">
-                  <span v-if="r.registered_by_admin" class="text-xs text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Admin</span>
+                  <span v-if="r.registered_by_admin" class="text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Admin</span>
                   <span v-else class="text-xs text-muted">Helfer</span>
                 </td>
               </tr>

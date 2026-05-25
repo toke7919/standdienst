@@ -15,7 +15,7 @@
             <div class="flex items-center gap-2 mt-1.5 flex-wrap">
               <span
                 v-if="o.is_instance_admin"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
               >Instanz-Admin</span>
               <span v-else class="text-xs text-muted">Organisator</span>
               <span class="text-sand">·</span>
@@ -48,7 +48,7 @@
             <td class="px-4 py-3">
               <span
                 v-if="o.is_instance_admin"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
               >
                 Instanz-Admin
               </span>

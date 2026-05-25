@@ -43,16 +43,16 @@
           <template v-if="updateInfo.update_available">
             <div class="border-t border-sand pt-4">
               <p class="text-xs text-muted uppercase tracking-wide mb-0.5">Neue Version</p>
-              <p class="font-semibold text-indigo-700 text-lg font-mono">{{ updateInfo.latest_version }}</p>
+              <p class="font-semibold text-primary-700 text-lg font-mono">{{ updateInfo.latest_version }}</p>
             </div>
-            <div v-if="updateInfo.latest_release_notes" class="border border-indigo-100 rounded-lg bg-indigo-50/50">
+            <div v-if="updateInfo.latest_release_notes" class="border border-primary-200 rounded-lg bg-primary-50/50">
               <button type="button"
-                      class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                      class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-50 rounded-lg"
                       @click="showLatestNotes = !showLatestNotes">
                 Release-Notes {{ updateInfo.latest_version }}
-                <span class="text-indigo-400 text-xs">{{ showLatestNotes ? '▲' : '▼' }}</span>
+                <span class="text-primary-400 text-xs">{{ showLatestNotes ? '▲' : '▼' }}</span>
               </button>
-              <div v-if="showLatestNotes" class="px-4 pb-4 pt-1 text-sm text-ink/80 whitespace-pre-wrap border-t border-indigo-100">
+              <div v-if="showLatestNotes" class="px-4 pb-4 pt-1 text-sm text-ink/80 whitespace-pre-wrap border-t border-primary-200">
                 {{ updateInfo.latest_release_notes }}
               </div>
             </div>

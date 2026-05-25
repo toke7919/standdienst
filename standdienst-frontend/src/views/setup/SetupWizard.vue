@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4">
+  <div class="min-h-screen bg-gradient-to-br from-bg-brand to-soft flex items-center justify-center p-4">
     <div class="w-full max-w-lg">
 
       <!-- Header -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-md bg-indigo-600 text-white text-2xl font-bold mb-4">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-md bg-primary-600 text-white text-2xl font-bold mb-4">
           S
         </div>
         <h1 class="text-2xl font-bold text-ink">Standdienst einrichten</h1>
@@ -15,7 +15,7 @@
       <div class="flex gap-1.5 mb-8">
         <div v-for="i in totalSteps" :key="i"
              class="h-1.5 flex-1 rounded-full transition-colors duration-300"
-             :class="i <= step ? 'bg-indigo-600' : 'bg-sand'" />
+             :class="i <= step ? 'bg-primary-600' : 'bg-sand'" />
       </div>
 
       <!-- ── Schritt 1: Willkommen ── -->
@@ -26,10 +26,10 @@
           Schritten durch die Ersteinrichtung.
         </p>
         <ul class="space-y-2 mb-6 text-sm text-ink/80">
-          <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">1.</span> Admin-Account anlegen</li>
-          <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">2.</span> Basis-URL konfigurieren</li>
-          <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">3.</span> Mail-Server einrichten (optional)</li>
-          <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">4.</span> GitHub-Token für Updates (optional)</li>
+          <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">1.</span> Admin-Account anlegen</li>
+          <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">2.</span> Basis-URL konfigurieren</li>
+          <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">3.</span> Mail-Server einrichten (optional)</li>
+          <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">4.</span> GitHub-Token für Updates (optional)</li>
         </ul>
         <button class="btn-primary w-full" @click="step = 2">Einrichtung starten</button>
       </div>
@@ -110,7 +110,7 @@
           Für Willkommens-Mails und Passwort-Reset-Links. Kann später in den Admin-Einstellungen
           geändert werden.
         </p>
-        <button class="text-xs text-indigo-600 underline mb-5" type="button"
+        <button class="text-xs text-primary-600 underline mb-5" type="button"
                 @click="step = 5">Diesen Schritt überspringen →</button>
 
         <form @submit.prevent="submitMail" class="space-y-4">
@@ -167,7 +167,7 @@
           Ein GitHub Personal Access Token (PAT) ermöglicht automatische Software-Updates
           direkt aus dem Admin-Bereich. Benötigt werden die Berechtigungen <code class="text-xs bg-bg-brand px-1 rounded">repo</code> oder <code class="text-xs bg-bg-brand px-1 rounded">contents:read</code>.
         </p>
-        <button class="text-xs text-indigo-600 underline mb-5" type="button"
+        <button class="text-xs text-primary-600 underline mb-5" type="button"
                 @click="finishSetup">Diesen Schritt überspringen →</button>
 
         <form @submit.prevent="submitPat" class="space-y-4">

@@ -51,7 +51,7 @@
                 >Herunterladen</a>
                 <button
                   v-if="b.type === 'encrypted'"
-                  class="text-indigo-600 hover:underline text-xs whitespace-nowrap"
+                  class="text-primary-600 hover:underline text-xs whitespace-nowrap"
                   @click="restore(b.filename)"
                 >Wiederherstellen</button>
                 <button class="text-red-500 hover:underline text-xs" @click="del(b.filename)">
