@@ -1,13 +1,13 @@
 <template>
   <div class="max-w-md">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Zwei-Faktor-Authentifizierung</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Zwei-Faktor-Authentifizierung</h1>
 
     <div class="card space-y-6">
       <template v-if="!auth.user?.totp_enabled || backupCodes.length">
 
         <!-- Schritt 1: Noch nicht eingerichtet -->
         <template v-if="!setupData && !backupCodes.length">
-          <p class="text-sm text-gray-600">
+          <p class="text-sm text-ink/80">
             2FA schützt dein Konto durch einen zusätzlichen Code aus einer Authenticator-App (z.B. Google Authenticator, Authy).
           </p>
           <button class="btn-primary" :disabled="loading" @click="startSetup">
@@ -19,12 +19,12 @@
         <!-- Schritt 2: QR-Code + Bestätigungscode -->
         <template v-else-if="setupData && !backupCodes.length">
           <div>
-            <p class="text-sm font-medium text-gray-700 mb-2">QR-Code scannen:</p>
-            <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-gray-200 rounded-lg" />
+            <p class="text-sm font-medium text-ink/80 mb-2">QR-Code scannen:</p>
+            <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-sand rounded-lg" />
           </div>
           <div>
-            <p class="text-sm text-gray-500 mb-1">Oder manuell eingeben:</p>
-            <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">{{ setupData.secret }}</code>
+            <p class="text-sm text-muted mb-1">Oder manuell eingeben:</p>
+            <code class="text-xs bg-bg-brand px-2 py-1 rounded font-mono">{{ setupData.secret }}</code>
           </div>
           <form @submit.prevent="confirm" class="space-y-3">
             <div>
@@ -54,7 +54,7 @@
             <code
               v-for="c in backupCodes"
               :key="c"
-              class="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-mono text-gray-800 text-center tracking-widest select-all"
+              class="text-sm bg-bg-brand border border-sand rounded-lg px-3 py-2 font-mono text-ink text-center tracking-widest select-all"
             >{{ c }}</code>
           </div>
 
@@ -74,8 +74,8 @@
           </div>
 
           <label class="flex items-start gap-3 cursor-pointer select-none">
-            <input type="checkbox" v-model="codesConfirmed" class="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-            <span class="text-sm text-gray-700">Ich habe meine Backup-Codes an einem sicheren Ort gespeichert.</span>
+            <input type="checkbox" v-model="codesConfirmed" class="mt-0.5 h-4 w-4 rounded border-sand text-primary-600 focus:ring-primary-500" />
+            <span class="text-sm text-ink/80">Ich habe meine Backup-Codes an einem sicheren Ort gespeichert.</span>
           </label>
 
           <button class="btn-primary w-full" :disabled="!codesConfirmed" @click="finishSetup">
