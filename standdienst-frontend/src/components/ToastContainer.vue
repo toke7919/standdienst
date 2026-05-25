@@ -31,7 +31,7 @@ const colorClass = (type) => ({
   error: 'bg-red-50 text-red-800 border border-red-200',
   warning: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
   info: 'bg-blue-50 text-blue-800 border border-blue-200',
-}[type] || 'bg-gray-50 text-gray-800 border border-gray-200')
+}[type] || 'bg-bg-brand text-ink border border-sand')
 
 const iconFor = (type) => ({
   success: CheckCircleIcon,

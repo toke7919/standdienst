@@ -8,7 +8,7 @@
       </div>
 
       <!-- Weiße Karte -->
-      <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <div class="bg-soft rounded-md shadow-2xl p-8">
         <form @submit.prevent="submit" class="space-y-4">
           <div>
             <label class="label">E-Mail</label>
@@ -27,10 +27,10 @@
 
         <div class="relative my-5">
           <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-200"></div>
+            <div class="w-full border-t border-sand"></div>
           </div>
-          <div class="relative flex justify-center text-xs text-gray-400">
-            <span class="bg-white px-2">oder</span>
+          <div class="relative flex justify-center text-xs text-muted">
+            <span class="bg-soft px-2">oder</span>
           </div>
         </div>
 

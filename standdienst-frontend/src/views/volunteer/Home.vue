@@ -19,28 +19,28 @@
       <div class="relative z-10 -mt-12 space-y-3">
         <RouterLink :to="`/${slug}/shifts`" class="card-interactive block">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0
+            <div class="w-12 h-12 rounded-md bg-primary-100 flex items-center justify-center flex-shrink-0
                         transition-colors duration-150 group-hover:bg-primary-200">
               <CalendarIcon class="w-6 h-6 text-primary-600" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-gray-900">Dienste</p>
-              <p class="text-sm text-gray-500 mt-0.5">Dienste ansehen und dich einteilen</p>
+              <p class="font-semibold text-ink">Dienste</p>
+              <p class="text-sm text-muted mt-0.5">Dienste ansehen und dich einteilen</p>
             </div>
-            <ChevronRightIcon class="w-5 h-5 text-gray-300 flex-shrink-0" />
+            <ChevronRightIcon class="w-5 h-5 text-sand flex-shrink-0" />
           </div>
         </RouterLink>
 
         <RouterLink :to="`/${slug}/food`" class="card-interactive block">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0 transition-colors duration-150">
+            <div class="w-12 h-12 rounded-md bg-primary-100 flex items-center justify-center flex-shrink-0 transition-colors duration-150">
               <ShoppingBagIcon class="w-6 h-6 text-primary-600" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-gray-900">Essensspende</p>
-              <p class="text-sm text-gray-500 mt-0.5">Mitgebrachtes eintragen und Übersicht ansehen</p>
+              <p class="font-semibold text-ink">Essensspende</p>
+              <p class="text-sm text-muted mt-0.5">Mitgebrachtes eintragen und Übersicht ansehen</p>
             </div>
-            <ChevronRightIcon class="w-5 h-5 text-gray-300 flex-shrink-0" />
+            <ChevronRightIcon class="w-5 h-5 text-sand flex-shrink-0" />
           </div>
         </RouterLink>
       </div>

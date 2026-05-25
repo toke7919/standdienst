@@ -1,11 +1,11 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Import</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Import</h1>
 
     <div class="max-w-2xl space-y-6">
       <div class="card">
-        <h2 class="text-base font-semibold text-gray-800 mb-2">Vorlagen herunterladen</h2>
-        <p class="text-sm text-gray-500 mb-4">
+        <h2 class="text-base font-semibold text-ink mb-2">Vorlagen herunterladen</h2>
+        <p class="text-sm text-muted mb-4">
           Lade eine Vorlage herunter, fülle sie aus und importiere sie unten.
         </p>
         <div class="flex gap-3">
@@ -22,7 +22,7 @@
       </div>
 
       <div class="card">
-        <h2 class="text-base font-semibold text-gray-800 mb-4">Schichten importieren</h2>
+        <h2 class="text-base font-semibold text-ink mb-4">Schichten importieren</h2>
         <div class="space-y-3">
           <div>
             <label class="label">Datei auswählen (CSV, XLSX oder ODS)</label>

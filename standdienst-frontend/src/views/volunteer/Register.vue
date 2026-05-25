@@ -16,15 +16,15 @@
     </div>
 
     <!-- Formular -->
-    <div class="flex-1 bg-white rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
+    <div class="flex-1 bg-soft rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
       <div class="max-w-md mx-auto">
 
-        <div v-if="settings?.site_locked" class="rounded-2xl text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
+        <div v-if="settings?.site_locked" class="rounded-md text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
           <p class="font-medium">Anmeldung gesperrt</p>
           <p v-if="settings.lock_message" class="text-sm mt-1">{{ settings.lock_message }}</p>
         </div>
 
-        <div v-else-if="loggedIn" class="rounded-2xl text-center text-green-800 bg-green-50 border border-green-200 p-5">
+        <div v-else-if="loggedIn" class="rounded-md text-center text-green-800 bg-green-50 border border-green-200 p-5">
           <p class="font-semibold">Registrierung erfolgreich!</p>
           <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
         </div>
@@ -42,10 +42,10 @@
           </div>
 
           <div>
-            <label class="label">E-Mail <span class="text-gray-400 text-xs">(optional)</span></label>
+            <label class="label">E-Mail <span class="text-muted text-xs">(optional)</span></label>
             <input v-model="form.email" type="email" class="input" autocomplete="email"
                    placeholder="Für Passwort-Einrichtung per Mail" />
-            <p class="text-xs text-gray-400 mt-1">Ohne E-Mail wirst du direkt eingeloggt (anonymer Zugang).</p>
+            <p class="text-xs text-muted mt-1">Ohne E-Mail wirst du direkt eingeloggt (anonymer Zugang).</p>
           </div>
 
           <div>
@@ -62,7 +62,7 @@
 
           <div v-if="hasPrivacyPolicy" class="flex items-start gap-2">
             <input v-model="form.consent" type="checkbox" id="consent" class="mt-1" />
-            <label for="consent" class="text-sm text-gray-600">
+            <label for="consent" class="text-sm text-ink/80">
               Ich habe die
               <RouterLink :to="`/${slug}/datenschutz`" class="text-primary-600 underline">
                 Datenschutzerklärung
@@ -80,15 +80,15 @@
         </form>
 
         <div class="mt-5 text-center">
-          <RouterLink :to="`/${slug}/login`" class="text-sm text-gray-400 hover:text-gray-600">
+          <RouterLink :to="`/${slug}/login`" class="text-sm text-muted hover:text-ink/80">
             Bereits registriert? Anmelden
           </RouterLink>
         </div>
 
-        <footer class="mt-8 text-center text-xs text-gray-400 space-y-1">
+        <footer class="mt-8 text-center text-xs text-muted space-y-1">
           <div class="flex justify-center gap-4">
-            <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
-            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+            <RouterLink :to="`/${slug}/impressum`" class="hover:text-ink/80">Impressum</RouterLink>
+            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-ink/80">Datenschutz</RouterLink>
           </div>
           <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
         </footer>

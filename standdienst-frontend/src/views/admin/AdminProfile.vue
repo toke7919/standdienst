@@ -1,10 +1,10 @@
 <template>
   <div class="max-w-lg space-y-6">
-    <h1 class="text-2xl font-bold text-gray-900">Profil bearbeiten</h1>
+    <h1 class="text-2xl font-bold text-ink">Profil bearbeiten</h1>
 
     <!-- Stammdaten -->
     <div class="card space-y-4">
-      <h2 class="text-base font-semibold text-gray-800">Persönliche Daten</h2>
+      <h2 class="text-base font-semibold text-ink">Persönliche Daten</h2>
       <form @submit.prevent="saveProfile" class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -23,7 +23,7 @@
         <div>
           <label class="label">
             Neues Passwort
-            <span class="text-gray-400 font-normal text-xs">(leer lassen zum Beibehalten)</span>
+            <span class="text-muted font-normal text-xs">(leer lassen zum Beibehalten)</span>
           </label>
           <div class="relative">
             <input
@@ -34,7 +34,7 @@
             />
             <button
               type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80"
               @click="showPw = !showPw"
             >
               <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
@@ -60,7 +60,7 @@
     <!-- 2FA -->
     <div class="card space-y-4">
       <div class="flex items-center gap-2">
-        <h2 class="text-base font-semibold text-gray-800">Zwei-Faktor-Authentifizierung</h2>
+        <h2 class="text-base font-semibold text-ink">Zwei-Faktor-Authentifizierung</h2>
         <span v-if="auth.user?.totp_enabled" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
           <ShieldCheckIcon class="w-3 h-3" />Aktiv
         </span>
@@ -68,7 +68,7 @@
 
       <template v-if="!auth.user?.totp_enabled">
         <template v-if="!twoFaSetupData">
-          <p class="text-sm text-gray-600">
+          <p class="text-sm text-ink/80">
             2FA schützt dein Konto durch einen zusätzlichen Code aus einer Authenticator-App
             (z.B. Google Authenticator, Authy).
           </p>
@@ -79,12 +79,12 @@
         </template>
         <template v-else>
           <div>
-            <p class="text-sm font-medium text-gray-700 mb-2">QR-Code scannen:</p>
-            <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-gray-200 rounded-lg" />
+            <p class="text-sm font-medium text-ink/80 mb-2">QR-Code scannen:</p>
+            <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-sand rounded-lg" />
           </div>
           <div>
-            <p class="text-sm text-gray-500 mb-1">Oder manuell eingeben:</p>
-            <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">{{ twoFaSetupData.secret }}</code>
+            <p class="text-sm text-muted mb-1">Oder manuell eingeben:</p>
+            <code class="text-xs bg-bg-brand px-2 py-1 rounded font-mono">{{ twoFaSetupData.secret }}</code>
           </div>
           <form @submit.prevent="confirm2fa" class="space-y-3">
             <div>
@@ -100,7 +100,7 @@
         </template>
       </template>
       <template v-else>
-        <p class="text-sm text-gray-600">
+        <p class="text-sm text-ink/80">
           2FA ist aktiv. Jede Anmeldung erfordert einen Code aus deiner Authenticator-App.
         </p>
         <button class="btn-danger" :disabled="twoFaDisabling" @click="disable2fa">
@@ -113,12 +113,12 @@
     <!-- Passkeys -->
     <div class="card space-y-4">
       <div class="flex items-center gap-2">
-        <h2 class="text-base font-semibold text-gray-800">Passkeys</h2>
+        <h2 class="text-base font-semibold text-ink">Passkeys</h2>
         <span v-if="credentials.length" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
           <ShieldCheckIcon class="w-3 h-3" />{{ credentials.length }} registriert
         </span>
       </div>
-      <p class="text-sm text-gray-600">
+      <p class="text-sm text-ink/80">
         Passkeys ermöglichen passwortlose Anmeldung mit Fingerabdruck, Gesichtserkennung oder PIN.
       </p>
 
@@ -129,10 +129,10 @@
 
       <div v-if="credentials.length > 0" class="space-y-2">
         <div v-for="cred in credentials" :key="cred.id"
-             class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+             class="flex items-center justify-between rounded-lg border border-sand px-3 py-2">
           <div>
-            <p class="text-sm font-medium text-gray-800">{{ cred.name }}</p>
-            <p class="text-xs text-gray-400">
+            <p class="text-sm font-medium text-ink">{{ cred.name }}</p>
+            <p class="text-xs text-muted">
               Erstellt: {{ formatDate(cred.created_at) }}
               <span v-if="cred.last_used_at"> · Zuletzt: {{ formatDate(cred.last_used_at) }}</span>
             </p>
@@ -142,7 +142,7 @@
           </button>
         </div>
       </div>
-      <p v-else-if="passkeysLoaded" class="text-sm text-gray-400">Noch keine Passkeys registriert.</p>
+      <p v-else-if="passkeysLoaded" class="text-sm text-muted">Noch keine Passkeys registriert.</p>
 
       <div v-if="passkeySupported && credentials.length < 5">
         <div v-if="!addingPasskey">

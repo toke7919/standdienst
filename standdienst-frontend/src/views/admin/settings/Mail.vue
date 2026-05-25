@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Mail-Einstellungen</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Mail-Einstellungen</h1>
     <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
 
     <form v-else @submit.prevent="save" class="space-y-4 max-w-2xl card">
@@ -8,7 +8,7 @@
       <div><label class="label">Port</label><input v-model.number="form.mail_port" type="number" class="input max-w-xs" /></div>
       <div class="flex items-center gap-2">
         <input v-model="form.mail_use_tls" type="checkbox" id="tls" />
-        <label for="tls" class="text-sm text-gray-700">TLS verwenden</label>
+        <label for="tls" class="text-sm text-ink/80">TLS verwenden</label>
       </div>
       <div><label class="label">Benutzername</label><input v-model="form.mail_username" class="input" /></div>
       <div><label class="label">Passwort</label><input v-model="form.mail_password" type="password" class="input" /></div>

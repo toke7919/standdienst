@@ -1,30 +1,30 @@
 <template>
   <div>
-    <h1 class="text-xl font-bold text-gray-900 mb-4">Dienste</h1>
+    <h1 class="text-xl font-bold text-ink mb-4">Dienste</h1>
 
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-6">
       <div v-for="i in 2" :key="i" class="mb-2">
-        <div class="sticky top-14 -mx-4 px-4 py-2 bg-gray-50 border-b border-gray-200">
-          <div class="h-3 w-28 bg-gray-200 rounded animate-pulse" />
+        <div class="sticky top-14 -mx-4 px-4 py-2 bg-bg-brand border-b border-sand">
+          <div class="h-3 w-28 bg-sand rounded animate-pulse" />
         </div>
         <div class="space-y-4 mt-3">
           <div v-for="j in 2" :key="j">
-            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-gray-50">
-              <div class="rounded-t-2xl overflow-hidden border border-b-0 border-gray-100">
-                <div class="h-1 bg-gray-200" />
-                <div class="bg-white px-4 py-2">
-                  <div class="h-3.5 w-36 bg-gray-100 rounded animate-pulse" />
+            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-bg-brand">
+              <div class="rounded-t-md overflow-hidden border border-b-0 border-sand">
+                <div class="h-1 bg-sand" />
+                <div class="bg-soft px-4 py-2">
+                  <div class="h-3.5 w-36 bg-bg-warm rounded animate-pulse" />
                 </div>
               </div>
             </div>
-            <div class="bg-white rounded-b-2xl border border-t-0 border-gray-100 p-4 space-y-2">
-              <div v-for="k in 3" :key="k" class="rounded-xl border border-gray-100 p-3 flex items-center justify-between gap-4">
+            <div class="bg-soft rounded-b-md border border-t-0 border-sand p-4 space-y-2">
+              <div v-for="k in 3" :key="k" class="rounded-xl border border-sand p-3 flex items-center justify-between gap-4">
                 <div class="flex-1 space-y-2">
-                  <div class="h-3.5 w-20 bg-gray-100 rounded animate-pulse" />
-                  <div class="h-2 w-32 bg-gray-100 rounded animate-pulse" />
+                  <div class="h-3.5 w-20 bg-bg-warm rounded animate-pulse" />
+                  <div class="h-2 w-32 bg-bg-warm rounded animate-pulse" />
                 </div>
-                <div class="h-8 w-20 bg-gray-100 rounded-lg animate-pulse flex-shrink-0" />
+                <div class="h-8 w-20 bg-bg-warm rounded-lg animate-pulse flex-shrink-0" />
               </div>
             </div>
           </div>
@@ -35,25 +35,25 @@
     <div v-else>
       <div v-for="group in grouped" :key="group.date" class="mb-6">
         <!-- Sticky Datumsheader (unterhalb der App-Kopfleiste h-14 = 3.5rem) -->
-        <div class="sticky top-14 z-10 -mx-4 px-4 py-2 bg-gray-50 border-b border-gray-200">
-          <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">{{ group.date }}</h2>
+        <div class="sticky top-14 z-10 -mx-4 px-4 py-2 bg-bg-brand border-b border-sand">
+          <h2 class="text-sm font-bold uppercase tracking-wide text-muted">{{ group.date }}</h2>
         </div>
 
         <div class="space-y-4 mt-3">
           <div v-for="standGroup in group.stands" :key="standGroup.stand_name">
             <!-- Sticky Kartenheader: Akzentstreifen + Standname integriert -->
-            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-gray-50">
-              <div class="rounded-t-2xl overflow-hidden border border-b-0 border-gray-100">
-                <div class="h-1 transition-colors" :class="standGroup.allFull ? 'bg-gray-300' : 'bg-primary-500'" />
-                <div class="bg-white px-4 py-2 flex items-center justify-between">
-                  <h3 class="text-sm font-semibold transition-colors" :class="standGroup.allFull ? 'text-gray-400' : 'text-primary-700'">{{ standGroup.stand_name }}</h3>
-                  <span v-if="standGroup.allFull" class="text-xs text-gray-400 font-medium">Alle Dienste voll</span>
+            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-bg-brand">
+              <div class="rounded-t-md overflow-hidden border border-b-0 border-sand">
+                <div class="h-1 transition-colors" :class="standGroup.allFull ? 'bg-sand' : 'bg-primary-500'" />
+                <div class="bg-soft px-4 py-2 flex items-center justify-between">
+                  <h3 class="text-sm font-semibold transition-colors" :class="standGroup.allFull ? 'text-muted' : 'text-primary-700'">{{ standGroup.stand_name }}</h3>
+                  <span v-if="standGroup.allFull" class="text-xs text-muted font-medium">Alle Dienste voll</span>
                 </div>
               </div>
             </div>
 
             <!-- Kartenkörper -->
-            <div class="bg-white rounded-b-2xl border border-t-0 border-gray-100 p-4">
+            <div class="bg-soft rounded-b-md border border-t-0 border-sand p-4">
               <div class="space-y-2">
                 <div
                   v-for="shift in standGroup.shifts"
@@ -61,21 +61,21 @@
                   class="rounded-xl border p-3 flex items-center justify-between transition-all duration-150"
                   :class="{
                     'bg-green-50 border-green-200': shift.is_registered,
-                    'border-gray-100 bg-gray-50/40 opacity-50': !shift.is_registered && shift.is_full,
-                    'border-gray-100': !shift.is_registered && !shift.is_full,
+                    'border-sand bg-bg-brand/40 opacity-50': !shift.is_registered && shift.is_full,
+                    'border-sand': !shift.is_registered && !shift.is_full,
                   }"
                 >
                   <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-700">{{ shift.time_range }}</p>
+                    <p class="text-sm font-medium text-ink/80">{{ shift.time_range }}</p>
                     <div class="flex items-center gap-2 mt-1.5">
-                      <div class="h-1.5 bg-gray-200 rounded-full w-24">
+                      <div class="h-1.5 bg-sand rounded-full w-24">
                         <div
                           class="h-1.5 rounded-full"
                           :class="shift.is_full ? 'bg-red-400' : 'bg-green-400'"
                           :style="{ width: `${Math.min(100, (shift.current_count / shift.max_volunteers) * 100)}%` }"
                         />
                       </div>
-                      <span class="text-xs text-gray-400">{{ shift.current_count }}/{{ shift.max_volunteers }}</span>
+                      <span class="text-xs text-muted">{{ shift.current_count }}/{{ shift.max_volunteers }}</span>
                     </div>
                     <div v-if="shift.registered_names?.length" class="mt-1.5 flex flex-wrap gap-1">
                       <span
@@ -88,7 +88,7 @@
                   <div class="ml-4 flex-shrink-0">
                     <span
                       v-if="!shift.is_registered && shift.is_full"
-                      class="inline-flex items-center text-sm text-gray-400 font-medium px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 cursor-not-allowed select-none"
+                      class="inline-flex items-center text-sm text-muted font-medium px-3 py-1.5 rounded-lg border border-sand bg-bg-brand cursor-not-allowed select-none"
                     >Dienst voll</span>
                     <button
                       v-else-if="!shift.is_registered"
@@ -116,7 +116,7 @@
         </div>
       </div>
 
-      <p v-if="!grouped.length" class="text-center text-gray-400 py-12">
+      <p v-if="!grouped.length" class="text-center text-muted py-12">
         Noch keine Dienste vorhanden
       </p>
     </div>

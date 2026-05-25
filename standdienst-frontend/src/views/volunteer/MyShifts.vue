@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-bold text-gray-900">Meine Dienste</h1>
+      <h1 class="text-xl font-bold text-ink">Meine Dienste</h1>
       <a :href="icsUrl" class="btn-secondary text-sm">
         <CalendarIcon class="w-4 h-4" />
         In Kalender exportieren
@@ -11,16 +11,16 @@
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-6">
       <div v-for="i in 2" :key="i">
-        <div class="h-3 w-24 bg-gray-200 rounded animate-pulse mb-2 mx-1" />
+        <div class="h-3 w-24 bg-sand rounded animate-pulse mb-2 mx-1" />
         <div class="card overflow-hidden !p-0">
-          <div class="h-1 bg-gray-200 rounded-t-2xl" />
-          <div class="divide-y divide-gray-100">
+          <div class="h-1 bg-sand rounded-t-md" />
+          <div class="divide-y divide-sand">
             <div v-for="j in 3" :key="j" class="flex items-center justify-between px-4 py-3 gap-3">
               <div class="flex-1 space-y-1.5">
-                <div class="h-3.5 w-32 bg-gray-100 rounded animate-pulse" />
-                <div class="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+                <div class="h-3.5 w-32 bg-bg-warm rounded animate-pulse" />
+                <div class="h-3 w-20 bg-bg-warm rounded animate-pulse" />
               </div>
-              <div class="h-5 w-5 bg-gray-100 rounded-full animate-pulse" />
+              <div class="h-5 w-5 bg-bg-warm rounded-full animate-pulse" />
             </div>
           </div>
         </div>
@@ -31,21 +31,21 @@
       <!-- Kommende Schichten -->
       <div v-if="upcomingGroups.length" class="space-y-6">
         <div v-for="group in upcomingGroups" :key="group.date">
-          <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2 px-1">{{ group.date }}</p>
+          <p class="text-xs font-bold uppercase tracking-wide text-muted mb-2 px-1">{{ group.date }}</p>
           <div class="card overflow-hidden !p-0">
-            <div class="h-1 bg-primary-500 rounded-t-2xl" />
-            <div class="divide-y divide-gray-100">
+            <div class="h-1 bg-primary-500 rounded-t-md" />
+            <div class="divide-y divide-sand">
               <div
                 v-for="reg in group.items"
                 :key="reg.id"
                 class="flex items-center justify-between px-4 py-3 gap-3"
               >
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-gray-800 truncate">{{ reg.stand_name }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">{{ reg.time_range }}</p>
+                  <p class="text-sm font-semibold text-ink truncate">{{ reg.stand_name }}</p>
+                  <p class="text-xs text-muted mt-0.5">{{ reg.time_range }}</p>
                 </div>
                 <button
-                  class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                  class="flex-shrink-0 text-sand hover:text-red-500 transition-colors"
                   title="Abmelden"
                   @click="cancel(reg)"
                 >
@@ -57,32 +57,32 @@
         </div>
       </div>
 
-      <p v-else class="text-center text-gray-400 py-8 text-sm">Keine kommenden Dienste</p>
+      <p v-else class="text-center text-muted py-8 text-sm">Keine kommenden Dienste</p>
 
       <!-- Vergangene Schichten (einklappbar) -->
       <div v-if="pastGroups.length" class="mt-8">
         <button
-          class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600 mb-3 px-1 transition-colors"
+          class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted hover:text-ink/80 mb-3 px-1 transition-colors"
           @click="showPast = !showPast"
         >
-          <ChevronDownIcon class="w-3.5 h-3.5 transition-transform duration-200" :class="showPast ? '' : '-rotate-90'" />
+          <ChevronDownIcon class="w-3.5 h-3.5 text-muted transition-transform duration-200" :class="showPast ? '' : '-rotate-90'" />
           Vergangene Dienste ({{ totalPast }})
         </button>
 
         <div v-if="showPast" class="space-y-4 opacity-50">
           <div v-for="group in pastGroups" :key="group.date">
-            <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2 px-1">{{ group.date }}</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-muted mb-2 px-1">{{ group.date }}</p>
             <div class="card overflow-hidden !p-0">
-              <div class="h-1 bg-gray-300 rounded-t-2xl" />
-              <div class="divide-y divide-gray-100">
+              <div class="h-1 bg-sand rounded-t-md" />
+              <div class="divide-y divide-sand">
                 <div
                   v-for="reg in group.items"
                   :key="reg.id"
                   class="flex items-center px-4 py-3 gap-3"
                 >
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-500 truncate">{{ reg.stand_name }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">{{ reg.time_range }}</p>
+                    <p class="text-sm font-semibold text-muted truncate">{{ reg.stand_name }}</p>
+                    <p class="text-xs text-muted mt-0.5">{{ reg.time_range }}</p>
                   </div>
                 </div>
               </div>
@@ -92,7 +92,7 @@
       </div>
     </template>
 
-    <p v-else class="text-center text-gray-400 py-12">Noch keine Anmeldungen</p>
+    <p v-else class="text-center text-muted py-12">Noch keine Anmeldungen</p>
   </div>
 </template>
 

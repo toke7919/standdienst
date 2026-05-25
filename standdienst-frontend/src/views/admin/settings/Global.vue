@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Globale Einstellungen</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Globale Einstellungen</h1>
 
     <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
 
@@ -28,14 +28,14 @@
           <label class="label">Volunteer-Aufbewahrung nach Löschung (Monate)</label>
           <input v-model.number="form.volunteer_retention_months" type="number" min="1" max="120"
                  class="input max-w-xs" placeholder="Leer = deaktiviert" />
-          <p class="text-xs text-gray-400 mt-1">
+          <p class="text-xs text-muted mt-1">
             Soft-gelöschte Volunteers werden nach dieser Frist automatisch permanent gelöscht.
           </p>
         </div>
       </div>
 
       <div class="card space-y-4">
-        <h2 class="text-base font-semibold text-gray-800">Sicherheit</h2>
+        <h2 class="text-base font-semibold text-ink">Sicherheit</h2>
         <div>
           <label class="label">IP-Whitelist (Rate-Limit + Fail2Ban ausgenommen)</label>
           <textarea
@@ -45,7 +45,7 @@
             placeholder="Eine IP oder CIDR pro Zeile, z.B.: 192.168.1.0/24, 10.0.0.1"
             @blur="normalizeWhitelist"
           />
-          <p class="text-xs text-gray-400 mt-1">
+          <p class="text-xs text-muted mt-1">
             Komma- oder zeilengetrennte IPv4/IPv6-Adressen oder CIDR-Ranges.
             Diese IPs sind von Rate-Limits und Fail2Ban-Logging ausgenommen.
           </p>
@@ -53,27 +53,27 @@
       </div>
 
       <div class="card space-y-4">
-        <h2 class="text-base font-semibold text-gray-800">GitHub / Updates</h2>
+        <h2 class="text-base font-semibold text-ink">GitHub / Updates</h2>
         <div>
           <label class="label">GitHub-Repository</label>
           <input v-model="form.github_repo" class="input font-mono text-sm"
                  placeholder="owner/repo  z.B. toke7919/standdienst_v2" />
-          <p class="text-xs text-gray-400 mt-1">
-            Wird für den Update-Check benötigt. Format: <code class="bg-gray-100 px-1 rounded">owner/repo</code>
+          <p class="text-xs text-muted mt-1">
+            Wird für den Update-Check benötigt. Format: <code class="bg-bg-brand px-1 rounded">owner/repo</code>
           </p>
         </div>
         <div>
           <label class="label">GitHub Personal Access Token (PAT)</label>
           <input v-model="form.github_pat" type="password" class="input font-mono text-sm"
                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
-          <p class="text-xs text-gray-400 mt-1">Optional – erhöht das API-Limit für private Repos.</p>
+          <p class="text-xs text-muted mt-1">Optional – erhöht das API-Limit für private Repos.</p>
         </div>
       </div>
 
       <div class="card space-y-4">
-        <h2 class="text-base font-semibold text-gray-800">Kontaktdaten Plattformbetreiber</h2>
-        <p class="text-xs text-gray-400 -mt-2" v-pre>
-          Diese Daten werden als Platzhalter <code class="bg-gray-100 px-1 rounded">{{organisation}}</code> usw. in die Vorlagen eingesetzt, wenn Impressum/Datenschutz ohne Instanz-Kontext (/impressum) aufgerufen wird.
+        <h2 class="text-base font-semibold text-ink">Kontaktdaten Plattformbetreiber</h2>
+        <p class="text-xs text-muted -mt-2" v-pre>
+          Diese Daten werden als Platzhalter <code class="bg-bg-brand px-1 rounded">{{organisation}}</code> usw. in die Vorlagen eingesetzt, wenn Impressum/Datenschutz ohne Instanz-Kontext (/impressum) aufgerufen wird.
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -106,14 +106,14 @@
       <div class="card space-y-3">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-base font-semibold text-gray-800">Impressum-Vorlage (HTML)</h2>
-            <p class="text-xs text-gray-400 mt-0.5" v-pre>
-              Platzhalter: <code class="bg-gray-100 px-1 rounded">{{organisation}}</code>
-              <code class="bg-gray-100 px-1 rounded ml-1">{{person}}</code>
-              <code class="bg-gray-100 px-1 rounded ml-1">{{adresse}}</code>
-              <code class="bg-gray-100 px-1 rounded ml-1">{{plz_ort}}</code>
-              <code class="bg-gray-100 px-1 rounded ml-1">{{email}}</code>
-              <code class="bg-gray-100 px-1 rounded ml-1">{{telefon}}</code>
+            <h2 class="text-base font-semibold text-ink">Impressum-Vorlage (HTML)</h2>
+            <p class="text-xs text-muted mt-0.5" v-pre>
+              Platzhalter: <code class="bg-bg-brand px-1 rounded">{{organisation}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{person}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{adresse}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{plz_ort}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{email}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{telefon}}</code>
             </p>
           </div>
           <button type="button" class="btn-secondary text-xs py-1 px-2 flex-shrink-0"
@@ -128,8 +128,8 @@
       <div class="card space-y-3">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-base font-semibold text-gray-800">Datenschutz-Vorlage (HTML)</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Gleiche Platzhalter wie Impressum-Vorlage.</p>
+            <h2 class="text-base font-semibold text-ink">Datenschutz-Vorlage (HTML)</h2>
+            <p class="text-xs text-muted mt-0.5">Gleiche Platzhalter wie Impressum-Vorlage.</p>
           </div>
           <button type="button" class="btn-secondary text-xs py-1 px-2 flex-shrink-0"
                   @click="form.datenschutz_template_html = datenschutzVorlage">
@@ -142,13 +142,13 @@
 
       <div class="card">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold text-gray-800">Betreiber-Impressum (HTML)</h2>
+          <h2 class="text-base font-semibold text-ink">Betreiber-Impressum (HTML)</h2>
           <button type="button" class="btn-secondary text-xs py-1 px-2"
                   @click="form.provider_impressum_html = legacyImpressumTemplate">
             Vorlage einfügen
           </button>
         </div>
-        <p class="text-xs text-gray-400 mb-3">Wird als "Technischer Betreiber"-Abschnitt unter instanzspezifischen Impressumsseiten angehängt.</p>
+        <p class="text-xs text-muted mb-3">Wird als "Technischer Betreiber"-Abschnitt unter instanzspezifischen Impressumsseiten angehängt.</p>
         <textarea v-model="form.provider_impressum_html" class="input font-mono text-xs" rows="10"
                   placeholder="HTML für das Betreiber-Impressum (§ 5 TMG)" />
       </div>

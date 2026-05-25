@@ -3,7 +3,7 @@
     <div class="flex items-center gap-3 mb-6">
       <RouterLink
         :to="`/admin/${route.params.slug}/volunteers`"
-        class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+        class="text-sm text-muted hover:text-ink/80 flex items-center gap-1"
       >
         <ChevronLeftIcon class="w-4 h-4" />
         Helfer
@@ -19,61 +19,61 @@
       <div class="card mb-6">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h1 class="text-xl font-bold text-gray-900">{{ volunteer.display_name || volunteer.name }}</h1>
-            <p class="text-sm text-gray-500 mt-0.5">{{ volunteer.email || 'Keine E-Mail' }}</p>
-            <p class="text-xs text-gray-400 mt-1">
+            <h1 class="text-xl font-bold text-ink">{{ volunteer.display_name || volunteer.name }}</h1>
+            <p class="text-sm text-muted mt-0.5">{{ volunteer.email || 'Keine E-Mail' }}</p>
+            <p class="text-xs text-muted mt-1">
               Registriert: {{ formatDate(volunteer.created_at) }}
             </p>
           </div>
           <button class="btn-secondary text-sm flex-shrink-0" @click="openEdit">Bearbeiten</button>
         </div>
-        <div class="flex gap-4 mt-4 pt-4 border-t border-gray-100">
+        <div class="flex gap-4 mt-4 pt-4 border-t border-sand">
           <div class="text-center">
-            <p class="text-2xl font-bold text-gray-900">{{ volunteer.registrations?.length ?? 0 }}</p>
-            <p class="text-xs text-gray-500">Schichten</p>
+            <p class="text-2xl font-bold text-ink">{{ volunteer.registrations?.length ?? 0 }}</p>
+            <p class="text-xs text-muted">Schichten</p>
           </div>
           <div class="text-center">
-            <p class="text-2xl font-bold text-gray-900">{{ volunteer.food_donations?.length ?? 0 }}</p>
-            <p class="text-xs text-gray-500">Spenden</p>
+            <p class="text-2xl font-bold text-ink">{{ volunteer.food_donations?.length ?? 0 }}</p>
+            <p class="text-xs text-muted">Spenden</p>
           </div>
         </div>
       </div>
 
       <!-- Schicht-Anmeldungen -->
       <div class="card mb-6">
-        <h2 class="text-base font-semibold text-gray-800 mb-3">Schicht-Anmeldungen</h2>
-        <div v-if="!volunteer.registrations?.length" class="text-sm text-gray-400 py-4 text-center">
+        <h2 class="text-base font-semibold text-ink mb-3">Schicht-Anmeldungen</h2>
+        <div v-if="!volunteer.registrations?.length" class="text-sm text-muted py-4 text-center">
           Keine Anmeldungen
         </div>
-        <div v-else class="overflow-hidden rounded-lg border border-gray-100">
+        <div v-else class="overflow-hidden rounded-lg border border-sand">
           <!-- Mobile -->
-          <div class="md:hidden divide-y divide-gray-50">
+          <div class="md:hidden divide-y divide-sand">
             <div v-for="r in volunteer.registrations" :key="r.id" class="px-4 py-3">
-              <p class="font-medium text-sm text-gray-900">{{ r.stand }}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{{ r.date }} · {{ r.time_range }}</p>
-              <span v-if="r.registered_by_admin" class="inline-block mt-1 text-xs text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Admin</span>
+              <p class="font-medium text-sm text-ink">{{ r.stand }}</p>
+              <p class="text-xs text-muted mt-0.5">{{ r.date }} · {{ r.time_range }}</p>
+              <span v-if="r.registered_by_admin" class="inline-block mt-1 text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Admin</span>
             </div>
           </div>
           <!-- Desktop -->
           <table class="hidden md:table w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-100">
+            <thead class="bg-bg-brand border-b border-sand">
               <tr>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Datum</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Ort</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Zeit</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Angemeldet am</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Von</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Datum</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Ort</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Zeit</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Angemeldet am</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Von</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in volunteer.registrations" :key="r.id" class="border-b border-gray-50 hover:bg-gray-50">
-                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ r.date }}</td>
-                <td class="px-4 py-3 font-medium text-gray-900">{{ r.stand }}</td>
-                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ r.time_range }}</td>
-                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ formatDate(r.registered_at) }}</td>
+              <tr v-for="r in volunteer.registrations" :key="r.id" class="border-b border-sand hover:bg-bg-warm">
+                <td class="px-4 py-3 text-ink/80 whitespace-nowrap">{{ r.date }}</td>
+                <td class="px-4 py-3 font-medium text-ink">{{ r.stand }}</td>
+                <td class="px-4 py-3 text-ink/80 whitespace-nowrap">{{ r.time_range }}</td>
+                <td class="px-4 py-3 text-muted whitespace-nowrap">{{ formatDate(r.registered_at) }}</td>
                 <td class="px-4 py-3">
-                  <span v-if="r.registered_by_admin" class="text-xs text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Admin</span>
-                  <span v-else class="text-xs text-gray-400">Helfer</span>
+                  <span v-if="r.registered_by_admin" class="text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Admin</span>
+                  <span v-else class="text-xs text-muted">Helfer</span>
                 </td>
               </tr>
             </tbody>
@@ -83,38 +83,38 @@
 
       <!-- Essensspenden -->
       <div class="card">
-        <h2 class="text-base font-semibold text-gray-800 mb-3">Essensspenden</h2>
-        <div v-if="!volunteer.food_donations?.length" class="text-sm text-gray-400 py-4 text-center">
+        <h2 class="text-base font-semibold text-ink mb-3">Essensspenden</h2>
+        <div v-if="!volunteer.food_donations?.length" class="text-sm text-muted py-4 text-center">
           Keine Spenden
         </div>
-        <div v-else class="overflow-hidden rounded-lg border border-gray-100">
+        <div v-else class="overflow-hidden rounded-lg border border-sand">
           <!-- Mobile -->
-          <div class="md:hidden divide-y divide-gray-50">
+          <div class="md:hidden divide-y divide-sand">
             <div v-for="f in volunteer.food_donations" :key="f.id" class="px-4 py-3">
-              <p class="font-medium text-sm text-gray-900">{{ f.food_type }}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{{ f.date }}</p>
-              <p v-if="f.description" class="text-xs text-gray-600 mt-0.5">{{ f.description }}</p>
+              <p class="font-medium text-sm text-ink">{{ f.food_type }}</p>
+              <p class="text-xs text-muted mt-0.5">{{ f.date }}</p>
+              <p v-if="f.description" class="text-xs text-ink/80 mt-0.5">{{ f.description }}</p>
               <span v-if="f.needs_refrigeration" class="inline-block mt-1 text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">Kühlung</span>
             </div>
           </div>
           <!-- Desktop -->
           <table class="hidden md:table w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-100">
+            <thead class="bg-bg-brand border-b border-sand">
               <tr>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Datum</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Kategorie</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Beschreibung</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500">Kühlung</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Datum</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Kategorie</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Beschreibung</th>
+                <th class="px-4 py-3 text-left font-medium text-muted">Kühlung</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="f in volunteer.food_donations" :key="f.id" class="border-b border-gray-50 hover:bg-gray-50">
-                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ f.date }}</td>
-                <td class="px-4 py-3 font-medium text-gray-900">{{ f.food_type }}</td>
-                <td class="px-4 py-3 text-gray-600">{{ f.description || '—' }}</td>
+              <tr v-for="f in volunteer.food_donations" :key="f.id" class="border-b border-sand hover:bg-bg-warm">
+                <td class="px-4 py-3 text-ink/80 whitespace-nowrap">{{ f.date }}</td>
+                <td class="px-4 py-3 font-medium text-ink">{{ f.food_type }}</td>
+                <td class="px-4 py-3 text-ink/80">{{ f.description || '—' }}</td>
                 <td class="px-4 py-3">
                   <span v-if="f.needs_refrigeration" class="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">Ja</span>
-                  <span v-else class="text-xs text-gray-400">Nein</span>
+                  <span v-else class="text-xs text-muted">Nein</span>
                 </td>
               </tr>
             </tbody>

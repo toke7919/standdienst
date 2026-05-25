@@ -1,44 +1,42 @@
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Standardpalette (Warm Violet) – wird zur Laufzeit durch applyTheme() überschrieben */
+/* Default-Primary: Karmin — wird zur Laufzeit durch applyTheme() pro Instanz überschrieben */
 :root {
-  --primary-50:  #f5f3ff;
-  --primary-100: #ede9fe;
-  --primary-200: #ddd6fe;
-  --primary-300: #c4b5fd;
-  --primary-400: #a78bfa;
-  --primary-500: #8b5cf6;
-  --primary-600: #7c3aed;
-  --primary-700: #6d28d9;
-  --primary-800: #5b21b6;
-  --primary-900: #4c1d95;
-  --primary-950: #2e1065;
+  --primary-50:  #f8f7f7;
+  --primary-100: #ece5e6;
+  --primary-200: #dfc8ca;
+  --primary-300: #d7a0a5;
+  --primary-400: #d36973;
+  --primary-500: #cc2d3d;
+  --primary-600: #a51f2c;
+  --primary-700: #811520;
+  --primary-800: #6c0d18;
+  --primary-900: #180406;
+  --primary-950: #120304;
 }
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    font-feature-settings: 'cv11', 'ss01'; /* Inter: offene Null + Ziffernsatz */
+    @apply bg-bg-brand text-ink antialiased;
+    font-family: var(--font-body);
     -webkit-text-size-adjust: 100%;
   }
 
   html, body {
     overscroll-behavior: none;
   }
-  /* overflow-x nur auf body – nicht auf html, da html sonst zum Scroll-Container wird
-     (CSS-Spec: overflow-x:hidden auf html macht overflow-y computed zu 'auto') */
   body {
     overflow-x: hidden;
   }
 
-  /* Dezenter WebKit-Scrollbalken */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+  ::-webkit-scrollbar-thumb { @apply bg-sand rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted; }
 }
 
 @layer utilities {
@@ -63,11 +61,11 @@
            active:scale-[0.97];
   }
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700
+    @apply btn bg-ink text-soft hover:bg-primary-600 active:bg-primary-700
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
   }
   .btn-secondary {
-    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50
+    @apply btn bg-soft text-ink border border-sand hover:bg-bg-warm
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
   }
   .btn-danger {
@@ -77,27 +75,26 @@
 
   /* ── Inputs ─────────────────────────────────────────────────── */
   .input {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-[16px] md:text-sm
-           shadow-sm placeholder-gray-400
+    @apply block w-full rounded-lg border border-sand bg-soft px-3 py-2.5 text-[16px] md:text-sm
+           text-ink placeholder:text-muted
            transition-colors duration-150
            focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0
-           disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;
+           disabled:bg-bg-brand disabled:text-muted disabled:cursor-not-allowed;
   }
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1.5;
+    @apply block text-sm font-medium text-ink/80 mb-1.5;
   }
 
   /* ── Cards ──────────────────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6;
+    @apply bg-soft rounded-md border border-sand p-4 lg:p-6;
   }
 
-  /* Anklickbare Karte mit Hover-Lift + Press-Feedback */
   .card-interactive {
     @apply card cursor-pointer
            transition-all duration-150 ease-out
-           hover:shadow-md hover:-translate-y-0.5
-           active:scale-[0.99] active:shadow-sm active:translate-y-0
+           hover:shadow-sm hover:-translate-y-0.5
+           active:scale-[0.99] active:shadow-none active:translate-y-0
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
   }
 
@@ -105,8 +102,8 @@
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
-  .badge-green  { @apply badge bg-green-100  text-green-800; }
-  .badge-red    { @apply badge bg-red-100    text-red-800; }
-  .badge-yellow { @apply badge bg-yellow-100 text-yellow-800; }
-  .badge-blue   { @apply badge bg-blue-100   text-blue-800; }
+  .badge-green  { @apply badge bg-[#d4edda]  text-ink; }
+  .badge-red    { @apply badge bg-primary-50 text-primary-700; }
+  .badge-yellow { @apply badge bg-[#fef3cd]  text-ink; }
+  .badge-blue   { @apply badge bg-[#dbeafe]  text-ink; }
 }

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Backup & Restore</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Backup & Restore</h1>
 
     <div class="max-w-3xl space-y-4">
       <!-- Aktionen -->
@@ -13,7 +13,7 @@
           <input type="file" accept=".enc" class="hidden" @change="handleUpload" />
           Backup hochladen
         </label>
-        <p class="text-xs text-gray-400 ml-auto">
+        <p class="text-xs text-muted ml-auto">
           Max. {{ maxBackups }} Backups – älteste werden automatisch gelöscht.
         </p>
       </div>
@@ -22,23 +22,23 @@
       <div class="card overflow-hidden p-0">
         <div v-if="loading" class="flex justify-center py-8"><LoadingSpinner size="lg" /></div>
         <div v-else>
-          <div v-if="!backups.length" class="px-4 py-8 text-center text-gray-400 text-sm">
+          <div v-if="!backups.length" class="px-4 py-8 text-center text-muted text-sm">
             Keine Backups vorhanden
           </div>
           <div v-for="b in backups" :key="b.filename"
-               class="border-b border-gray-100 last:border-0 hover:bg-gray-50 px-4 py-3">
+               class="border-b border-sand last:border-0 hover:bg-bg-warm px-4 py-3">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0 flex items-start gap-2">
                 <span
                   class="mt-0.5 flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded"
                   :class="b.type === 'encrypted'
                     ? 'bg-primary-100 text-primary-700'
-                    : 'bg-gray-100 text-gray-500'"
+                    : 'bg-bg-brand text-muted'"
                   :title="b.type === 'encrypted' ? 'In-App-Backup (verschlüsselt, wiederherstellbar)' : 'Shell-Skript-Backup (SQL, nur Download)'"
                 >{{ b.type === 'encrypted' ? 'App' : 'Skript' }}</span>
                 <div class="min-w-0">
-                  <p class="font-mono text-xs text-gray-700 truncate">{{ b.filename }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">
+                  <p class="font-mono text-xs text-ink/80 truncate">{{ b.filename }}</p>
+                  <p class="text-xs text-muted mt-0.5">
                     {{ fmt(b.created_at) }} &middot; {{ (b.size_bytes / 1024).toFixed(1) }} KB
                   </p>
                 </div>
@@ -51,7 +51,7 @@
                 >Herunterladen</a>
                 <button
                   v-if="b.type === 'encrypted'"
-                  class="text-indigo-600 hover:underline text-xs whitespace-nowrap"
+                  class="text-primary-600 hover:underline text-xs whitespace-nowrap"
                   @click="restore(b.filename)"
                 >Wiederherstellen</button>
                 <button class="text-red-500 hover:underline text-xs" @click="del(b.filename)">
@@ -66,10 +66,10 @@
 
     <!-- Restore-Modal -->
     <div v-if="restoreTarget" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-        <h2 class="text-lg font-semibold text-gray-900">Datenbank wiederherstellen</h2>
-        <p class="text-sm text-gray-600">
-          Backup: <code class="font-mono text-xs bg-gray-100 px-1 rounded">{{ restoreTarget }}</code>
+      <div class="bg-soft rounded-md shadow-xl w-full max-w-md p-6 space-y-4">
+        <h2 class="text-lg font-semibold text-ink">Datenbank wiederherstellen</h2>
+        <p class="text-sm text-ink/80">
+          Backup: <code class="font-mono text-xs bg-bg-brand px-1 rounded">{{ restoreTarget }}</code>
         </p>
         <p class="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
           Alle aktuellen Daten werden überschrieben. Dieser Vorgang kann nicht rückgängig gemacht werden.

@@ -1,13 +1,13 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Instanzen</h1>
+      <h1 class="text-2xl font-bold text-ink">Instanzen</h1>
       <button class="btn-primary" @click="openCreate">Neue Instanz</button>
     </div>
 
     <div class="card overflow-hidden p-0">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-bg-brand border-b border-sand">
           <tr>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="slug" @sort="toggleSort">Slug</SortTh>
@@ -16,9 +16,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="inst in sorted" :key="inst.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">{{ inst.name }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ inst.slug }}</td>
+          <tr v-for="inst in sorted" :key="inst.id" class="border-b border-sand hover:bg-bg-warm">
+            <td class="px-4 py-3 font-medium text-ink">{{ inst.name }}</td>
+            <td class="px-4 py-3 text-muted">{{ inst.slug }}</td>
             <td class="px-4 py-3">
               <span :class="inst.is_active ? 'badge-green' : 'badge-red'">
                 {{ inst.is_active ? 'Aktiv' : 'Inaktiv' }}
@@ -49,12 +49,12 @@
         </div>
         <div class="flex items-center gap-2">
           <input v-model="form.is_active" type="checkbox" id="active" class="rounded" />
-          <label for="active" class="text-sm text-gray-700">Aktiv</label>
+          <label for="active" class="text-sm text-ink/80">Aktiv</label>
         </div>
 
-        <div class="border-t border-gray-100 pt-4 space-y-3">
-          <h3 class="text-sm font-semibold text-gray-700">Kontaktdaten (Impressum / Datenschutz)</h3>
-          <p class="text-xs text-gray-400">
+        <div class="border-t border-sand pt-4 space-y-3">
+          <h3 class="text-sm font-semibold text-ink/80">Kontaktdaten (Impressum / Datenschutz)</h3>
+          <p class="text-xs text-muted">
             Werden als Platzhalter in die globalen Impressum- und Datenschutz-Vorlagen eingesetzt.
           </p>
           <div class="grid grid-cols-2 gap-3">

@@ -1,13 +1,13 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Administratoren</h1>
+      <h1 class="text-2xl font-bold text-ink">Administratoren</h1>
       <button class="btn-primary" @click="openCreate">Neuer Admin</button>
     </div>
 
     <div class="card overflow-hidden p-0">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-bg-brand border-b border-sand">
           <tr>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="email" @sort="toggleSort">E-Mail</SortTh>
@@ -17,9 +17,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in sorted" :key="a.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 text-gray-700">{{ a.name || '—' }}</td>
-            <td class="px-4 py-3 font-medium text-gray-900">{{ a.email }}</td>
+          <tr v-for="a in sorted" :key="a.id" class="border-b border-sand hover:bg-bg-warm">
+            <td class="px-4 py-3 text-ink/80">{{ a.name || '—' }}</td>
+            <td class="px-4 py-3 font-medium text-ink">{{ a.email }}</td>
             <td class="px-4 py-3">
               <span :class="a.is_primary ? 'badge-blue' : 'badge-yellow'">
                 {{ a.is_primary ? 'Primär' : 'Standard' }}
@@ -37,11 +37,11 @@
                 class="text-xs text-red-600 hover:underline"
                 @click="deleteAdmin(a)"
               >Löschen</button>
-              <span v-else class="text-xs text-gray-300" title="Primärer Admin ist löschgeschützt">Löschen</span>
+              <span v-else class="text-xs text-sand" title="Primärer Admin ist löschgeschützt">Löschen</span>
             </td>
           </tr>
           <tr v-if="!admins.length">
-            <td colspan="5" class="px-4 py-8 text-center text-gray-400">Keine Admins gefunden</td>
+            <td colspan="5" class="px-4 py-8 text-center text-muted">Keine Admins gefunden</td>
           </tr>
         </tbody>
       </table>
@@ -66,7 +66,7 @@
         </div>
         <div class="flex items-center gap-2">
           <input v-model="form.is_primary" type="checkbox" id="primary" />
-          <label for="primary" class="text-sm text-gray-700">Primärer Admin (Löschschutz)</label>
+          <label for="primary" class="text-sm text-ink/80">Primärer Admin (Löschschutz)</label>
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">

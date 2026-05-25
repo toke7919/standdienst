@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-bg-brand flex items-center justify-center p-4">
     <div class="card w-full max-w-sm">
       <h1 class="text-xl font-semibold mb-1">Zwei-Faktor-Authentifizierung</h1>
-      <p class="text-sm text-gray-500 mb-6">
+      <p class="text-sm text-muted mb-6">
         {{ useBackup ? 'Backup-Code eingeben' : 'Code aus der Authenticator-App eingeben' }}
       </p>
       <form @submit.prevent="submit" class="space-y-4">
@@ -27,7 +27,7 @@
             class="input text-xl tracking-widest text-center uppercase"
             required
           />
-          <p class="text-xs text-gray-400 text-center">8-stelliger Backup-Code (ohne Bindestriche)</p>
+          <p class="text-xs text-muted text-center">8-stelliger Backup-Code (ohne Bindestriche)</p>
         </div>
         <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
         <button type="submit" class="btn-primary w-full"
@@ -38,7 +38,7 @@
       </form>
       <button
         type="button"
-        class="mt-4 w-full text-sm text-gray-400 hover:text-gray-600 text-center"
+        class="mt-4 w-full text-sm text-muted hover:text-ink/80 text-center"
         @click="toggleMode"
       >
         {{ useBackup ? '← Authenticator-Code verwenden' : 'Backup-Code verwenden' }}

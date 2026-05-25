@@ -1,6 +1,6 @@
 <template>
   <Modal v-model="show" :title="dialog?.title || 'Bestätigen'" size="sm">
-    <p class="text-gray-600 mb-6">{{ dialog?.message }}</p>
+    <p class="text-ink/80 mb-6">{{ dialog?.message }}</p>
     <div class="flex gap-3 justify-end">
       <button class="btn-secondary" @click="close(false)">
         {{ dialog?.cancelText || 'Abbrechen' }}

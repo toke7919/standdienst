@@ -4,6 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
+        ink:       'rgb(var(--color-ink-rgb) / <alpha-value>)',
+        muted:     'var(--color-muted)',
+        sand:      'var(--color-sand)',
+        'bg-brand': 'var(--color-bg)',
+        'bg-warm':  'var(--color-bg-warm)',
+        soft:      'var(--color-soft)',
         primary: {
           50:  'var(--primary-50)',
           100: 'var(--primary-100)',
