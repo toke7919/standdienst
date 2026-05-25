@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 140" width="600" height="140">
+  
+  <text x="0" y="92" fill="#1a1311" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="100" letter-spacing="-3">Standdienst</text>
+  <line x1="0" y1="118" x2="540" y2="118" stroke="#a51f2c" stroke-width="4" stroke-dasharray="10 7"></line>
+</svg>

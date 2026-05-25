@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 78 100" width="156" height="200">
+  
+  <rect x="2" y="2" width="74" height="96" rx="6" fill="#1a1311"></rect>
+  <line x1="6" y1="30" x2="72" y2="30" stroke="#fdf6e9" stroke-width="1.2" stroke-dasharray="2.5 2.5"></line>
+  <text x="39" y="20" text-anchor="middle" fill="#fdf6e9" font-family="Geist Mono, ui-monospace, monospace" font-size="7" letter-spacing="1.5">SCHICHT</text>
+  <text x="39" y="68" text-anchor="middle" fill="#fdf6e9" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="36" letter-spacing="-2">14</text>
+  <circle cx="39" cy="84" r="3" fill="#fdf6e9"></circle>
+</svg>
