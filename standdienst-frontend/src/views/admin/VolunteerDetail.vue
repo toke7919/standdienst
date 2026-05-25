@@ -81,6 +81,34 @@
         </div>
       </div>
 
+      <!-- DSGVO-Aktionen -->
+      <div class="card mb-6">
+        <h2 class="text-base font-semibold text-ink mb-1">DSGVO</h2>
+        <p class="text-xs text-muted mb-4">Aktionen gemäß Datenschutz-Grundverordnung</p>
+        <div class="flex flex-wrap gap-3">
+          <button
+            v-if="volunteer.email"
+            class="btn-secondary text-sm"
+            :disabled="auskunftLoading"
+            @click="sendAuskunft"
+          >
+            <LoadingSpinner v-if="auskunftLoading" size="sm" />
+            Datenauskunft senden (Art. 15)
+          </button>
+          <span v-else class="text-xs text-muted self-center">Keine E-Mail – Datenauskunft nicht möglich</span>
+          <button
+            v-if="!volunteer.deleted_at"
+            class="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50"
+            :disabled="deleteLoading"
+            @click="softDelete"
+          >
+            <LoadingSpinner v-if="deleteLoading" size="sm" />
+            Pseudonymisieren (Art. 17)
+          </button>
+          <span v-else class="text-xs text-muted self-center italic">Bereits pseudonymisiert</span>
+        </div>
+      </div>
+
       <!-- Essensspenden -->
       <div class="card">
         <h2 class="text-base font-semibold text-ink mb-3">Essensspenden</h2>
@@ -166,6 +194,8 @@ const loading = ref(true)
 const showModal = ref(false)
 const form = ref({ first_name: '', last_name: '', email: '' })
 const saveError = ref('')
+const auskunftLoading = ref(false)
+const deleteLoading = ref(false)
 
 onMounted(load)
 
@@ -205,6 +235,37 @@ async function save() {
     await load()
   } catch (e) {
     saveError.value = e.response?.data?.error || 'Fehler'
+  }
+}
+
+async function sendAuskunft() {
+  auskunftLoading.value = true
+  try {
+    await adminApi.sendDsgvoAuskunft(route.params.slug, volunteer.value.id)
+    ui.success('Datenauskunft wurde versendet')
+  } catch (e) {
+    ui.error(e.response?.data?.error || 'Versand fehlgeschlagen')
+  } finally {
+    auskunftLoading.value = false
+  }
+}
+
+async function softDelete() {
+  const ok = await ui.confirm({
+    title: 'Helfer pseudonymisieren',
+    message: `${volunteer.value.display_name || volunteer.value.name} wirklich pseudonymisieren? Name und E-Mail werden unwiderruflich gelöscht. Schichtanmeldungen bleiben anonymisiert erhalten.`,
+    danger: true,
+  })
+  if (!ok) return
+  deleteLoading.value = true
+  try {
+    await adminApi.deleteVolunteer(route.params.slug, volunteer.value.id)
+    ui.success('Helfer pseudonymisiert')
+    await load()
+  } catch (e) {
+    ui.error(e.response?.data?.error || 'Fehler')
+  } finally {
+    deleteLoading.value = false
   }
 }
 </script>

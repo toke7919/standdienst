@@ -26,6 +26,8 @@ export const adminApi = {
     client.delete(`${a(slug)}/volunteers/${id}/permanent`),
   resetVolunteerPassword: (slug, id, data) =>
     client.post(`${a(slug)}/volunteers/${id}/reset-password`, data),
+  sendDsgvoAuskunft: (slug, id) =>
+    client.post(`${a(slug)}/volunteers/${id}/dsgvo-auskunft`),
 
   // Stands
   getStands: (slug) => client.get(`${a(slug)}/stands`),

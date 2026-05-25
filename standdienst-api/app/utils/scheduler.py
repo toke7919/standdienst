@@ -248,12 +248,14 @@ def _send_reminders(app):
                 ]
 
                 try:
+                    opt_out_url = f'{base_url}/{slug}/profile'
                     send_mail(
                         v.email,
                         f'Erinnerung für morgen – {title}',
                         build_reminder_email(v.name, shift_data, food_data, title, base_url,
                                              slug=slug, primary_color=primary_color,
-                                             logo_url=logo_url, copyright_text=copyright_text),
+                                             logo_url=logo_url, copyright_text=copyright_text,
+                                             opt_out_url=opt_out_url),
                         sender_name=title,
                     )
                     log.info('Erinnerungsmail gesendet: volunteer_id=%d', v.id)

@@ -530,6 +530,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         my_shifts_url = f'{base_url}/{instance.slug}/my-shifts'
+        opt_out_url = f'{base_url}/{instance.slug}/profile'
         stand = Stand.query.get(shift.stand_id)
         html = build_shift_confirmation_email(
             name=volunteer.display_name,
@@ -543,6 +544,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
             primary_color=primary_color,
             logo_url=logo_url,
             copyright_text=copyright_text,
+            opt_out_url=opt_out_url,
         )
         send_mail(volunteer.email, f'Anmeldung bestätigt – {title}', html, sender_name=title)
     except Exception as exc:

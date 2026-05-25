@@ -4,10 +4,10 @@ from sqlalchemy import func
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Volunteer, ActivityLog, GlobalSettings, Registration, FoodDonation
+from ...models import Volunteer, ActivityLog, GlobalSettings, SiteSettings, Registration, FoodDonation
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
 from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
-from ...utils.mail import is_mail_configured, send_mail, build_welcome_email
+from ...utils.mail import is_mail_configured, send_mail, build_welcome_email, build_daten_auskunft_email
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = VolunteerSchema()
@@ -186,6 +186,7 @@ def delete_volunteer(slug, volunteer_id):
         event_type=ActivityLog.VOLUNTEER_DELETE,
         volunteer_name=name,
         actor_type=getattr(g.current_user, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=details,
     ))
     db.session.commit()
@@ -211,11 +212,72 @@ def permanent_delete_volunteer(slug, volunteer_id):
         event_type=ActivityLog.VOLUNTEER_PERMANENT_DELETE,
         volunteer_name=name,
         actor_type=getattr(_g.current_user, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=details,
     ))
     db.session.delete(volunteer)
     db.session.commit()
     return no_content()
+
+
+@admin_bp.route('/<slug>/volunteers/<int:volunteer_id>/dsgvo-auskunft', methods=['POST'])
+@require_instance_admin
+def send_dsgvo_auskunft(slug, volunteer_id):
+    """Art. 15 DSGVO – Datenauskunft per E-Mail für einen Volunteer versenden."""
+    volunteer = _get_or_404(volunteer_id, g.instance.id)
+    if not volunteer.email:
+        return error('Keine E-Mail-Adresse hinterlegt', 400)
+    if not is_mail_configured():
+        return error('E-Mail nicht konfiguriert', 503)
+
+    gs = GlobalSettings.query.first()
+    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    base_url = current_app.config.get('FRONTEND_URL', '')
+    title = (settings.site_title if settings else None) or g.instance.name
+    primary_color = settings.primary_color if settings else '#4f46e5'
+    logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
+                if settings and settings.logo_filename else f'{base_url}/logo.png')
+    copyright_text = gs.copyright_text if gs else None
+
+    data = {
+        'volunteer': {
+            'id': volunteer.id, 'name': volunteer.name, 'email': volunteer.email,
+            'instance_id': volunteer.instance_id,
+            'created_at': volunteer.created_at.isoformat() if volunteer.created_at else None,
+            'consent_given_at': volunteer.consent_given_at.isoformat() if volunteer.consent_given_at else None,
+        },
+        'registrations': [
+            {
+                'shift_id': reg.shift.id,
+                'stand': reg.shift.stand.name,
+                'date': reg.shift.event_date.date.isoformat(),
+                'start_time': reg.shift.start_time.isoformat(),
+                'end_time': reg.shift.end_time.isoformat(),
+                'registered_at': reg.registered_at.isoformat() if reg.registered_at else None,
+            }
+            for reg in volunteer.registrations
+        ],
+        'food_donations': [
+            {
+                'food_type': fd.food_type.name,
+                'description': fd.description,
+                'needs_refrigeration': fd.needs_refrigeration,
+                'registered_at': fd.registered_at.isoformat() if fd.registered_at else None,
+            }
+            for fd in volunteer.food_donations
+        ],
+    }
+
+    send_mail(
+        volunteer.email,
+        f'Ihre Daten bei {title}',
+        build_daten_auskunft_email(volunteer.name, data, title, base_url,
+                                   slug=g.instance.slug, primary_color=primary_color,
+                                   logo_url=logo_url, copyright_text=copyright_text),
+        sender_name=title,
+    )
+    _log(g.instance.id, f'DSGVO-Auskunft versendet: {volunteer.name}', g.current_user)
+    return ok({'message': 'Datenauskunft wurde an die E-Mail-Adresse gesendet'})
 
 
 @admin_bp.route('/<slug>/volunteers/<int:volunteer_id>/reset-password', methods=['POST'])
@@ -255,5 +317,6 @@ def _log(instance_id, details, actor):
         event_type=ActivityLog.AUDIT_DATA,
         volunteer_name=getattr(actor, 'email', str(actor)),
         actor_type=getattr(actor, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=details,
     ))
