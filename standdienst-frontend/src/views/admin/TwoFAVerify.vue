@@ -76,7 +76,11 @@ async function submit() {
       const remaining = res.remaining_backup_codes ?? '?'
       ui.warn(`Backup-Code verwendet. Noch ${remaining} Codes verfügbar.`)
     }
-    router.push('/admin/dashboard')
+    if (auth.isOrganizer && auth.user?.instances?.length === 1) {
+      router.push(`/admin/${auth.user.instances[0].slug}/dashboard`)
+    } else {
+      router.push('/admin/dashboard')
+    }
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Ungültiger Code'
     code.value = ''

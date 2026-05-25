@@ -386,6 +386,8 @@ def _contact_vars(obj) -> dict:
         'plz_ort':      getattr(obj, 'contact_zip_city', '') or '',
         'email':        getattr(obj, 'contact_email', '') or '',
         'telefon':      getattr(obj, 'contact_phone', '') or '',
+        'asp':          getattr(obj, 'contact_asp', '') or '',
+        'asp-email':    getattr(obj, 'contact_asp_email', '') or '',
     }
 
 

@@ -99,7 +99,7 @@ def require_instance_admin(fn):
             if role == 'organizer':
                 if not user.has_instance_access(instance.id):
                     return jsonify(error='Kein Zugriff auf diese Instanz'), 403
-                if not user.is_instance_admin:
+                if not user.is_admin_for(instance.id):
                     return jsonify(error='Instanz-Admin-Berechtigung erforderlich'), 403
             g.instance = instance
 

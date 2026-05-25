@@ -62,6 +62,12 @@ def init_scheduler(app):
         id='send_reminders',
         replace_existing=True,
     )
+    _scheduler.add_job(
+        lambda: _send_organizer_digest(app),
+        CronTrigger(hour=18, minute=0),  # täglich 18:00 – Organisatoren-Digest
+        id='organizer_digest',
+        replace_existing=True,
+    )
 
     _scheduler.start()
     log.info('APScheduler gestartet')
@@ -264,6 +270,134 @@ def _send_reminders(app):
 
         except Exception:
             log.exception('Erinnerungs-Job fehlgeschlagen')
+
+
+def _send_organizer_digest(app):
+    """Täglich 18:00 – Zusammenfassung der heutigen Änderungen an Organisatoren."""
+    if not _redis_lock(app, 'organizer_digest', ttl=86000):
+        return
+    with app.app_context():
+        try:
+            import pytz
+            from ..extensions import db
+            from ..models import (
+                Organizer, Registration, ActivityLog, FoodDonation,
+                Shift, Stand, EventDate, Instance,
+            )
+            from ..models.instance import organizer_instances as oi_table
+            from ..utils.mail import is_mail_configured, send_mail, build_organizer_digest_email
+            from ..utils.settings_cache import get_global_settings, get_site_settings
+
+            if not is_mail_configured():
+                return
+
+            gs = get_global_settings()
+            tz_name = gs.timezone if gs and gs.timezone else 'Europe/Berlin'
+            tz = pytz.timezone(tz_name)
+            now_local = datetime.now(tz)
+            today = now_local.date()
+            day_start = tz.localize(datetime(today.year, today.month, today.day, 0, 0, 0)).astimezone(timezone.utc)
+            day_end = now_local.astimezone(timezone.utc)
+
+            base_url = app.config.get('FRONTEND_URL', '')
+            copyright_text = gs.copyright_text if gs else None
+            date_label = today.strftime('%d.%m.%Y')
+
+            organizers = Organizer.query.filter(
+                Organizer.notifications_enabled.is_(True),
+                Organizer.email.isnot(None),
+            ).all()
+
+            for org in organizers:
+                for instance in org.instances.all():
+                    settings = get_site_settings(instance.id)
+                    title = settings.site_title if settings else instance.name
+                    primary_color = settings.primary_color if settings else '#4f46e5'
+                    logo_url = (
+                        f'{base_url}/uploads/{settings.logo_filename}'
+                        if settings and settings.logo_filename else None
+                    )
+
+                    # Neue Anmeldungen heute (durch Volunteers oder Admins)
+                    regs_today = (
+                        db.session.query(Registration, Shift, Stand)
+                        .join(Shift, Registration.shift_id == Shift.id)
+                        .join(Stand, Shift.stand_id == Stand.id)
+                        .filter(
+                            Stand.instance_id == instance.id,
+                            Registration.registered_at >= day_start,
+                            Registration.registered_at <= day_end,
+                        )
+                        .all()
+                    )
+
+                    # Abmeldungen heute (ActivityLog)
+                    cancels_today = ActivityLog.query.filter(
+                        ActivityLog.instance_id == instance.id,
+                        ActivityLog.event_type == ActivityLog.SHIFT_UNREGISTER,
+                        ActivityLog.timestamp >= day_start,
+                        ActivityLog.timestamp <= day_end,
+                    ).all()
+
+                    # Essensspenden heute
+                    foods_today = FoodDonation.query.filter(
+                        FoodDonation.instance_id == instance.id,
+                        FoodDonation.created_at >= day_start,
+                        FoodDonation.created_at <= day_end,
+                    ).all()
+
+                    if not regs_today and not cancels_today and not foods_today:
+                        continue
+
+                    reg_data = [
+                        {
+                            'name': (r.volunteer.display_name if r.volunteer else r.guest_name) or '—',
+                            'stand': s.name,
+                            'time': f'{sh.start_time.strftime("%H:%M")}–{sh.end_time.strftime("%H:%M")}',
+                        }
+                        for r, sh, s in regs_today
+                    ]
+                    cancel_data = [
+                        {'name': c.volunteer_name or '—', 'stand': '', 'time': c.details or ''}
+                        for c in cancels_today
+                    ]
+                    food_data = [
+                        {
+                            'name': (f.volunteer.display_name if f.volunteer else f.guest_name) or '—',
+                            'food_type': f.food_type.name if f.food_type else '—',
+                            'description': f.description,
+                        }
+                        for f in foods_today
+                        if f.food_type
+                    ]
+
+                    try:
+                        opt_out_url = f'{base_url}/admin/profile'
+                        send_mail(
+                            org.email,
+                            f'Tagesübersicht {date_label} – {title}',
+                            build_organizer_digest_email(
+                                org.name or org.email,
+                                title,
+                                date_label,
+                                reg_data,
+                                cancel_data,
+                                food_data,
+                                base_url,
+                                instance.slug,
+                                primary_color=primary_color,
+                                logo_url=logo_url,
+                                copyright_text=copyright_text,
+                                opt_out_url=opt_out_url,
+                            ),
+                            sender_name=title,
+                        )
+                        log.info('Organizer-Digest gesendet: organizer_id=%d, instance=%s', org.id, instance.slug)
+                    except Exception:
+                        log.exception('Organizer-Digest fehlgeschlagen: organizer_id=%d, instance=%s', org.id, instance.slug)
+
+        except Exception:
+            log.exception('Organizer-Digest-Job fehlgeschlagen')
 
 
 def _run_smb_backup(app):

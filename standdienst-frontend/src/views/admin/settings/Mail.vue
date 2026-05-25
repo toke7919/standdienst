@@ -15,15 +15,21 @@
       <div><label class="label">Absender-E-Mail</label><input v-model="form.mail_default_sender" type="email" class="input" /></div>
       <div><label class="label">Absender-Name</label><input v-model="form.mail_sender_name" class="input" /></div>
       <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
-      <div class="flex gap-3 flex-wrap">
+      <div class="flex gap-3 flex-wrap items-end">
         <button type="submit" class="btn-primary" :disabled="saving">
           <LoadingSpinner v-if="saving" size="sm" />
           Speichern
         </button>
-        <button type="button" class="btn-secondary" :disabled="testing" @click="sendTest">
-          <LoadingSpinner v-if="testing" size="sm" />
-          Testmail senden
-        </button>
+        <div class="flex items-end gap-2">
+          <div>
+            <label class="label">Testmail an</label>
+            <input v-model="testRecipient" type="email" class="input text-sm" placeholder="empfaenger@beispiel.de" />
+          </div>
+          <button type="button" class="btn-secondary" :disabled="testing" @click="sendTest">
+            <LoadingSpinner v-if="testing" size="sm" />
+            Senden
+          </button>
+        </div>
       </div>
       <p v-if="testResult" class="text-sm" :class="testResult.ok ? 'text-green-700' : 'text-red-600'">
         {{ testResult.message }}
@@ -44,6 +50,7 @@ const saving = ref(false)
 const testing = ref(false)
 const saveError = ref('')
 const testResult = ref(null)
+const testRecipient = ref('')
 const form = ref({})
 
 onMounted(async () => {
@@ -73,7 +80,7 @@ async function sendTest() {
   testing.value = true
   testResult.value = null
   try {
-    const res = await adminApi.sendTestMail({})
+    const res = await adminApi.sendTestMail({ to: testRecipient.value || undefined })
     testResult.value = { ok: true, message: res.data.message }
   } catch (e) {
     testResult.value = { ok: false, message: e.response?.data?.error || 'Versand fehlgeschlagen' }

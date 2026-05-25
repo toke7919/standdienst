@@ -167,6 +167,7 @@ async function uploadLogo(event) {
   try {
     const res = await adminApi.uploadLogo(route.params.slug, fd)
     form.value.logo_filename = res.data.data.logo_filename
+    if (res.data.data.updated_at) form.value.updated_at = res.data.data.updated_at
     ui.success('Logo hochgeladen')
   } catch (e) {
     ui.err(e.response?.data?.error || 'Upload fehlgeschlagen')

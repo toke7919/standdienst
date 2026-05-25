@@ -118,4 +118,5 @@ class RegistrationSchema(SQLAlchemyAutoSchema):
 
 class RegistrationCreateSchema(Schema):
     shift_id = fields.Int(required=True)
-    guest_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    guest_name = fields.Str(validate=validate.Length(min=1, max=100), allow_none=True, load_default=None)
+    volunteer_id = fields.Int(allow_none=True, load_default=None)

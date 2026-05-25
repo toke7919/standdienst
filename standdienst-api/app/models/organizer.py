@@ -35,6 +35,7 @@ class Organizer(db.Model):
     totp_enabled = db.Column(db.Boolean, nullable=False, default=False)
     totp_backup_codes = db.Column(db.JSON, nullable=True)
     is_instance_admin = db.Column(db.Boolean, nullable=False, default=False)
+    notifications_enabled = db.Column(db.Boolean, nullable=False, default=True)
 
     instances = db.relationship(
         'Instance',
@@ -88,6 +89,15 @@ class Organizer(db.Model):
 
     def has_instance_access(self, instance_id: int) -> bool:
         return self.instances.filter_by(id=instance_id).first() is not None
+
+    def is_admin_for(self, instance_id: int) -> bool:
+        row = db.session.execute(
+            organizer_instances.select().where(
+                organizer_instances.c.organizer_id == self.id,
+                organizer_instances.c.instance_id == instance_id,
+            )
+        ).first()
+        return bool(row and row.is_instance_admin)
 
     def is_primary_for(self, instance_id: int) -> bool:
         row = db.session.execute(

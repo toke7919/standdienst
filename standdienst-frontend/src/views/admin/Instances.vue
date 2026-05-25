@@ -82,6 +82,14 @@
               <label class="label text-xs">Telefon</label>
               <input v-model="form.contact_phone" class="input text-sm" type="tel" placeholder="+49 123 456789" />
             </div>
+            <div>
+              <label class="label text-xs">Ansprechpartner <span class="text-muted font-normal">(Platzhalter: {{asp}})</span></label>
+              <input v-model="form.contact_asp" class="input text-sm" placeholder="Für Rückfragen: Max Muster" />
+            </div>
+            <div>
+              <label class="label text-xs">Ansprechpartner E-Mail <span class="text-muted font-normal">({{asp-email}})</span></label>
+              <input v-model="form.contact_asp_email" class="input text-sm" type="email" placeholder="max@beispiel.de" />
+            </div>
           </div>
         </div>
 
@@ -112,6 +120,7 @@ const _emptyForm = () => ({
   name: '', slug: '', is_active: true,
   contact_organisation: '', contact_person: '', contact_street: '',
   contact_zip_city: '', contact_email: '', contact_phone: '',
+  contact_asp: '', contact_asp_email: '',
 })
 const form = ref(_emptyForm())
 const saving = ref(false)
@@ -141,6 +150,8 @@ function openEdit(inst) {
     contact_zip_city: inst.contact_zip_city || '',
     contact_email: inst.contact_email || '',
     contact_phone: inst.contact_phone || '',
+    contact_asp: inst.contact_asp || '',
+    contact_asp_email: inst.contact_asp_email || '',
   }
   saveError.value = ''
   showModal.value = true

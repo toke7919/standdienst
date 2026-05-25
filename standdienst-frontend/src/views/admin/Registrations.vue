@@ -140,10 +140,41 @@
 
     <Modal v-model="showModal" title="Anmeldung hinzufügen">
       <form @submit.prevent="save" class="space-y-4">
-        <div>
+        <!-- Mode toggle -->
+        <div class="flex rounded-lg border border-sand overflow-hidden text-sm">
+          <button
+            type="button"
+            class="flex-1 py-2 font-medium transition-colors"
+            :class="mode === 'guest' ? 'bg-primary-600 text-white' : 'bg-soft text-muted hover:text-ink'"
+            @click="mode = 'guest'"
+          >Gast-Name</button>
+          <button
+            type="button"
+            class="flex-1 py-2 font-medium transition-colors border-l border-sand"
+            :class="mode === 'volunteer' ? 'bg-primary-600 text-white' : 'bg-soft text-muted hover:text-ink'"
+            @click="mode = 'volunteer'"
+          >Vorhandener Helfer</button>
+        </div>
+
+        <!-- Guest name -->
+        <div v-if="mode === 'guest'">
           <label class="label">Name des Helfers</label>
           <input v-model="form.guest_name" class="input" required placeholder="Vor- und Nachname" maxlength="100" />
         </div>
+
+        <!-- Volunteer selector -->
+        <div v-else>
+          <label class="label">Helfer auswählen</label>
+          <input v-model="volunteerSearch" class="input mb-2" placeholder="Name oder E-Mail suchen…" />
+          <select v-model="form.volunteer_id" class="input" required>
+            <option value="">Bitte wählen</option>
+            <option v-for="v in filteredVolunteers" :key="v.id" :value="v.id">
+              {{ v.display_name || v.name }}<template v-if="v.email"> ({{ v.email }})</template>
+            </option>
+          </select>
+          <p v-if="!filteredVolunteers.length && volunteerSearch" class="text-xs text-muted mt-1">Keine Treffer</p>
+        </div>
+
         <div>
           <label class="label">Dienst</label>
           <select v-model="form.shift_id" class="input" required>
@@ -189,8 +220,21 @@ const ui = useUiStore()
 const grid = ref([])
 const loading = ref(true)
 const showModal = ref(false)
-const form = ref({ guest_name: '', shift_id: '' })
+const form = ref({ guest_name: '', shift_id: '', volunteer_id: '' })
 const saveError = ref('')
+const mode = ref('guest')
+const volunteers = ref([])
+const volunteerSearch = ref('')
+
+const filteredVolunteers = computed(() => {
+  const q = volunteerSearch.value.toLowerCase()
+  if (!q) return volunteers.value
+  return volunteers.value.filter(v => {
+    const name = (v.display_name || v.name || '').toLowerCase()
+    const email = (v.email || '').toLowerCase()
+    return name.includes(q) || email.includes(q)
+  })
+})
 
 // Extrahiert zwei Zeitangaben "HH:MM" aus einem time_range-String
 function parseTimeRange(range) {
@@ -261,7 +305,9 @@ const enrichedGrid = computed(() => {
   })
 })
 
-onMounted(load)
+onMounted(async () => {
+  await Promise.all([load(), loadVolunteers()])
+})
 
 async function load() {
   loading.value = true
@@ -271,6 +317,13 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadVolunteers() {
+  try {
+    const res = await adminApi.getVolunteers(route.params.slug, { per_page: 500 })
+    volunteers.value = res.data.data
+  } catch { /* ignore */ }
 }
 
 function occupied(cell) {
@@ -307,18 +360,23 @@ function fillBarClass(cell) {
 }
 
 function openCreate(shiftId) {
-  form.value = { guest_name: '', shift_id: shiftId || '' }
+  form.value = { guest_name: '', shift_id: shiftId || '', volunteer_id: '' }
+  mode.value = 'guest'
+  volunteerSearch.value = ''
   saveError.value = ''
   showModal.value = true
 }
 
 async function save() {
   saveError.value = ''
+  const payload = { shift_id: form.value.shift_id }
+  if (mode.value === 'volunteer') {
+    payload.volunteer_id = form.value.volunteer_id
+  } else {
+    payload.guest_name = form.value.guest_name
+  }
   try {
-    await adminApi.createRegistration(route.params.slug, {
-      shift_id: form.value.shift_id,
-      guest_name: form.value.guest_name,
-    })
+    await adminApi.createRegistration(route.params.slug, payload)
     ui.success('Anmeldung eingetragen')
     showModal.value = false
     await load()

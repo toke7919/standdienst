@@ -24,6 +24,8 @@ class InstanceCreateSchema(Schema):
     contact_zip_city = fields.Str(validate=validate.Length(max=100), allow_none=True)
     contact_email = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_phone = fields.Str(validate=validate.Length(max=50), allow_none=True)
+    contact_asp = fields.Str(validate=validate.Length(max=200), allow_none=True)
+    contact_asp_email = fields.Str(validate=validate.Length(max=200), allow_none=True)
 
     @validates('slug')
     def validate_slug(self, value, **_):
@@ -45,6 +47,8 @@ class InstanceUpdateSchema(Schema):
     contact_zip_city = fields.Str(validate=validate.Length(max=100), allow_none=True)
     contact_email = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_phone = fields.Str(validate=validate.Length(max=50), allow_none=True)
+    contact_asp = fields.Str(validate=validate.Length(max=200), allow_none=True)
+    contact_asp_email = fields.Str(validate=validate.Length(max=200), allow_none=True)
 
 
 class GlobalSettingsSchema(SQLAlchemyAutoSchema):
@@ -68,6 +72,8 @@ class GlobalSettingsUpdateSchema(Schema):
     contact_zip_city = fields.Str(validate=validate.Length(max=100), allow_none=True)
     contact_email = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_phone = fields.Str(validate=validate.Length(max=50), allow_none=True)
+    contact_asp = fields.Str(validate=validate.Length(max=200), allow_none=True)
+    contact_asp_email = fields.Str(validate=validate.Length(max=200), allow_none=True)
     log_retention_months = fields.Int(validate=validate.Range(min=1, max=36))
     volunteer_retention_months = fields.Int(validate=validate.Range(min=1, max=120), allow_none=True)
     timezone = fields.Str(validate=validate.Length(max=100))

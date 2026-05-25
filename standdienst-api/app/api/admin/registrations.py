@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Registration, Shift, Stand, EventDate, ActivityLog
+from ...models import Registration, Shift, Stand, EventDate, ActivityLog, Volunteer
 from ...schemas.shifts import RegistrationSchema, RegistrationCreateSchema
 from ...utils.auth import require_staff, require_instance_admin
 from ...utils.responses import ok, created, no_content, error, paginated
@@ -139,12 +139,26 @@ def create_registration(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
+    volunteer_id = data.get('volunteer_id')
+    guest_name = data.get('guest_name')
+    if not volunteer_id and not guest_name:
+        return error('Name oder Helfer-ID erforderlich', 422)
+
     shift = _get_instance_shift(data['shift_id'], g.instance.id)
     if not shift:
         return error('Schicht nicht gefunden', 404)
     if shift.is_full:
         return error('Schicht ist bereits voll', 409)
 
+    volunteer = None
+    if volunteer_id:
+        volunteer = Volunteer.query.filter_by(id=volunteer_id, instance_id=g.instance.id).first()
+        if not volunteer:
+            return error('Helfer nicht gefunden', 404)
+        if volunteer.deleted_at:
+            return error('Helfer ist pseudonymisiert', 400)
+
+    display_name = volunteer.display_name if volunteer else guest_name
     stand     = shift.stand
     date      = shift.event_date
     time_str  = f'{shift.start_time.strftime("%H:%M")}–{shift.end_time.strftime("%H:%M")}'
@@ -152,15 +166,15 @@ def create_registration(slug):
 
     reg = Registration(
         shift_id=data['shift_id'],
-        guest_name=data['guest_name'],
-        volunteer_id=None,
+        guest_name=None if volunteer else guest_name,
+        volunteer_id=volunteer_id,
         registered_by_admin=True,
     )
     db.session.add(reg)
     db.session.add(ActivityLog(
         instance_id=g.instance.id,
         event_type=ActivityLog.SHIFT_REGISTER,
-        volunteer_name=data['guest_name'],
+        volunteer_name=display_name,
         actor_type=getattr(g.current_user, 'role', 'admin'),
         details=detail,
     ))

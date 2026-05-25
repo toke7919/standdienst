@@ -42,6 +42,7 @@ def create_organizer():
         return error('E-Mail-Adresse bereits vergeben', 409)
 
     instance_ids = data.pop('instance_ids', [])
+    instance_admin_ids = data.pop('instance_admin_ids', [])
     password = data.pop('password', None)
 
     first_name = data.get('first_name', '').strip()
@@ -52,7 +53,7 @@ def create_organizer():
         first_name=first_name,
         last_name=last_name,
         name=full_name or first_name,
-        is_instance_admin=data.get('is_instance_admin', False),
+        is_instance_admin=bool(instance_admin_ids),
     )
     if password:
         if not validate_password_strength(password):
@@ -61,7 +62,7 @@ def create_organizer():
 
     db.session.add(organizer)
     db.session.flush()
-    _assign_instances(organizer, instance_ids)
+    _assign_instances(organizer, instance_ids, instance_admin_ids)
 
     _log(f'Organisator angelegt: {organizer.email}', g.current_user)
     db.session.commit()
@@ -122,14 +123,14 @@ def update_organizer(organizer_id):
         organizer.first_name = data.get('first_name', organizer.first_name or '').strip()
         organizer.last_name = data.get('last_name', organizer.last_name or '').strip()
         organizer.name = f'{organizer.first_name} {organizer.last_name}'.strip() or organizer.first_name
-    if 'is_instance_admin' in data:
-        organizer.is_instance_admin = data['is_instance_admin']
     if 'password' in data and data['password']:
         if not validate_password_strength(data['password']):
             return error('Passwort zu schwach', 400)
         organizer.set_password(data['password'])
     if 'instance_ids' in data:
-        _assign_instances(organizer, data['instance_ids'])
+        instance_admin_ids = data.get('instance_admin_ids', [])
+        _assign_instances(organizer, data['instance_ids'], instance_admin_ids)
+        organizer.is_instance_admin = bool(instance_admin_ids)
 
     _log(f'Organisator geändert: {organizer.email}', g.current_user)
     db.session.commit()
@@ -146,7 +147,9 @@ def delete_organizer(organizer_id):
     return no_content()
 
 
-def _assign_instances(organizer, instance_ids: list):
+def _assign_instances(organizer, instance_ids: list, instance_admin_ids: list = None):
+    if instance_admin_ids is None:
+        instance_admin_ids = []
     db.session.execute(
         organizer_instances.delete().where(
             organizer_instances.c.organizer_id == organizer.id
@@ -160,6 +163,7 @@ def _assign_instances(organizer, instance_ids: list):
                     organizer_id=organizer.id,
                     instance_id=iid,
                     is_primary=(iid == instance_ids[0]),
+                    is_instance_admin=(iid in instance_admin_ids),
                 )
             )
 

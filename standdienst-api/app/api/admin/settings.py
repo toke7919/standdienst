@@ -104,7 +104,8 @@ def upload_logo(slug):
 
     settings.logo_filename = filename
     db.session.commit()
-    return ok({'logo_filename': filename})
+    db.session.refresh(settings)
+    return ok({'logo_filename': filename, 'updated_at': settings.updated_at.isoformat() if settings.updated_at else None})
 
 
 @admin_bp.route('/settings/global', methods=['GET'])
@@ -193,9 +194,10 @@ def update_mail_settings():
 def send_test_mail():
     if not is_mail_configured(current_app):
         return error('E-Mail nicht konfiguriert', 503)
-    to = getattr(g.current_user, 'email', None)
+    body = request.get_json() or {}
+    to = (body.get('to') or '').strip() or getattr(g.current_user, 'email', None)
     if not to:
-        return error('Kein E-Mail-Konto für diesen Admin hinterlegt', 400)
+        return error('Keine Empfängeradresse angegeben', 400)
     try:
         send_mail(
             to=to,
