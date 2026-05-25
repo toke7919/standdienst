@@ -3,7 +3,7 @@
     <div class="w-full max-w-md">
       <!-- Branding über der Karte -->
       <div class="text-center mb-8">
-        <img src="/logo.svg" alt="Standdienst" class="h-12 mx-auto mb-4 drop-shadow-lg" />
+        <img src="/assets/mark-ticket.svg" alt="Standdienst" class="h-12 mx-auto mb-4 drop-shadow-lg" />
         <h1 class="text-2xl font-bold text-white">Admin-Anmeldung</h1>
       </div>
 

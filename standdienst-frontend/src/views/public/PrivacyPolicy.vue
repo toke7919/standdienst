@@ -15,7 +15,7 @@
       <p class="text-primary-200 mt-1.5 text-sm">Datenschutzerklärung</p>
     </div>
 
-    <div class="flex-1 bg-white rounded-t-3xl shadow-2xl px-6 pt-8 pb-12 -mt-8 overflow-y-auto">
+    <div class="flex-1 bg-soft rounded-t-md shadow-lg px-6 pt-8 pb-12 -mt-8 overflow-y-auto">
       <div class="max-w-2xl mx-auto">
         <LoadingSpinner v-if="loading" />
         <div v-else-if="html" class="prose prose-sm max-w-none text-ink/80" v-html="html" />
@@ -25,13 +25,22 @@
     </div>
   </div>
 
-  <!-- Plattform-Kontext / kein Slug: einfaches Layout -->
-  <div v-else class="max-w-2xl mx-auto px-4 py-12">
-    <h1 class="text-2xl font-bold text-ink mb-8">Datenschutzerklärung</h1>
-    <LoadingSpinner v-if="loading" />
-    <div v-else-if="html" class="prose prose-sm max-w-none text-ink/80" v-html="html" />
-    <p v-else class="text-muted">Keine Datenschutzerklärung hinterlegt.</p>
-    <button class="mt-8 btn-secondary" @click="$router.back()">Zurück</button>
+  <!-- Plattform-Kontext / kein Slug: gleiches Layout wie Instanz-Kontext -->
+  <div v-else class="min-h-screen flex flex-col bg-gradient-to-b from-primary-800 to-primary-700">
+    <div class="flex-shrink-0 pt-16 pb-24 px-6 text-white text-center">
+      <img src="/assets/mark-ticket.svg" class="h-16 object-contain mx-auto mb-4 drop-shadow-lg" alt="Logo" />
+      <h1 class="text-2xl font-bold tracking-tight">Standdienst</h1>
+      <p class="text-primary-200 mt-1.5 text-sm">Datenschutzerklärung</p>
+    </div>
+
+    <div class="flex-1 bg-soft rounded-t-md shadow-lg px-6 pt-8 pb-12 -mt-8 overflow-y-auto">
+      <div class="max-w-2xl mx-auto">
+        <LoadingSpinner v-if="loading" />
+        <div v-else-if="html" class="prose prose-sm max-w-none text-ink/80" v-html="html" />
+        <p v-else class="text-muted">Keine Datenschutzerklärung hinterlegt.</p>
+        <button class="mt-8 btn-secondary" @click="$router.back()">Zurück</button>
+      </div>
+    </div>
   </div>
 </template>
 
