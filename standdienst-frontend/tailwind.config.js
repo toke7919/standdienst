@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink:       'var(--color-ink)',
+        ink:       'rgb(var(--color-ink-rgb) / <alpha-value>)',
         muted:     'var(--color-muted)',
         sand:      'var(--color-sand)',
         'bg-brand': 'var(--color-bg)',

@@ -82,7 +82,7 @@
            disabled:bg-bg-brand disabled:text-muted disabled:cursor-not-allowed;
   }
   .label {
-    @apply block text-sm font-medium text-ink mb-1.5 opacity-80;
+    @apply block text-sm font-medium text-ink/80 mb-1.5;
   }
 
   /* ── Cards ──────────────────────────────────────────────────── */

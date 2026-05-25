@@ -8,6 +8,7 @@
   --color-bg-warm: #e9d8bd;       /* Sand warm */
   --color-soft: #fdf6e9;          /* Soft cream */
   --color-ink: #1a1311;           /* Tinte */
+  --color-ink-rgb: 26 19 17;      /* RGB-Kanäle für Tailwind-Opacity-Modifier */
   --color-muted: #7a695a;         /* Muted text */
 
   /* Typography */
