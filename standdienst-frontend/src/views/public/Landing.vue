@@ -4,7 +4,7 @@
     <!-- ===== HERO ===== -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center">
       <!-- Logo -->
-      <img src="/logo.svg" alt="Standdienst" class="h-16 md:h-20 mb-8 drop-shadow-xl" />
+      <img src="/assets/mark-ticket.svg" alt="Standdienst" class="h-16 md:h-20 mb-8 drop-shadow-xl" />
       <p class="text-primary-200 text-lg md:text-xl max-w-2xl leading-relaxed mb-10">
         Die Plattform für Freiwilligenkoordination bei Vereinen und Veranstaltungen.
         Schichten planen, Helfer einteilen und Essensspenden verwalten – einfach, digital und DSGVO-konform.
