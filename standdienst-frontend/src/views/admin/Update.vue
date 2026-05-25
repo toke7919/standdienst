@@ -1,10 +1,10 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">System-Update</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">System-Update</h1>
 
     <div class="max-w-2xl space-y-4">
       <div class="card space-y-4">
-        <div v-if="checking" class="flex items-center gap-2 text-gray-500 text-sm">
+        <div v-if="checking" class="flex items-center gap-2 text-muted text-sm">
           <LoadingSpinner size="sm" />
           Prüfe auf Updates…
         </div>
@@ -13,8 +13,8 @@
           <!-- Installierte Version -->
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Installierte Version</p>
-              <p class="font-semibold text-gray-900 text-lg font-mono">{{ updateInfo.current_version }}</p>
+              <p class="text-xs text-muted uppercase tracking-wide mb-0.5">Installierte Version</p>
+              <p class="font-semibold text-ink text-lg font-mono">{{ updateInfo.current_version }}</p>
             </div>
             <span v-if="updateInfo.update_available" class="badge-blue">Update verfügbar</span>
             <span v-else class="badge-green">Aktuell</span>
@@ -27,22 +27,22 @@
           </div>
 
           <!-- Release-Notes installierte Version -->
-          <div v-if="updateInfo.current_release_notes" class="border border-gray-100 rounded-lg">
+          <div v-if="updateInfo.current_release_notes" class="border border-sand rounded-lg">
             <button type="button"
-                    class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+                    class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-ink/80 hover:bg-bg-warm rounded-lg"
                     @click="showCurrentNotes = !showCurrentNotes">
               Release-Notes {{ updateInfo.current_version }}
-              <span class="text-gray-400 text-xs">{{ showCurrentNotes ? '▲' : '▼' }}</span>
+              <span class="text-muted text-xs">{{ showCurrentNotes ? '▲' : '▼' }}</span>
             </button>
-            <div v-if="showCurrentNotes" class="px-4 pb-4 pt-1 text-sm text-gray-600 whitespace-pre-wrap border-t border-gray-100">
+            <div v-if="showCurrentNotes" class="px-4 pb-4 pt-1 text-sm text-ink/80 whitespace-pre-wrap border-t border-sand">
               {{ updateInfo.current_release_notes }}
             </div>
           </div>
 
           <!-- Neueste Version (wenn Update verfügbar) -->
           <template v-if="updateInfo.update_available">
-            <div class="border-t border-gray-100 pt-4">
-              <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Neue Version</p>
+            <div class="border-t border-sand pt-4">
+              <p class="text-xs text-muted uppercase tracking-wide mb-0.5">Neue Version</p>
               <p class="font-semibold text-indigo-700 text-lg font-mono">{{ updateInfo.latest_version }}</p>
             </div>
             <div v-if="updateInfo.latest_release_notes" class="border border-indigo-100 rounded-lg bg-indigo-50/50">
@@ -52,7 +52,7 @@
                 Release-Notes {{ updateInfo.latest_version }}
                 <span class="text-indigo-400 text-xs">{{ showLatestNotes ? '▲' : '▼' }}</span>
               </button>
-              <div v-if="showLatestNotes" class="px-4 pb-4 pt-1 text-sm text-gray-600 whitespace-pre-wrap border-t border-indigo-100">
+              <div v-if="showLatestNotes" class="px-4 pb-4 pt-1 text-sm text-ink/80 whitespace-pre-wrap border-t border-indigo-100">
                 {{ updateInfo.latest_release_notes }}
               </div>
             </div>
@@ -76,13 +76,13 @@
       </div>
 
       <div v-if="updateLog.length" class="card">
-        <h2 class="text-sm font-semibold text-gray-700 mb-3">Protokoll</h2>
+        <h2 class="text-sm font-semibold text-ink/80 mb-3">Protokoll</h2>
         <div class="space-y-2">
           <div v-for="(entry, i) in updateLog" :key="i" class="text-xs">
             <span :class="entry.ok ? 'text-green-700' : 'text-red-600'" class="font-medium">
               {{ entry.step }}
             </span>
-            <pre v-if="entry.output" class="mt-1 text-gray-500 whitespace-pre-wrap">{{ entry.output }}</pre>
+            <pre v-if="entry.output" class="mt-1 text-muted whitespace-pre-wrap">{{ entry.output }}</pre>
           </div>
         </div>
       </div>

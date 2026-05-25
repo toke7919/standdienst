@@ -1,25 +1,25 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Organisatoren</h1>
+      <h1 class="text-2xl font-bold text-ink">Organisatoren</h1>
       <button class="btn-primary" @click="openCreate">Neuer Organisator</button>
     </div>
 
     <div class="card overflow-hidden p-0">
       <!-- Mobile: gestapelte Liste -->
-      <div class="md:hidden divide-y divide-gray-50">
+      <div class="md:hidden divide-y divide-sand">
         <div v-for="o in sorted" :key="o.id" class="flex items-start gap-3 px-4 py-3">
           <div class="flex-1 min-w-0">
-            <p class="font-medium text-gray-900 text-sm">{{ o.name }}</p>
-            <p class="text-xs text-gray-500 mt-0.5 truncate">{{ o.email }}</p>
+            <p class="font-medium text-ink text-sm">{{ o.name }}</p>
+            <p class="text-xs text-muted mt-0.5 truncate">{{ o.email }}</p>
             <div class="flex items-center gap-2 mt-1.5 flex-wrap">
               <span
                 v-if="o.is_instance_admin"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700"
               >Instanz-Admin</span>
-              <span v-else class="text-xs text-gray-400">Organisator</span>
-              <span class="text-gray-200">·</span>
-              <span class="text-xs text-gray-400">{{ o.instance_ids?.length ?? 0 }} Instanzen</span>
+              <span v-else class="text-xs text-muted">Organisator</span>
+              <span class="text-sand">·</span>
+              <span class="text-xs text-muted">{{ o.instance_ids?.length ?? 0 }} Instanzen</span>
             </div>
           </div>
           <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -27,24 +27,24 @@
             <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
           </div>
         </div>
-        <div v-if="!sorted.length" class="px-4 py-8 text-center text-gray-400 text-sm">Keine Organisatoren</div>
+        <div v-if="!sorted.length" class="px-4 py-8 text-center text-muted text-sm">Keine Organisatoren</div>
       </div>
 
       <!-- Desktop: Tabelle -->
       <table class="hidden md:table w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-bg-brand border-b border-sand">
           <tr>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="email" @sort="toggleSort">E-Mail</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="is_instance_admin" @sort="toggleSort">Rolle</SortTh>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Instanzen</th>
+            <th class="px-4 py-3 text-left font-medium text-muted">Instanzen</th>
             <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="o in sorted" :key="o.id" class="border-b border-gray-50 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">{{ o.name }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ o.email }}</td>
+          <tr v-for="o in sorted" :key="o.id" class="border-b border-sand hover:bg-bg-warm">
+            <td class="px-4 py-3 font-medium text-ink">{{ o.name }}</td>
+            <td class="px-4 py-3 text-muted">{{ o.email }}</td>
             <td class="px-4 py-3">
               <span
                 v-if="o.is_instance_admin"
@@ -52,9 +52,9 @@
               >
                 Instanz-Admin
               </span>
-              <span v-else class="text-xs text-gray-400">Organisator</span>
+              <span v-else class="text-xs text-muted">Organisator</span>
             </td>
-            <td class="px-4 py-3 text-gray-500">{{ o.instance_ids?.length ?? 0 }}</td>
+            <td class="px-4 py-3 text-muted">{{ o.instance_ids?.length ?? 0 }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
               <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
@@ -78,28 +78,28 @@
         </div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" required /></div>
         <div v-if="!editing">
-          <label class="label">Passwort <span class="text-xs font-normal text-gray-400">(optional)</span></label>
+          <label class="label">Passwort <span class="text-xs font-normal text-muted">(optional)</span></label>
           <input v-model="form.password" type="password" class="input" autocomplete="new-password" />
-          <p class="text-xs text-gray-400 mt-1">
+          <p class="text-xs text-muted mt-1">
             Leer lassen → Einladungsmail mit Passwort-Einrichtungslink (7 Tage gültig)
           </p>
         </div>
         <div class="flex items-center gap-3">
           <input v-model="form.is_instance_admin" type="checkbox" id="is_instance_admin" class="rounded" />
-          <label for="is_instance_admin" class="text-sm text-gray-700">
+          <label for="is_instance_admin" class="text-sm text-ink/80">
             Instanz-Admin
-            <span class="text-xs text-gray-400 ml-1">(kann Einstellungen der eigenen Instanz bearbeiten)</span>
+            <span class="text-xs text-muted ml-1">(kann Einstellungen der eigenen Instanz bearbeiten)</span>
           </label>
         </div>
 
         <div>
           <label class="label">Zugeordnete Instanzen</label>
-          <div v-if="!instances.length" class="text-xs text-gray-400 py-2">Keine Instanzen vorhanden</div>
-          <div v-else class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
+          <div v-if="!instances.length" class="text-xs text-muted py-2">Keine Instanzen vorhanden</div>
+          <div v-else class="border border-sand rounded-lg divide-y divide-sand max-h-48 overflow-y-auto">
             <label
               v-for="inst in instances"
               :key="inst.id"
-              class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2 hover:bg-bg-warm cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -107,8 +107,8 @@
                 v-model="form.instance_ids"
                 class="rounded"
               />
-              <span class="text-sm text-gray-700">{{ inst.name }}</span>
-              <span class="text-xs text-gray-400 font-mono">{{ inst.slug }}</span>
+              <span class="text-sm text-ink/80">{{ inst.name }}</span>
+              <span class="text-xs text-muted font-mono">{{ inst.slug }}</span>
             </label>
           </div>
         </div>

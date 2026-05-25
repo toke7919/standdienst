@@ -1,9 +1,9 @@
 <template>
   <div class="max-w-md">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Passkeys</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Passkeys</h1>
 
     <div class="card space-y-6">
-      <p class="text-sm text-gray-600">
+      <p class="text-sm text-ink/80">
         Passkeys ermöglichen passwortlose Anmeldung mit Fingerabdruck, Gesichtserkennung oder PIN.
         Gespeichert werden sie sicher auf deinem Gerät oder in deinem Passwort-Manager.
       </p>
@@ -15,12 +15,12 @@
 
       <!-- Passkey-Liste -->
       <div v-if="credentials.length > 0" class="space-y-2">
-        <p class="text-sm font-medium text-gray-700">Registrierte Passkeys</p>
+        <p class="text-sm font-medium text-ink/80">Registrierte Passkeys</p>
         <div v-for="cred in credentials" :key="cred.id"
-             class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+             class="flex items-center justify-between rounded-lg border border-sand px-3 py-2">
           <div>
-            <p class="text-sm font-medium text-gray-800">{{ cred.name }}</p>
-            <p class="text-xs text-gray-400">
+            <p class="text-sm font-medium text-ink">{{ cred.name }}</p>
+            <p class="text-xs text-muted">
               Erstellt: {{ formatDate(cred.created_at) }}
               <span v-if="cred.last_used_at"> · Zuletzt verwendet: {{ formatDate(cred.last_used_at) }}</span>
             </p>
@@ -31,7 +31,7 @@
           </button>
         </div>
       </div>
-      <p v-else-if="loaded" class="text-sm text-gray-400">Noch keine Passkeys registriert.</p>
+      <p v-else-if="loaded" class="text-sm text-muted">Noch keine Passkeys registriert.</p>
 
       <!-- Neuen Passkey hinzufügen -->
       <div v-if="passkeySupported && credentials.length < 5">

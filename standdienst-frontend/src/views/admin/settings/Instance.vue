@@ -1,17 +1,17 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Instanz-Einstellungen</h1>
+    <h1 class="text-2xl font-bold text-ink mb-6">Instanz-Einstellungen</h1>
 
     <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
 
     <form v-else @submit.prevent="save" class="space-y-6 max-w-2xl">
       <div class="card space-y-4">
-        <h2 class="text-base font-semibold text-gray-800">Allgemein</h2>
+        <h2 class="text-base font-semibold text-ink">Allgemein</h2>
         <div><label class="label">Seitentitel</label><input v-model="form.site_title" class="input" required /></div>
         <div>
           <label class="label">Primärfarbe</label>
           <div class="flex items-center gap-3">
-            <input v-model="form.primary_color" type="color" class="h-10 w-20 rounded cursor-pointer border border-gray-300" />
+            <input v-model="form.primary_color" type="color" class="h-10 w-20 rounded cursor-pointer border border-sand" />
             <input v-model="form.primary_color" class="input max-w-32" placeholder="#4f46e5" />
           </div>
         </div>
@@ -23,18 +23,18 @@
       </div>
 
       <div class="card space-y-4">
-        <h2 class="text-base font-semibold text-gray-800">Funktionen</h2>
+        <h2 class="text-base font-semibold text-ink">Funktionen</h2>
         <div class="flex items-center gap-2">
           <input v-model="form.shifts_enabled" type="checkbox" id="shifts" />
-          <label for="shifts" class="text-sm text-gray-700">Schichten aktiviert</label>
+          <label for="shifts" class="text-sm text-ink/80">Schichten aktiviert</label>
         </div>
         <div class="flex items-center gap-2">
           <input v-model="form.food_donations_enabled" type="checkbox" id="food" />
-          <label for="food" class="text-sm text-gray-700">Essensspenden aktiviert</label>
+          <label for="food" class="text-sm text-ink/80">Essensspenden aktiviert</label>
         </div>
 <div class="flex items-center gap-2">
           <input v-model="form.site_locked" type="checkbox" id="locked" />
-          <label for="locked" class="text-sm text-gray-700">Anmeldung gesperrt</label>
+          <label for="locked" class="text-sm text-ink/80">Anmeldung gesperrt</label>
         </div>
         <div v-if="form.site_locked">
           <div class="flex items-center justify-between mb-1">
@@ -60,7 +60,7 @@
             class="input max-w-xs"
             placeholder="Leer lassen = keine Einschränkung"
           />
-          <p class="text-xs text-gray-400 mt-1">
+          <p class="text-xs text-muted mt-1">
             Helfer können sich bis zu dieser Zeit vor Schichtbeginn abmelden. Leer lassen für keine Einschränkung.
           </p>
         </div>
