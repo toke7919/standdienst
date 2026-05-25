@@ -30,8 +30,11 @@ def list_organizers():
 @admin_bp.route('/organizers', methods=['POST'])
 @require_admin
 def create_organizer():
+    raw = request.get_json() or {}
+    if 'password' in raw and not raw['password']:
+        del raw['password']
     try:
-        data = _create.load(request.get_json() or {})
+        data = _create.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
@@ -101,8 +104,11 @@ def get_organizer(organizer_id):
 @require_admin
 def update_organizer(organizer_id):
     organizer = Organizer.query.get_or_404(organizer_id)
+    raw = request.get_json() or {}
+    if 'password' in raw and not raw['password']:
+        del raw['password']
     try:
-        data = _update.load(request.get_json() or {})
+        data = _update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
