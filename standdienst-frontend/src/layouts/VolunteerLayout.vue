@@ -54,7 +54,7 @@
 
     <!-- ====== MOBILE BOTTOM NAVIGATION ====== -->
     <nav
-      class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-40"
+      class="lg:hidden fixed bottom-0 inset-x-0 bg-soft border-t border-sand z-40"
       style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     >
       <div class="flex items-stretch h-[4.25rem]">
@@ -62,7 +62,7 @@
           v-for="link in bottomLinks"
           :key="link.to"
           :to="link.to"
-          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 [&.router-link-active]:text-primary-600 transition-all duration-150 active:scale-90"
+          class="relative flex-1 flex flex-col items-center justify-center gap-1 text-muted [&.router-link-active]:text-primary-600 transition-all duration-150 active:scale-90"
         >
           <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 scale-x-0 [.router-link-active_&]:scale-x-100 transition-transform duration-200 origin-center" />
           <component :is="link.icon" class="w-6 h-6 transition-transform duration-150 [.router-link-active_&]:scale-110" />
@@ -96,7 +96,7 @@ const settings = computed(() => instanceStore.current)
 
 const headerTextClass = computed(() => {
   const color = settings.value?.primary_color || '#7c3aed'
-  return isColorDark(color) ? 'text-white' : 'text-gray-900'
+  return isColorDark(color) ? 'text-white' : 'text-ink'
 })
 
 // Padding-bottom für mobile: Höhe der Bottom-Nav + Safe Area
