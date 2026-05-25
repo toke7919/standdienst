@@ -70,7 +70,7 @@
         <div class="grid md:grid-cols-2 gap-8 items-start">
 
           <!-- Dashboard Mockup -->
-          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div class="bg-soft rounded-md shadow-lg overflow-hidden">
             <div class="bg-primary-700 px-4 py-2.5 flex items-center gap-1.5">
               <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
               <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
@@ -109,7 +109,7 @@
           </div>
 
           <!-- Helfer-Ansicht Mockup -->
-          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div class="bg-soft rounded-md shadow-lg overflow-hidden">
             <div class="bg-primary-700 px-4 py-2.5 flex items-center gap-1.5">
               <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
               <div class="w-2.5 h-2.5 rounded-full bg-white/30"></div>

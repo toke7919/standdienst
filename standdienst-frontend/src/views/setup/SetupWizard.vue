@@ -4,7 +4,7 @@
 
       <!-- Header -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white text-2xl font-bold mb-4">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-md bg-indigo-600 text-white text-2xl font-bold mb-4">
           S
         </div>
         <h1 class="text-2xl font-bold text-ink">Standdienst einrichten</h1>
