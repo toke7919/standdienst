@@ -93,6 +93,14 @@ onMounted(() => {
   )
 })
 
+function redirectAfterLogin() {
+  if (auth.isOrganizer && auth.user?.instances?.length === 1) {
+    router.push(`/admin/${auth.user.instances[0].slug}/dashboard`)
+  } else {
+    router.push('/admin/dashboard')
+  }
+}
+
 async function submit() {
   errorMsg.value = ''
   loading.value = true
@@ -101,7 +109,7 @@ async function submit() {
     if (res.requires2fa) {
       router.push('/admin/login/2fa')
     } else {
-      router.push('/admin/dashboard')
+      redirectAfterLogin()
     }
   } catch (e) {
     errorMsg.value = e.response?.data?.error || 'Anmeldung fehlgeschlagen'
@@ -121,7 +129,7 @@ async function loginWithPasskey() {
     const serialized = serializeAuthenticationCredential(credential)
     const { data } = await authApi.passkeyAuthenticateComplete(serialized)
     auth.user = data.user
-    router.push('/admin/dashboard')
+    redirectAfterLogin()
   } catch (e) {
     if (e.name === 'NotAllowedError') {
       passkeyError.value = 'Passkey-Anmeldung abgebrochen'

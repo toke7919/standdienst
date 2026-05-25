@@ -11,9 +11,21 @@ class OrganizerSchema(SQLAlchemyAutoSchema):
 
     has_login = fields.Bool(dump_only=True)
     instance_ids = fields.Method('_instance_ids', dump_only=True)
+    instance_admin_ids = fields.Method('_instance_admin_ids', dump_only=True)
 
     def _instance_ids(self, obj):
         return [i.id for i in obj.instances.all()]
+
+    def _instance_admin_ids(self, obj):
+        from ..models.instance import organizer_instances
+        from ..extensions import db
+        rows = db.session.execute(
+            organizer_instances.select().where(
+                organizer_instances.c.organizer_id == obj.id,
+                organizer_instances.c.is_instance_admin == True,
+            )
+        ).fetchall()
+        return [row.instance_id for row in rows]
 
 
 class OrganizerCreateSchema(Schema):
@@ -21,8 +33,8 @@ class OrganizerCreateSchema(Schema):
     last_name = fields.Str(validate=validate.Length(max=50), load_default='')
     email = fields.Email(required=True)
     password = fields.Str(validate=validate.Length(min=8), allow_none=True, load_default=None)
-    is_instance_admin = fields.Bool(load_default=False)
     instance_ids = fields.List(fields.Int(), load_default=[])
+    instance_admin_ids = fields.List(fields.Int(), load_default=[])
 
 
 class OrganizerUpdateSchema(Schema):
@@ -30,8 +42,8 @@ class OrganizerUpdateSchema(Schema):
     last_name = fields.Str(validate=validate.Length(max=50))
     email = fields.Email()
     password = fields.Str(validate=validate.Length(min=8), allow_none=True)
-    is_instance_admin = fields.Bool()
     instance_ids = fields.List(fields.Int())
+    instance_admin_ids = fields.List(fields.Int())
 
 
 class OrganizerInstanceAssignSchema(Schema):

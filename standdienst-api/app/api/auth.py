@@ -386,6 +386,23 @@ def _user_payload(user) -> dict:
         payload['instance_id'] = user.instance_id
     if hasattr(user, 'is_instance_admin'):
         payload['is_instance_admin'] = user.is_instance_admin
+    if hasattr(user, 'instances') and user.role == 'organizer':
+        from ..models.instance import organizer_instances as oi_table
+        from ..extensions import db as _db
+        insts = user.instances.all()
+        admin_rows = {
+            row.instance_id
+            for row in _db.session.execute(
+                oi_table.select().where(
+                    oi_table.c.organizer_id == user.id,
+                    oi_table.c.is_instance_admin == True,
+                )
+            ).fetchall()
+        }
+        payload['instances'] = [
+            {'id': i.id, 'slug': i.slug, 'name': i.name, 'is_admin': i.id in admin_rows}
+            for i in insts
+        ]
     if hasattr(user, 'notifications_enabled'):
         payload['notifications_enabled'] = user.notifications_enabled
     if hasattr(user, 'email_confirmation_enabled'):
@@ -431,6 +448,8 @@ def update_profile():
             return jsonify(error=err), 400
         user.set_password(data['password'])
         user.rotate_jwt()
+    if 'notifications_enabled' in data and role == 'organizer':
+        user.notifications_enabled = bool(data['notifications_enabled'])
 
     db.session.commit()
     from ..utils.responses import ok

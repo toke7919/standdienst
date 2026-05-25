@@ -26,9 +26,11 @@ def instance_admin_user():
     return org
 
 
-def _assign(organizer, instance):
+def _assign(organizer, instance, is_instance_admin=None):
+    admin_flag = organizer.is_instance_admin if is_instance_admin is None else is_instance_admin
     _db.session.execute(organizer_instances.insert().values(
-        organizer_id=organizer.id, instance_id=instance.id, is_primary=False
+        organizer_id=organizer.id, instance_id=instance.id,
+        is_primary=False, is_instance_admin=admin_flag,
     ))
     _db.session.commit()
 

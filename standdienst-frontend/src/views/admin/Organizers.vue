@@ -14,7 +14,7 @@
             <p class="text-xs text-muted mt-0.5 truncate">{{ o.email }}</p>
             <div class="flex items-center gap-2 mt-1.5 flex-wrap">
               <span
-                v-if="o.is_instance_admin"
+                v-if="o.instance_admin_ids?.length"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
               >Instanz-Admin</span>
               <span v-else class="text-xs text-muted">Organisator</span>
@@ -36,7 +36,7 @@
           <tr>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="email" @sort="toggleSort">E-Mail</SortTh>
-            <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="is_instance_admin" @sort="toggleSort">Rolle</SortTh>
+            <th class="px-4 py-3 text-left font-medium text-muted">Rolle</th>
             <th class="px-4 py-3 text-left font-medium text-muted">Instanzen</th>
             <th class="px-4 py-3" />
           </tr>
@@ -47,7 +47,7 @@
             <td class="px-4 py-3 text-muted">{{ o.email }}</td>
             <td class="px-4 py-3">
               <span
-                v-if="o.is_instance_admin"
+                v-if="o.instance_admin_ids?.length"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
               >
                 Instanz-Admin
@@ -84,32 +84,41 @@
             Leer lassen → Einladungsmail mit Passwort-Einrichtungslink (7 Tage gültig)
           </p>
         </div>
-        <div class="flex items-center gap-3">
-          <input v-model="form.is_instance_admin" type="checkbox" id="is_instance_admin" class="rounded" />
-          <label for="is_instance_admin" class="text-sm text-ink/80">
-            Instanz-Admin
-            <span class="text-xs text-muted ml-1">(kann Einstellungen der eigenen Instanz bearbeiten)</span>
-          </label>
-        </div>
-
         <div>
           <label class="label">Zugeordnete Instanzen</label>
+          <p class="text-xs text-muted mb-2">Instanz-Admin-Recht erlaubt Zugriff auf Einstellungen und Protokoll der jeweiligen Instanz.</p>
           <div v-if="!instances.length" class="text-xs text-muted py-2">Keine Instanzen vorhanden</div>
-          <div v-else class="border border-sand rounded-lg divide-y divide-sand max-h-48 overflow-y-auto">
-            <label
+          <div v-else class="border border-sand rounded-lg divide-y divide-sand max-h-56 overflow-y-auto">
+            <div
               v-for="inst in instances"
               :key="inst.id"
-              class="flex items-center gap-3 px-3 py-2 hover:bg-bg-warm cursor-pointer"
+              class="flex items-center gap-3 px-3 py-2 hover:bg-bg-warm"
             >
               <input
                 type="checkbox"
                 :value="inst.id"
                 v-model="form.instance_ids"
+                :id="`inst-${inst.id}`"
                 class="rounded"
+                @change="onInstanceToggle(inst.id)"
               />
-              <span class="text-sm text-ink/80">{{ inst.name }}</span>
-              <span class="text-xs text-muted font-mono">{{ inst.slug }}</span>
-            </label>
+              <label :for="`inst-${inst.id}`" class="flex-1 text-sm text-ink/80 cursor-pointer">
+                {{ inst.name }}
+                <span class="text-xs text-muted font-mono ml-1">{{ inst.slug }}</span>
+              </label>
+              <label
+                v-if="form.instance_ids.includes(inst.id)"
+                class="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  :value="inst.id"
+                  v-model="form.instance_admin_ids"
+                  class="rounded"
+                />
+                Instanz-Admin
+              </label>
+            </div>
           </div>
         </div>
 
@@ -136,7 +145,7 @@ const organizers = ref([])
 const instances = ref([])
 const showModal = ref(false)
 const editing = ref(null)
-const form = ref({ first_name: '', last_name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] })
+const form = ref({ first_name: '', last_name: '', email: '', password: '', instance_ids: [], instance_admin_ids: [] })
 const saveError = ref('')
 
 const { sortKey, sortDir, sorted, toggleSort } = useSort(organizers, 'name')
@@ -157,7 +166,7 @@ async function loadInstances() {
 
 function openCreate() {
   editing.value = null
-  form.value = { first_name: '', last_name: '', email: '', password: '', is_instance_admin: false, instance_ids: [] }
+  form.value = { first_name: '', last_name: '', email: '', password: '', instance_ids: [], instance_admin_ids: [] }
   saveError.value = ''
   showModal.value = true
 }
@@ -169,8 +178,8 @@ function openEdit(o) {
     first_name: o.first_name || parts[0] || '',
     last_name: o.last_name || parts.slice(1).join(' ') || '',
     email: o.email,
-    is_instance_admin: o.is_instance_admin ?? false,
     instance_ids: [...(o.instance_ids ?? [])],
+    instance_admin_ids: [...(o.instance_admin_ids ?? [])],
   }
   saveError.value = ''
   showModal.value = true
@@ -184,8 +193,8 @@ async function save() {
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         email: form.value.email,
-        is_instance_admin: form.value.is_instance_admin,
         instance_ids: form.value.instance_ids,
+        instance_admin_ids: form.value.instance_admin_ids,
       })
       ui.success('Organisator aktualisiert')
     } else {
@@ -196,6 +205,12 @@ async function save() {
     await load()
   } catch (e) {
     saveError.value = e.response?.data?.error || 'Fehler'
+  }
+}
+
+function onInstanceToggle(instanceId) {
+  if (!form.value.instance_ids.includes(instanceId)) {
+    form.value.instance_admin_ids = form.value.instance_admin_ids.filter(id => id !== instanceId)
   }
 }
 

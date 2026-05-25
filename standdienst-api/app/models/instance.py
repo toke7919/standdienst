@@ -10,6 +10,7 @@ organizer_instances = db.Table(
     db.Column('instance_id', db.Integer,
               db.ForeignKey('instances.id', ondelete='CASCADE'), primary_key=True),
     db.Column('is_primary', db.Boolean, nullable=False, default=False),
+    db.Column('is_instance_admin', db.Boolean, nullable=False, default=False),
 )
 
 
@@ -28,6 +29,8 @@ class Instance(db.Model):
     contact_zip_city = db.Column(db.String(100), nullable=True)
     contact_email = db.Column(db.String(200), nullable=True)
     contact_phone = db.Column(db.String(50), nullable=True)
+    contact_asp = db.Column(db.String(200), nullable=True)
+    contact_asp_email = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Instance {self.slug}>'
@@ -48,6 +51,8 @@ class GlobalSettings(db.Model):
     contact_zip_city = db.Column(db.String(100), nullable=True)
     contact_email = db.Column(db.String(200), nullable=True)
     contact_phone = db.Column(db.String(50), nullable=True)
+    contact_asp = db.Column(db.String(200), nullable=True)
+    contact_asp_email = db.Column(db.String(200), nullable=True)
     log_retention_months = db.Column(db.Integer, nullable=False, default=3)
     smb_enabled = db.Column(db.Boolean, nullable=False, default=False)
     smb_server = db.Column(db.String(200), nullable=True)

@@ -674,3 +674,85 @@ def build_reminder_email(
         opt_out_url=opt_out_url,
         opt_out_label='Erinnerungsmails deaktivieren',
     )
+
+
+def build_organizer_digest_email(
+    organizer_name: str,
+    instance_title: str,
+    date_label: str,
+    registrations: list,
+    cancellations: list,
+    food_donations: list,
+    base_url: str,
+    slug: str,
+    primary_color: str = '#4f46e5',
+    logo_url: str = None,
+    copyright_text: str = None,
+    opt_out_url: str = None,
+) -> str:
+    """Tägliche Zusammenfassung der Aktivitäten für Organisatoren."""
+
+    def _table_section(title, rows, headers, row_fn):
+        if not rows:
+            return ''
+        td_style = 'padding:8px 12px;border-bottom:1px solid #eee;'
+        def _row(r):
+            cells = ''.join(f'<td style="{td_style}">{c}</td>' for c in row_fn(r))
+            return f'<tr>{cells}</tr>'
+        row_html = ''.join(_row(r) for r in rows)
+        head_html = ''.join(f'<th style="padding:8px 12px;text-align:left;background:#f4f4f5;font-size:12px;color:#71717a;">{h}</th>' for h in headers)
+        return (
+            f'<p style="margin:24px 0 8px;font-weight:600;color:#18181b;">{title}</p>'
+            f'<table style="width:100%;border-collapse:collapse;font-size:14px;border:1px solid #eee;border-radius:8px;overflow:hidden;">'
+            f'<thead><tr>{head_html}</tr></thead>'
+            f'<tbody>{row_html}</tbody></table>'
+        )
+
+    reg_section = _table_section(
+        f'Neue Anmeldungen ({len(registrations)})',
+        registrations,
+        ['Name', 'Stand', 'Zeit'],
+        lambda r: [r['name'], r['stand'], r['time']],
+    )
+    cancel_section = _table_section(
+        f'Abmeldungen ({len(cancellations)})',
+        cancellations,
+        ['Name', 'Stand', 'Zeit'],
+        lambda r: [r['name'], r['stand'], r['time']],
+    )
+    food_section = _table_section(
+        f'Essensspenden ({len(food_donations)})',
+        food_donations,
+        ['Von', 'Kategorie', 'Beschreibung'],
+        lambda r: [r['name'], r['food_type'], r['description'] or '—'],
+    )
+
+    admin_url = f'{base_url}/admin/{slug}/registrations'
+    content = f"""
+    <p style="margin:0 0 16px;">Hallo <strong>{organizer_name}</strong>,</p>
+    <p style="margin:0 0 24px;">
+      hier ist deine Zusammenfassung für <strong>{instance_title}</strong> vom <strong>{date_label}</strong>:
+    </p>
+    {reg_section or '<p style="color:#71717a;">Keine neuen Anmeldungen.</p>' if not cancel_section and not food_section else reg_section}
+    {cancel_section}
+    {food_section}
+    <p style="margin:24px 0 0;text-align:center;">
+      <a href="{admin_url}"
+         style="background:{primary_color};color:#ffffff;padding:13px 30px;
+                border-radius:8px;text-decoration:none;font-weight:600;
+                font-size:15px;display:inline-block;">
+        Zur Anmeldungsübersicht
+      </a>
+    </p>
+    """
+    return build_email_template(
+        content,
+        title=instance_title,
+        base_url=base_url,
+        slug=slug,
+        primary_color=primary_color,
+        logo_url=logo_url,
+        copyright_text=copyright_text,
+        opt_out_url=opt_out_url,
+        opt_out_label='Tägliche Zusammenfassung deaktivieren',
+    )

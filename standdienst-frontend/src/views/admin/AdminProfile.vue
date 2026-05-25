@@ -57,6 +57,26 @@
       </form>
     </div>
 
+    <!-- Benachrichtigungen (nur für Organisatoren) -->
+    <div v-if="auth.isOrganizer" class="card space-y-4">
+      <h2 class="text-base font-semibold text-ink">Benachrichtigungen</h2>
+      <div class="flex items-start gap-3">
+        <input
+          id="notif-toggle"
+          v-model="notificationsEnabled"
+          type="checkbox"
+          class="mt-0.5 rounded"
+          @change="saveNotifications"
+        />
+        <label for="notif-toggle" class="text-sm text-ink/80 cursor-pointer">
+          <span class="font-medium">Tages-Digest per E-Mail</span>
+          <span class="block text-xs text-muted mt-0.5">
+            Täglich um 18:00 Uhr eine Zusammenfassung der heutigen Anmeldungen, Abmeldungen und Essensspenden erhalten.
+          </span>
+        </label>
+      </div>
+    </div>
+
     <!-- 2FA -->
     <div class="card space-y-4">
       <div class="flex items-center gap-2">
@@ -181,6 +201,20 @@ import { prepareRegistrationOptions, serializeRegistrationCredential } from '@/u
 
 const auth = useAuthStore()
 const ui = useUiStore()
+
+// ── Benachrichtigungen (Organisatoren) ─────────────────────────────────────
+const notificationsEnabled = ref(auth.user?.notifications_enabled ?? true)
+
+async function saveNotifications() {
+  try {
+    await authApi.updateProfile({ notifications_enabled: notificationsEnabled.value })
+    ui.success(notificationsEnabled.value ? 'Digest aktiviert' : 'Digest deaktiviert')
+    await auth.fetchMe()
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler')
+    notificationsEnabled.value = !notificationsEnabled.value
+  }
+}
 
 // ── Profil ─────────────────────────────────────────────────────────────────
 const profileForm = ref({
