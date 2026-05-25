@@ -16,11 +16,11 @@
     </div>
 
     <!-- Formular -->
-    <div class="flex-1 bg-white rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
+    <div class="flex-1 bg-soft rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
       <div class="max-w-md mx-auto">
 
         <div v-if="!sent" class="space-y-4">
-          <p class="text-sm text-gray-500">Wir schicken dir einen Reset-Link an deine E-Mail-Adresse.</p>
+          <p class="text-sm text-muted">Wir schicken dir einen Reset-Link an deine E-Mail-Adresse.</p>
           <form @submit.prevent="submit" class="space-y-4">
             <div>
               <label class="label">E-Mail</label>
@@ -33,20 +33,20 @@
           </form>
         </div>
 
-        <div v-else class="rounded-2xl text-sm text-green-800 bg-green-50 border border-green-200 p-5 text-center">
+        <div v-else class="rounded-md text-sm text-green-800 bg-green-50 border border-green-200 p-5 text-center">
           Falls die Adresse bekannt ist, wurde ein Link gesendet.
         </div>
 
         <div class="mt-5 text-center">
-          <RouterLink :to="`/${slug}/login`" class="text-sm text-gray-400 hover:text-gray-600">
+          <RouterLink :to="`/${slug}/login`" class="text-sm text-muted hover:text-ink/80">
             ← Zurück zum Login
           </RouterLink>
         </div>
 
-        <footer class="mt-8 text-center text-xs text-gray-400 space-y-1">
+        <footer class="mt-8 text-center text-xs text-muted space-y-1">
           <div class="flex justify-center gap-4">
-            <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
-            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+            <RouterLink :to="`/${slug}/impressum`" class="hover:text-ink/80">Impressum</RouterLink>
+            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-ink/80">Datenschutz</RouterLink>
           </div>
           <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
         </footer>

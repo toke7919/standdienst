@@ -1,9 +1,9 @@
 <template>
   <div class="max-w-lg">
-    <h1 class="text-xl font-bold text-gray-900 mb-6">Mein Profil</h1>
+    <h1 class="text-xl font-bold text-ink mb-6">Mein Profil</h1>
 
     <div class="card space-y-4 mb-6">
-      <h2 class="text-base font-semibold text-gray-800">Daten ändern</h2>
+      <h2 class="text-base font-semibold text-ink">Daten ändern</h2>
       <form @submit.prevent="save" class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div><label class="label">Vorname</label><input v-model="form.first_name" class="input" required autocomplete="given-name" /></div>
@@ -11,7 +11,7 @@
         </div>
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" autocomplete="email" /></div>
         <div>
-          <label class="label">Neues Passwort <span class="text-gray-400 font-normal text-xs">(leer lassen zum Beibehalten)</span></label>
+          <label class="label">Neues Passwort <span class="text-muted font-normal text-xs">(leer lassen zum Beibehalten)</span></label>
           <div class="relative">
             <input
               v-model="form.password"
@@ -21,7 +21,7 @@
             />
             <button
               type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80"
               @click="showPw = !showPw"
             >
               <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
@@ -45,28 +45,28 @@
 
     <!-- E-Mail-Benachrichtigungen -->
     <div v-if="mailEnabled && form.email" class="card mb-6">
-      <h2 class="text-base font-semibold text-gray-800 mb-3">Benachrichtigungen</h2>
+      <h2 class="text-base font-semibold text-ink mb-3">Benachrichtigungen</h2>
       <div class="space-y-3">
         <label class="flex items-start gap-3 cursor-pointer">
           <div class="relative flex-shrink-0 mt-0.5">
             <input type="checkbox" class="sr-only peer" v-model="form.email_confirmation_enabled" @change="saveEmailConfirmation" />
-            <div class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+            <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
             <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
           </div>
           <div>
-            <span class="text-sm text-gray-700">Anmeldebestätigung per E-Mail</span>
-            <p class="text-xs text-gray-400 mt-0.5">Nach jeder Schicht-Anmeldung eine Bestätigungsmail erhalten</p>
+            <span class="text-sm text-ink/80">Anmeldebestätigung per E-Mail</span>
+            <p class="text-xs text-muted mt-0.5">Nach jeder Schicht-Anmeldung eine Bestätigungsmail erhalten</p>
           </div>
         </label>
         <label class="flex items-start gap-3 cursor-pointer">
           <div class="relative flex-shrink-0 mt-0.5">
             <input type="checkbox" class="sr-only peer" v-model="form.notifications_enabled" @change="saveNotifications" />
-            <div class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+            <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
             <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
           </div>
           <div>
-            <span class="text-sm text-gray-700">Erinnerungsmails aktivieren</span>
-            <p class="text-xs text-gray-400 mt-0.5">Einen Tag vor dem Dienst oder der Essensspenden-Abgabe erinnert werden</p>
+            <span class="text-sm text-ink/80">Erinnerungsmails aktivieren</span>
+            <p class="text-xs text-muted mt-0.5">Einen Tag vor dem Dienst oder der Essensspenden-Abgabe erinnert werden</p>
           </div>
         </label>
       </div>
@@ -74,8 +74,8 @@
 
     <!-- DSGVO: Datenauskunft -->
     <div class="card mb-6">
-      <h2 class="text-base font-semibold text-gray-800 mb-2">Meine Daten (DSGVO Art. 20)</h2>
-      <p class="text-sm text-gray-500 mb-4">
+      <h2 class="text-base font-semibold text-ink mb-2">Meine Daten (DSGVO Art. 20)</h2>
+      <p class="text-sm text-muted mb-4">
         Lade eine maschinenlesbare Kopie aller über dich gespeicherten Daten herunter.
       </p>
       <button class="btn-secondary" :disabled="exportLoading" @click="exportData">
@@ -86,7 +86,7 @@
 
     <!-- Abmelden (nur mobil sichtbar) -->
     <div class="card mb-6 md:hidden">
-      <h2 class="text-base font-semibold text-gray-800 mb-3">Sitzung</h2>
+      <h2 class="text-base font-semibold text-ink mb-3">Sitzung</h2>
       <button class="btn-secondary w-full" @click="auth.volunteerLogout(route.params.slug)">Abmelden</button>
     </div>
 
@@ -97,7 +97,7 @@
       </div>
       <div class="card border-red-200">
         <h2 class="text-base font-semibold text-red-700 mb-2">Konto löschen</h2>
-        <p class="text-sm text-gray-500 mb-4">
+        <p class="text-sm text-muted mb-4">
           Deine Daten werden pseudonymisiert und sind danach nicht mehr zugänglich (DSGVO-konformes Soft-Delete).
         </p>
         <button class="btn-danger" @click="deleteAccount">Konto löschen</button>

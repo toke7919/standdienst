@@ -1,34 +1,34 @@
 <template>
   <div>
-    <h1 class="text-xl font-bold text-gray-900 mb-6">Essensspende</h1>
+    <h1 class="text-xl font-bold text-ink mb-6">Essensspende</h1>
 
     <!-- Skeleton -->
     <div v-if="!loaded" class="space-y-6">
       <div v-for="i in 2" :key="i" class="card overflow-hidden !p-0">
-        <div class="h-1 bg-gray-200 rounded-t-2xl" />
+        <div class="h-1 bg-sand rounded-t-md" />
         <div class="p-6 space-y-3">
-          <div class="h-4 w-40 bg-gray-100 rounded animate-pulse" />
-          <div class="h-3 w-56 bg-gray-100 rounded animate-pulse" />
-          <div class="border-t border-gray-100 my-1" />
-          <div class="h-10 bg-gray-100 rounded-lg animate-pulse" />
-          <div class="h-8 w-24 bg-gray-100 rounded-lg animate-pulse" />
+          <div class="h-4 w-40 bg-bg-warm rounded animate-pulse" />
+          <div class="h-3 w-56 bg-bg-warm rounded animate-pulse" />
+          <div class="border-t border-sand my-1" />
+          <div class="h-10 bg-bg-warm rounded-lg animate-pulse" />
+          <div class="h-8 w-24 bg-bg-warm rounded-lg animate-pulse" />
         </div>
       </div>
     </div>
 
-    <p v-else-if="!combinedTypes.length" class="text-center text-gray-400 py-8">
+    <p v-else-if="!combinedTypes.length" class="text-center text-muted py-8">
       Noch keine Spendenkategorien vorhanden
     </p>
 
     <div v-else class="space-y-6">
       <div v-for="t in combinedTypes" :key="t.id" class="card overflow-hidden !p-0">
         <!-- farbiger Streifen oben -->
-        <div class="h-1 bg-primary-500 rounded-t-2xl" />
+        <div class="h-1 bg-primary-500 rounded-t-md" />
 
         <div class="p-6">
         <!-- Typ-Kopf: Name -->
         <div class="mb-1">
-          <h2 class="text-base font-semibold text-gray-900">{{ t.name }}</h2>
+          <h2 class="text-base font-semibold text-ink">{{ t.name }}</h2>
         </div>
 
         <!-- Abgabe-Info -->
@@ -37,9 +37,9 @@
         </p>
 
         <!-- Hinweistext -->
-        <p v-if="t.notes" class="text-sm text-gray-500 italic mb-3">{{ t.notes }}</p>
+        <p v-if="t.notes" class="text-sm text-muted italic mb-3">{{ t.notes }}</p>
 
-        <div class="border-t border-gray-100 my-3" />
+        <div class="border-t border-sand my-3" />
 
         <!-- Eintragungs-Formular -->
         <form @submit.prevent="add(t.id)" class="space-y-2">
@@ -52,7 +52,7 @@
           />
           <div v-if="t.refrigeration_enabled" class="flex items-center gap-2">
             <input v-model="forms[t.id].needs_refrigeration" type="checkbox" :id="`ref-${t.id}`" />
-            <label :for="`ref-${t.id}`" class="text-sm text-gray-700">Kühlung erforderlich</label>
+            <label :for="`ref-${t.id}`" class="text-sm text-ink/80">Kühlung erforderlich</label>
           </div>
           <p v-if="errors[t.id]" class="text-sm text-red-600">{{ errors[t.id] }}</p>
           <button type="submit" class="btn-primary text-sm" :disabled="submitting === t.id">
@@ -62,7 +62,7 @@
         </form>
 
         <!-- Vorhandene Spenden -->
-        <div class="border-t border-gray-100 mt-4 pt-3">
+        <div class="border-t border-sand mt-4 pt-3">
 
           <!-- Eigene Spenden: immer sichtbar -->
           <div v-if="t.myDonations.length" class="space-y-2" :class="t.otherDonations.length ? 'mb-3' : ''">
@@ -76,10 +76,10 @@
                   {{ d.description }}
                   <span v-if="d.needs_refrigeration" class="ml-1 text-sky-400" title="Kühlung erforderlich">❄</span>
                 </p>
-                <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.volunteer_name }}</p>
+                <p class="text-xs text-muted mt-0.5 truncate">{{ d.volunteer_name }}</p>
               </div>
               <button
-                class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                class="flex-shrink-0 text-sand hover:text-red-500 transition-colors"
                 title="Entfernen"
                 @click="remove(d)"
               >
@@ -95,13 +95,13 @@
               class="flex items-center justify-between w-full text-left gap-2"
               @click="donationsOpen[t.id] = !donationsOpen[t.id]"
             >
-              <span class="text-xs text-gray-500 font-medium">
+              <span class="text-xs text-muted font-medium">
                 {{ t.otherDonations.length }}
                 {{ t.myDonations.length ? 'weitere' : '' }}
                 {{ t.otherDonations.length === 1 ? 'Eintragung' : 'Eintragungen' }}
               </span>
               <ChevronDownIcon
-                class="w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-200"
+                class="w-3.5 h-3.5 text-muted flex-shrink-0 transition-transform duration-200"
                 :class="donationsOpen[t.id] ? '' : '-rotate-90'"
               />
             </button>
@@ -109,21 +109,21 @@
               <div
                 v-for="d in t.otherDonations"
                 :key="d.id"
-                class="flex items-center rounded-xl px-3 py-2.5 gap-3 border bg-gray-50 border-transparent"
+                class="flex items-center rounded-xl px-3 py-2.5 gap-3 border bg-bg-brand border-transparent"
               >
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-800 truncate">
+                  <p class="text-sm font-medium text-ink truncate">
                     {{ d.description }}
                     <span v-if="d.needs_refrigeration" class="ml-1 text-sky-400" title="Kühlung erforderlich">❄</span>
                   </p>
-                  <p class="text-xs text-gray-400 mt-0.5 truncate">{{ d.volunteer_name }}</p>
+                  <p class="text-xs text-muted mt-0.5 truncate">{{ d.volunteer_name }}</p>
                 </div>
               </div>
             </div>
           </template>
 
           <!-- Leerzustand -->
-          <p v-if="!t.donations.length" class="text-xs text-gray-400">Noch keine Eintragungen</p>
+          <p v-if="!t.donations.length" class="text-xs text-muted">Noch keine Eintragungen</p>
         </div>
 
         </div><!-- /p-6 -->

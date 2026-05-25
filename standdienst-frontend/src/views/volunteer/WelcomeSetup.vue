@@ -16,7 +16,7 @@
     </div>
 
     <!-- Inhalt -->
-    <div class="flex-1 bg-white rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
+    <div class="flex-1 bg-soft rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
       <div class="max-w-md mx-auto">
 
         <!-- Laden -->
@@ -30,8 +30,8 @@
             <ExclamationTriangleIcon class="w-7 h-7 text-amber-500" />
           </div>
           <div>
-            <p class="font-semibold text-gray-900">Ungültiger oder abgelaufener Link</p>
-            <p class="text-sm text-gray-500 mt-1">
+            <p class="font-semibold text-ink">Ungültiger oder abgelaufener Link</p>
+            <p class="text-sm text-muted mt-1">
               Der Einrichtungslink ist nicht mehr gültig (max. 7 Tage).<br />
               Bitte registriere dich erneut oder wende dich an die Organisatoren.
             </p>
@@ -42,14 +42,14 @@
         </div>
 
         <!-- Erfolgreich -->
-        <div v-else-if="done" class="rounded-2xl text-center text-green-800 bg-green-50 border border-green-200 p-5">
+        <div v-else-if="done" class="rounded-md text-center text-green-800 bg-green-50 border border-green-200 p-5">
           <p class="font-semibold">Passwort eingerichtet!</p>
           <p class="text-sm mt-1">Du wirst weitergeleitet…</p>
         </div>
 
         <!-- Formular -->
         <div v-else>
-          <p class="text-gray-700 mb-5">
+          <p class="text-ink/80 mb-5">
             Hallo <span class="font-semibold">{{ volunteerName }}</span>, richte jetzt dein Passwort ein.
           </p>
 
@@ -65,7 +65,7 @@
                   autocomplete="new-password"
                   placeholder="Mindestens 6 Zeichen"
                 />
-                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" @click="showPw = !showPw">
+                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80" @click="showPw = !showPw">
                   <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
                   <EyeIcon v-else class="w-4 h-4" />
                 </button>
@@ -74,7 +74,7 @@
               <div v-if="password" class="mt-2 space-y-1">
                 <div class="flex gap-1">
                   <div v-for="i in 4" :key="i" class="h-1 flex-1 rounded-full transition-colors duration-200"
-                    :class="i <= pwStrength.level ? pwStrength.barColor : 'bg-gray-200'" />
+                    :class="i <= pwStrength.level ? pwStrength.barColor : 'bg-sand'" />
                 </div>
                 <p class="text-xs" :class="pwStrength.textColor">{{ pwStrength.label }}</p>
               </div>
@@ -94,10 +94,10 @@
           </form>
         </div>
 
-        <footer class="mt-8 text-center text-xs text-gray-400 space-y-1">
+        <footer class="mt-8 text-center text-xs text-muted space-y-1">
           <div class="flex justify-center gap-4">
-            <RouterLink :to="`/${slug}/impressum`" class="hover:text-gray-600">Impressum</RouterLink>
-            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-gray-600">Datenschutz</RouterLink>
+            <RouterLink :to="`/${slug}/impressum`" class="hover:text-ink/80">Impressum</RouterLink>
+            <RouterLink v-if="settings?.has_privacy_policy" :to="`/${slug}/datenschutz`" class="hover:text-ink/80">Datenschutz</RouterLink>
           </div>
           <p v-if="settings?.copyright_text">{{ settings.copyright_text }}</p>
         </footer>

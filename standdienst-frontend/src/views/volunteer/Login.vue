@@ -19,18 +19,18 @@
     </div>
 
     <!-- Card – überlappt den Branding-Bereich -->
-    <div class="flex-1 bg-white rounded-t-[2rem] shadow-2xl -mt-20 overflow-y-auto">
+    <div class="flex-1 bg-soft rounded-t-[2rem] shadow-2xl -mt-20 overflow-y-auto">
       <div class="max-w-md mx-auto px-6 pt-8 pb-10">
 
         <!-- Instanz nicht gefunden -->
-        <div v-if="instanceStore.notFound" class="rounded-2xl text-center text-red-800 bg-red-50 border border-red-200 p-6">
+        <div v-if="instanceStore.notFound" class="rounded-md text-center text-red-800 bg-red-50 border border-red-200 p-6">
           <p class="font-semibold text-base mb-1">Seite nicht gefunden</p>
           <p class="text-sm text-red-700">Die aufgerufene Seite existiert nicht.</p>
           <RouterLink to="/" class="inline-block mt-4 text-sm text-red-600 hover:text-red-800 underline">← Zur Startseite</RouterLink>
         </div>
 
         <!-- Gesperrt -->
-        <div v-else-if="settings?.site_locked" class="rounded-2xl text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
+        <div v-else-if="settings?.site_locked" class="rounded-md text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
           <p class="font-semibold">Anmeldung gesperrt</p>
           <p v-if="settings.lock_message" class="text-sm mt-1">{{ settings.lock_message }}</p>
         </div>
@@ -38,10 +38,10 @@
         <template v-else>
           <!-- Primäre Aktion: Neu anmelden -->
           <div class="mb-6">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Neu dabei?</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Neu dabei?</p>
             <RouterLink
               :to="`/${slug}/register`"
-              class="flex items-center justify-between w-full rounded-2xl bg-primary-600 text-white px-5 py-4 shadow-md hover:bg-primary-700 active:scale-[0.98] transition-all duration-150"
+              class="flex items-center justify-between w-full rounded-md bg-primary-600 text-white px-5 py-4 shadow-md hover:bg-primary-700 active:scale-[0.98] transition-all duration-150"
             >
               <div class="text-left">
                 <p class="font-semibold text-base leading-tight">Jetzt registrieren</p>
@@ -54,16 +54,16 @@
           <!-- Trennlinie -->
           <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-100" />
+              <div class="w-full border-t border-sand" />
             </div>
             <div class="relative flex justify-center">
-              <span class="bg-white px-3 text-xs text-gray-400 font-medium">Bereits registriert?</span>
+              <span class="bg-soft px-3 text-xs text-muted font-medium">Bereits registriert?</span>
             </div>
           </div>
 
           <!-- Sekundäre Aktion: Login -->
           <div>
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Anmelden</p>
+            <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Anmelden</p>
             <form @submit.prevent="submit" class="space-y-3">
               <div>
                 <label class="label">E-Mail</label>
@@ -98,7 +98,7 @@
             </form>
 
             <div class="text-center mt-3">
-              <RouterLink :to="`/${slug}/forgot-password`" class="text-sm text-gray-400 hover:text-gray-600">
+              <RouterLink :to="`/${slug}/forgot-password`" class="text-sm text-muted hover:text-ink/80">
                 Passwort vergessen?
               </RouterLink>
             </div>
@@ -106,16 +106,16 @@
         </template>
 
         <!-- Footer -->
-        <footer class="mt-10 text-center text-xs text-gray-400 space-y-1">
+        <footer class="mt-10 text-center text-xs text-muted space-y-1">
           <div class="flex justify-center gap-4">
             <RouterLink
               :to="instanceStore.notFound ? '/impressum' : `/${slug}/impressum`"
-              class="hover:text-gray-600"
+              class="hover:text-ink/80"
             >Impressum</RouterLink>
             <RouterLink
               v-if="!instanceStore.notFound && settings?.has_privacy_policy"
               :to="`/${slug}/datenschutz`"
-              class="hover:text-gray-600"
+              class="hover:text-ink/80"
             >Datenschutz</RouterLink>
           </div>
           <p v-if="footerCopyright">{{ footerCopyright }}</p>
