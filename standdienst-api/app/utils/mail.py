@@ -35,11 +35,27 @@ def apply_db_mail_config(settings) -> None:
     mail.init_app(current_app)
 
 
-def send_mail(to: str, subject: str, html: str, sender_name: str = None, retries: int = 3):
-    """Sendet eine E-Mail mit bis zu `retries` Versuchen (exponentielles Backoff)."""
+def _html_to_text(html: str) -> str:
+    """Einfache HTML → Plain-Text Konvertierung für E-Mail-Fallback."""
+    import re
+    text = re.sub(r'<br\s*/?>', '\n', html, flags=re.IGNORECASE)
+    text = re.sub(r'</?(p|div|tr|h[1-6])[^>]*>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'<td[^>]*>', '  ', text, flags=re.IGNORECASE)
+    text = re.sub(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>([^<]+)</a>',
+                  r'\2 (\1)', text, flags=re.IGNORECASE)
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
+def send_mail(to: str, subject: str, html: str, sender_name: str = None,
+              retries: int = 3, plain_text: str = None):
+    """Sendet eine E-Mail (HTML + Plain-Text) mit bis zu `retries` Versuchen."""
     default_sender = current_app.config.get('MAIL_DEFAULT_SENDER', '')
     sender = f'{sender_name} <{default_sender}>' if sender_name else default_sender
-    msg = Message(subject=subject, recipients=[to], html=html, sender=sender)
+    body = plain_text or _html_to_text(html)
+    msg = Message(subject=subject, recipients=[to], html=html, body=body, sender=sender)
     last_exc: Exception | None = None
     for attempt in range(retries):
         try:
@@ -69,6 +85,8 @@ def build_email_template(
     primary_color: str = '#4f46e5',
     logo_url: str = None,
     copyright_text: str = None,
+    opt_out_url: str = None,
+    opt_out_label: str = 'Benachrichtigungen deaktivieren',
 ) -> str:
     """Bettet content_html in ein vollständiges, responsives HTML-E-Mail-Template ein."""
 
@@ -87,12 +105,6 @@ def build_email_template(
             f'</div>'
         )
 
-    copyright_block = ''
-    if copyright_text:
-        copyright_block = (
-            f'<p style="margin:0 0 8px;color:#6b7280;font-size:12px;">{copyright_text}</p>'
-        )
-
     datenschutz_url = None
     if slug:
         impressum_url = f'{base_url}/{slug}/impressum'
@@ -109,11 +121,20 @@ def build_email_template(
     else:
         links_block = ''
 
+    opt_out_block = ''
+    if opt_out_url:
+        opt_out_block = (
+            f'<p style="margin:8px 0 0;">'
+            f'<a href="{opt_out_url}" style="color:#9ca3af;font-size:11px;'
+            f'text-decoration:underline;">{opt_out_label}</a>'
+            f'</p>'
+        )
+
     datenschutz_info = ''
     if datenschutz_url:
         datenschutz_info = (
             f'<br>Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer '
-            f'<a href="{datenschutz_url}" style="color:#6b7280;text-decoration:underline;">'
+            f'<a href="{datenschutz_url}" style="color:#9ca3af;text-decoration:underline;">'
             f'Datenschutzerklärung</a>.'
         )
 
@@ -156,10 +177,10 @@ def build_email_template(
             <td style="background-color:#f9fafb;border:1px solid #e5e7eb;border-top:none;
                        border-radius:0 0 12px 12px;padding:20px 32px;text-align:center;">
               {links_block}
-              {copyright_block}
               <p style="margin:0;color:#9ca3af;font-size:11px;line-height:1.6;">
                 Diese E-Mail wurde automatisch versandt.{datenschutz_info}
               </p>
+              {opt_out_block}
             </td>
           </tr>
 
@@ -412,6 +433,7 @@ def build_shift_confirmation_email(
     primary_color: str = '#4f46e5',
     logo_url: str = None,
     copyright_text: str = None,
+    opt_out_url: str = None,
 ) -> str:
     """Bestätigungsmail nach erfolgreicher Schicht-Anmeldung."""
     content = f"""
@@ -456,6 +478,8 @@ def build_shift_confirmation_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+        opt_out_url=opt_out_url,
+        opt_out_label='Bestätigungsmails deaktivieren',
     )
 
 
@@ -580,6 +604,7 @@ def build_reminder_email(
     primary_color: str = '#4f46e5',
     logo_url: str = None,
     copyright_text: str = None,
+    opt_out_url: str = None,
 ) -> str:
     """Erinnerungsmail: morgen anstehende Dienste und/oder Essensspenden."""
 
@@ -646,4 +671,6 @@ def build_reminder_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+        opt_out_url=opt_out_url,
+        opt_out_label='Erinnerungsmails deaktivieren',
     )

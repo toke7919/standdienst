@@ -116,5 +116,6 @@ def _log(instance_id, details, actor):
         event_type=ActivityLog.AUDIT_DATA,
         volunteer_name=getattr(actor, 'email', str(actor)),
         actor_type=getattr(actor, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=details,
     ))

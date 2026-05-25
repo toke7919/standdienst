@@ -122,5 +122,6 @@ def _log(instance_id, details, actor_email):
         event_type=ActivityLog.AUDIT_DATA,
         volunteer_name=actor_email,
         actor_type='admin',
+        ip_address=request.remote_addr,
         details=details,
     ))
