@@ -7,25 +7,25 @@
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white text-2xl font-bold mb-4">
           S
         </div>
-        <h1 class="text-2xl font-bold text-gray-900">Standdienst einrichten</h1>
-        <p class="text-gray-500 mt-1 text-sm">Ersteinrichtung – Schritt {{ step }} von {{ totalSteps }}</p>
+        <h1 class="text-2xl font-bold text-ink">Standdienst einrichten</h1>
+        <p class="text-muted mt-1 text-sm">Ersteinrichtung – Schritt {{ step }} von {{ totalSteps }}</p>
       </div>
 
       <!-- Fortschrittsleiste -->
       <div class="flex gap-1.5 mb-8">
         <div v-for="i in totalSteps" :key="i"
              class="h-1.5 flex-1 rounded-full transition-colors duration-300"
-             :class="i <= step ? 'bg-indigo-600' : 'bg-gray-200'" />
+             :class="i <= step ? 'bg-indigo-600' : 'bg-sand'" />
       </div>
 
       <!-- ── Schritt 1: Willkommen ── -->
       <div v-if="step === 1" class="card">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">Willkommen</h2>
-        <p class="text-gray-600 text-sm mb-4">
+        <h2 class="text-lg font-semibold text-ink mb-3">Willkommen</h2>
+        <p class="text-ink/80 text-sm mb-4">
           Standdienst wurde erfolgreich installiert. Dieser Assistent führt dich in wenigen
           Schritten durch die Ersteinrichtung.
         </p>
-        <ul class="space-y-2 mb-6 text-sm text-gray-600">
+        <ul class="space-y-2 mb-6 text-sm text-ink/80">
           <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">1.</span> Admin-Account anlegen</li>
           <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">2.</span> Basis-URL konfigurieren</li>
           <li class="flex items-center gap-2"><span class="text-indigo-600 font-semibold">3.</span> Mail-Server einrichten (optional)</li>
@@ -36,8 +36,8 @@
 
       <!-- ── Schritt 2: Admin-Account ── -->
       <div v-else-if="step === 2" class="card">
-        <h2 class="text-lg font-semibold text-gray-900 mb-1">Admin-Account</h2>
-        <p class="text-sm text-gray-500 mb-5">
+        <h2 class="text-lg font-semibold text-ink mb-1">Admin-Account</h2>
+        <p class="text-sm text-muted mb-5">
           Dieser Account hat vollen Zugriff auf die gesamte Plattform.
         </p>
         <form @submit.prevent="submitAdmin" class="space-y-4">
@@ -50,7 +50,7 @@
             <label class="label">Passwort</label>
             <input v-model="admin.password" type="password" class="input" required
                    autocomplete="new-password" placeholder="Mindestens 8 Zeichen" />
-            <p class="text-xs text-gray-400 mt-1">Mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen</p>
+            <p class="text-xs text-muted mt-1">Mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen</p>
           </div>
           <div>
             <label class="label">Passwort bestätigen</label>
@@ -70,8 +70,8 @@
 
       <!-- ── Schritt 3: Basis-URL ── -->
       <div v-else-if="step === 3" class="card">
-        <h2 class="text-lg font-semibold text-gray-900 mb-1">Basis-URL</h2>
-        <p class="text-sm text-gray-500 mb-5">
+        <h2 class="text-lg font-semibold text-ink mb-1">Basis-URL</h2>
+        <p class="text-sm text-muted mb-5">
           Die öffentliche Adresse der Anwendung – wird in E-Mails und QR-Codes verwendet.
         </p>
         <form @submit.prevent="submitConfig" class="space-y-4">
@@ -79,10 +79,10 @@
             <label class="label">Basis-URL</label>
             <input v-model="config.base_url" type="url" class="input"
                    placeholder="https://standdienst.example.com" />
-            <p class="text-xs text-gray-400 mt-1">Ohne abschließenden Slash. Leer lassen = später konfigurieren.</p>
+            <p class="text-xs text-muted mt-1">Ohne abschließenden Slash. Leer lassen = später konfigurieren.</p>
           </div>
           <div>
-            <label class="label">Copyright-Text <span class="text-gray-400 text-xs">(optional)</span></label>
+            <label class="label">Copyright-Text <span class="text-muted text-xs">(optional)</span></label>
             <input v-model="config.copyright_text" class="input"
                    placeholder="© 2026 Mein Verein" />
           </div>
@@ -105,8 +105,8 @@
 
       <!-- ── Schritt 4: Mail-Server ── -->
       <div v-else-if="step === 4" class="card">
-        <h2 class="text-lg font-semibold text-gray-900 mb-1">Mail-Server</h2>
-        <p class="text-sm text-gray-500 mb-1">
+        <h2 class="text-lg font-semibold text-ink mb-1">Mail-Server</h2>
+        <p class="text-sm text-muted mb-1">
           Für Willkommens-Mails und Passwort-Reset-Links. Kann später in den Admin-Einstellungen
           geändert werden.
         </p>
@@ -126,7 +126,7 @@
           </div>
           <div class="flex items-center gap-3">
             <input v-model="mail.use_tls" type="checkbox" id="tls" class="rounded" />
-            <label for="tls" class="text-sm text-gray-700">TLS verwenden</label>
+            <label for="tls" class="text-sm text-ink/80">TLS verwenden</label>
           </div>
           <div>
             <label class="label">Benutzername</label>
@@ -162,28 +162,28 @@
 
       <!-- ── Schritt 5: GitHub PAT ── -->
       <div v-else-if="step === 5" class="card">
-        <h2 class="text-lg font-semibold text-gray-900 mb-1">GitHub-Token für Updates</h2>
-        <p class="text-sm text-gray-500 mb-1">
+        <h2 class="text-lg font-semibold text-ink mb-1">GitHub-Token für Updates</h2>
+        <p class="text-sm text-muted mb-1">
           Ein GitHub Personal Access Token (PAT) ermöglicht automatische Software-Updates
-          direkt aus dem Admin-Bereich. Benötigt werden die Berechtigungen <code class="text-xs bg-gray-100 px-1 rounded">repo</code> oder <code class="text-xs bg-gray-100 px-1 rounded">contents:read</code>.
+          direkt aus dem Admin-Bereich. Benötigt werden die Berechtigungen <code class="text-xs bg-bg-brand px-1 rounded">repo</code> oder <code class="text-xs bg-bg-brand px-1 rounded">contents:read</code>.
         </p>
         <button class="text-xs text-indigo-600 underline mb-5" type="button"
                 @click="finishSetup">Diesen Schritt überspringen →</button>
 
         <form @submit.prevent="submitPat" class="space-y-4">
           <div>
-            <label class="label">GitHub-Repository <span class="text-gray-400 text-xs">(optional)</span></label>
+            <label class="label">GitHub-Repository <span class="text-muted text-xs">(optional)</span></label>
             <input v-model="config.github_repo" class="input font-mono text-sm"
                    placeholder="owner/repository" autocomplete="off" />
-            <p class="text-xs text-gray-400 mt-1">
-              Format: <code class="bg-gray-100 px-1 rounded">owner/repo</code>, z.B. <code class="bg-gray-100 px-1 rounded">meinverein/standdienst</code>
+            <p class="text-xs text-muted mt-1">
+              Format: <code class="bg-bg-brand px-1 rounded">owner/repo</code>, z.B. <code class="bg-bg-brand px-1 rounded">meinverein/standdienst</code>
             </p>
           </div>
           <div>
-            <label class="label">GitHub PAT <span class="text-gray-400 text-xs">(optional)</span></label>
+            <label class="label">GitHub PAT <span class="text-muted text-xs">(optional)</span></label>
             <input v-model="config.github_pat" class="input font-mono text-sm"
                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
-            <p class="text-xs text-gray-400 mt-1">
+            <p class="text-xs text-muted mt-1">
               Erstellen unter: GitHub → Settings → Developer settings → Personal access tokens
             </p>
           </div>
@@ -201,8 +201,8 @@
       <!-- ── Schritt 6: Fertig ── -->
       <div v-else-if="step === 6" class="card text-center">
         <div class="text-5xl mb-4">🎉</div>
-        <h2 class="text-xl font-bold text-gray-900 mb-2">Einrichtung abgeschlossen!</h2>
-        <p class="text-gray-600 text-sm mb-6">
+        <h2 class="text-xl font-bold text-ink mb-2">Einrichtung abgeschlossen!</h2>
+        <p class="text-ink/80 text-sm mb-6">
           Standdienst ist betriebsbereit. Melde dich jetzt mit deinem Admin-Account an, um
           die erste Instanz anzulegen.
         </p>
@@ -210,7 +210,7 @@
           <RouterLink to="/admin/login" class="btn-primary w-full inline-flex justify-center">
             Zum Admin-Login
           </RouterLink>
-          <p class="text-xs text-gray-400">
+          <p class="text-xs text-muted">
             Weitere Einstellungen findest du unter Admin → Einstellungen
           </p>
         </div>

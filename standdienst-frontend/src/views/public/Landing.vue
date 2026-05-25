@@ -78,31 +78,31 @@
               <span class="ml-2 text-xs text-white/60 font-medium truncate">Dashboard · Sportverein Beispielstadt</span>
             </div>
             <div class="p-4">
-              <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Übersicht</p>
+              <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Übersicht</p>
               <div class="grid grid-cols-2 gap-2.5 mb-4">
                 <div class="bg-primary-50 rounded-xl p-3 border border-primary-100">
-                  <p class="text-[10px] text-gray-400 mb-0.5">Registrierte Helfer</p>
+                  <p class="text-[10px] text-muted mb-0.5">Registrierte Helfer</p>
                   <p class="text-2xl font-bold text-primary-700">47</p>
                 </div>
                 <div class="bg-green-50 rounded-xl p-3 border border-green-100">
-                  <p class="text-[10px] text-gray-400 mb-0.5">Anmeldungen</p>
+                  <p class="text-[10px] text-muted mb-0.5">Anmeldungen</p>
                   <p class="text-2xl font-bold text-green-700">134</p>
                 </div>
                 <div class="bg-amber-50 rounded-xl p-3 border border-amber-100">
-                  <p class="text-[10px] text-gray-400 mb-0.5">Essensspenden</p>
+                  <p class="text-[10px] text-muted mb-0.5">Essensspenden</p>
                   <p class="text-2xl font-bold text-amber-700">28</p>
                 </div>
                 <div class="bg-sky-50 rounded-xl p-3 border border-sky-100">
-                  <p class="text-[10px] text-gray-400 mb-0.5">Offene Dienste</p>
+                  <p class="text-[10px] text-muted mb-0.5">Offene Dienste</p>
                   <p class="text-2xl font-bold text-sky-700">3</p>
                 </div>
               </div>
-              <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Letzte Aktivitäten</p>
+              <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-2">Letzte Aktivitäten</p>
               <div class="space-y-1.5">
-                <div v-for="(a, i) in mockActivity" :key="i" class="flex items-center gap-2 text-xs text-gray-500">
+                <div v-for="(a, i) in mockActivity" :key="i" class="flex items-center gap-2 text-xs text-muted">
                   <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" :class="a.color"></div>
                   <span class="truncate">{{ a.text }}</span>
-                  <span class="ml-auto text-gray-300 flex-shrink-0">{{ a.time }}</span>
+                  <span class="ml-auto text-sand flex-shrink-0">{{ a.time }}</span>
                 </div>
               </div>
             </div>
@@ -117,14 +117,14 @@
               <span class="ml-2 text-xs text-white/60 font-medium truncate">Dienste auswählen</span>
             </div>
             <div class="p-4">
-              <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Samstag, 14. Juni 2026</p>
+              <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Samstag, 14. Juni 2026</p>
               <div class="space-y-2">
                 <div v-for="(s, i) in mockShifts" :key="i"
                      class="rounded-xl border p-3 flex items-center justify-between gap-3"
-                     :class="s.registered ? 'bg-primary-50 border-primary-200' : 'border-gray-100'">
+                     :class="s.registered ? 'bg-primary-50 border-primary-200' : 'border-sand'">
                   <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 truncate">{{ s.stand }}</p>
-                    <p class="text-xs text-gray-400">{{ s.time }} · {{ s.spots }} Plätze frei</p>
+                    <p class="text-sm font-semibold text-ink truncate">{{ s.stand }}</p>
+                    <p class="text-xs text-muted">{{ s.time }} · {{ s.spots }} Plätze frei</p>
                   </div>
                   <div class="flex-shrink-0">
                     <span v-if="s.registered"
@@ -132,7 +132,7 @@
                       Angemeldet
                     </span>
                     <span v-else
-                          class="text-xs font-medium text-gray-500 bg-gray-100 rounded-lg px-2 py-1">
+                          class="text-xs font-medium text-muted bg-bg-brand rounded-lg px-2 py-1">
                       Anmelden
                     </span>
                   </div>

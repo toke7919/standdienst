@@ -21,19 +21,19 @@
 
         <template v-else-if="data">
           <div v-if="data.html" class="prose prose-sm max-w-none mb-8">
-            <h2 v-if="data.context === 'instance'" class="text-lg font-semibold text-gray-800 mb-3">
+            <h2 v-if="data.context === 'instance'" class="text-lg font-semibold text-ink mb-3">
               Inhaltlich Verantwortlicher
             </h2>
             <div v-html="data.html" />
           </div>
-          <div v-if="data.operator_html" class="prose prose-sm max-w-none mb-8 pt-6 border-t border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800 mb-3">Technischer Betreiber</h2>
+          <div v-if="data.operator_html" class="prose prose-sm max-w-none mb-8 pt-6 border-t border-sand">
+            <h2 class="text-lg font-semibold text-ink mb-3">Technischer Betreiber</h2>
             <div v-html="data.operator_html" />
           </div>
-          <p v-if="!data.html && !data.operator_html" class="text-gray-500">Kein Impressum hinterlegt.</p>
+          <p v-if="!data.html && !data.operator_html" class="text-muted">Kein Impressum hinterlegt.</p>
         </template>
 
-        <p v-else class="text-gray-500">Kein Impressum hinterlegt.</p>
+        <p v-else class="text-muted">Kein Impressum hinterlegt.</p>
 
         <button class="mt-8 btn-secondary" @click="$router.back()">Zurück</button>
       </div>
@@ -42,7 +42,7 @@
 
   <!-- Plattform-Kontext: einfaches Layout -->
   <div v-else class="max-w-2xl mx-auto px-4 py-12">
-    <h1 class="text-2xl font-bold text-gray-900 mb-8">Impressum</h1>
+    <h1 class="text-2xl font-bold text-ink mb-8">Impressum</h1>
 
     <LoadingSpinner v-if="loading" />
 
@@ -50,14 +50,14 @@
       <div v-if="data.html" class="prose prose-sm max-w-none mb-8">
         <div v-html="data.html" />
       </div>
-      <div v-if="data.operator_html" class="prose prose-sm max-w-none mb-8 pt-6 border-t border-gray-200">
-        <h2 class="text-lg font-semibold text-gray-800 mb-3">Technischer Betreiber</h2>
+      <div v-if="data.operator_html" class="prose prose-sm max-w-none mb-8 pt-6 border-t border-sand">
+        <h2 class="text-lg font-semibold text-ink mb-3">Technischer Betreiber</h2>
         <div v-html="data.operator_html" />
       </div>
-      <p v-if="!data.html && !data.operator_html" class="text-gray-500">Kein Impressum hinterlegt.</p>
+      <p v-if="!data.html && !data.operator_html" class="text-muted">Kein Impressum hinterlegt.</p>
     </template>
 
-    <p v-else class="text-gray-500">Kein Impressum hinterlegt.</p>
+    <p v-else class="text-muted">Kein Impressum hinterlegt.</p>
 
     <button class="mt-8 btn-secondary" @click="$router.back()">Zurück</button>
   </div>
