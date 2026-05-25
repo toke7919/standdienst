@@ -1,6 +1,6 @@
 <template>
   <div v-if="pages > 1" class="flex items-center justify-between py-3">
-    <p class="text-sm text-gray-500">
+    <p class="text-sm text-muted">
       {{ (page - 1) * perPage + 1 }}–{{ Math.min(page * perPage, total) }} von {{ total }}
     </p>
     <div class="flex gap-1">
@@ -10,7 +10,7 @@
         class="w-8 h-8 text-sm rounded-lg flex items-center justify-center transition-colors"
         :class="p === page
           ? 'bg-primary-600 text-white'
-          : p === '…' ? 'cursor-default text-gray-400' : 'text-gray-700 hover:bg-gray-100'"
+          : p === '…' ? 'cursor-default text-muted' : 'text-ink/80 hover:bg-bg-warm'"
         :disabled="p === '…'"
         @click="p !== '…' && $emit('update:page', p)"
       >{{ p }}</button>
