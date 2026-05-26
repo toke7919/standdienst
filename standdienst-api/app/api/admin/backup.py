@@ -128,7 +128,10 @@ def _dump_pg() -> bytes:
             'pg_dump',
             '-h', p['host'], '-p', p['port'], '-U', p['user'], '-d', p['dbname'],
             '--format=plain', '--data-only', '--no-owner',
-            '--no-privileges', '--column-inserts', '--disable-triggers',
+            '--no-privileges', '--column-inserts',
+            # Kein --disable-triggers: erfordert Superuser-Rechte in PostgreSQL.
+            # Ohne Flag gibt pg_dump INSERTs in FK-Abhängigkeitsreihenfolge aus,
+            # was für unser Datenmodell (keine zirkulären FKs) ausreicht.
         ],
         capture_output=True, env=env, timeout=120,
     )
@@ -341,19 +344,16 @@ def _restore_pg(sql_bytes: bytes) -> None:
     base_cmd = ['psql', '-h', p['host'], '-p', p['port'], '-U', p['user'], '-d', p['dbname'],
                 '-v', 'ON_ERROR_STOP=1', '--no-psqlrc', '-q']
 
-    # FK-Constraints deaktivieren, alle Tabellen leeren
+    # Alle Tabellen leeren (CASCADE kümmert sich um FK-Abhängigkeiten, kein Superuser nötig)
     tables = [t.name for t in reversed(db.metadata.sorted_tables)]
-    truncate_sql = "SET session_replication_role = 'replica';\n"
-    truncate_sql += 'TRUNCATE TABLE ' + ', '.join(f'"{t}"' for t in tables) + ' RESTART IDENTITY CASCADE;\n'
-    truncate_sql += "SET session_replication_role = 'origin';\n"
+    truncate_sql = 'TRUNCATE TABLE ' + ', '.join(f'"{t}"' for t in tables) + ' RESTART IDENTITY CASCADE;\n'
 
     r = subprocess.run(base_cmd, input=truncate_sql.encode(), capture_output=True, env=env, timeout=60)
     if r.returncode != 0:
         raise RuntimeError(f'Tabellen leeren fehlgeschlagen: {r.stderr.decode()}')
 
-    # Daten einspielen
-    restore_sql = "SET session_replication_role = 'replica';\n" + sql_bytes.decode('utf-8') + "\nSET session_replication_role = 'origin';\n"
-    r = subprocess.run(base_cmd, input=restore_sql.encode(), capture_output=True, env=env, timeout=300)
+    # Daten einspielen – pg_dump ohne --disable-triggers gibt INSERTs in FK-Reihenfolge aus
+    r = subprocess.run(base_cmd, input=sql_bytes, capture_output=True, env=env, timeout=300)
     if r.returncode != 0:
         raise RuntimeError(f'Daten-Restore fehlgeschlagen: {r.stderr.decode()}')
 
@@ -438,6 +438,10 @@ def run_restore(backup_path: Path, password: str) -> None:
             _restore_pg(sql_bytes)
         else:
             _restore_sqlalchemy(sql_bytes)
+
+        # SQLAlchemy-Session-Cache invalidieren, damit nachfolgende Queries
+        # frische Daten aus der wiederhergestellten DB lesen
+        db.session.expire_all()
 
         # Sensitive Fields re-verschlüsseln
         sf_file = tmppath / 'sensitive_fields.json'
