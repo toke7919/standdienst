@@ -11,7 +11,12 @@
         <div>
           <label class="label">Primärfarbe</label>
           <div class="flex items-center gap-3">
-            <input v-model="form.primary_color" type="color" class="h-10 w-20 rounded cursor-pointer border border-sand" :disabled="!form.primary_color" />
+            <input
+              type="color"
+              :value="form.primary_color || '#4f46e5'"
+              class="h-10 w-20 rounded cursor-pointer border border-sand"
+              @input="form.primary_color = $event.target.value"
+            />
             <input v-model="form.primary_color" class="input max-w-32" placeholder="Anwendungsstandard" />
             <button v-if="form.primary_color" type="button" class="btn-secondary text-xs py-1.5" @click="form.primary_color = null">Zurücksetzen</button>
           </div>
@@ -73,10 +78,16 @@
       </div>
 
       <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
-      <button type="submit" class="btn-primary" :disabled="saving">
-        <LoadingSpinner v-if="saving" size="sm" />
-        Speichern
-      </button>
+      <div class="flex items-center gap-3">
+        <button type="submit" class="btn-primary" :disabled="saving || resetting">
+          <LoadingSpinner v-if="saving" size="sm" />
+          Speichern
+        </button>
+        <button type="button" class="btn-secondary text-sm" :disabled="saving || resetting" @click="resetSettings">
+          <LoadingSpinner v-if="resetting" size="sm" />
+          Einstellungen zurücksetzen
+        </button>
+      </div>
     </form>
 
     <!-- Gefahrenzone: nur für globale Admins -->
@@ -114,6 +125,7 @@ const instanceStore = useInstanceStore()
 const loading = ref(true)
 const saving = ref(false)
 const clearing = ref(false)
+const resetting = ref(false)
 const saveError = ref('')
 const form = ref({})
 
@@ -134,10 +146,8 @@ async function save() {
   try {
     const res = await adminApi.updateSiteSettings(route.params.slug, form.value)
     form.value.updated_at = res.data.data.updated_at
-    if (form.value.primary_color) {
-      applyTheme(form.value.primary_color)
-      instanceStore.invalidateCache()
-    }
+    instanceStore.invalidateCache()
+    if (form.value.primary_color) applyTheme(form.value.primary_color)
     ui.success('Einstellungen gespeichert')
   } catch (e) {
     saveError.value = e.response?.data?.error || 'Fehler'
@@ -162,6 +172,31 @@ async function clearData() {
     ui.err(e.response?.data?.error || 'Fehler beim Löschen')
   } finally {
     clearing.value = false
+  }
+}
+
+async function resetSettings() {
+  const ok = await ui.confirm({
+    title: 'Einstellungen zurücksetzen',
+    message: 'Seitentitel wird auf "Standdienst" gesetzt, Primärfarbe und Logo werden entfernt. Das Anwendungsstandard-Design wird verwendet. Fortfahren?',
+    confirmText: 'Zurücksetzen',
+    danger: false,
+  })
+  if (!ok) return
+  resetting.value = true
+  try {
+    if (form.value.logo_filename) await adminApi.deleteLogo(route.params.slug)
+    form.value.site_title = 'Standdienst'
+    form.value.primary_color = null
+    form.value.logo_filename = null
+    const res = await adminApi.updateSiteSettings(route.params.slug, form.value)
+    form.value.updated_at = res.data.data.updated_at
+    instanceStore.invalidateCache()
+    ui.success('Einstellungen zurückgesetzt')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler beim Zurücksetzen')
+  } finally {
+    resetting.value = false
   }
 }
 
