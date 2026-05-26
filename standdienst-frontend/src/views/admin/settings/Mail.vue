@@ -63,9 +63,6 @@
           Senden
         </button>
       </div>
-      <p v-if="testResult" class="text-sm" :class="testResult.ok ? 'text-green-700' : 'text-red-600'">
-        {{ testResult.message }}
-      </p>
     </div>
 
     <!-- Mail-Typ-Test-Center -->
@@ -139,7 +136,6 @@ const saving = ref(false)
 const testing = ref(false)
 const editing = ref(false)
 const saveError = ref('')
-const testResult = ref(null)
 const testRecipient = ref('')
 const form = ref({})
 const savedForm = ref({})
@@ -194,12 +190,11 @@ async function save() {
 
 async function sendTest() {
   testing.value = true
-  testResult.value = null
   try {
     const res = await adminApi.sendTestMail({ to: testRecipient.value || undefined })
-    testResult.value = { ok: true, message: res.data.message }
+    ui.success(res.data.message || 'Testmail gesendet')
   } catch (e) {
-    testResult.value = { ok: false, message: e.response?.data?.error || 'Versand fehlgeschlagen' }
+    ui.err(e.response?.data?.error || 'Versand fehlgeschlagen')
   } finally {
     testing.value = false
   }
