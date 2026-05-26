@@ -357,6 +357,7 @@ def build_organizer_invite_email(
     instances: list,
     base_url: str,
     primary_color: str = '#4f46e5',
+    copyright_text: str = None,
 ) -> str:
     """Einladungsmail für neue Organisatoren ohne Passwort.
 
@@ -418,6 +419,7 @@ def build_organizer_invite_email(
         title='Standdienst',
         base_url=base_url,
         primary_color=primary_color,
+        copyright_text=copyright_text,
     )
 
 

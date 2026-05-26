@@ -228,17 +228,30 @@ def send_typed_test_mail():
         build_welcome_email, build_reset_email, build_organizer_invite_email,
         build_shift_confirmation_email, build_reminder_email, build_organizer_digest_email,
     )
+    from ...utils.settings_cache import get_site_settings, get_global_settings
     from ..public import _base_url
     base_url = _base_url()
 
-    # Beispiel-Instanzname
-    inst_name = slug or 'Muster-Instanz'
+    # Branding aus Instanz- oder Global-Settings laden
+    gs = get_global_settings()
+    copyright_text = gs.copyright_text if gs else None
+    primary_color = '#4f46e5'
+    logo_url = None
+    inst_name = 'Muster-Instanz'
+
     if slug:
         from ...models import Instance
         inst = Instance.query.filter_by(slug=slug).first()
         if inst:
             inst_name = inst.name
+            settings = get_site_settings(inst.id)
+            if settings:
+                primary_color = settings.primary_color or primary_color
+                inst_name = settings.site_title or inst_name
+                if settings.logo_filename:
+                    logo_url = f'{base_url}/uploads/{settings.logo_filename}'
 
+    eff_slug = slug or 'beispiel'
     DUMMY = {
         'name': 'Max Mustermann',
         'email': to,
@@ -247,15 +260,19 @@ def send_typed_test_mail():
         'time': '10:00–14:00',
         'setup_url': f'{base_url}/admin/reset-password?token=BEISPIELTOKEN',
         'reset_url': f'{base_url}/admin/reset-password?token=BEISPIELTOKEN',
-        'welcome_url': f'{base_url}/welcome/BEISPIELTOKEN',
+        'welcome_url': f'{base_url}/{eff_slug}/welcome/BEISPIELTOKEN',
         'inst_name': inst_name,
-        'inst_url': f'{base_url}/{slug or "beispiel"}',
+        'inst_url': f'{base_url}/{eff_slug}',
+        'opt_out_vol': f'{base_url}/{eff_slug}/profile',
+        'opt_out_org': f'{base_url}/admin/profile',
     }
 
     BUILDERS = {
         'welcome': lambda: (
             f'Willkommen – {inst_name}',
-            build_welcome_email(DUMMY['name'], inst_name, DUMMY['welcome_url'], base_url),
+            build_welcome_email(DUMMY['name'], inst_name, DUMMY['welcome_url'], base_url,
+                                primary_color=primary_color, logo_url=logo_url,
+                                slug=slug, copyright_text=copyright_text),
         ),
         'organizer_invite': lambda: (
             'Dein Organisator-Konto bei Standdienst',
@@ -263,17 +280,22 @@ def send_typed_test_mail():
                 DUMMY['name'], DUMMY['setup_url'],
                 [{'name': inst_name, 'volunteer_url': DUMMY['inst_url']}],
                 base_url,
+                primary_color=primary_color,
+                copyright_text=copyright_text,
             ),
         ),
         'reset': lambda: (
             'Passwort zurücksetzen – Standdienst',
-            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url),
+            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url,
+                              primary_color=primary_color, copyright_text=copyright_text),
         ),
         'shift_confirmation': lambda: (
             f'Anmeldebestätigung – {inst_name}',
             build_shift_confirmation_email(
                 DUMMY['name'], inst_name, DUMMY['stand'], DUMMY['date'],
                 DUMMY['time'], DUMMY['inst_url'], base_url, slug=slug,
+                primary_color=primary_color, logo_url=logo_url,
+                copyright_text=copyright_text, opt_out_url=DUMMY['opt_out_vol'],
             ),
         ),
         'reminder': lambda: (
@@ -285,6 +307,10 @@ def send_typed_test_mail():
                 instance_title=inst_name,
                 base_url=base_url,
                 slug=slug,
+                primary_color=primary_color,
+                logo_url=logo_url,
+                copyright_text=copyright_text,
+                opt_out_url=DUMMY['opt_out_vol'],
             ),
         ),
         'digest': lambda: (
@@ -295,9 +321,13 @@ def send_typed_test_mail():
                 date_label=DUMMY['date'],
                 registrations=[{'name': 'Anna Beispiel', 'stand': DUMMY['stand'], 'time': DUMMY['time']}],
                 cancellations=[],
-                food_donations=[{'name': 'Berta Beispiel', 'type': 'Kuchen', 'description': 'Schokoladenkuchen'}],
+                food_donations=[{'name': 'Berta Beispiel', 'food_type': 'Kuchen', 'description': 'Schokoladenkuchen'}],
                 base_url=base_url,
-                slug=slug or 'beispiel',
+                slug=eff_slug,
+                primary_color=primary_color,
+                logo_url=logo_url,
+                copyright_text=copyright_text,
+                opt_out_url=DUMMY['opt_out_org'],
             ),
         ),
     }

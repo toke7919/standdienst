@@ -300,8 +300,12 @@ def forgot_password():
         base_url = current_app.config.get('FRONTEND_URL', '')
         reset_url = f'{base_url}/admin/reset-password?token={raw_token}'
         try:
+            from ..models import GlobalSettings
+            gs = GlobalSettings.query.first()
+            copyright_text = gs.copyright_text if gs else None
             send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(getattr(user, 'name', email), reset_url, base_url))
+                      build_reset_email(getattr(user, 'name', email), reset_url, base_url,
+                                        copyright_text=copyright_text))
         except Exception:
             pass
 

@@ -3,7 +3,7 @@ from marshmallow import ValidationError
 
 from . import admin_bp
 from ...extensions import db
-from ...models import Organizer, Instance, ActivityLog
+from ...models import Organizer, Instance, ActivityLog, GlobalSettings
 from ...models.instance import organizer_instances
 from ...schemas.organizer import OrganizerSchema, OrganizerCreateSchema, OrganizerUpdateSchema
 from ...utils.auth import require_admin, validate_password_strength
@@ -78,6 +78,8 @@ def create_organizer():
                 {'name': inst.name, 'volunteer_url': f'{base_url}/{inst.slug}'}
                 for inst in organizer.instances.all()
             ]
+            gs = GlobalSettings.query.first()
+            copyright_text = gs.copyright_text if gs else None
             send_mail(
                 organizer.email,
                 'Dein Organisator-Konto bei Standdienst',
@@ -86,6 +88,7 @@ def create_organizer():
                     setup_url,
                     inst_list,
                     base_url,
+                    copyright_text=copyright_text,
                 ),
             )
         except Exception:
@@ -167,6 +170,8 @@ def resend_organizer_invite(organizer_id):
             {'name': inst.name, 'volunteer_url': f'{base_url}/{inst.slug}'}
             for inst in organizer.instances.all()
         ]
+        gs = GlobalSettings.query.first()
+        copyright_text = gs.copyright_text if gs else None
         send_mail(
             organizer.email,
             'Dein Organisator-Konto bei Standdienst',
@@ -175,6 +180,7 @@ def resend_organizer_invite(organizer_id):
                 setup_url,
                 inst_list,
                 base_url,
+                copyright_text=copyright_text,
             ),
         )
         return ok({'message': 'Einladung versendet'})
