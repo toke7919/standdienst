@@ -189,9 +189,18 @@ def update_mail_settings():
     return ok(_mail_schema.dump(settings))
 
 
+def _reload_mail_config():
+    """Lädt aktuelle DB-Mail-Einstellungen in den Flask-Config des laufenden Workers."""
+    from ...models import MailSettings
+    ms = MailSettings.query.first()
+    if ms and ms.mail_server:
+        apply_db_mail_config(ms)
+
+
 @admin_bp.route('/settings/mail/test', methods=['POST'])
 @require_admin
 def send_test_mail():
+    _reload_mail_config()
     if not is_mail_configured(current_app):
         return error('E-Mail nicht konfiguriert', 503)
     body = request.get_json() or {}
@@ -213,6 +222,7 @@ def send_test_mail():
 @admin_bp.route('/settings/mail/test-type', methods=['POST'])
 @require_admin
 def send_typed_test_mail():
+    _reload_mail_config()
     if not is_mail_configured(current_app):
         return error('E-Mail nicht konfiguriert', 503)
     body = request.get_json() or {}
