@@ -15,7 +15,7 @@ from ..schemas.shifts import ShiftSchema, RegistrationSchema
 from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
 from ..utils.auth import require_volunteer, validate_password_strength
 from ..utils.mail import (
-    is_mail_configured, send_mail,
+    is_mail_configured, send_mail, get_logo_for_email,
     build_daten_auskunft_email, build_shift_confirmation_email,
 )
 from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
@@ -400,15 +400,15 @@ def meine_daten_export(slug):
     settings = get_site_settings(g.instance.id)
     title = settings.site_title if settings else g.instance.name
     base_url = current_app.config.get('FRONTEND_URL', '')
-    primary_color = settings.primary_color if settings else '#4f46e5'
-    logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
-                if settings and settings.logo_filename else f'{base_url}/logo.png')
+    primary_color = settings.primary_color if settings else None
+    logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
     global_settings = get_global_settings()
     copyright_text = global_settings.copyright_text if global_settings else None
+    kw = dict(slug=g.instance.slug, copyright_text=copyright_text, logo_url=logo_url)
+    if primary_color:
+        kw['primary_color'] = primary_color
     send_mail(v.email, f'Ihre Daten bei {title}',
-              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url,
-                                         slug=g.instance.slug, primary_color=primary_color,
-                                         logo_url=logo_url, copyright_text=copyright_text),
+              build_daten_auskunft_email(v.name, _build_volunteer_export(v), title, base_url, **kw),
               sender_name=title)
     return ok({'message': 'Daten wurden an Ihre E-Mail-Adresse gesendet'})
 
@@ -523,15 +523,18 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
     try:
         base_url = current_app.config.get('FRONTEND_URL', '')
         title = settings.site_title if settings else instance.name
-        primary_color = settings.primary_color if settings else '#4f46e5'
-        logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
-                    if settings and settings.logo_filename else f'{base_url}/logo.png')
+        primary_color = settings.primary_color if settings else None
+        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
         from ..utils.settings_cache import get_global_settings
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         my_shifts_url = f'{base_url}/{instance.slug}/my-shifts'
         opt_out_url = f'{base_url}/{instance.slug}/profile'
         stand = Stand.query.get(shift.stand_id)
+        kw = dict(slug=instance.slug, logo_url=logo_url,
+                  copyright_text=copyright_text, opt_out_url=opt_out_url)
+        if primary_color:
+            kw['primary_color'] = primary_color
         html = build_shift_confirmation_email(
             name=volunteer.display_name,
             instance_title=title,
@@ -540,11 +543,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
             time_range=shift.time_range,
             my_shifts_url=my_shifts_url,
             base_url=base_url,
-            slug=instance.slug,
-            primary_color=primary_color,
-            logo_url=logo_url,
-            copyright_text=copyright_text,
-            opt_out_url=opt_out_url,
+            **kw,
         )
         send_mail(volunteer.email, f'Anmeldung bestätigt – {title}', html, sender_name=title)
     except Exception as exc:

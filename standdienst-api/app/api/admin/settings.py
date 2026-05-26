@@ -225,6 +225,7 @@ def send_typed_test_mail():
         return error('Keine Empfängeradresse angegeben', 400)
 
     from ...utils.mail import (
+        get_logo_for_email,
         build_welcome_email, build_reset_email, build_organizer_invite_email,
         build_shift_confirmation_email, build_reminder_email, build_organizer_digest_email,
     )
@@ -235,7 +236,7 @@ def send_typed_test_mail():
     # Branding aus Instanz- oder Global-Settings laden
     gs = get_global_settings()
     copyright_text = gs.copyright_text if gs else None
-    primary_color = '#4f46e5'
+    primary_color = None
     logo_url = None
     inst_name = 'Muster-Instanz'
 
@@ -248,8 +249,7 @@ def send_typed_test_mail():
             if settings:
                 primary_color = settings.primary_color or primary_color
                 inst_name = settings.site_title or inst_name
-                if settings.logo_filename:
-                    logo_url = f'{base_url}/uploads/{settings.logo_filename}'
+                logo_url = get_logo_for_email(settings.logo_filename, base_url)
 
     eff_slug = slug or 'beispiel'
     DUMMY = {
@@ -267,12 +267,18 @@ def send_typed_test_mail():
         'opt_out_org': f'{base_url}/admin/profile',
     }
 
+    def _kw(**extra):
+        k = dict(logo_url=logo_url, copyright_text=copyright_text)
+        if primary_color:
+            k['primary_color'] = primary_color
+        k.update(extra)
+        return k
+
     BUILDERS = {
         'welcome': lambda: (
             f'Willkommen – {inst_name}',
             build_welcome_email(DUMMY['name'], inst_name, DUMMY['welcome_url'], base_url,
-                                primary_color=primary_color, logo_url=logo_url,
-                                slug=slug, copyright_text=copyright_text),
+                                **_kw(slug=slug)),
         ),
         'organizer_invite': lambda: (
             'Dein Organisator-Konto bei Standdienst',
@@ -280,22 +286,19 @@ def send_typed_test_mail():
                 DUMMY['name'], DUMMY['setup_url'],
                 [{'name': inst_name, 'volunteer_url': DUMMY['inst_url']}],
                 base_url,
-                primary_color=primary_color,
-                copyright_text=copyright_text,
+                **_kw(),
             ),
         ),
         'reset': lambda: (
             'Passwort zurücksetzen – Standdienst',
-            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url,
-                              primary_color=primary_color, copyright_text=copyright_text),
+            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url, **_kw()),
         ),
         'shift_confirmation': lambda: (
             f'Anmeldebestätigung – {inst_name}',
             build_shift_confirmation_email(
                 DUMMY['name'], inst_name, DUMMY['stand'], DUMMY['date'],
-                DUMMY['time'], DUMMY['inst_url'], base_url, slug=slug,
-                primary_color=primary_color, logo_url=logo_url,
-                copyright_text=copyright_text, opt_out_url=DUMMY['opt_out_vol'],
+                DUMMY['time'], DUMMY['inst_url'], base_url,
+                **_kw(slug=slug, opt_out_url=DUMMY['opt_out_vol']),
             ),
         ),
         'reminder': lambda: (
@@ -306,11 +309,7 @@ def send_typed_test_mail():
                 food_items=[],
                 instance_title=inst_name,
                 base_url=base_url,
-                slug=slug,
-                primary_color=primary_color,
-                logo_url=logo_url,
-                copyright_text=copyright_text,
-                opt_out_url=DUMMY['opt_out_vol'],
+                **_kw(slug=slug, opt_out_url=DUMMY['opt_out_vol']),
             ),
         ),
         'digest': lambda: (
@@ -324,10 +323,7 @@ def send_typed_test_mail():
                 food_donations=[{'name': 'Berta Beispiel', 'food_type': 'Kuchen', 'description': 'Schokoladenkuchen'}],
                 base_url=base_url,
                 slug=eff_slug,
-                primary_color=primary_color,
-                logo_url=logo_url,
-                copyright_text=copyright_text,
-                opt_out_url=DUMMY['opt_out_org'],
+                **_kw(opt_out_url=DUMMY['opt_out_org']),
             ),
         ),
     }

@@ -168,7 +168,7 @@ def _send_reminders(app):
                 Volunteer, Registration, Shift, EventDate,
                 FoodDonation, FoodDonationType, Instance,
             )
-            from ..utils.mail import is_mail_configured, send_mail, build_reminder_email
+            from ..utils.mail import is_mail_configured, send_mail, get_logo_for_email, build_reminder_email
             from ..utils.settings_cache import get_global_settings, get_site_settings
 
             if not is_mail_configured():
@@ -226,10 +226,9 @@ def _send_reminders(app):
                 settings = get_site_settings(v.instance_id)
                 instance = Instance.query.get(v.instance_id)
                 title = settings.site_title if settings else (instance.name if instance else 'Standdienst')
-                primary_color = settings.primary_color if settings else '#4f46e5'
-                logo_url = (
-                    f'{base_url}/uploads/{settings.logo_filename}'
-                    if settings and settings.logo_filename else None
+                primary_color = settings.primary_color if settings else None
+                logo_url = get_logo_for_email(
+                    settings.logo_filename if settings else None, base_url
                 )
                 slug = instance.slug if instance else ''
 
@@ -255,13 +254,14 @@ def _send_reminders(app):
 
                 try:
                     opt_out_url = f'{base_url}/{slug}/profile'
+                    kw = dict(slug=slug, logo_url=logo_url,
+                              copyright_text=copyright_text, opt_out_url=opt_out_url)
+                    if primary_color:
+                        kw['primary_color'] = primary_color
                     send_mail(
                         v.email,
                         f'Erinnerung für morgen – {title}',
-                        build_reminder_email(v.name, shift_data, food_data, title, base_url,
-                                             slug=slug, primary_color=primary_color,
-                                             logo_url=logo_url, copyright_text=copyright_text,
-                                             opt_out_url=opt_out_url),
+                        build_reminder_email(v.name, shift_data, food_data, title, base_url, **kw),
                         sender_name=title,
                     )
                     log.info('Erinnerungsmail gesendet: volunteer_id=%d', v.id)
@@ -312,10 +312,9 @@ def _send_organizer_digest(app):
                 for instance in org.instances.all():
                     settings = get_site_settings(instance.id)
                     title = settings.site_title if settings else instance.name
-                    primary_color = settings.primary_color if settings else '#4f46e5'
-                    logo_url = (
-                        f'{base_url}/uploads/{settings.logo_filename}'
-                        if settings and settings.logo_filename else None
+                    primary_color = settings.primary_color if settings else None
+                    logo_url = get_logo_for_email(
+                        settings.logo_filename if settings else None, base_url
                     )
 
                     # Neue Anmeldungen heute (durch Volunteers oder Admins)
@@ -373,6 +372,10 @@ def _send_organizer_digest(app):
 
                     try:
                         opt_out_url = f'{base_url}/admin/profile'
+                        kw = dict(logo_url=logo_url, copyright_text=copyright_text,
+                                  opt_out_url=opt_out_url)
+                        if primary_color:
+                            kw['primary_color'] = primary_color
                         send_mail(
                             org.email,
                             f'Tagesübersicht {date_label} – {title}',
@@ -385,10 +388,7 @@ def _send_organizer_digest(app):
                                 food_data,
                                 base_url,
                                 instance.slug,
-                                primary_color=primary_color,
-                                logo_url=logo_url,
-                                copyright_text=copyright_text,
-                                opt_out_url=opt_out_url,
+                                **kw,
                             ),
                             sender_name=title,
                         )

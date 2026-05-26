@@ -114,14 +114,6 @@
         {{ selectedTypes.length ? `${selectedTypes.length} Testmail(s) senden` : 'Typ auswählen' }}
       </button>
 
-      <div v-if="typedResults.length" class="space-y-1">
-        <p
-          v-for="r in typedResults"
-          :key="r.type"
-          class="text-sm"
-          :class="r.ok ? 'text-green-700' : 'text-red-600'"
-        >{{ r.message }}</p>
-      </div>
     </div>
   </div>
 </template>
@@ -157,7 +149,6 @@ const selectedTypes = ref([])
 const typedTestSlug = ref('')
 const typedTestRecipient = ref('')
 const typedTesting = ref(false)
-const typedResults = ref([])
 
 onMounted(async () => {
   try {
@@ -216,19 +207,17 @@ async function sendTest() {
 
 async function sendTypedTests() {
   typedTesting.value = true
-  typedResults.value = []
   for (const type of selectedTypes.value) {
+    const label = MAIL_TYPES.find(m => m.value === type)?.label || type
     try {
-      const res = await adminApi.sendTypedTestMail({
+      await adminApi.sendTypedTestMail({
         type,
         to: typedTestRecipient.value,
         instance_slug: typedTestSlug.value || undefined,
       })
-      const label = MAIL_TYPES.find(m => m.value === type)?.label || type
-      typedResults.value.push({ type, ok: true, message: `✓ ${label}: ${res.data.message}` })
+      ui.success(`${label} gesendet`)
     } catch (e) {
-      const label = MAIL_TYPES.find(m => m.value === type)?.label || type
-      typedResults.value.push({ type, ok: false, message: `✗ ${label}: ${e.response?.data?.error || 'Versand fehlgeschlagen'}` })
+      ui.err(`${label}: ${e.response?.data?.error || 'Versand fehlgeschlagen'}`)
     }
   }
   typedTesting.value = false

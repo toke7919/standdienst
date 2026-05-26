@@ -76,13 +76,42 @@ def send_mail(to: str, subject: str, html: str, sender_name: str = None,
 # HTML-E-Mail-Template (Basis für alle ausgehenden Mails)
 # ---------------------------------------------------------------------------
 
+_DEFAULT_PRIMARY = '#a51f2c'   # Karmin – neues Brand-Farbschema
+_BG_OUTER   = '#f5ece1'        # Papier
+_BG_CONTENT = '#fdf6e9'        # Soft cream
+_BG_FOOTER  = '#e9d8bd'        # Sand warm
+_BORDER     = '#dbc8a8'        # Sand
+_TEXT_MAIN  = '#1a1311'        # Tinte
+_TEXT_MUTED = '#7a695a'        # Muted
+
+
+def get_logo_for_email(logo_filename: str, base_url: str) -> str | None:
+    """Liefert ein Base64-Data-URI des Logos (bevorzugt) oder die /uploads/-URL als Fallback."""
+    if not logo_filename:
+        return None
+    try:
+        import base64, mimetypes, os
+        from flask import current_app
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        path = os.path.join(upload_folder, logo_filename)
+        if os.path.isfile(path):
+            mime, _ = mimetypes.guess_type(path)
+            mime = mime or 'image/png'
+            with open(path, 'rb') as fh:
+                data = base64.b64encode(fh.read()).decode()
+            return f'data:{mime};base64,{data}'
+    except Exception:
+        pass
+    return f'{base_url}/uploads/{logo_filename}'
+
+
 def build_email_template(
     content_html: str,
     *,
     title: str,
     base_url: str,
     slug: str = None,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
@@ -91,13 +120,17 @@ def build_email_template(
     """Bettet content_html in ein vollständiges, responsives HTML-E-Mail-Template ein."""
 
     logo_block = ''
-    _is_public_url = (
-        logo_url
-        and logo_url.startswith(('http://', 'https://'))
-        and 'localhost' not in logo_url
-        and '127.0.0.1' not in logo_url
+    _renderable = (
+        logo_url and (
+            logo_url.startswith('data:')
+            or (
+                logo_url.startswith(('http://', 'https://'))
+                and 'localhost' not in logo_url
+                and '127.0.0.1' not in logo_url
+            )
+        )
     )
-    if _is_public_url:
+    if _renderable:
         logo_block = (
             f'<div style="margin-bottom:12px;">'
             f'<img src="{logo_url}" alt="{title}" width="180" height="48" '
@@ -111,10 +144,10 @@ def build_email_template(
         datenschutz_url = f'{base_url}/{slug}/datenschutz'
         links_block = (
             f'<p style="margin:0 0 10px;">'
-            f'<a href="{impressum_url}" style="color:#6b7280;font-size:12px;'
+            f'<a href="{impressum_url}" style="color:{_TEXT_MUTED};font-size:12px;'
             f'text-decoration:underline;">Impressum</a>'
             f'&nbsp;&nbsp;·&nbsp;&nbsp;'
-            f'<a href="{datenschutz_url}" style="color:#6b7280;font-size:12px;'
+            f'<a href="{datenschutz_url}" style="color:{_TEXT_MUTED};font-size:12px;'
             f'text-decoration:underline;">Datenschutz</a>'
             f'</p>'
         )
@@ -125,7 +158,7 @@ def build_email_template(
     if opt_out_url:
         opt_out_block = (
             f'<p style="margin:8px 0 0;">'
-            f'<a href="{opt_out_url}" style="color:#9ca3af;font-size:11px;'
+            f'<a href="{opt_out_url}" style="color:{_TEXT_MUTED};font-size:11px;'
             f'text-decoration:underline;">{opt_out_label}</a>'
             f'</p>'
         )
@@ -134,7 +167,7 @@ def build_email_template(
     if datenschutz_url:
         datenschutz_info = (
             f'<br>Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer '
-            f'<a href="{datenschutz_url}" style="color:#9ca3af;text-decoration:underline;">'
+            f'<a href="{datenschutz_url}" style="color:{_TEXT_MUTED};text-decoration:underline;">'
             f'Datenschutzerklärung</a>.'
         )
 
@@ -145,9 +178,9 @@ def build_email_template(
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background-color:{_BG_OUTER};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
-         style="background-color:#f3f4f6;padding:32px 16px;">
+         style="background-color:{_BG_OUTER};padding:32px 16px;">
     <tr>
       <td align="center">
         <table style="max-width:560px;width:100%;" cellpadding="0" cellspacing="0" role="presentation">
@@ -164,9 +197,9 @@ def build_email_template(
 
           <!-- Inhalt -->
           <tr>
-            <td style="background-color:#ffffff;padding:32px 32px 28px;
-                       border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
-              <div style="color:#374151;font-size:15px;line-height:1.7;">
+            <td style="background-color:{_BG_CONTENT};padding:32px 32px 28px;
+                       border-left:1px solid {_BORDER};border-right:1px solid {_BORDER};">
+              <div style="color:{_TEXT_MAIN};font-size:15px;line-height:1.7;">
                 {content_html}
               </div>
             </td>
@@ -174,10 +207,10 @@ def build_email_template(
 
           <!-- Footer -->
           <tr>
-            <td style="background-color:#f9fafb;border:1px solid #e5e7eb;border-top:none;
+            <td style="background-color:{_BG_FOOTER};border:1px solid {_BORDER};border-top:none;
                        border-radius:0 0 12px 12px;padding:20px 32px;text-align:center;">
               {links_block}
-              <p style="margin:0;color:#9ca3af;font-size:11px;line-height:1.6;">
+              <p style="margin:0;color:{_TEXT_MUTED};font-size:11px;line-height:1.6;">
                 Diese E-Mail wurde automatisch versandt.{datenschutz_info}
               </p>
               {opt_out_block}
@@ -201,7 +234,7 @@ def build_welcome_email(
     instance_title: str,
     setup_url: str,
     base_url: str,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     slug: str = None,
     copyright_text: str = None,
@@ -246,7 +279,7 @@ def build_reset_email(
     *,
     title: str = 'Standdienst',
     slug: str = None,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
 ) -> str:
@@ -286,7 +319,7 @@ def build_registration_email(
     login_url: str,
     base_url: str = '',
     slug: str = None,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
 ) -> str:
@@ -320,7 +353,7 @@ def build_invite_email(
     role_label: str,
     login_url: str,
     base_url: str,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
 ) -> str:
     """Einladungsmail wenn ein Passwort bereits gesetzt wurde (nur noch für Admin-Anlegen)."""
     content = f"""
@@ -356,7 +389,7 @@ def build_organizer_invite_email(
     setup_url: str,
     instances: list,
     base_url: str,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     copyright_text: str = None,
 ) -> str:
     """Einladungsmail für neue Organisatoren ohne Passwort.
@@ -432,7 +465,7 @@ def build_shift_confirmation_email(
     my_shifts_url: str,
     base_url: str,
     slug: str = None,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
@@ -491,7 +524,7 @@ def build_daten_auskunft_email(
     instance_title: str,
     base_url: str,
     slug: str = None,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
 ) -> str:
@@ -603,7 +636,7 @@ def build_reminder_email(
     instance_title: str,
     base_url: str,
     slug: str = None,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
@@ -687,7 +720,7 @@ def build_organizer_digest_email(
     food_donations: list,
     base_url: str,
     slug: str,
-    primary_color: str = '#4f46e5',
+    primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
