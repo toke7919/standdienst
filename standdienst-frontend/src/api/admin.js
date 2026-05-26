@@ -69,6 +69,7 @@ export const adminApi = {
   createOrganizer: (data) => client.post('/admin/organizers', data),
   updateOrganizer: (id, data) => client.put(`/admin/organizers/${id}`, data),
   deleteOrganizer: (id) => client.delete(`/admin/organizers/${id}`),
+  resendOrganizerInvite: (id) => client.post(`/admin/organizers/${id}/resend-invite`),
   assignInstances: (id, instanceIds) => client.put(`/admin/organizers/${id}`, { instance_ids: instanceIds }),
 
   // Admins
@@ -89,6 +90,7 @@ export const adminApi = {
   getMailSettings: () => client.get('/admin/settings/mail'),
   updateMailSettings: (data) => client.put('/admin/settings/mail', data),
   sendTestMail: (data) => client.post('/admin/settings/mail/test', data),
+  sendTypedTestMail: (data) => client.post('/admin/settings/mail/test-type', data),
 
   // Activity log
   getActivityLog: (p) => client.get('/admin/activity', { params: p }),

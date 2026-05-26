@@ -35,6 +35,62 @@
         {{ testResult.message }}
       </p>
     </form>
+
+    <!-- Mail-Typ-Test-Center -->
+    <div v-if="!loading" class="max-w-2xl mt-6 card space-y-4">
+      <h2 class="text-base font-semibold text-ink">Mail-Typen testen</h2>
+      <p class="text-xs text-muted">Mails werden mit Beispieldaten befüllt. Instanz-Kontext beeinflusst den Absendernamen und die Links.</p>
+
+      <div>
+        <label class="label">Mail-Typen auswählen</label>
+        <div class="border border-sand rounded-lg divide-y divide-sand">
+          <label
+            v-for="mt in MAIL_TYPES"
+            :key="mt.value"
+            class="flex items-start gap-3 px-3 py-2.5 hover:bg-bg-warm cursor-pointer"
+          >
+            <input type="checkbox" :value="mt.value" v-model="selectedTypes" class="mt-0.5 rounded" />
+            <div class="min-w-0">
+              <span class="text-sm font-medium text-ink">{{ mt.label }}</span>
+              <span class="text-xs text-muted block">{{ mt.desc }}</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label">Instanz <span class="text-muted font-normal text-xs">(optional)</span></label>
+          <select v-model="typedTestSlug" class="input">
+            <option value="">Plattform (kein Instanz-Kontext)</option>
+            <option v-for="inst in instances" :key="inst.id" :value="inst.slug">{{ inst.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Empfänger-E-Mail</label>
+          <input v-model="typedTestRecipient" type="email" class="input" placeholder="test@beispiel.de" />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="btn-primary"
+        :disabled="typedTesting || !selectedTypes.length || !typedTestRecipient"
+        @click="sendTypedTests"
+      >
+        <LoadingSpinner v-if="typedTesting" size="sm" />
+        {{ selectedTypes.length ? `${selectedTypes.length} Testmail(s) senden` : 'Typ auswählen' }}
+      </button>
+
+      <div v-if="typedResults.length" class="space-y-1">
+        <p
+          v-for="r in typedResults"
+          :key="r.type"
+          class="text-sm"
+          :class="r.ok ? 'text-green-700' : 'text-red-600'"
+        >{{ r.message }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -44,6 +100,15 @@ import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
+const MAIL_TYPES = [
+  { value: 'welcome',           label: 'Willkommens-Mail',         desc: 'Wird an Volunteers gesendet, die sich ohne Passwort registriert haben' },
+  { value: 'organizer_invite',  label: 'Organisator-Einladung',    desc: 'Wird beim Anlegen eines neuen Organisators versendet' },
+  { value: 'reset',             label: 'Passwort-Reset',           desc: 'Wird bei einer Passwort-Zurücksetzen-Anfrage versendet' },
+  { value: 'shift_confirmation',label: 'Schicht-Bestätigung',      desc: 'Wird nach erfolgreicher Schicht-Anmeldung eines Volunteers versendet' },
+  { value: 'reminder',          label: 'Erinnerungsmail',          desc: 'Wird täglich um 08:00 Uhr an Volunteers mit aktivierten Benachrichtigungen gesendet' },
+  { value: 'digest',            label: 'Organisator-Tages-Digest', desc: 'Wird täglich um 18:00 Uhr an Organisatoren gesendet' },
+]
+
 const ui = useUiStore()
 const loading = ref(true)
 const saving = ref(false)
@@ -52,11 +117,22 @@ const saveError = ref('')
 const testResult = ref(null)
 const testRecipient = ref('')
 const form = ref({})
+const instances = ref([])
+
+const selectedTypes = ref([])
+const typedTestSlug = ref('')
+const typedTestRecipient = ref('')
+const typedTesting = ref(false)
+const typedResults = ref([])
 
 onMounted(async () => {
   try {
-    const res = await adminApi.getMailSettings()
-    form.value = res.data.data
+    const [mailRes, instRes] = await Promise.all([
+      adminApi.getMailSettings(),
+      adminApi.getInstances({ per_page: 200 }),
+    ])
+    form.value = mailRes.data.data
+    instances.value = instRes.data.data
   } finally {
     loading.value = false
   }
@@ -87,5 +163,25 @@ async function sendTest() {
   } finally {
     testing.value = false
   }
+}
+
+async function sendTypedTests() {
+  typedTesting.value = true
+  typedResults.value = []
+  for (const type of selectedTypes.value) {
+    try {
+      const res = await adminApi.sendTypedTestMail({
+        type,
+        to: typedTestRecipient.value,
+        instance_slug: typedTestSlug.value || undefined,
+      })
+      const label = MAIL_TYPES.find(m => m.value === type)?.label || type
+      typedResults.value.push({ type, ok: true, message: `✓ ${label}: ${res.data.message}` })
+    } catch (e) {
+      const label = MAIL_TYPES.find(m => m.value === type)?.label || type
+      typedResults.value.push({ type, ok: false, message: `✗ ${label}: ${e.response?.data?.error || 'Versand fehlgeschlagen'}` })
+    }
+  }
+  typedTesting.value = false
 }
 </script>

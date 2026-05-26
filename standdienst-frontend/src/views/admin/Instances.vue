@@ -83,11 +83,11 @@
               <input v-model="form.contact_phone" class="input text-sm" type="tel" placeholder="+49 123 456789" />
             </div>
             <div>
-              <label class="label text-xs">Ansprechpartner <span class="text-muted font-normal">(Platzhalter: {{asp}})</span></label>
+              <label class="label text-xs">Ansprechpartner</label>
               <input v-model="form.contact_asp" class="input text-sm" placeholder="Für Rückfragen: Max Muster" />
             </div>
             <div>
-              <label class="label text-xs">Ansprechpartner E-Mail <span class="text-muted font-normal">({{asp-email}})</span></label>
+              <label class="label text-xs">Ansprechpartner E-Mail</label>
               <input v-model="form.contact_asp_email" class="input text-sm" type="email" placeholder="max@beispiel.de" />
             </div>
           </div>

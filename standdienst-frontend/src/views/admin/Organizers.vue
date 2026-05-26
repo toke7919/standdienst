@@ -20,10 +20,17 @@
               <span v-else class="text-xs text-muted">Organisator</span>
               <span class="text-sand">·</span>
               <span class="text-xs text-muted">{{ o.instance_ids?.length ?? 0 }} Instanzen</span>
+              <span class="text-sand">·</span>
+              <span
+                v-if="o.has_login"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
+              >Aktiv</span>
+              <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Einladung ausstehend</span>
             </div>
           </div>
           <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
             <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
+            <button v-if="!o.has_login" class="text-xs text-amber-600 hover:underline" @click="resendInvite(o)">Einladung senden</button>
             <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
           </div>
         </div>
@@ -37,6 +44,7 @@
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="name" @sort="toggleSort">Name</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="email" @sort="toggleSort">E-Mail</SortTh>
             <th class="px-4 py-3 text-left font-medium text-muted">Rolle</th>
+            <th class="px-4 py-3 text-left font-medium text-muted">Status</th>
             <th class="px-4 py-3 text-left font-medium text-muted">Instanzen</th>
             <th class="px-4 py-3" />
           </tr>
@@ -54,9 +62,14 @@
               </span>
               <span v-else class="text-xs text-muted">Organisator</span>
             </td>
+            <td class="px-4 py-3">
+              <span v-if="o.has_login" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Aktiv</span>
+              <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Einladung ausstehend</span>
+            </td>
             <td class="px-4 py-3 text-muted">{{ o.instance_ids?.length ?? 0 }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
+              <button v-if="!o.has_login" class="text-xs text-amber-600 hover:underline" @click="resendInvite(o)">Einladung senden</button>
               <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
             </td>
           </tr>
@@ -211,6 +224,15 @@ async function save() {
 function onInstanceToggle(instanceId) {
   if (!form.value.instance_ids.includes(instanceId)) {
     form.value.instance_admin_ids = form.value.instance_admin_ids.filter(id => id !== instanceId)
+  }
+}
+
+async function resendInvite(o) {
+  try {
+    await adminApi.resendOrganizerInvite(o.id)
+    ui.success('Einladungsmail versendet')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Versand fehlgeschlagen')
   }
 }
 

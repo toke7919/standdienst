@@ -210,6 +210,111 @@ def send_test_mail():
         return error('E-Mail-Versand fehlgeschlagen', 500)
 
 
+@admin_bp.route('/settings/mail/test-type', methods=['POST'])
+@require_admin
+def send_typed_test_mail():
+    if not is_mail_configured(current_app):
+        return error('E-Mail nicht konfiguriert', 503)
+    body = request.get_json() or {}
+    mail_type = (body.get('type') or '').strip()
+    to = (body.get('to') or '').strip()
+    slug = (body.get('instance_slug') or '').strip() or None
+    if not mail_type:
+        return error('Kein Mail-Typ angegeben', 400)
+    if not to:
+        return error('Keine Empfängeradresse angegeben', 400)
+
+    from ...utils.mail import (
+        build_welcome_email, build_reset_email, build_organizer_invite_email,
+        build_shift_confirmation_email, build_reminder_email, build_organizer_digest_email,
+    )
+    from ..public import _base_url
+    base_url = _base_url()
+
+    # Beispiel-Instanzname
+    inst_name = slug or 'Muster-Instanz'
+    if slug:
+        from ...models import Instance
+        inst = Instance.query.filter_by(slug=slug).first()
+        if inst:
+            inst_name = inst.name
+
+    DUMMY = {
+        'name': 'Max Mustermann',
+        'email': to,
+        'stand': 'Stand 1',
+        'date': '28.06.2025',
+        'time': '10:00–14:00',
+        'setup_url': f'{base_url}/admin/reset-password?token=BEISPIELTOKEN',
+        'reset_url': f'{base_url}/admin/reset-password?token=BEISPIELTOKEN',
+        'welcome_url': f'{base_url}/welcome/BEISPIELTOKEN',
+        'inst_name': inst_name,
+        'inst_url': f'{base_url}/{slug or "beispiel"}',
+    }
+
+    BUILDERS = {
+        'welcome': lambda: (
+            f'Willkommen – {inst_name}',
+            build_welcome_email(DUMMY['name'], inst_name, DUMMY['welcome_url'], base_url),
+        ),
+        'organizer_invite': lambda: (
+            'Dein Organisator-Konto bei Standdienst',
+            build_organizer_invite_email(
+                DUMMY['name'], DUMMY['setup_url'],
+                [{'name': inst_name, 'volunteer_url': DUMMY['inst_url']}],
+                base_url,
+            ),
+        ),
+        'reset': lambda: (
+            'Passwort zurücksetzen – Standdienst',
+            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url),
+        ),
+        'shift_confirmation': lambda: (
+            f'Anmeldebestätigung – {inst_name}',
+            build_shift_confirmation_email(
+                DUMMY['name'], inst_name, DUMMY['stand'], DUMMY['date'],
+                DUMMY['time'], DUMMY['inst_url'], base_url, slug=slug,
+            ),
+        ),
+        'reminder': lambda: (
+            f'Erinnerung: Schicht morgen – {inst_name}',
+            build_reminder_email(
+                DUMMY['name'],
+                shifts=[{'stand': DUMMY['stand'], 'time': DUMMY['time']}],
+                food_items=[],
+                instance_title=inst_name,
+                base_url=base_url,
+                slug=slug,
+            ),
+        ),
+        'digest': lambda: (
+            f'Tages-Zusammenfassung – {inst_name}',
+            build_organizer_digest_email(
+                organizer_name=DUMMY['name'],
+                instance_title=inst_name,
+                date_label=DUMMY['date'],
+                registrations=[{'name': 'Anna Beispiel', 'stand': DUMMY['stand'], 'time': DUMMY['time']}],
+                cancellations=[],
+                food_donations=[{'name': 'Berta Beispiel', 'type': 'Kuchen', 'description': 'Schokoladenkuchen'}],
+                base_url=base_url,
+                slug=slug or 'beispiel',
+            ),
+        ),
+    }
+
+    builder = BUILDERS.get(mail_type)
+    if not builder:
+        return error(f'Unbekannter Mail-Typ: {mail_type}', 400)
+
+    try:
+        subject, html = builder()
+        send_mail(to=to, subject=subject, html=html)
+        return ok(message=f'Testmail ({mail_type}) an {to} gesendet')
+    except Exception:
+        current_app.logger.exception('Typisierte Testmail fehlgeschlagen')
+        return error('E-Mail-Versand fehlgeschlagen', 500)
+
+
 def _log(instance_id, details, actor):
     db.session.add(ActivityLog(
         instance_id=instance_id,

@@ -176,6 +176,7 @@ def create_registration(slug):
         event_type=ActivityLog.SHIFT_REGISTER,
         volunteer_name=display_name,
         actor_type=getattr(g.current_user, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=detail,
     ))
     try:
@@ -211,6 +212,7 @@ def delete_registration(slug, reg_id):
         event_type=ActivityLog.SHIFT_UNREGISTER,
         volunteer_name=name,
         actor_type=getattr(g.current_user, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=detail + ' (Admin-Abmeldung)',
     ))
     db.session.commit()
