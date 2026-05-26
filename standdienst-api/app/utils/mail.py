@@ -31,6 +31,7 @@ def apply_db_mail_config(settings) -> None:
         MAIL_USERNAME=settings.mail_username or '',
         MAIL_PASSWORD=settings.mail_password or '',
         MAIL_DEFAULT_SENDER=settings.mail_default_sender or '',
+        MAIL_SENDER_NAME=settings.mail_sender_name or '',
     )
     mail.init_app(current_app)
 
@@ -53,7 +54,8 @@ def send_mail(to: str, subject: str, html: str, sender_name: str = None,
               retries: int = 3, plain_text: str = None):
     """Sendet eine E-Mail (HTML + Plain-Text) mit bis zu `retries` Versuchen."""
     default_sender = current_app.config.get('MAIL_DEFAULT_SENDER', '')
-    sender = f'{sender_name} <{default_sender}>' if sender_name else default_sender
+    _name = sender_name or current_app.config.get('MAIL_SENDER_NAME', '')
+    sender = f'{_name} <{default_sender}>' if _name else default_sender
     body = plain_text or _html_to_text(html)
     msg = Message(subject=subject, recipients=[to], html=html, body=body, sender=sender)
     last_exc: Exception | None = None
@@ -106,12 +108,14 @@ def get_logo_for_email(logo_filename: str, base_url: str) -> str | None:
 
 
 def get_platform_logo_for_email() -> str | None:
-    """Liefert das Plattform-Logo (static/logo.png) als Base64-Data-URI."""
+    """Liefert das Plattform-Logo (static/dist/logo.png) als Base64-Data-URI."""
     try:
         import base64, os
         from flask import current_app
-        static_folder = current_app.static_folder or os.path.join(os.getcwd(), 'static')
-        path = os.path.join(static_folder, 'logo.png')
+        # static_folder is None (app created with static_folder=None);
+        # logo lives at <app_package>/../static/dist/logo.png
+        root = current_app.root_path
+        path = os.path.normpath(os.path.join(root, '..', 'static', 'dist', 'logo.png'))
         if os.path.isfile(path):
             with open(path, 'rb') as fh:
                 data = base64.b64encode(fh.read()).decode()

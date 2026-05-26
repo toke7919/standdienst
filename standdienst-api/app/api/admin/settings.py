@@ -202,6 +202,7 @@ def _reload_mail_config():
         MAIL_USERNAME=ms.mail_username or '',
         MAIL_PASSWORD=ms.mail_password or '',
         MAIL_DEFAULT_SENDER=ms.mail_default_sender or '',
+        MAIL_SENDER_NAME=ms.mail_sender_name or '',
     )
     current_app.extensions['mail'] = _mail.init_mail(
         current_app.config, current_app.debug, current_app.testing
