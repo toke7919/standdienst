@@ -162,8 +162,8 @@ def build_email_template(
     if _renderable:
         logo_block = (
             f'<div style="margin-bottom:12px;">'
-            f'<img src="{logo_url}" alt="{title}" width="180" height="48" '
-            f'style="max-height:48px;max-width:180px;object-fit:contain;display:block;margin:0 auto;">'
+            f'<img src="{logo_url}" alt="{title}" width="240" '
+            f'style="max-width:240px;height:auto;display:block;margin:0 auto;">'
             f'</div>'
         )
 
