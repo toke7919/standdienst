@@ -395,8 +395,8 @@ def _contact_vars(obj) -> dict:
     if obj is None:
         return {}
     return {
-        'organisation': getattr(obj, 'contact_organisation', '') or '',
         'person':       getattr(obj, 'contact_person', '') or '',
+        'organisation': getattr(obj, 'contact_organisation', '') or getattr(obj, 'contact_person', '') or '',
         'adresse':      getattr(obj, 'contact_street', '') or '',
         'plz_ort':      getattr(obj, 'contact_zip_city', '') or '',
         'email':        getattr(obj, 'contact_email', '') or '',

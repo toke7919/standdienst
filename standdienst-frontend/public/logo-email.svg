@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80">
+  <!-- Ticket mark – light version (cream on red) -->
+  <g transform="scale(0.8)">
+    <rect x="2" y="2" width="74" height="96" rx="6" fill="#fdf6e9"/>
+    <line x1="6" y1="30" x2="72" y2="30" stroke="#a51f2c" stroke-width="1.2" stroke-dasharray="2.5 2.5"/>
+    <text x="39" y="20" text-anchor="middle" fill="#a51f2c" font-family="Geist Mono, ui-monospace, monospace" font-size="7" letter-spacing="1.5">SCHICHT</text>
+    <text x="39" y="68" text-anchor="middle" fill="#a51f2c" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="36" letter-spacing="-2">14</text>
+    <circle cx="39" cy="84" r="3" fill="#e8b94a"/>
+  </g>
+  <!-- Wordmark – cream on red -->
+  <text x="74" y="57" fill="#fdf6e9" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="48" letter-spacing="-1.5">Standdienst</text>
+  <line x1="74" y1="70" x2="355" y2="70" stroke="#fdf6e9" stroke-width="3" stroke-dasharray="9 6"/>
+</svg>

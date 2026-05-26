@@ -100,6 +100,16 @@
             <label class="label">Telefon</label>
             <input v-model="form.contact_phone" class="input" type="tel" placeholder="+49 123 456789" />
           </div>
+          <div>
+            <label class="label">Ansprechpartner</label>
+            <input v-model="form.contact_asp" class="input" placeholder="Erika Musterfrau" />
+            <p class="text-xs text-muted mt-1" v-pre>Platzhalter <code class="bg-bg-brand px-1 rounded">{{asp}}</code></p>
+          </div>
+          <div>
+            <label class="label">E-Mail Ansprechpartner</label>
+            <input v-model="form.contact_asp_email" class="input" type="email" placeholder="asp@beispiel.de" />
+            <p class="text-xs text-muted mt-1" v-pre>Platzhalter <code class="bg-bg-brand px-1 rounded">{{asp-email}}</code></p>
+          </div>
         </div>
       </div>
 
@@ -114,6 +124,8 @@
               <code class="bg-bg-brand px-1 rounded ml-1">{{plz_ort}}</code>
               <code class="bg-bg-brand px-1 rounded ml-1">{{email}}</code>
               <code class="bg-bg-brand px-1 rounded ml-1">{{telefon}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{asp}}</code>
+              <code class="bg-bg-brand px-1 rounded ml-1">{{asp-email}}</code>
             </p>
           </div>
           <button type="button" class="btn-secondary text-xs py-1 px-2 flex-shrink-0"
@@ -193,6 +205,11 @@ const impressumVorlage = `<h2>Angaben gemäß § 5 TMG</h2>
 <p>
   Telefon: {{telefon}}<br>
   E-Mail: {{email}}
+</p>
+<h3>Ansprechpartner</h3>
+<p>
+  {{asp}}<br>
+  E-Mail: {{asp-email}}
 </p>
 <h3>Registereintrag</h3>
 <p>

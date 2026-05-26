@@ -108,18 +108,19 @@ def get_logo_for_email(logo_filename: str, base_url: str) -> str | None:
 
 
 def get_platform_logo_for_email() -> str | None:
-    """Liefert das Plattform-Logo (static/dist/logo.png) als Base64-Data-URI."""
+    """Liefert das Plattform-Logo (logo-email.png, helle Version für farbige Header) als Base64-Data-URI."""
     try:
         import base64, os
         from flask import current_app
         # static_folder is None (app created with static_folder=None);
-        # logo lives at <app_package>/../static/dist/logo.png
+        # logo-email.png is the light-on-dark variant for use inside the colored email header
         root = current_app.root_path
-        path = os.path.normpath(os.path.join(root, '..', 'static', 'dist', 'logo.png'))
-        if os.path.isfile(path):
-            with open(path, 'rb') as fh:
-                data = base64.b64encode(fh.read()).decode()
-            return f'data:image/png;base64,{data}'
+        for name in ('logo-email.png', 'logo.png'):
+            path = os.path.normpath(os.path.join(root, '..', 'static', 'dist', name))
+            if os.path.isfile(path):
+                with open(path, 'rb') as fh:
+                    data = base64.b64encode(fh.read()).decode()
+                return f'data:image/png;base64,{data}'
     except Exception:
         pass
     return None

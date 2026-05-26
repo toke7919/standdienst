@@ -128,6 +128,7 @@ const MAIL_TYPES = [
   { value: 'shift_confirmation',label: 'Schicht-Bestätigung',      desc: 'Wird nach erfolgreicher Schicht-Anmeldung eines Volunteers versendet' },
   { value: 'reminder',          label: 'Erinnerungsmail',          desc: 'Wird täglich um 08:00 Uhr an Volunteers mit aktivierten Benachrichtigungen gesendet' },
   { value: 'digest',            label: 'Organisator-Tages-Digest', desc: 'Wird täglich um 18:00 Uhr an Organisatoren gesendet' },
+  { value: 'dsgvo_auskunft',    label: 'DSGVO-Datenauskunft',      desc: 'Wird auf Anfrage des Volunteers versendet (Art. 15 DSGVO)' },
 ]
 
 const ui = useUiStore()

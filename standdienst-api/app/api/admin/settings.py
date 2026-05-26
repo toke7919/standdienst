@@ -250,6 +250,7 @@ def send_typed_test_mail():
         get_logo_for_email,
         build_welcome_email, build_reset_email, build_organizer_invite_email,
         build_shift_confirmation_email, build_reminder_email, build_organizer_digest_email,
+        build_daten_auskunft_email,
     )
     from ...utils.settings_cache import get_site_settings, get_global_settings
     from ..public import _base_url
@@ -358,6 +359,27 @@ def send_typed_test_mail():
                 base_url=base_url,
                 slug=eff_slug,
                 **_kw(opt_out_url=DUMMY['opt_out_org']),
+            ),
+        ),
+        'dsgvo_auskunft': lambda: (
+            f'Ihre Daten bei {inst_name}',
+            build_daten_auskunft_email(
+                DUMMY['name'],
+                data={
+                    'volunteer': {
+                        'name': DUMMY['name'],
+                        'email': DUMMY['email'],
+                        'created_at': '01.01.2025 10:00',
+                        'consent_given_at': '01.01.2025 10:00',
+                    },
+                    'registrations': [{'date': DUMMY['date'], 'stand': DUMMY['stand'],
+                                       'start_time': '10:00', 'end_time': '14:00'}],
+                    'food_donations': [{'food_type': 'Kuchen', 'description': 'Schokoladenkuchen',
+                                        'needs_refrigeration': False}],
+                },
+                instance_title=inst_name,
+                base_url=base_url,
+                **_kw(slug=slug),
             ),
         ),
     }
