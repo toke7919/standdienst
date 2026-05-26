@@ -154,8 +154,8 @@ def build_email_template(
         _promo_footer = f"""
           <tr>
             <td style="padding:28px 0 4px;text-align:center;">
-              <table style="max-width:400px;width:100%;background-color:#1a1311;
-                            border-radius:12px;" cellpadding="0" cellspacing="0" role="presentation">
+              <table align="center" style="max-width:400px;width:100%;background-color:#1a1311;
+                            border-radius:12px;margin:0 auto;" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="padding:28px 32px 24px;text-align:center;">
                     <img src="{_promo_logo}" alt="Standdienst" width="220"
@@ -165,7 +165,7 @@ def build_email_template(
                       Helfer koordinieren – ganz ohne Stress.
                     </p>
                     <p style="margin:0 0 16px;color:#c8b8a2;font-size:12px;line-height:1.6;">
-                      Standdienst ist die kostenfreie Plattform f&uuml;r Vereine und<br>
+                      Standdienst ist die Plattform f&uuml;r Vereine und<br>
                       Veranstaltungen: Schichten, St&auml;nde und Essensspenden&nbsp;&ndash;<br>
                       einfach, datenschutzkonform, ohne Tracking.
                     </p>
