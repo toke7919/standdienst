@@ -180,7 +180,7 @@ def delete_volunteer(slug, volunteer_id):
     volunteer.soft_delete()
     details = f'Pseudonymisiert: {name}'
     if reg_count or food_count:
-        details += f' ({reg_count} Schicht-Anm., {food_count} Spenden)'
+        details += f' ({reg_count} Dienst-Anm., {food_count} Spenden)'
     db.session.add(ActivityLog(
         instance_id=g.instance.id,
         event_type=ActivityLog.VOLUNTEER_DELETE,
@@ -206,7 +206,7 @@ def permanent_delete_volunteer(slug, volunteer_id):
     name       = volunteer.name
     details    = f'Endgültig gelöscht: {name}'
     if reg_count or food_count:
-        details += f' ({reg_count} Schicht-Anm., {food_count} Spenden)'
+        details += f' ({reg_count} Dienst-Anm., {food_count} Spenden)'
     db.session.add(ActivityLog(
         instance_id=instance.id,
         event_type=ActivityLog.VOLUNTEER_PERMANENT_DELETE,

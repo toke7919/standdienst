@@ -87,7 +87,7 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
                      .filter(Stand.instance_id == instance_id)
                      .count())
 
-    # Helfer ohne Schicht: aktive Volunteers mit 0 Anmeldungen
+    # Helfer ohne Dienst: aktive Volunteers mit 0 Anmeldungen
     volunteers_with_shift = (Registration.query
                              .join(Shift).join(Stand)
                              .filter(Stand.instance_id == instance_id,
@@ -122,7 +122,7 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
             'fill_rate': d_rate,
         })
 
-    # Gesamtkapazität (Summe aller Plätze über alle Schichten)
+    # Gesamtkapazität (Summe aller Plätze über alle Dienste)
     total_spots = sum(s.max_volunteers for s in shifts_all)
 
     # Anmeldungen der letzten 7 Tage (für Trend-Sparkline)

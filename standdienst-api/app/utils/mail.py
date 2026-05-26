@@ -166,7 +166,7 @@ def build_email_template(
                     </p>
                     <p style="margin:0 0 16px;color:#c8b8a2;font-size:12px;line-height:1.6;">
                       Standdienst ist die Plattform f&uuml;r Vereine und<br>
-                      Veranstaltungen: Schichten, St&auml;nde und Essensspenden&nbsp;&ndash;<br>
+                      Veranstaltungen: Dienste, St&auml;nde und Essensspenden&nbsp;&ndash;<br>
                       einfach, datenschutzkonform, ohne Tracking.
                     </p>
                     <a href="{base_url}"
@@ -197,8 +197,8 @@ def build_email_template(
     if _renderable:
         logo_block = (
             f'<div style="margin-bottom:12px;">'
-            f'<img src="{logo_url}" alt="{title}" width="240" '
-            f'style="max-width:240px;height:auto;display:block;margin:0 auto;">'
+            f'<img src="{logo_url}" alt="{title}" '
+            f'style="max-width:220px;max-height:72px;width:auto;height:auto;display:block;margin:0 auto;">'
             f'</div>'
         )
 
@@ -557,7 +557,7 @@ def build_shift_confirmation_email(
     copyright_text: str = None,
     opt_out_url: str = None,
 ) -> str:
-    """Bestätigungsmail nach erfolgreicher Schicht-Anmeldung."""
+    """Bestätigungsmail nach erfolgreicher Dienst-Anmeldung."""
     content = f"""
     <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
     <p style="margin:0 0 16px;">

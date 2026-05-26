@@ -355,7 +355,7 @@ def send_typed_test_mail():
             ),
         ),
         'reminder': lambda: (
-            f'Erinnerung: Schicht morgen – {inst_name}',
+            f'Erinnerung: Dienst morgen – {inst_name}',
             build_reminder_email(
                 DUMMY['name'],
                 shifts=[{'stand': DUMMY['stand'], 'time': DUMMY['time']}],

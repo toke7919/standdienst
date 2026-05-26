@@ -222,7 +222,7 @@ const datenschutzVorlage = `<h2><strong>Datenschutzerklärung</strong><br></h2><
 <ul>
   <li><strong>Name</strong> – zur Identifikation bei Veranstaltungen</li>
   <li><strong>E-Mail-Adresse</strong> (optional) – zur Anmeldung und für Benachrichtigungen</li>
-  <li><strong>Schicht- und Spendenanmeldungen</strong> – zur Koordination des Standdienstes</li>
+  <li><strong>Dienst- und Spendenanmeldungen</strong> – zur Koordination des Standdienstes</li>
 </ul>
 <p><br>Rechtsgrundlage: Art. 6 DSGVO (Vertragserfüllung / vorvertragliche Maßnahmen).<br></p>
 <br>

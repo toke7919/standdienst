@@ -7,8 +7,8 @@ import {
 } from '@heroicons/vue/24/outline'
 
 export const EVENT_META = {
-  shift_register:            { icon: CheckCircleIcon,              label: 'Schicht +',     color: 'bg-green-100 text-green-700' },
-  shift_unregister:          { icon: MinusCircleIcon,              label: 'Schicht −',     color: 'bg-orange-100 text-orange-700' },
+  shift_register:            { icon: CheckCircleIcon,              label: 'Dienst +',     color: 'bg-green-100 text-green-700' },
+  shift_unregister:          { icon: MinusCircleIcon,              label: 'Dienst −',     color: 'bg-orange-100 text-orange-700' },
   food_register:             { icon: ShoppingBagIcon,              label: 'Spende +',      color: 'bg-teal-100 text-teal-700' },
   food_unregister:           { icon: XCircleIcon,                  label: 'Spende −',      color: 'bg-orange-100 text-orange-700' },
   login_success:             { icon: ArrowRightOnRectangleIcon,    label: 'Login ✓',       color: 'bg-blue-100 text-blue-700' },

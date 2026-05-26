@@ -73,7 +73,7 @@
                   :style="`top: ${h.pct}%`"
                 />
 
-                <!-- Schicht-Block -->
+                <!-- Dienst-Block -->
                 <div
                   v-for="item in shiftItems"
                   :key="item.cell.shift_id"
@@ -331,7 +331,7 @@ const enrichedGrid = computed(() => {
       h.ty = i === 0 ? 0 : i === hours.length - 1 ? -100 : -50
     })
 
-    // 3. Pro Stand die Schicht-Blöcke mit prozentigen Position/Höhe
+    // 3. Pro Stand die Dienst-Blöcke mit prozentigen Position/Höhe
     const standShifts = section.stands.map((stand, si) => {
       const shiftItems = []
       for (const row of section.rows) {

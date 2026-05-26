@@ -28,7 +28,7 @@
     </div>
 
     <template v-else-if="upcomingGroups.length || pastGroups.length">
-      <!-- Kommende Schichten -->
+      <!-- Kommende Dienste -->
       <div v-if="upcomingGroups.length" class="space-y-6">
         <div v-for="group in upcomingGroups" :key="group.date">
           <p class="text-xs font-bold uppercase tracking-wide text-muted mb-2 px-1">{{ group.date }}</p>
@@ -59,7 +59,7 @@
 
       <p v-else class="text-center text-muted py-8 text-sm">Keine kommenden Dienste</p>
 
-      <!-- Vergangene Schichten (einklappbar) -->
+      <!-- Vergangene Dienste (einklappbar) -->
       <div v-if="pastGroups.length" class="mt-8">
         <button
           class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted hover:text-ink/80 mb-3 px-1 transition-colors"

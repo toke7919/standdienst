@@ -555,7 +555,7 @@ def export_pdf(slug):
       td {{ padding: 5px; border-bottom: 1px solid #eee; }}
       tr:nth-child(even) td {{ background: #f9f9f9; }}
     </style></head><body>
-      <h1>Schichtplan – {g.instance.name}</h1>
+      <h1>Dienstplan – {g.instance.name}</h1>
       <p>Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       <table>
         <tr><th>Stand</th><th>Datum</th><th>Uhrzeit</th><th>Helfer</th><th>E-Mail</th></tr>
@@ -576,7 +576,7 @@ def _pdf_row(stand, datum, uhrzeit, name, email):
 
 
 # ---------------------------------------------------------------------------
-# iCal – Schichten
+# iCal – Dienste
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/<slug>/export/ical', methods=['GET'])
@@ -585,7 +585,7 @@ def export_ical(slug):
     cal = Calendar()
     cal.add('prodid', f'-//Standdienst//{g.instance.slug}//DE')
     cal.add('version', '2.0')
-    cal.add('x-wr-calname', f'Schichtplan {g.instance.name}')
+    cal.add('x-wr-calname', f'Dienstplan {g.instance.name}')
 
     tz = pytz.timezone('Europe/Berlin')
 
