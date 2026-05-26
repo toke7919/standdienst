@@ -110,6 +110,22 @@ def upload_logo(slug):
     return ok({'logo_filename': filename, 'updated_at': settings.updated_at.isoformat() if settings.updated_at else None})
 
 
+@admin_bp.route('/<slug>/settings/logo', methods=['DELETE'])
+@require_instance_admin
+def delete_logo(slug):
+    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+    if settings.logo_filename:
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        old_path = os.path.join(upload_dir, settings.logo_filename)
+        try:
+            os.unlink(old_path)
+        except OSError:
+            pass
+        settings.logo_filename = None
+        db.session.commit()
+    return ok({'logo_filename': None})
+
+
 @admin_bp.route('/settings/global', methods=['GET'])
 @require_admin
 def get_global_settings():

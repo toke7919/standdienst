@@ -11,7 +11,7 @@
             class="h-8 w-8 object-contain rounded-lg flex-shrink-0"
             alt="Logo"
           />
-          <img v-else src="/favicon.svg" class="w-8 h-8 rounded-lg flex-shrink-0" alt="Standdienst" />
+          <img v-else src="/assets/mark-ticket.svg" class="w-8 h-8 rounded-lg flex-shrink-0" alt="Standdienst" />
           <span class="font-semibold text-white truncate">{{ instanceInfo?.site_title || 'Standdienst' }}</span>
         </RouterLink>
       </div>

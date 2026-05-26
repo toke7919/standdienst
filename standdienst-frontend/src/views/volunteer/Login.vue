@@ -10,9 +10,7 @@
           class="h-20 object-contain mx-auto drop-shadow-xl"
           alt="Logo"
         />
-        <div v-else class="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto border border-white/30 shadow-xl">
-          <span class="text-white text-3xl font-bold">{{ settings?.site_title?.charAt(0) || 'S' }}</span>
-        </div>
+        <img v-else src="/assets/mark-ticket.svg" class="w-20 h-20 mx-auto drop-shadow-xl" alt="Standdienst" />
       </div>
       <h1 class="text-2xl font-bold tracking-tight">{{ settings?.site_title || 'Standdienst' }}</h1>
       <p class="text-primary-200 mt-1.5 text-sm">Helfer-Verwaltung</p>

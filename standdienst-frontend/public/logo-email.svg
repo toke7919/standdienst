@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 80">
   <!-- Ticket mark – light version (cream on red) -->
   <g transform="scale(0.8)">
     <rect x="2" y="2" width="74" height="96" rx="6" fill="#fdf6e9"/>
@@ -9,5 +9,5 @@
   </g>
   <!-- Wordmark – cream on red -->
   <text x="74" y="57" fill="#fdf6e9" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="48" letter-spacing="-1.5">Standdienst</text>
-  <line x1="74" y1="70" x2="355" y2="70" stroke="#fdf6e9" stroke-width="3" stroke-dasharray="9 6"/>
+  <line x1="74" y1="70" x2="415" y2="70" stroke="#fdf6e9" stroke-width="3" stroke-dasharray="9 6"/>
 </svg>
