@@ -11,7 +11,7 @@ from ..utils.settings_cache import get_global_settings
 from ..utils.auth import validate_password_strength
 from ..utils.captcha import generate_challenge, verify_solution
 from ..utils.mail import (
-    is_mail_configured, send_mail,
+    is_mail_configured, send_mail, get_logo_for_email,
     build_reset_email, build_welcome_email, build_registration_email,
 )
 
@@ -139,15 +139,16 @@ def register(slug):
         title = settings.site_title if settings else instance.name
         base_url = _base_url()
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
-        primary_color = settings.primary_color if settings else '#4f46e5'
-        logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
+        primary_color = settings.primary_color if settings else None
+        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         try:
+            kw = dict(logo_url=logo_url, slug=slug, copyright_text=copyright_text)
+            if primary_color:
+                kw['primary_color'] = primary_color
             send_mail(email, f'Willkommen bei {title}',
-                      build_welcome_email(volunteer.name, title, setup_url, base_url,
-                                          primary_color=primary_color, logo_url=logo_url,
-                                          slug=slug, copyright_text=copyright_text),
+                      build_welcome_email(volunteer.name, title, setup_url, base_url, **kw),
                       sender_name=title)
         except Exception:
             pass
@@ -280,15 +281,16 @@ def volunteer_forgot_password(slug):
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
         settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
         title = settings.site_title if settings else instance.name
-        primary_color = settings.primary_color if settings else '#4f46e5'
-        logo_url = f'{base_url}/uploads/{settings.logo_filename}' if settings and settings.logo_filename else None
+        primary_color = settings.primary_color if settings else None
+        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         try:
+            kw = dict(title=title, slug=slug, logo_url=logo_url, copyright_text=copyright_text)
+            if primary_color:
+                kw['primary_color'] = primary_color
             send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(volunteer.name, reset_url, base_url,
-                                        title=title, slug=slug, primary_color=primary_color,
-                                        logo_url=logo_url, copyright_text=copyright_text),
+                      build_reset_email(volunteer.name, reset_url, base_url, **kw),
                       sender_name=title)
         except Exception:
             pass

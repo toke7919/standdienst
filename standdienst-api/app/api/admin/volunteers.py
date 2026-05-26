@@ -7,7 +7,7 @@ from ...extensions import db
 from ...models import Volunteer, ActivityLog, GlobalSettings, SiteSettings, Registration, FoodDonation
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
 from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
-from ...utils.mail import is_mail_configured, send_mail, build_welcome_email, build_daten_auskunft_email
+from ...utils.mail import is_mail_configured, send_mail, get_logo_for_email, build_welcome_email, build_daten_auskunft_email
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = VolunteerSchema()
@@ -234,9 +234,8 @@ def send_dsgvo_auskunft(slug, volunteer_id):
     settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
     base_url = current_app.config.get('FRONTEND_URL', '')
     title = (settings.site_title if settings else None) or g.instance.name
-    primary_color = settings.primary_color if settings else '#4f46e5'
-    logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
-                if settings and settings.logo_filename else f'{base_url}/logo.png')
+    primary_color = settings.primary_color if settings else None
+    logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
     copyright_text = gs.copyright_text if gs else None
 
     data = {
@@ -268,12 +267,13 @@ def send_dsgvo_auskunft(slug, volunteer_id):
         ],
     }
 
+    kw = dict(slug=g.instance.slug, logo_url=logo_url, copyright_text=copyright_text)
+    if primary_color:
+        kw['primary_color'] = primary_color
     send_mail(
         volunteer.email,
         f'Ihre Daten bei {title}',
-        build_daten_auskunft_email(volunteer.name, data, title, base_url,
-                                   slug=g.instance.slug, primary_color=primary_color,
-                                   logo_url=logo_url, copyright_text=copyright_text),
+        build_daten_auskunft_email(volunteer.name, data, title, base_url, **kw),
         sender_name=title,
     )
     _log(g.instance.id, f'DSGVO-Auskunft versendet: {volunteer.name}', g.current_user)
@@ -300,13 +300,13 @@ def _send_welcome_email(volunteer, raw_token):
         setup_url = f'{base_url}/{g.instance.slug}/welcome/{raw_token}'
         settings = get_site_settings(g.instance.id)
         title = settings.site_title if settings else g.instance.name
-        primary_color = settings.primary_color if settings else '#4f46e5'
-        logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
-                    if settings and settings.logo_filename else None)
+        primary_color = settings.primary_color if settings else None
+        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
         copyright_text = gs.copyright_text if gs else None
-        html = build_welcome_email(volunteer.display_name, title, setup_url, base_url,
-                                   primary_color=primary_color, logo_url=logo_url,
-                                   slug=g.instance.slug, copyright_text=copyright_text)
+        kw = dict(logo_url=logo_url, slug=g.instance.slug, copyright_text=copyright_text)
+        if primary_color:
+            kw['primary_color'] = primary_color
+        html = build_welcome_email(volunteer.display_name, title, setup_url, base_url, **kw)
         send_mail(volunteer.email, f'Willkommen bei {title}', html, sender_name=title)
     except Exception:
         pass  # E-Mail optional – Helfer trotzdem anlegen
