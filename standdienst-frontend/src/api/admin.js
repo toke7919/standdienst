@@ -85,6 +85,7 @@ export const adminApi = {
     client.post(`${a(slug)}/settings/logo`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  deleteLogo: (slug) => client.delete(`${a(slug)}/settings/logo`),
   getGlobalSettings: () => client.get('/admin/settings/global'),
   updateGlobalSettings: (data) => client.put('/admin/settings/global', data),
   getMailSettings: () => client.get('/admin/settings/mail'),

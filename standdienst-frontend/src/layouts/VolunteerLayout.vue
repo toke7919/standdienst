@@ -14,6 +14,7 @@
             class="h-8 object-contain flex-shrink-0"
             alt="Logo"
           />
+          <img v-else src="/assets/mark-ticket.svg" class="h-8 w-8 flex-shrink-0" alt="Standdienst" />
           <span class="font-semibold truncate" :class="headerTextClass">
             {{ settings?.site_title || 'Standdienst' }}
           </span>

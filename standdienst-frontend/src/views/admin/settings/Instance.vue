@@ -19,8 +19,12 @@
         </div>
         <div>
           <label class="label">Logo</label>
-          <input type="file" accept="image/*" class="text-sm" @change="uploadLogo" />
+          <div class="flex items-center gap-3">
+            <input type="file" accept="image/*" class="text-sm" @change="uploadLogo" />
+            <button v-if="form.logo_filename" type="button" class="btn-secondary text-xs py-1.5" @click="removeLogo">Entfernen</button>
+          </div>
           <img v-if="form.logo_filename" :src="`/uploads/${form.logo_filename}`" class="mt-2 h-16 object-contain" alt="Logo" />
+          <p v-else class="text-xs text-muted mt-1">Kein Logo – Anwendungsstandard wird verwendet</p>
         </div>
       </div>
 
@@ -158,6 +162,16 @@ async function clearData() {
     ui.err(e.response?.data?.error || 'Fehler beim Löschen')
   } finally {
     clearing.value = false
+  }
+}
+
+async function removeLogo() {
+  try {
+    await adminApi.deleteLogo(route.params.slug)
+    form.value.logo_filename = null
+    ui.success('Logo entfernt')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler beim Entfernen')
   }
 }
 
