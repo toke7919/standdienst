@@ -128,6 +128,48 @@
       </template>
     </div>
 
+    <!-- Backup-Codes-Modal -->
+    <Teleport to="body">
+      <div v-if="showBackupCodesModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div class="bg-soft rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+              <KeyIcon class="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-ink">Backup-Codes speichern</h3>
+              <p class="text-sm text-muted mt-0.5">
+                Bewahre diese Codes sicher auf. Du kannst sie bei verlorenem Zugriff auf deine
+                Authenticator-App verwenden. Jeder Code ist einmalig verwendbar.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-bg-brand border border-sand rounded-lg p-3 font-mono text-sm space-y-1">
+            <div v-for="code in backupCodes" :key="code" class="tracking-widest text-ink">{{ code }}</div>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" class="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" @click="copyBackupCodes">
+              <ClipboardIcon class="w-3.5 h-3.5" />Kopieren
+            </button>
+            <button type="button" class="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1" @click="downloadBackupCodes">
+              <ArrowDownTrayIcon class="w-3.5 h-3.5" />Herunterladen
+            </button>
+          </div>
+
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" v-model="codesAcknowledged" class="mt-0.5 rounded border-sand" />
+            <span class="text-sm text-ink/80">Ich habe die Codes sicher gespeichert.</span>
+          </label>
+
+          <button type="button" class="btn-primary w-full" :disabled="!codesAcknowledged" @click="finishSetup">
+            Fertig
+          </button>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Passkeys -->
     <div class="card space-y-4">
       <div class="flex items-center gap-2">
@@ -193,7 +235,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { authApi } from '@/api/auth'
-import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, KeyIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, KeyIcon, TrashIcon, ClipboardIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { prepareRegistrationOptions, serializeRegistrationCredential } from '@/utils/webauthn'
 
@@ -259,6 +301,9 @@ const twoFaLoading = ref(false)
 const twoFaConfirming = ref(false)
 const twoFaDisabling = ref(false)
 const twoFaError = ref('')
+const backupCodes = ref([])
+const showBackupCodesModal = ref(false)
+const codesAcknowledged = ref(false)
 
 const qrUrl = computed(() => {
   if (!twoFaSetupData.value?.otpauth_url) return ''
@@ -279,17 +324,40 @@ async function confirm2fa() {
   twoFaConfirming.value = true
   twoFaError.value = ''
   try {
-    await authApi.confirm2fa(twoFaCode.value)
-    ui.success('2FA aktiviert')
-    await auth.fetchMe()
-    twoFaSetupData.value = null
-    twoFaCode.value = ''
+    const res = await authApi.confirm2fa(twoFaCode.value)
+    backupCodes.value = res.data.backup_codes || []
+    codesAcknowledged.value = false
+    showBackupCodesModal.value = true
   } catch (e) {
     twoFaError.value = e.response?.data?.error || 'Ungültiger Code'
     twoFaCode.value = ''
   } finally {
     twoFaConfirming.value = false
   }
+}
+
+async function finishSetup() {
+  showBackupCodesModal.value = false
+  backupCodes.value = []
+  twoFaSetupData.value = null
+  twoFaCode.value = ''
+  ui.success('2FA aktiviert')
+  await auth.fetchMe()
+}
+
+function copyBackupCodes() {
+  navigator.clipboard.writeText(backupCodes.value.join('\n'))
+  ui.success('Codes kopiert')
+}
+
+function downloadBackupCodes() {
+  const blob = new Blob([backupCodes.value.join('\n')], { type: 'text/plain' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'standdienst-backup-codes.txt'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 async function disable2fa() {

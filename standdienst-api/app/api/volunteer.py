@@ -30,13 +30,13 @@ _food_create_schema = FoodDonationCreateSchema()
 
 
 # ---------------------------------------------------------------------------
-# Schichten
+# Dienste
 # ---------------------------------------------------------------------------
 
 @volunteer_bp.route('/<slug>/shifts/events', methods=['GET'])
 @require_volunteer
 def shift_events(slug):
-    """SSE-Endpunkt: liefert Echtzeit-Aktualisierungen wenn Schichten belegt/freigegeben werden."""
+    """SSE-Endpunkt: liefert Echtzeit-Aktualisierungen wenn Dienste belegt/freigegeben werden."""
     uri = current_app.config.get('RATELIMIT_STORAGE_URI', 'memory://')
     if not uri.startswith('redis://'):
         # Ohne Redis: einmaliges Event senden und Verbindung schließen
@@ -79,7 +79,7 @@ def list_shifts(slug):
     instance = g.instance
     settings = get_site_settings(instance.id)
     if settings and not settings.shifts_enabled:
-        return error('Schichten sind deaktiviert', 403)
+        return error('Dienste sind deaktiviert', 403)
 
     dates = EventDate.query.filter_by(instance_id=instance.id).order_by(EventDate.date).all()
     result = []
@@ -116,20 +116,20 @@ def register_shift(slug, shift_id):
     if settings and not settings.registration_open:
         return error('Anmeldeschluss ist überschritten', 403)
 
-    # Row-Level Lock: sperrt Schicht-Zeile für Dauer der Transaktion
+    # Row-Level Lock: sperrt Dienst-Zeile für Dauer der Transaktion
     shift = Shift.query.with_for_update().get(shift_id)
     if not shift:
-        return error('Schicht nicht gefunden', 404)
+        return error('Dienst nicht gefunden', 404)
     stand = Stand.query.get(shift.stand_id)
     if not stand or stand.instance_id != g.instance.id:
-        return error('Schicht nicht gefunden', 404)
+        return error('Dienst nicht gefunden', 404)
 
     if shift.is_full:
-        return error('Schicht ist bereits voll', 409)
+        return error('Dienst ist bereits voll', 409)
     if Registration.query.filter_by(volunteer_id=g.current_user.id, shift_id=shift_id).first():
         return error('Bereits eingetragen', 409)
     if _has_time_overlap(g.current_user.id, shift):
-        return error('Zeitüberschneidung mit einer anderen Schicht', 409)
+        return error('Zeitüberschneidung mit einem anderen Dienst', 409)
 
     db.session.add(Registration(volunteer_id=g.current_user.id, shift_id=shift_id))
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_REGISTER, g.current_user,
@@ -184,7 +184,7 @@ def my_registrations_ical(slug):
     cal = Calendar()
     cal.add('prodid', f'-//Standdienst//{g.instance.slug}//DE')
     cal.add('version', '2.0')
-    cal.add('x-wr-calname', f'Meine Schichten – {g.instance.name}')
+    cal.add('x-wr-calname', f'Meine Dienste – {g.instance.name}')
 
     tz = pytz.timezone('Europe/Berlin')
     regs = Registration.query.filter_by(volunteer_id=g.current_user.id).all()
@@ -363,7 +363,7 @@ def delete_profile(slug):
     name       = v.name  # Namen vor soft_delete sichern
     details    = 'DSGVO-Selbstlöschung'
     if reg_count or food_count:
-        details += f' ({reg_count} Schicht-Anm., {food_count} Spenden)'
+        details += f' ({reg_count} Dienst-Anm., {food_count} Spenden)'
     db.session.add(ActivityLog(
         instance_id=g.instance.id,
         event_type=ActivityLog.VOLUNTEER_DELETE,
@@ -452,7 +452,7 @@ def _build_volunteer_export(v) -> dict:
 
 
 def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
-    """Prüft ob Volunteer am selben Veranstaltungstag eine überlappende Schicht hat."""
+    """Prüft ob Volunteer am selben Veranstaltungstag einen überlappenden Dienst hat."""
     existing = (
         Registration.query
         .join(Shift, Registration.shift_id == Shift.id)
@@ -471,7 +471,7 @@ def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
 
 
 def _publish_shift_update(app, slug: str, shift_id: int) -> None:
-    """Benachrichtigt SSE-Clients über eine geänderte Schichtbelegung."""
+    """Benachrichtigt SSE-Clients über eine geänderte Dienstbelegung."""
     uri = app.config.get('RATELIMIT_STORAGE_URI', 'memory://')
     if not uri.startswith('redis://'):
         return
@@ -485,7 +485,7 @@ def _publish_shift_update(app, slug: str, shift_id: int) -> None:
 
 
 def _shift_detail(shift) -> str:
-    """Lesbare Beschreibung einer Schicht für das Protokoll."""
+    """Lesbare Beschreibung eines Dienstes für das Protokoll."""
     if not shift:
         return ''
     stand = Stand.query.get(shift.stand_id)
@@ -517,7 +517,7 @@ def _unregister_deadline_error(shift, deadline_hours: int):
 
 
 def _send_shift_confirmation(volunteer, shift, instance, settings):
-    """Sendet Bestätigungsmail nach Schicht-Anmeldung (fire-and-forget)."""
+    """Sendet Bestätigungsmail nach Dienst-Anmeldung (fire-and-forget)."""
     if not (volunteer.email and volunteer.email_confirmation_enabled and is_mail_configured()):
         return
     try:

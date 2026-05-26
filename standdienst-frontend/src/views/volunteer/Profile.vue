@@ -55,7 +55,7 @@
           </div>
           <div>
             <span class="text-sm text-ink/80">Anmeldebestätigung per E-Mail</span>
-            <p class="text-xs text-muted mt-0.5">Nach jeder Schicht-Anmeldung eine Bestätigungsmail erhalten</p>
+            <p class="text-xs text-muted mt-0.5">Nach jeder Dienst-Anmeldung eine Bestätigungsmail erhalten</p>
           </div>
         </label>
         <label class="flex items-start gap-3 cursor-pointer">

@@ -30,7 +30,7 @@
         <div class="flex gap-4 mt-4 pt-4 border-t border-sand">
           <div class="text-center">
             <p class="text-2xl font-bold text-ink">{{ volunteer.registrations?.length ?? 0 }}</p>
-            <p class="text-xs text-muted">Schichten</p>
+            <p class="text-xs text-muted">Dienste</p>
           </div>
           <div class="text-center">
             <p class="text-2xl font-bold text-ink">{{ volunteer.food_donations?.length ?? 0 }}</p>
@@ -39,9 +39,9 @@
         </div>
       </div>
 
-      <!-- Schicht-Anmeldungen -->
+      <!-- Dienst-Anmeldungen -->
       <div class="card mb-6">
-        <h2 class="text-base font-semibold text-ink mb-3">Schicht-Anmeldungen</h2>
+        <h2 class="text-base font-semibold text-ink mb-3">Dienst-Anmeldungen</h2>
         <div v-if="!volunteer.registrations?.length" class="text-sm text-muted py-4 text-center">
           Keine Anmeldungen
         </div>
@@ -253,7 +253,7 @@ async function sendAuskunft() {
 async function softDelete() {
   const ok = await ui.confirm({
     title: 'Helfer pseudonymisieren',
-    message: `${volunteer.value.display_name || volunteer.value.name} wirklich pseudonymisieren? Name und E-Mail werden unwiderruflich gelöscht. Schichtanmeldungen bleiben anonymisiert erhalten.`,
+    message: `${volunteer.value.display_name || volunteer.value.name} wirklich pseudonymisieren? Name und E-Mail werden unwiderruflich gelöscht. Dienstanmeldungen bleiben anonymisiert erhalten.`,
     danger: true,
   })
   if (!ok) return

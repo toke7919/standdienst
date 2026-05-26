@@ -125,7 +125,7 @@ const MAIL_TYPES = [
   { value: 'welcome',           label: 'Willkommens-Mail',         desc: 'Wird an Volunteers gesendet, die sich ohne Passwort registriert haben' },
   { value: 'organizer_invite',  label: 'Organisator-Einladung',    desc: 'Wird beim Anlegen eines neuen Organisators versendet' },
   { value: 'reset',             label: 'Passwort-Reset',           desc: 'Wird bei einer Passwort-Zurücksetzen-Anfrage versendet' },
-  { value: 'shift_confirmation',label: 'Schicht-Bestätigung',      desc: 'Wird nach erfolgreicher Schicht-Anmeldung eines Volunteers versendet' },
+  { value: 'shift_confirmation',label: 'Dienst-Bestätigung',      desc: 'Wird nach erfolgreicher Dienst-Anmeldung eines Volunteers versendet' },
   { value: 'reminder',          label: 'Erinnerungsmail',          desc: 'Wird täglich um 08:00 Uhr an Volunteers mit aktivierten Benachrichtigungen gesendet' },
   { value: 'digest',            label: 'Organisator-Tages-Digest', desc: 'Wird täglich um 18:00 Uhr an Organisatoren gesendet' },
   { value: 'dsgvo_auskunft',    label: 'DSGVO-Datenauskunft',      desc: 'Wird auf Anfrage des Volunteers versendet (Art. 15 DSGVO)' },

@@ -7,7 +7,7 @@
       <img src="/assets/mark-ticket.svg" alt="Standdienst" class="h-16 md:h-20 mb-8 drop-shadow-xl" />
       <p class="text-primary-200 text-lg md:text-xl max-w-2xl leading-relaxed mb-10">
         Die Plattform für Freiwilligenkoordination bei Vereinen und Veranstaltungen.
-        Schichten planen, Helfer einteilen und Essensspenden verwalten – einfach, digital und DSGVO-konform.
+        Dienste planen, Helfer einteilen und Essensspenden verwalten – einfach, digital und DSGVO-konform.
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3">
@@ -30,13 +30,13 @@
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <FeatureCard
             :icon="CalendarDaysIcon"
-            title="Schichtplanung"
-            text="Termine und Schichten anlegen, Stände organisieren und die Belegung in Echtzeit verfolgen."
+            title="Dienstplanung"
+            text="Termine und Dienste anlegen, Stände organisieren und die Belegung in Echtzeit verfolgen."
           />
           <FeatureCard
             :icon="UsersIcon"
             title="Helfer-Self-Service"
-            text="Freiwillige tragen sich selbst ein und aus, verwalten ihr Profil und exportieren Schichten als Kalender."
+            text="Freiwillige tragen sich selbst ein und aus, verwalten ihr Profil und exportieren Dienste als Kalender."
           />
           <FeatureCard
             :icon="ShoppingBagIcon"
@@ -189,7 +189,7 @@ const copyrightText = ref('Standdienst')
 
 const mockActivity = [
   { text: 'M. Schmidt hat sich für Einlass angemeldet', time: 'vor 2 Min.', color: 'bg-green-400' },
-  { text: 'T. Müller hat Schicht abgemeldet', time: 'vor 8 Min.', color: 'bg-red-400' },
+  { text: 'T. Müller hat Dienst abgemeldet', time: 'vor 8 Min.', color: 'bg-red-400' },
   { text: 'A. Weber hat Kuchen eingetragen', time: 'vor 15 Min.', color: 'bg-amber-400' },
   { text: 'Neue Registrierung: S. Bauer', time: 'vor 22 Min.', color: 'bg-primary-400' },
 ]

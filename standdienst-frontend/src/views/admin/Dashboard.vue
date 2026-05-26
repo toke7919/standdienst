@@ -222,7 +222,7 @@
             <p class="text-xs text-muted mt-1">7-Tage-Trend</p>
           </div>
 
-          <!-- Leere Schichten – Alert-Karte -->
+          <!-- Leere Dienste – Alert-Karte -->
           <div
             :class="['rounded-md shadow-sm border p-4 lg:p-6 transition-colors duration-300',
                      data.shifts_empty > 0 ? 'bg-red-50 border-red-200' : 'bg-soft border-sand']"

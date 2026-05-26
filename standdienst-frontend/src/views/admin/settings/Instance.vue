@@ -37,7 +37,7 @@
         <h2 class="text-base font-semibold text-ink">Funktionen</h2>
         <div class="flex items-center gap-2">
           <input v-model="form.shifts_enabled" type="checkbox" id="shifts" />
-          <label for="shifts" class="text-sm text-ink/80">Schichten aktiviert</label>
+          <label for="shifts" class="text-sm text-ink/80">Dienste aktiviert</label>
         </div>
         <div class="flex items-center gap-2">
           <input v-model="form.food_donations_enabled" type="checkbox" id="food" />
@@ -62,7 +62,7 @@
           <input v-model="form.registration_deadline" type="datetime-local" class="input max-w-xs" />
         </div>
         <div>
-          <label class="label">Abmeldeschluss (Stunden vor Schichtbeginn)</label>
+          <label class="label">Abmeldeschluss (Stunden vor Dienstbeginn)</label>
           <input
             v-model.number="form.unregister_deadline_hours"
             type="number"
@@ -72,7 +72,7 @@
             placeholder="Leer lassen = keine Einschränkung"
           />
           <p class="text-xs text-muted mt-1">
-            Helfer können sich bis zu dieser Zeit vor Schichtbeginn abmelden. Leer lassen für keine Einschränkung.
+            Helfer können sich bis zu dieser Zeit vor Dienstbeginn abmelden. Leer lassen für keine Einschränkung.
           </p>
         </div>
       </div>
@@ -95,7 +95,7 @@
       <div class="card border-red-200 bg-red-50 space-y-3">
         <h2 class="text-base font-semibold text-red-800">Gefahrenzone</h2>
         <p class="text-sm text-red-700">
-          Löscht alle Helfer, Stände, Termine, Schichten, Anmeldungen und Essensspenden dieser Instanz.
+          Löscht alle Helfer, Stände, Termine, Dienste, Anmeldungen und Essensspenden dieser Instanz.
           Die Instanz selbst und ihre Einstellungen bleiben erhalten. Diese Aktion ist
           <strong>nicht umkehrbar</strong>.
         </p>
@@ -159,7 +159,7 @@ async function save() {
 async function clearData() {
   const ok = await ui.confirm({
     title: 'Alle Instanzdaten löschen',
-    message: 'Alle Helfer, Stände, Termine, Schichten und Anmeldungen dieser Instanz werden unwiderruflich gelöscht. Fortfahren?',
+    message: 'Alle Helfer, Stände, Termine, Dienste und Anmeldungen dieser Instanz werden unwiderruflich gelöscht. Fortfahren?',
     confirmText: 'Endgültig löschen',
     danger: true,
   })

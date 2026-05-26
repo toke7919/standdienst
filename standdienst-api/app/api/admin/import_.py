@@ -43,7 +43,7 @@ def import_template_ods(slug):
         return error('odfpy nicht installiert', 500)
 
     doc = OpenDocumentSpreadsheet()
-    table = Table(name='Schichten')
+    table = Table(name='Dienste')
     for row_data in [_IMPORT_COLUMNS, ['Kasse', '01.08.2025', '08:00', '12:00', '3']]:
         row = TableRow()
         for val in row_data:
@@ -71,7 +71,7 @@ def import_template_xlsx(slug):
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = 'Schichten'
+    ws.title = 'Dienste'
     ws.append(_IMPORT_COLUMNS)
     ws.append(['Kasse', '01.08.2025', '08:00', '12:00', 3])
 
@@ -245,4 +245,4 @@ def _process_shift_rows(rows, instance_id):
 
     db.session.commit()
     return ok({'created': created, 'skipped': skipped, 'errors': errors},
-              f'{created} Schichten importiert, {skipped} übersprungen')
+              f'{created} Dienste importiert, {skipped} übersprungen')

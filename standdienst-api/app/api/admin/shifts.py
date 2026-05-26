@@ -53,12 +53,12 @@ def create_shift(slug):
     db.session.add(shift)
     start_str = data['start_time'].strftime('%H:%M')
     end_str = data['end_time'].strftime('%H:%M')
-    _log(g.instance.id, f'Schicht angelegt: {stand.name} am {date.formatted}, {start_str}–{end_str}', g.current_user)
+    _log(g.instance.id, f'Dienst angelegt: {stand.name} am {date.formatted}, {start_str}–{end_str}', g.current_user)
     try:
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return error('Schicht mit diesen Parametern existiert bereits', 409)
+        return error('Dienst mit diesen Parametern existiert bereits', 409)
     shift = _get_or_404(shift.id, g.instance.id)
     return created(_schema.dump(shift))
 
@@ -82,7 +82,7 @@ def update_shift(slug, shift_id):
 
     stand_name = shift.stand.name if shift.stand else f'Stand {shift.stand_id}'
     date_fmt = shift.event_date.formatted if shift.event_date else ''
-    _log(g.instance.id, f'Schicht geändert: {stand_name} am {date_fmt}, {shift.time_range}', g.current_user)
+    _log(g.instance.id, f'Dienst geändert: {stand_name} am {date_fmt}, {shift.time_range}', g.current_user)
     db.session.commit()
     return ok(_schema.dump(shift))
 
@@ -93,7 +93,7 @@ def delete_shift(slug, shift_id):
     shift = _get_or_404(shift_id, g.instance.id)
     stand_name = shift.stand.name if shift.stand else f'Stand {shift.stand_id}'
     date_fmt = shift.event_date.formatted if shift.event_date else ''
-    _log(g.instance.id, f'Schicht gelöscht: {stand_name} am {date_fmt}, {shift.time_range}', g.current_user)
+    _log(g.instance.id, f'Dienst gelöscht: {stand_name} am {date_fmt}, {shift.time_range}', g.current_user)
     db.session.delete(shift)
     db.session.commit()
     return no_content()

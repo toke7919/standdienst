@@ -42,7 +42,7 @@ def _helfer_activity(retention: str) -> dict:
         'data_categories': [
             'Name',
             'E-Mail-Adresse (optional)',
-            'Schichtanmeldungen',
+            'Dienstanmeldungen',
             'Essensspenden',
         ],
         'recipients': 'Keine Weitergabe an Dritte',

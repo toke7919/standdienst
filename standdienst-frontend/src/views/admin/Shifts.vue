@@ -35,7 +35,7 @@
                 <BuildingStorefrontIcon class="w-3.5 h-3.5 text-muted flex-shrink-0" />
                 <span class="text-xs font-semibold text-muted">{{ sg.stand_name }}</span>
               </div>
-              <!-- Schicht-Zeilen -->
+              <!-- Dienst-Zeilen -->
               <div
                 v-for="s in sg.shifts"
                 :key="s.id"

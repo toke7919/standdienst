@@ -152,7 +152,7 @@ async function save() {
 async function deleteStand(s) {
   const ok = await ui.confirm({
     title: 'Stand löschen',
-    message: `"${s.name}" löschen? Alle Schichten werden ebenfalls gelöscht.`,
+    message: `"${s.name}" löschen? Alle Dienste werden ebenfalls gelöscht.`,
     confirmText: 'Löschen', danger: true,
   })
   if (!ok) return

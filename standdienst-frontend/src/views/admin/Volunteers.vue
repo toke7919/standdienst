@@ -20,7 +20,7 @@
             >{{ v.display_name || v.name }}</RouterLink>
             <p class="text-xs text-muted mt-0.5 truncate">{{ v.email || '—' }}</p>
             <div class="flex items-center gap-2 mt-1.5">
-              <span class="text-xs text-muted">{{ v.shift_count ?? 0 }} Schichten</span>
+              <span class="text-xs text-muted">{{ v.shift_count ?? 0 }} Dienste</span>
               <span class="text-sand">·</span>
               <span class="text-xs text-muted">{{ v.food_count ?? 0 }} Spenden</span>
             </div>
@@ -40,7 +40,7 @@
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="name" @sort="toggleLocalSort">Name</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="email" @sort="toggleLocalSort">E-Mail</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="created_at" @sort="toggleLocalSort">Angemeldet</SortTh>
-            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="shift_count" @sort="toggleLocalSort" class="text-right">Schichten</SortTh>
+            <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="shift_count" @sort="toggleLocalSort" class="text-right">Dienste</SortTh>
             <SortTh :sort-key="localSortKey" :sort-dir="localSortDir" field="food_count" @sort="toggleLocalSort" class="text-right">Spenden</SortTh>
             <th class="px-4 py-3" />
           </tr>
@@ -248,7 +248,7 @@ async function pseudonymize() {
   const name = editing.value.display_name || editing.value.name
   const ok = await ui.confirm({
     title: 'Helfer pseudonymisieren',
-    message: `${name} wirklich pseudonymisieren? Name und E-Mail werden unwiderruflich gelöscht. Schichtanmeldungen bleiben anonymisiert erhalten.`,
+    message: `${name} wirklich pseudonymisieren? Name und E-Mail werden unwiderruflich gelöscht. Dienstanmeldungen bleiben anonymisiert erhalten.`,
     confirmText: 'Pseudonymisieren',
     danger: true,
   })

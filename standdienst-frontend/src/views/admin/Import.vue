@@ -22,7 +22,7 @@
       </div>
 
       <div class="card">
-        <h2 class="text-base font-semibold text-ink mb-4">Schichten importieren</h2>
+        <h2 class="text-base font-semibold text-ink mb-4">Dienste importieren</h2>
         <div class="space-y-3">
           <div>
             <label class="label">Datei auswählen (CSV, XLSX oder ODS)</label>

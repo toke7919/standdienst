@@ -42,10 +42,10 @@ def list_registrations(slug):
 @admin_bp.route('/<slug>/registrations/grid', methods=['GET'])
 @require_staff
 def registration_grid(slug):
-    """Gibt alle Schichten + Anmeldungen als tabellarische Grid-Struktur zurück.
+    """Gibt alle Dienste + Anmeldungen als tabellarische Grid-Struktur zurück.
     Struktur: eine Sektion pro Veranstaltungstag, Stände als Spalten, Zeiten als Zeilen.
     """
-    # Alle Schichten dieser Instanz mit Stand und Datum laden
+    # Alle Dienste dieser Instanz mit Stand und Datum laden
     shifts = (Shift.query
               .join(Stand, Shift.stand_id == Stand.id)
               .join(EventDate, Shift.event_date_id == EventDate.id)
@@ -56,7 +56,7 @@ def registration_grid(slug):
     if not shifts:
         return ok([])
 
-    # Alle Anmeldungen für diese Schichten laden
+    # Alle Anmeldungen für diese Dienste laden
     shift_ids = [s.id for s in shifts]
     registrations = Registration.query.filter(Registration.shift_id.in_(shift_ids)).all()
 
@@ -146,9 +146,9 @@ def create_registration(slug):
 
     shift = _get_instance_shift(data['shift_id'], g.instance.id)
     if not shift:
-        return error('Schicht nicht gefunden', 404)
+        return error('Dienst nicht gefunden', 404)
     if shift.is_full:
-        return error('Schicht ist bereits voll', 409)
+        return error('Dienst ist bereits voll', 409)
 
     volunteer = None
     if volunteer_id:
