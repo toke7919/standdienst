@@ -66,10 +66,13 @@ watch(settings, (s) => {
 
 onMounted(async () => {
   const s = slug.value
-  if (!s) { loading.value = false; return }
-  if (!instanceStore.current) await instanceStore.loadInstance(s).catch(() => {})
+  if (s) {
+    if (!instanceStore.current) await instanceStore.loadInstance(s).catch(() => {})
+  }
   try {
-    const res = await publicApi.getPrivacyPolicy(s)
+    const res = s
+      ? await publicApi.getPrivacyPolicy(s)
+      : await publicApi.getPlatformPrivacyPolicy()
     html.value = res.data.data.privacy_policy_html || null
   } catch {
     html.value = null

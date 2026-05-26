@@ -14,7 +14,7 @@ from ...schemas.settings import SiteSettingsSchema, SiteSettingsUpdateSchema
 from ...utils.auth import require_admin, require_instance_admin
 from ...utils.sanitizer import sanitize_html
 from ...utils.responses import ok, error, optimistic_lock_conflict
-from ...utils.mail import send_mail, is_mail_configured, apply_db_mail_config
+from ...utils.mail import send_mail, is_mail_configured, apply_db_mail_config, get_platform_logo_for_email
 from ...utils.settings_cache import invalidate_site, invalidate_global
 
 _site_schema = SiteSettingsSchema()
@@ -251,6 +251,10 @@ def send_typed_test_mail():
                 inst_name = settings.site_title or inst_name
                 logo_url = get_logo_for_email(settings.logo_filename, base_url)
 
+    # Fallback auf Plattform-Logo wenn keine Instanz oder kein Instanz-Logo
+    if not logo_url:
+        logo_url = get_platform_logo_for_email()
+
     eff_slug = slug or 'beispiel'
     DUMMY = {
         'name': 'Max Mustermann',
@@ -286,12 +290,20 @@ def send_typed_test_mail():
                 DUMMY['name'], DUMMY['setup_url'],
                 [{'name': inst_name, 'volunteer_url': DUMMY['inst_url']}],
                 base_url,
-                **_kw(),
+                **_kw(
+                    impressum_url=f'{base_url}/impressum',
+                    datenschutz_url=f'{base_url}/datenschutz',
+                ),
             ),
         ),
         'reset': lambda: (
             'Passwort zurücksetzen – Standdienst',
-            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url, **_kw()),
+            build_reset_email(DUMMY['name'], DUMMY['reset_url'], base_url,
+                              **_kw(
+                                  slug=slug,
+                                  impressum_url=f'{base_url}/impressum' if not slug else None,
+                                  datenschutz_url=f'{base_url}/datenschutz' if not slug else None,
+                              )),
         ),
         'shift_confirmation': lambda: (
             f'Anmeldebestätigung – {inst_name}',

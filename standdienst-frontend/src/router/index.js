@@ -22,6 +22,10 @@ const router = createRouter({
       path: '/impressum',
       component: () => import('@/views/public/Impressum.vue'),
     },
+    {
+      path: '/datenschutz',
+      component: () => import('@/views/public/PrivacyPolicy.vue'),
+    },
 
     // Admin auth
     {

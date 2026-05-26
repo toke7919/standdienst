@@ -15,7 +15,7 @@ from ..schemas.shifts import ShiftSchema, RegistrationSchema
 from ..schemas.food import FoodDonationSchema, FoodDonationCreateSchema
 from ..utils.auth import require_volunteer, validate_password_strength
 from ..utils.mail import (
-    is_mail_configured, send_mail, get_logo_for_email,
+    is_mail_configured, send_mail, get_effective_logo_for_email,
     build_daten_auskunft_email, build_shift_confirmation_email,
 )
 from ..utils.responses import ok, created, no_content, error, optimistic_lock_conflict
@@ -401,7 +401,7 @@ def meine_daten_export(slug):
     title = settings.site_title if settings else g.instance.name
     base_url = current_app.config.get('FRONTEND_URL', '')
     primary_color = settings.primary_color if settings else None
-    logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
+    logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
     global_settings = get_global_settings()
     copyright_text = global_settings.copyright_text if global_settings else None
     kw = dict(slug=g.instance.slug, copyright_text=copyright_text, logo_url=logo_url)
@@ -524,7 +524,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         base_url = current_app.config.get('FRONTEND_URL', '')
         title = settings.site_title if settings else instance.name
         primary_color = settings.primary_color if settings else None
-        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
+        logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
         from ..utils.settings_cache import get_global_settings
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None

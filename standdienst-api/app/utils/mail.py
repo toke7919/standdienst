@@ -105,12 +105,36 @@ def get_logo_for_email(logo_filename: str, base_url: str) -> str | None:
     return f'{base_url}/uploads/{logo_filename}'
 
 
+def get_platform_logo_for_email() -> str | None:
+    """Liefert das Plattform-Logo (static/logo.png) als Base64-Data-URI."""
+    try:
+        import base64, os
+        from flask import current_app
+        static_folder = current_app.static_folder or os.path.join(os.getcwd(), 'static')
+        path = os.path.join(static_folder, 'logo.png')
+        if os.path.isfile(path):
+            with open(path, 'rb') as fh:
+                data = base64.b64encode(fh.read()).decode()
+            return f'data:image/png;base64,{data}'
+    except Exception:
+        pass
+    return None
+
+
+def get_effective_logo_for_email(logo_filename: str | None, base_url: str) -> str | None:
+    """Liefert Instanz-Logo oder – als Fallback – das Plattform-Logo."""
+    logo = get_logo_for_email(logo_filename, base_url) if logo_filename else None
+    return logo or get_platform_logo_for_email()
+
+
 def build_email_template(
     content_html: str,
     *,
     title: str,
     base_url: str,
     slug: str = None,
+    impressum_url: str = None,
+    datenschutz_url: str = None,
     primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
@@ -138,18 +162,26 @@ def build_email_template(
             f'</div>'
         )
 
-    datenschutz_url = None
-    if slug:
-        impressum_url = f'{base_url}/{slug}/impressum'
-        datenschutz_url = f'{base_url}/{slug}/datenschutz'
+    # Impressum/Datenschutz-URLs: explizit übergeben oder aus Slug berechnen
+    _impressum = impressum_url or (f'{base_url}/{slug}/impressum' if slug else None)
+    _datenschutz = datenschutz_url or (f'{base_url}/{slug}/datenschutz' if slug else None)
+
+    if _impressum or _datenschutz:
+        parts = []
+        if _impressum:
+            parts.append(
+                f'<a href="{_impressum}" style="color:{_TEXT_MUTED};font-size:12px;'
+                f'text-decoration:underline;">Impressum</a>'
+            )
+        if _datenschutz:
+            parts.append(
+                f'<a href="{_datenschutz}" style="color:{_TEXT_MUTED};font-size:12px;'
+                f'text-decoration:underline;">Datenschutz</a>'
+            )
         links_block = (
             f'<p style="margin:0 0 10px;">'
-            f'<a href="{impressum_url}" style="color:{_TEXT_MUTED};font-size:12px;'
-            f'text-decoration:underline;">Impressum</a>'
-            f'&nbsp;&nbsp;·&nbsp;&nbsp;'
-            f'<a href="{datenschutz_url}" style="color:{_TEXT_MUTED};font-size:12px;'
-            f'text-decoration:underline;">Datenschutz</a>'
-            f'</p>'
+            + '&nbsp;&nbsp;·&nbsp;&nbsp;'.join(parts)
+            + '</p>'
         )
     else:
         links_block = ''
@@ -164,10 +196,10 @@ def build_email_template(
         )
 
     datenschutz_info = ''
-    if datenschutz_url:
+    if _datenschutz:
         datenschutz_info = (
             f'<br>Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer '
-            f'<a href="{datenschutz_url}" style="color:{_TEXT_MUTED};text-decoration:underline;">'
+            f'<a href="{_datenschutz}" style="color:{_TEXT_MUTED};text-decoration:underline;">'
             f'Datenschutzerklärung</a>.'
         )
 
@@ -279,6 +311,8 @@ def build_reset_email(
     *,
     title: str = 'Standdienst',
     slug: str = None,
+    impressum_url: str = None,
+    datenschutz_url: str = None,
     primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
@@ -307,6 +341,8 @@ def build_reset_email(
         title=title,
         base_url=base_url,
         slug=slug,
+        impressum_url=impressum_url,
+        datenschutz_url=datenschutz_url,
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
@@ -390,7 +426,10 @@ def build_organizer_invite_email(
     instances: list,
     base_url: str,
     primary_color: str = _DEFAULT_PRIMARY,
+    logo_url: str = None,
     copyright_text: str = None,
+    impressum_url: str = None,
+    datenschutz_url: str = None,
 ) -> str:
     """Einladungsmail für neue Organisatoren ohne Passwort.
 
@@ -452,7 +491,10 @@ def build_organizer_invite_email(
         title='Standdienst',
         base_url=base_url,
         primary_color=primary_color,
+        logo_url=logo_url,
         copyright_text=copyright_text,
+        impressum_url=impressum_url,
+        datenschutz_url=datenschutz_url,
     )
 
 

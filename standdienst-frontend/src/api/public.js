@@ -10,6 +10,7 @@ export const publicApi = {
   resetPassword: (slug, token, password) =>
     client.post(`/public/${slug}/reset-password`, { token, password }),
   getPrivacyPolicy: (slug) => client.get(`/public/${slug}/datenschutz`),
+  getPlatformPrivacyPolicy: () => client.get('/public/datenschutz'),
   getPlatformImpressum: () => client.get('/public/impressum'),
   getPlatformInfo: () => client.get('/public/platform-info'),
   getInstanceImpressum: (slug) => client.get(`/public/${slug}/impressum`),
