@@ -148,6 +148,41 @@ def build_email_template(
 ) -> str:
     """Bettet content_html in ein vollständiges, responsives HTML-E-Mail-Template ein."""
 
+    # Plattform-Logo für den Werbe-Footer (immer die helle Variante auf dunklem Grund)
+    _promo_logo = get_platform_logo_for_email() or ''
+    if _promo_logo:
+        _promo_footer = f"""
+          <tr>
+            <td style="padding:28px 0 4px;text-align:center;">
+              <table style="max-width:400px;width:100%;background-color:#1a1311;
+                            border-radius:12px;" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="padding:28px 32px 24px;text-align:center;">
+                    <img src="{_promo_logo}" alt="Standdienst" width="220"
+                         style="max-width:220px;height:auto;display:block;margin:0 auto 14px;">
+                    <p style="margin:0 0 6px;color:#fdf6e9;font-size:14px;font-weight:700;
+                               letter-spacing:-0.2px;line-height:1.4;">
+                      Helfer koordinieren – ganz ohne Stress.
+                    </p>
+                    <p style="margin:0 0 16px;color:#c8b8a2;font-size:12px;line-height:1.6;">
+                      Standdienst ist die kostenfreie Plattform f&uuml;r Vereine und<br>
+                      Veranstaltungen: Schichten, St&auml;nde und Essensspenden&nbsp;&ndash;<br>
+                      einfach, datenschutzkonform, ohne Tracking.
+                    </p>
+                    <a href="{base_url}"
+                       style="display:inline-block;background-color:#a51f2c;color:#fdf6e9;
+                              font-size:12px;font-weight:600;text-decoration:none;
+                              padding:8px 20px;border-radius:6px;">
+                      Mehr erfahren &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>"""
+    else:
+        _promo_footer = ''
+
     logo_block = ''
     _renderable = (
         logo_url and (
@@ -259,6 +294,7 @@ def build_email_template(
           </tr>
 
         </table>
+{_promo_footer}
       </td>
     </tr>
   </table>
