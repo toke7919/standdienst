@@ -131,6 +131,7 @@ def create_food_donation(slug):
         event_type=ActivityLog.FOOD_REGISTER,
         volunteer_name=data['guest_name'],
         actor_type=getattr(g.current_user, 'role', 'admin'),
+        ip_address=request.remote_addr,
         details=f'{food_type.name}: {data["description"]} (Admin-Eintragung)',
     ))
     db.session.commit()

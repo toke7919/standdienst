@@ -162,17 +162,47 @@
           <input v-model="form.guest_name" class="input" required placeholder="Vor- und Nachname" maxlength="100" />
         </div>
 
-        <!-- Volunteer selector -->
+        <!-- Volunteer autocomplete -->
         <div v-else>
           <label class="label">Helfer auswählen</label>
-          <input v-model="volunteerSearch" class="input mb-2" placeholder="Name oder E-Mail suchen…" />
-          <select v-model="form.volunteer_id" class="input" required>
-            <option value="">Bitte wählen</option>
-            <option v-for="v in filteredVolunteers" :key="v.id" :value="v.id">
-              {{ v.display_name || v.name }}<template v-if="v.email"> ({{ v.email }})</template>
-            </option>
-          </select>
-          <p v-if="!filteredVolunteers.length && volunteerSearch" class="text-xs text-muted mt-1">Keine Treffer</p>
+          <!-- Ausgewählter Helfer -->
+          <div v-if="selectedVolunteer" class="flex items-center gap-2 px-3 py-2 bg-primary-50 border border-primary-200 rounded-lg mb-2">
+            <span class="flex-1 text-sm text-ink">
+              {{ selectedVolunteer.display_name || selectedVolunteer.name }}
+              <span v-if="selectedVolunteer.email" class="text-muted text-xs ml-1">({{ selectedVolunteer.email }})</span>
+            </span>
+            <button type="button" class="text-muted hover:text-ink text-xs" @click="clearVolunteer">×</button>
+          </div>
+          <!-- Sucheingabe -->
+          <div v-else class="relative">
+            <input
+              v-model="volunteerSearch"
+              class="input"
+              placeholder="Mind. 3 Zeichen eingeben…"
+              autocomplete="off"
+              @focus="showDropdown = true"
+              @blur="onSearchBlur"
+            />
+            <!-- Dropdown -->
+            <div
+              v-if="showDropdown && volunteerSearch.length >= 3"
+              class="absolute z-20 left-0 right-0 mt-1 bg-soft border border-sand rounded-lg shadow-lg max-h-48 overflow-y-auto"
+            >
+              <div v-if="!filteredVolunteers.length" class="px-3 py-2 text-xs text-muted">Keine Treffer</div>
+              <button
+                v-for="v in filteredVolunteers"
+                :key="v.id"
+                type="button"
+                class="w-full text-left px-3 py-2 text-sm hover:bg-bg-warm transition-colors"
+                @mousedown.prevent="selectVolunteer(v)"
+              >
+                <span class="font-medium text-ink">{{ v.display_name || v.name }}</span>
+                <span v-if="v.email" class="text-xs text-muted ml-1">{{ v.email }}</span>
+              </button>
+            </div>
+          </div>
+          <!-- hidden required field -->
+          <input type="text" :value="form.volunteer_id" required class="sr-only" tabindex="-1" aria-hidden="true" />
         </div>
 
         <div>
@@ -226,15 +256,35 @@ const mode = ref('guest')
 const volunteers = ref([])
 const volunteerSearch = ref('')
 
+const selectedVolunteer = ref(null)
+const showDropdown = ref(false)
+
 const filteredVolunteers = computed(() => {
   const q = volunteerSearch.value.toLowerCase()
-  if (!q) return volunteers.value
+  if (q.length < 3) return []
   return volunteers.value.filter(v => {
     const name = (v.display_name || v.name || '').toLowerCase()
     const email = (v.email || '').toLowerCase()
     return name.includes(q) || email.includes(q)
   })
 })
+
+function selectVolunteer(v) {
+  selectedVolunteer.value = v
+  form.value.volunteer_id = v.id
+  volunteerSearch.value = ''
+  showDropdown.value = false
+}
+
+function clearVolunteer() {
+  selectedVolunteer.value = null
+  form.value.volunteer_id = ''
+  volunteerSearch.value = ''
+}
+
+function onSearchBlur() {
+  setTimeout(() => { showDropdown.value = false }, 150)
+}
 
 // Extrahiert zwei Zeitangaben "HH:MM" aus einem time_range-String
 function parseTimeRange(range) {
@@ -363,6 +413,8 @@ function openCreate(shiftId) {
   form.value = { guest_name: '', shift_id: shiftId || '', volunteer_id: '' }
   mode.value = 'guest'
   volunteerSearch.value = ''
+  selectedVolunteer.value = null
+  showDropdown.value = false
   saveError.value = ''
   showModal.value = true
 }

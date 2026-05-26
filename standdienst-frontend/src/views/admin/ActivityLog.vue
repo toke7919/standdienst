@@ -45,6 +45,7 @@
               >{{ log.instance_name }}</RouterLink>
               <span v-else class="text-xs text-muted">Plattform</span>
             </div>
+            <p v-if="log.ip_address" class="text-xs text-muted font-mono mt-0.5">{{ log.ip_address }}</p>
             <p v-if="log.details" class="text-xs text-muted truncate mt-0.5">{{ log.details }}</p>
           </div>
           <span class="text-xs text-sand flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>

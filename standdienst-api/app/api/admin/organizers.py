@@ -147,6 +147,41 @@ def delete_organizer(organizer_id):
     return no_content()
 
 
+@admin_bp.route('/organizers/<int:organizer_id>/resend-invite', methods=['POST'])
+@require_admin
+def resend_organizer_invite(organizer_id):
+    organizer = Organizer.query.get_or_404(organizer_id)
+    if organizer.has_login:
+        return error('Konto bereits aktiv', 400)
+    if not organizer.email:
+        return error('Kein E-Mail-Konto hinterlegt', 400)
+    if not is_mail_configured():
+        return error('Mail nicht konfiguriert', 503)
+    try:
+        from ..public import _base_url
+        base_url = _base_url()
+        raw_token = organizer.generate_reset_token(7 * 24 * 3600)
+        db.session.commit()
+        setup_url = f'{base_url}/admin/reset-password?token={raw_token}&type=organizer'
+        inst_list = [
+            {'name': inst.name, 'volunteer_url': f'{base_url}/{inst.slug}'}
+            for inst in organizer.instances.all()
+        ]
+        send_mail(
+            organizer.email,
+            'Dein Organisator-Konto bei Standdienst',
+            build_organizer_invite_email(
+                organizer.name or organizer.email,
+                setup_url,
+                inst_list,
+                base_url,
+            ),
+        )
+        return ok({'message': 'Einladung versendet'})
+    except Exception as exc:
+        return error(f'Versand fehlgeschlagen: {exc}', 500)
+
+
 def _assign_instances(organizer, instance_ids: list, instance_admin_ids: list = None):
     if instance_admin_ids is None:
         instance_admin_ids = []
@@ -173,5 +208,6 @@ def _log(details, actor):
         event_type=ActivityLog.AUDIT_ORGANIZER,
         volunteer_name=getattr(actor, 'email', str(actor)),
         actor_type='admin',
+        ip_address=request.remote_addr,
         details=details,
     ))
