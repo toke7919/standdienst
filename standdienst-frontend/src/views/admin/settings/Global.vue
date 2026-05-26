@@ -193,94 +193,77 @@ const timezones = [
   'Europe/Stockholm', 'Europe/Helsinki', 'UTC',
 ]
 
-const impressumVorlage = `<h2>Angaben gemäß § 5 TMG</h2>
-<p>
+const impressumVorlage = `<p>
   {{organisation}}<br>
   {{adresse}}<br>
-  {{plz_ort}}
+  {{plz_ort}}<br><br>
 </p>
 <h3>Vertreten durch</h3>
-<p>{{person}}</p>
+<p>{{person}}<br><br></p>
 <h3>Kontakt</h3>
 <p>
-  Telefon: {{telefon}}<br>
-  E-Mail: {{email}}
+  E-Mail: {{email}}<br>
 </p>
-<h3>Ansprechpartner</h3>
-<p>
-  {{asp}}<br>
-  E-Mail: {{asp-email}}
-</p>
-<h3>Registereintrag</h3>
-<p>
-  Eingetragen im Vereinsregister.<br>
-  Registergericht: [Amtsgericht Stadt]<br>
-  Registernummer: VR [XXXXX]
-</p>
-<h3>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h3>
-<p>{{person}}, {{adresse}}, {{plz_ort}}</p>`
 
-const datenschutzVorlage = `<h2>Datenschutzerklärung</h2>
-<h3>1. Verantwortlicher</h3>
+<h3><br>Inhaltlicher Ansprechpartner</h3>
+<p>{{asp}}, {{asp-email}}</p>`
+
+const datenschutzVorlage = `<h2><strong>Datenschutzerklärung</strong><br></h2><br>
+<h3><strong>1. Verantwortlicher</strong></h3>
 <p>
   Verantwortlicher im Sinne der DSGVO ist:<br>
   {{organisation}}<br>
   {{adresse}}, {{plz_ort}}<br>
-  E-Mail: {{email}}
+  E-Mail: {{email}}<br>
 </p>
-<h3>2. Erhobene Daten und Zweck</h3>
+<br>
+<h3><strong>2. Erhobene Daten und Zweck</strong></h3>
 <p>Zur Nutzung dieser Plattform erheben wir folgende personenbezogene Daten:</p>
 <ul>
   <li><strong>Name</strong> – zur Identifikation bei Veranstaltungen</li>
-  <li><strong>E-Mail-Adresse</strong> (optional) – für Anmeldebestätigungen und Passwort-Reset</li>
+  <li><strong>E-Mail-Adresse</strong> (optional) – zur Anmeldung und für Benachrichtigungen</li>
   <li><strong>Schicht- und Spendenanmeldungen</strong> – zur Koordination des Standdienstes</li>
 </ul>
-<p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung / vorvertragliche Maßnahmen).</p>
-<h3>3. Speicherdauer</h3>
+<p><br>Rechtsgrundlage: Art. 6 DSGVO (Vertragserfüllung / vorvertragliche Maßnahmen).<br></p>
+<br>
+<h3><strong>3. Speicherdauer</strong></h3>
 <p>
   Personenbezogene Daten werden gelöscht, sobald sie für den Verarbeitungszweck nicht mehr
-  benötigt werden, spätestens jedoch [X Monate] nach Ende der Veranstaltung.
-  Auf Anfrage erfolgt eine sofortige Löschung (Art. 17 DSGVO).
+  benötigt werden, spätestens jedoch 3 Monate nach Ende der Veranstaltung.
+  Auf Anfrage erfolgt eine sofortige Löschung (Art. 17 DSGVO).<br>
 </p>
-<h3>4. Weitergabe an Dritte</h3>
-<p>Daten werden nicht an Dritte weitergegeben, außer dies ist gesetzlich vorgeschrieben.</p>
-<h3>5. Ihre Rechte</h3>
+<br>
+<h3><strong>4. Weitergabe an Dritte</strong></h3>
+<p>Daten werden nicht an Dritte weitergegeben, außer dies ist gesetzlich vorgeschrieben.<br></p>
+<br>
+<h3><strong>5. Ihre Rechte</strong></h3>
 <p>
   Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17),
   Einschränkung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO).
-  Zur Ausübung Ihrer Rechte wenden Sie sich an: {{email}}
+  Zur Ausübung Ihrer Rechte wenden Sie sich an: {{email}}<br>
 </p>
-<h3>6. Cookies und lokale Speicherung</h3>
+<br>
+<h3><strong>6. Cookies und lokale Speicherung</strong></h3>
 <p>
   Diese Anwendung verwendet ausschließlich technisch notwendige Cookies (Sitzungs-Token).
-  Es werden keine Tracking- oder Werbe-Cookies eingesetzt.
+  Es werden keine Tracking- oder Werbe-Cookies eingesetzt.<br>
 </p>
-<h3>7. Beschwerderecht</h3>
+<br>
+<h3><strong>7. Beschwerderecht</strong></h3>
 <p>
   Sie haben das Recht, sich bei der zuständigen Datenschutz-Aufsichtsbehörde zu beschweren.
 </p>`
 
-const legacyImpressumTemplate = `<h2>Angaben gemäß § 5 TMG</h2>
-<p>
-  [Name des Betreibers / Verein]<br>
-  [Straße, Hausnummer]<br>
-  [PLZ Ort]
+const legacyImpressumTemplate = `<p>
+  Tobias Keßler<br>
+  An der Wolfskaul 3<br>
+  54296 Trier<br>
 </p>
-<h3>Vertreten durch</h3>
-<p>[Vorname Nachname, Funktion]</p>
+<br>
 <h3>Kontakt</h3>
 <p>
-  Telefon: [+49 ...]<br>
-  E-Mail: [impressum@beispiel.de]
-</p>
-<h3>Registereintrag</h3>
-<p>
-  Eingetragen im Vereinsregister.<br>
-  Registergericht: [Amtsgericht Stadt]<br>
-  Registernummer: VR [XXXXX]
-</p>
-<h3>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h3>
-<p>[Vorname Nachname, Anschrift]</p>`
+  E-Mail: hallo@kessler.biz<br>
+</p>`
 
 onMounted(async () => {
   try {
