@@ -299,40 +299,123 @@
            GLOBALES ADMIN-DASHBOARD
            ================================================================ -->
       <template v-else>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Instanzen" :value="data.instance_count" color="blue" :icon="ServerIcon" />
-          <StatCard label="Helfer gesamt" :value="data.total_volunteers" color="emerald" :icon="UsersIcon" />
-          <StatCard label="Anmeldungen" :value="data.total_registrations" color="violet" :icon="ClipboardDocumentListIcon" />
-          <StatCard label="Essensspenden" :value="data.total_food_donations" color="amber" :icon="ShoppingBagIcon" />
+
+        <!-- ── ROW 1: Hero KPIs ─────────────────────────────────────── -->
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+
+          <!-- Plattform-Belegungsring -->
+          <div class="card flex flex-col items-center col-span-2 lg:col-span-1">
+            <p class="self-start text-xs font-semibold text-muted uppercase tracking-wider mb-3">Plattform-Belegung</p>
+            <div class="relative w-28 h-28 lg:w-36 lg:h-36 mb-3">
+              <svg viewBox="0 0 100 100" class="w-full h-full">
+                <circle cx="50" cy="50" r="36" fill="none" stroke="var(--color-sand, #e5e0d8)" stroke-width="11" />
+                <circle
+                  cx="50" cy="50" r="36"
+                  fill="none"
+                  :stroke="globalRingColor"
+                  stroke-width="11"
+                  stroke-linecap="round"
+                  :stroke-dasharray="`${globalRingDash.toFixed(1)} ${RING_C.toFixed(1)}`"
+                  transform="rotate(-90 50 50)"
+                  style="transition: stroke-dasharray 0.9s cubic-bezier(0.34,1.56,0.64,1)"
+                />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-2xl font-black tabular-nums leading-none" :style="`color:${globalRingColor}`">
+                  {{ data.overall_fill_rate }}%
+                </span>
+                <span class="text-[11px] text-muted mt-0.5 font-medium">Belegung</span>
+              </div>
+            </div>
+            <div class="w-full space-y-1.5 text-xs">
+              <div class="flex justify-between">
+                <span class="text-muted">Vollbesetzte Dienste</span>
+                <span class="font-bold tabular-nums text-ink/80">{{ data.total_shifts_full }} / {{ data.total_shifts }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-muted">Belegte Plätze</span>
+                <span class="font-bold tabular-nums text-ink/80">{{ data.total_registrations }} / {{ data.total_spots }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Anmeldungen + 7-Tage-Sparkline -->
+          <div class="card flex flex-col">
+            <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Anmeldungen (7 Tage)</p>
+            <div class="flex items-end gap-1 h-16 mb-2">
+              <div
+                v-for="d in data.daily_registrations"
+                :key="d.date"
+                class="flex-1 flex flex-col items-center gap-0.5"
+              >
+                <div
+                  class="w-full rounded-t-[2px] transition-all duration-500"
+                  :class="isToday(d.date) ? 'bg-primary-500' : 'bg-primary-200'"
+                  :style="`height:${globalSparkPx(d.count)}px`"
+                />
+              </div>
+            </div>
+            <div class="flex justify-between mb-4">
+              <span
+                v-for="d in data.daily_registrations"
+                :key="d.date"
+                class="flex-1 text-center text-[10px]"
+                :class="isToday(d.date) ? 'text-primary-600 font-semibold' : 'text-muted'"
+              >{{ d.day_short }}</span>
+            </div>
+            <div class="mt-auto pt-3 border-t border-sand flex items-center justify-between">
+              <span class="text-xs text-muted">Gesamt</span>
+              <span class="text-2xl font-black tabular-nums text-ink">{{ data.total_registrations }}</span>
+            </div>
+          </div>
+
+          <!-- Plattform-Zählkacheln -->
+          <div class="grid grid-cols-2 gap-3 col-span-2 lg:col-span-1">
+            <StatCard label="Instanzen" :value="data.instance_count" color="blue" :icon="ServerIcon" />
+            <StatCard label="Helfer" :value="data.total_volunteers" color="emerald" :icon="UsersIcon" />
+            <StatCard label="Dienste" :value="data.total_shifts" color="violet" :icon="ClipboardDocumentListIcon" />
+            <StatCard label="Essensspenden" :value="data.total_food_donations" color="amber" :icon="ShoppingBagIcon" />
+          </div>
         </div>
-        <div v-if="data.instances?.length" class="card mb-8">
-          <h2 class="text-base font-semibold text-ink mb-4">Instanzübersicht</h2>
+
+        <!-- ── Instanzübersicht ─────────────────────────────────────── -->
+        <div v-if="data.instances?.length" class="card overflow-hidden !p-0 mb-8">
+          <h2 class="text-base font-semibold text-ink px-4 pt-4 pb-3">Instanzübersicht</h2>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
-                <tr class="border-b border-sand">
-                  <th class="text-left py-2 pr-4 font-medium text-muted">Instanz</th>
-                  <th class="text-right py-2 px-3 font-medium text-muted">Helfer</th>
-                  <th class="text-right py-2 px-3 font-medium text-muted">Dienste</th>
-                  <th class="text-right py-2 px-3 font-medium text-muted">Anmeldungen</th>
-                  <th class="text-right py-2 px-3 font-medium text-muted">Belegung</th>
+                <tr class="border-b border-sand bg-bg-brand">
+                  <th class="text-left px-4 py-2 font-medium text-muted">Instanz</th>
+                  <th class="text-right px-4 py-2 font-medium text-muted">Helfer</th>
+                  <th class="text-right px-4 py-2 font-medium text-muted">Dienste</th>
+                  <th class="text-right px-4 py-2 font-medium text-muted">Anmeldungen</th>
+                  <th class="text-right px-4 py-2 font-medium text-muted pr-5">Belegung</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
                   v-for="inst in data.instances"
                   :key="inst.id"
-                  class="border-b border-sand hover:bg-bg-warm cursor-pointer"
+                  class="border-b border-sand last:border-0 hover:bg-bg-warm cursor-pointer"
                   @click="$router.push(`/admin/${inst.slug}/dashboard`)"
                 >
-                  <td class="py-2 pr-4 font-medium text-ink">{{ inst.name }}</td>
-                  <td class="py-2 px-3 text-right text-ink/80">{{ inst.volunteers }}</td>
-                  <td class="py-2 px-3 text-right text-ink/80">{{ inst.shifts }}</td>
-                  <td class="py-2 px-3 text-right text-ink/80">{{ inst.registrations }}</td>
-                  <td class="py-2 px-3 text-right">
-                    <span :class="fillBadgeColor(inst.fill_rate)" class="text-xs font-semibold px-2 py-0.5 rounded-full">
-                      {{ inst.fill_rate }}%
-                    </span>
+                  <td class="px-4 py-2.5 font-medium text-ink">{{ inst.name }}</td>
+                  <td class="px-4 py-2.5 text-right text-ink/80">{{ inst.volunteers }}</td>
+                  <td class="px-4 py-2.5 text-right text-ink/80">{{ inst.shifts }}</td>
+                  <td class="px-4 py-2.5 text-right text-ink/80">{{ inst.registrations }}</td>
+                  <td class="px-4 py-2.5 text-right pr-5">
+                    <div class="inline-flex items-center gap-2">
+                      <div class="w-16 h-2 bg-bg-brand rounded-full overflow-hidden">
+                        <div
+                          class="h-full rounded-full"
+                          :class="fillBarColor(inst.fill_rate)"
+                          :style="`width:${inst.fill_rate}%`"
+                        />
+                      </div>
+                      <span class="text-xs font-semibold w-9 text-right tabular-nums" :class="fillTextColor(inst.fill_rate)">
+                        {{ inst.fill_rate }}%
+                      </span>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -413,21 +496,29 @@ const loading = ref(true)
 const slug = computed(() => route.params.slug || null)
 const volunteerUrl = computed(() => slug.value ? `${window.location.origin}/${slug.value}` : '')
 
-// ── SVG Donut ──────────────────────────────────────────────────────
+// ── SVG Donut (Instanz + Global) ───────────────────────────────────
 const RING_R = 36
 const RING_C = 2 * Math.PI * RING_R          // ≈ 226.2
 const ringDashAnimated = ref(0)
+const globalRingDash = ref(0)
 
 watch(data, (newVal) => {
-  if (!newVal) { ringDashAnimated.value = 0; return }
+  if (!newVal) { ringDashAnimated.value = 0; globalRingDash.value = 0; return }
   ringDashAnimated.value = 0
+  globalRingDash.value = 0
   requestAnimationFrame(() => requestAnimationFrame(() => {
     ringDashAnimated.value = ((newVal.fill_rate ?? 0) / 100) * RING_C
+    globalRingDash.value = ((newVal.overall_fill_rate ?? 0) / 100) * RING_C
   }))
 }, { immediate: true })
 
 const ringColor = computed(() => {
   const r = data.value?.fill_rate ?? 0
+  return r >= 80 ? '#10b981' : r >= 50 ? '#f59e0b' : '#ef4444'
+})
+
+const globalRingColor = computed(() => {
+  const r = data.value?.overall_fill_rate ?? 0
   return r >= 80 ? '#10b981' : r >= 50 ? '#f59e0b' : '#ef4444'
 })
 
@@ -456,6 +547,11 @@ const maxDailyCount = computed(() =>
 function sparkBarPx(count) {
   if (!count) return 3
   return Math.max(6, Math.round((count / maxDailyCount.value) * 28))
+}
+
+function globalSparkPx(count) {
+  if (!count) return 3
+  return Math.max(6, Math.round((count / maxDailyCount.value) * 52))
 }
 
 function isToday(dateStr) {

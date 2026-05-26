@@ -34,11 +34,6 @@ def global_dashboard():
         Volunteer.instance_id.in_(instance_ids), Volunteer.deleted_at.is_(None)
     ).count() if instance_ids else 0
 
-    total_shifts = (Shift.query
-                    .join(Stand)
-                    .filter(Stand.instance_id.in_(instance_ids))
-                    .count()) if instance_ids else 0
-
     total_registrations = (Registration.query
                            .join(Shift)
                            .join(Stand)
@@ -55,6 +50,40 @@ def global_dashboard():
         for i in instances
     ]
 
+    # Aggregierte Plattform-Werte aus Instanz-Stats
+    total_shifts = sum(s['shifts'] for s in instance_stats)
+    total_shifts_full = sum(s['shifts_full'] for s in instance_stats)
+    total_spots = sum(s['total_spots'] for s in instance_stats)
+    overall_fill_rate = round(total_shifts_full / total_shifts * 100) if total_shifts else 0
+
+    # 7-Tage-Trend plattformweit
+    today = _date.today()
+    seven_days_ago = today - timedelta(days=6)
+    _day_names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+    if instance_ids:
+        daily_q = (Registration.query
+                   .join(Shift).join(Stand)
+                   .filter(Stand.instance_id.in_(instance_ids),
+                           func.date(Registration.registered_at) >= seven_days_ago)
+                   .with_entities(func.date(Registration.registered_at).label('day'),
+                                  func.count().label('cnt'))
+                   .group_by(func.date(Registration.registered_at))
+                   .all())
+        daily_map = {}
+        for r in daily_q:
+            key = r.day.isoformat() if hasattr(r.day, 'isoformat') else str(r.day)
+            daily_map[key] = r.cnt
+    else:
+        daily_map = {}
+    daily_registrations = [
+        {
+            'date': (seven_days_ago + timedelta(days=i)).isoformat(),
+            'day_short': _day_names[(seven_days_ago + timedelta(days=i)).weekday()],
+            'count': daily_map.get((seven_days_ago + timedelta(days=i)).isoformat(), 0),
+        }
+        for i in range(7)
+    ]
+
     recent = (ActivityLog.query
               .filter(ActivityLog.event_type.in_(_ORGANIZER_TYPES))
               .order_by(ActivityLog.timestamp.desc())
@@ -65,8 +94,12 @@ def global_dashboard():
         'instance_count': len(instances),
         'total_volunteers': total_volunteers,
         'total_shifts': total_shifts,
+        'total_shifts_full': total_shifts_full,
+        'total_spots': total_spots,
+        'overall_fill_rate': overall_fill_rate,
         'total_registrations': total_registrations,
         'total_food_donations': total_food,
+        'daily_registrations': daily_registrations,
         'instances': instance_stats,
         'recent_activity': [_log_dict(e) for e in recent],
     })
