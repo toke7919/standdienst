@@ -1,44 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 72">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4c1d95"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
-    </linearGradient>
-    <radialGradient id="shine" cx="30%" cy="25%" r="55%">
-      <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="white" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-
-  <!-- ── Icon mark (72 × 72) ── -->
-  <rect width="72" height="72" rx="16" fill="url(#g)"/>
-  <rect width="72" height="72" rx="16" fill="url(#shine)"/>
-
-  <!-- Person head -->
-  <circle cx="34" cy="26" r="8.6" fill="white"/>
-
-  <!-- Person shoulders -->
-  <path d="M 14 55 C 14 39 23 37 34 37 C 45 37 55 40 55 55 Z" fill="white"/>
-
-  <!-- Badge shadow -->
-  <circle cx="55" cy="17" r="12.5" fill="#065f46" opacity="0.3"/>
-  <!-- Badge -->
-  <circle cx="55" cy="17" r="11" fill="#10b981"/>
-
-  <!-- Check -->
-  <path d="M 49 17 L 54 22.5 L 61 11"
-        fill="none" stroke="white" stroke-width="2.6"
-        stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- ── Wordmark ── -->
-  <!-- "Stand" — heavier -->
-  <text x="86" y="46"
-        font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"
-        font-size="28" font-weight="800" fill="white"
-        letter-spacing="-0.5">Stand</text>
-  <!-- "dienst" — lighter -->
-  <text x="183" y="46"
-        font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif"
-        font-size="28" font-weight="400" fill="white"
-        fill-opacity="0.85" letter-spacing="-0.5">dienst</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80">
+  <!-- Ticket mark (mark-ticket.svg, viewBox 0 0 78 100, scaled to 62×80) -->
+  <g transform="scale(0.8)">
+    <rect x="2" y="2" width="74" height="96" rx="6" fill="#a51f2c"/>
+    <line x1="6" y1="30" x2="72" y2="30" stroke="#fdf6e9" stroke-width="1.2" stroke-dasharray="2.5 2.5"/>
+    <text x="39" y="20" text-anchor="middle" fill="#fdf6e9" font-family="Geist Mono, ui-monospace, monospace" font-size="7" letter-spacing="1.5">SCHICHT</text>
+    <text x="39" y="68" text-anchor="middle" fill="#fdf6e9" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="36" letter-spacing="-2">14</text>
+    <circle cx="39" cy="84" r="3" fill="#e8b94a"/>
+  </g>
+  <!-- Wordmark (wordmark.svg style) -->
+  <text x="74" y="57" fill="#1a1311" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="48" letter-spacing="-1.5">Standdienst</text>
+  <line x1="74" y1="70" x2="355" y2="70" stroke="#a51f2c" stroke-width="3" stroke-dasharray="9 6"/>
 </svg>
