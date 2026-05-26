@@ -195,29 +195,34 @@ if ! $ASSUME_YES; then
 fi
 
 # ---------------------------------------------------------------------------
-# Backup erstellen (pg_dump)
+# Backup erstellen (.sdbackup via Python-Backend)
 # ---------------------------------------------------------------------------
 section "Backup erstellen"
-BACKUP_DIR="$INSTALL_DIR/backups"
-mkdir -p "$BACKUP_DIR"
-BACKUP_FILE="$BACKUP_DIR/backup_vor_update_${LATEST}_$(date +%Y%m%d_%H%M%S).sql.gz"
-
-if [ -n "$DATABASE_URL" ]; then
-    if PGPASSWORD="$(echo "$DATABASE_URL" | python3 -c "
-import sys,re
-m=re.match(r'postgresql://[^:]+:([^@]+)@', sys.stdin.read().strip())
-print(m.group(1) if m else '')
-")" pg_dump --no-password \
-        -h "$(echo "$DATABASE_URL" | python3 -c "import sys,re; m=re.match(r'.*@([^:/]+)', sys.stdin.read().strip()); print(m.group(1) if m else '127.0.0.1')")" \
-        -U "$DB_NAME" "$DB_NAME" 2>/dev/null | gzip > "$BACKUP_FILE"; then
-        chown "$SERVICE_USER:$SERVICE_USER" "$BACKUP_FILE" 2>/dev/null || true
-        info "Backup erstellt: $BACKUP_FILE"
+PYTHON="${INSTALL_DIR}/.venv/bin/python3"
+if [ -x "${PYTHON}" ]; then
+    BACKUP_LABEL="vor_update_${LATEST//\//_}"
+    BACKUP_OUT="$("${PYTHON}" - <<PYEOF 2>&1
+import sys, os
+sys.path.insert(0, '${INSTALL_DIR}')
+from wsgi import app
+with app.app_context():
+    from app.api.admin.backup import run_backup
+    try:
+        name = run_backup(label='${BACKUP_LABEL}')
+        print(name)
+    except Exception as e:
+        print(f'FEHLER: {e}', file=sys.stderr)
+        sys.exit(1)
+PYEOF
+    )"
+    if [ $? -eq 0 ] && [ -n "$BACKUP_OUT" ]; then
+        chown "$SERVICE_USER:$SERVICE_USER" "${INSTALL_DIR}/backups/${BACKUP_OUT}" 2>/dev/null || true
+        info "Backup erstellt: ${BACKUP_OUT}"
     else
-        warn "pg_dump fehlgeschlagen – Update wird trotzdem fortgesetzt"
-        rm -f "$BACKUP_FILE"
+        warn "Backup fehlgeschlagen (kein Passwort gesetzt?) – Update wird trotzdem fortgesetzt"
     fi
 else
-    warn "DATABASE_URL nicht gesetzt – Backup übersprungen"
+    warn "Python-Venv nicht gefunden – Backup übersprungen"
 fi
 
 # ---------------------------------------------------------------------------
@@ -316,6 +321,5 @@ echo -e "${GREEN}║      Update abgeschlossen!                  ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 echo "  Version  : $CURRENT → $NEW_VERSION"
-[ -f "$BACKUP_FILE" ] && echo "  Backup   : $BACKUP_FILE"
 echo "  Logs     : journalctl -u standdienst -f"
 echo ""
