@@ -122,8 +122,10 @@ export const adminApi = {
   importTemplateOdsUrl: (slug) => `/api/admin/${slug}/import/template/ods`,
 
   // Backup
+  getBackupSettings: () => client.get('/admin/backup/settings'),
+  updateBackupSettings: (data) => client.put('/admin/backup/settings', data),
   listBackups: () => client.get('/admin/backup/list'),
-  createBackup: () => client.post('/admin/backup/create'),
+  createBackup: (data) => client.post('/admin/backup/create', data || {}),
   downloadBackupUrl: (name) => `/api/admin/backup/${name}/download`,
   uploadBackup: (formData) =>
     client.post('/admin/backup/upload', formData, {
@@ -131,6 +133,8 @@ export const adminApi = {
     }),
   deleteBackup: (name) => client.delete(`/admin/backup/${name}`),
   restoreBackup: (name, data) => client.post(`/admin/backup/${name}/restore`, data || {}),
+  lockBackup: (name) => client.post(`/admin/backup/${name}/lock`),
+  unlockBackup: (name) => client.delete(`/admin/backup/${name}/lock`),
 
   // Update
   checkUpdate: () => client.get('/admin/update/check'),
