@@ -294,11 +294,20 @@ def reset_volunteer_password(slug, volunteer_id):
 
 def _send_welcome_email(volunteer, raw_token):
     try:
+        from ...utils.settings_cache import get_site_settings
         gs = GlobalSettings.query.first()
         base_url = (gs.base_url or '').rstrip('/') if gs else ''
         setup_url = f'{base_url}/{g.instance.slug}/welcome/{raw_token}'
-        html = build_welcome_email(volunteer.display_name, g.instance.name, setup_url, base_url)
-        send_mail(volunteer.email, f'Willkommen bei {g.instance.name}', html)
+        settings = get_site_settings(g.instance.id)
+        title = settings.site_title if settings else g.instance.name
+        primary_color = settings.primary_color if settings else '#4f46e5'
+        logo_url = (f'{base_url}/uploads/{settings.logo_filename}'
+                    if settings and settings.logo_filename else None)
+        copyright_text = gs.copyright_text if gs else None
+        html = build_welcome_email(volunteer.display_name, title, setup_url, base_url,
+                                   primary_color=primary_color, logo_url=logo_url,
+                                   slug=g.instance.slug, copyright_text=copyright_text)
+        send_mail(volunteer.email, f'Willkommen bei {title}', html, sender_name=title)
     except Exception:
         pass  # E-Mail optional – Helfer trotzdem anlegen
 
