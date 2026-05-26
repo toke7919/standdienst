@@ -190,11 +190,29 @@ def update_mail_settings():
 
 
 def _reload_mail_config():
-    """Lädt aktuelle DB-Mail-Einstellungen in den Flask-Config des laufenden Workers."""
-    from ...models import MailSettings
-    ms = MailSettings.query.first()
-    if ms and ms.mail_server:
-        apply_db_mail_config(ms)
+    """Lädt aktuelle DB-Mail-Einstellungen in den Flask-Config des laufenden Workers.
+
+    Nutzt mail.init_mail() statt mail.init_app(), um den LocalProxy-State nicht
+    zu überschreiben (Flask-Mail 0.10.0 setzt app.extensions = ... in init_app).
+    """
+    try:
+        ms = MailSettings.query.first()
+        if not (ms and ms.mail_server):
+            return
+        from ...extensions import mail as _mail
+        current_app.config.update(
+            MAIL_SERVER=ms.mail_server,
+            MAIL_PORT=ms.mail_port or 587,
+            MAIL_USE_TLS=ms.mail_use_tls,
+            MAIL_USERNAME=ms.mail_username or '',
+            MAIL_PASSWORD=ms.mail_password or '',
+            MAIL_DEFAULT_SENDER=ms.mail_default_sender or '',
+        )
+        current_app.extensions['mail'] = _mail.init_mail(
+            current_app.config, current_app.debug, current_app.testing
+        )
+    except Exception:
+        current_app.logger.warning('Mail-Config-Reload fehlgeschlagen, nutze bestehende Einstellungen')
 
 
 @admin_bp.route('/settings/mail/test', methods=['POST'])
