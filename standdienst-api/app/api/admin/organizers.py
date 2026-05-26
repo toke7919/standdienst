@@ -7,7 +7,7 @@ from ...models import Organizer, Instance, ActivityLog, GlobalSettings
 from ...models.instance import organizer_instances
 from ...schemas.organizer import OrganizerSchema, OrganizerCreateSchema, OrganizerUpdateSchema
 from ...utils.auth import require_admin, validate_password_strength
-from ...utils.mail import is_mail_configured, send_mail, build_organizer_invite_email
+from ...utils.mail import is_mail_configured, send_mail, build_organizer_invite_email, get_platform_logo_for_email
 from ...utils.responses import ok, created, no_content, error, paginated
 
 _schema = OrganizerSchema()
@@ -80,6 +80,7 @@ def create_organizer():
             ]
             gs = GlobalSettings.query.first()
             copyright_text = gs.copyright_text if gs else None
+            logo_url = get_platform_logo_for_email()
             send_mail(
                 organizer.email,
                 'Dein Organisator-Konto bei Standdienst',
@@ -89,6 +90,9 @@ def create_organizer():
                     inst_list,
                     base_url,
                     copyright_text=copyright_text,
+                    logo_url=logo_url,
+                    impressum_url=f'{base_url}/impressum',
+                    datenschutz_url=f'{base_url}/datenschutz',
                 ),
             )
         except Exception:
@@ -172,6 +176,7 @@ def resend_organizer_invite(organizer_id):
         ]
         gs = GlobalSettings.query.first()
         copyright_text = gs.copyright_text if gs else None
+        logo_url = get_platform_logo_for_email()
         send_mail(
             organizer.email,
             'Dein Organisator-Konto bei Standdienst',
@@ -181,6 +186,9 @@ def resend_organizer_invite(organizer_id):
                 inst_list,
                 base_url,
                 copyright_text=copyright_text,
+                logo_url=logo_url,
+                impressum_url=f'{base_url}/impressum',
+                datenschutz_url=f'{base_url}/datenschutz',
             ),
         )
         return ok({'message': 'Einladung versendet'})

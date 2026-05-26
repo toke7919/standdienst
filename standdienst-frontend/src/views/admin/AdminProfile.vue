@@ -60,21 +60,19 @@
     <!-- Benachrichtigungen (nur für Organisatoren) -->
     <div v-if="auth.isOrganizer" class="card space-y-4">
       <h2 class="text-base font-semibold text-ink">Benachrichtigungen</h2>
-      <div class="flex items-start gap-3">
-        <input
-          id="notif-toggle"
-          v-model="notificationsEnabled"
-          type="checkbox"
-          class="mt-0.5 rounded"
-          @change="saveNotifications"
-        />
-        <label for="notif-toggle" class="text-sm text-ink/80 cursor-pointer">
-          <span class="font-medium">Tages-Digest per E-Mail</span>
-          <span class="block text-xs text-muted mt-0.5">
+      <label class="flex items-start gap-3 cursor-pointer">
+        <div class="relative flex-shrink-0 mt-0.5">
+          <input type="checkbox" class="sr-only peer" v-model="notificationsEnabled" @change="saveNotifications" />
+          <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+        </div>
+        <div>
+          <span class="text-sm font-medium text-ink/80">Tages-Digest per E-Mail</span>
+          <p class="text-xs text-muted mt-0.5">
             Täglich um 18:00 Uhr eine Zusammenfassung der heutigen Anmeldungen, Abmeldungen und Essensspenden erhalten.
-          </span>
-        </label>
-      </div>
+          </p>
+        </div>
+      </label>
     </div>
 
     <!-- 2FA -->

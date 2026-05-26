@@ -15,7 +15,7 @@ from marshmallow import ValidationError
 from ..extensions import db, limiter, _real_ip
 from ..models import Admin, Organizer, Instance, ActivityLog
 from ..utils.auth import validate_password_strength
-from ..utils.mail import send_mail, build_reset_email
+from ..utils.mail import send_mail, build_reset_email, get_platform_logo_for_email
 
 auth_bp = Blueprint('auth', __name__)
 log = logging.getLogger(__name__)
@@ -303,9 +303,15 @@ def forgot_password():
             from ..models import GlobalSettings
             gs = GlobalSettings.query.first()
             copyright_text = gs.copyright_text if gs else None
+            logo_url = get_platform_logo_for_email()
             send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(getattr(user, 'name', email), reset_url, base_url,
-                                        copyright_text=copyright_text))
+                      build_reset_email(
+                          getattr(user, 'name', email), reset_url, base_url,
+                          copyright_text=copyright_text,
+                          logo_url=logo_url,
+                          impressum_url=f'{base_url}/impressum',
+                          datenschutz_url=f'{base_url}/datenschutz',
+                      ))
         except Exception:
             pass
 

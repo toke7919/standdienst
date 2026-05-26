@@ -11,7 +11,7 @@ class SiteSettings(db.Model):
         nullable=False, unique=True, index=True,
     )
     site_title = db.Column(db.String(200), nullable=False, default='Standdienst')
-    primary_color = db.Column(db.String(7), nullable=False, default='#4f46e5')
+    primary_color = db.Column(db.String(7), nullable=True, default=None)
     logo_filename = db.Column(db.String(200), nullable=True)
     mail_sender_name = db.Column(db.String(200), nullable=False, default='')
     shifts_enabled = db.Column(db.Boolean, nullable=False, default=True)

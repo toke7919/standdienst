@@ -168,7 +168,7 @@ def _send_reminders(app):
                 Volunteer, Registration, Shift, EventDate,
                 FoodDonation, FoodDonationType, Instance,
             )
-            from ..utils.mail import is_mail_configured, send_mail, get_logo_for_email, build_reminder_email
+            from ..utils.mail import is_mail_configured, send_mail, get_effective_logo_for_email, build_reminder_email
             from ..utils.settings_cache import get_global_settings, get_site_settings
 
             if not is_mail_configured():
@@ -227,7 +227,7 @@ def _send_reminders(app):
                 instance = Instance.query.get(v.instance_id)
                 title = settings.site_title if settings else (instance.name if instance else 'Standdienst')
                 primary_color = settings.primary_color if settings else None
-                logo_url = get_logo_for_email(
+                logo_url = get_effective_logo_for_email(
                     settings.logo_filename if settings else None, base_url
                 )
                 slug = instance.slug if instance else ''
@@ -285,7 +285,7 @@ def _send_organizer_digest(app):
                 Shift, Stand, EventDate, Instance,
             )
             from ..models.instance import organizer_instances as oi_table
-            from ..utils.mail import is_mail_configured, send_mail, build_organizer_digest_email
+            from ..utils.mail import is_mail_configured, send_mail, build_organizer_digest_email, get_effective_logo_for_email
             from ..utils.settings_cache import get_global_settings, get_site_settings
 
             if not is_mail_configured():
@@ -313,7 +313,7 @@ def _send_organizer_digest(app):
                     settings = get_site_settings(instance.id)
                     title = settings.site_title if settings else instance.name
                     primary_color = settings.primary_color if settings else None
-                    logo_url = get_logo_for_email(
+                    logo_url = get_effective_logo_for_email(
                         settings.logo_filename if settings else None, base_url
                     )
 

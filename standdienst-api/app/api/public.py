@@ -11,7 +11,7 @@ from ..utils.settings_cache import get_global_settings
 from ..utils.auth import validate_password_strength
 from ..utils.captcha import generate_challenge, verify_solution
 from ..utils.mail import (
-    is_mail_configured, send_mail, get_logo_for_email,
+    is_mail_configured, send_mail, get_effective_logo_for_email,
     build_reset_email, build_welcome_email, build_registration_email,
 )
 
@@ -140,7 +140,7 @@ def register(slug):
         base_url = _base_url()
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
         primary_color = settings.primary_color if settings else None
-        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
+        logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         try:
@@ -219,6 +219,19 @@ def platform_impressum():
     }), 200
 
 
+@public_bp.route('/datenschutz', methods=['GET'])
+def platform_datenschutz():
+    gs = get_global_settings()
+    html = _render_template(
+        gs.datenschutz_template_html if gs else None,
+        _contact_vars(gs),
+    )
+    return jsonify(data={
+        'privacy_policy_html': html,
+        'context': 'platform',
+    }), 200
+
+
 @public_bp.route('/<slug>/impressum', methods=['GET'])
 def instance_impressum(slug):
     instance = Instance.query.filter_by(slug=slug, is_active=True).first()
@@ -282,7 +295,7 @@ def volunteer_forgot_password(slug):
         settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
         title = settings.site_title if settings else instance.name
         primary_color = settings.primary_color if settings else None
-        logo_url = get_logo_for_email(settings.logo_filename if settings else None, base_url)
+        logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         try:
