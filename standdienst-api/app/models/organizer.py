@@ -16,7 +16,7 @@ class Organizer(db.Model):
     """Eingeschränkte Admin-Rolle; immer einer oder mehreren Instanzen zugeordnet.
 
     is_instance_admin=True  → volle Kontrolle über zugeordnete Instanzen
-    is_instance_admin=False → operativer Zugriff (Schichten, Termine, Eintragungen)
+    is_instance_admin=False → operativer Zugriff (Dienste, Termine, Eintragungen)
     """
     __tablename__ = 'organizers'
 

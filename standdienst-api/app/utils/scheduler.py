@@ -133,7 +133,7 @@ def _purge_old_volunteers(app):
 
             count = 0
             for v in candidates:
-                # Nicht löschen wenn Volunteer noch zukünftige Schichten hat
+                # Nicht löschen wenn Volunteer noch zukünftige Dienste hat
                 has_future = (
                     Registration.query
                     .join(Shift, Registration.shift_id == Shift.id)
