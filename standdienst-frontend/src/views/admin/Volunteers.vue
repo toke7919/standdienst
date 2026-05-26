@@ -96,6 +96,34 @@
           <button type="button" class="btn-secondary" @click="showModal = false">Abbrechen</button>
           <button type="submit" class="btn-primary">Speichern</button>
         </div>
+
+        <!-- DSGVO-Aktionen (nur für Instanz-Admins / globale Admins) -->
+        <template v-if="editing && (auth.isAdmin || auth.isInstanceAdminFor(route.params.slug))">
+          <hr class="border-sand" />
+          <div class="space-y-2">
+            <p class="text-xs font-semibold text-muted uppercase tracking-wide">DSGVO</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-if="editing.email"
+                type="button"
+                class="btn-secondary text-xs"
+                :disabled="auskunftSending"
+                @click="sendAuskunft"
+              >
+                <LoadingSpinner v-if="auskunftSending" size="sm" class="mr-1" />
+                Datenauskunft senden (Art. 15)
+              </button>
+              <span v-else class="text-xs text-muted self-center">Keine E-Mail – Datenauskunft nicht möglich</span>
+              <button
+                type="button"
+                class="btn-danger text-xs"
+                @click="pseudonymize"
+              >
+                Pseudonymisieren (Art. 17)
+              </button>
+            </div>
+          </div>
+        </template>
       </form>
     </Modal>
   </div>
@@ -105,13 +133,16 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'
+import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useSort } from '@/composables/useSort'
 import Modal from '@/components/Modal.vue'
 import Pagination from '@/components/Pagination.vue'
 import SortTh from '@/components/SortTh.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
+const auth = useAuthStore()
 const ui = useUiStore()
 
 const volunteers = ref([])
@@ -192,6 +223,40 @@ async function deleteVol(v) {
   try {
     await adminApi.deleteVolunteer(route.params.slug, v.id)
     ui.success('Gelöscht')
+    await load()
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler')
+  }
+}
+
+// ── DSGVO-Aktionen ─────────────────────────────────────────────────────────
+const auskunftSending = ref(false)
+
+async function sendAuskunft() {
+  auskunftSending.value = true
+  try {
+    await adminApi.sendDsgvoAuskunft(route.params.slug, editing.value.id)
+    ui.success('Datenauskunft wurde versendet')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler')
+  } finally {
+    auskunftSending.value = false
+  }
+}
+
+async function pseudonymize() {
+  const name = editing.value.display_name || editing.value.name
+  const ok = await ui.confirm({
+    title: 'Helfer pseudonymisieren',
+    message: `${name} wirklich pseudonymisieren? Name und E-Mail werden unwiderruflich gelöscht. Schichtanmeldungen bleiben anonymisiert erhalten.`,
+    confirmText: 'Pseudonymisieren',
+    danger: true,
+  })
+  if (!ok) return
+  try {
+    await adminApi.deleteVolunteer(route.params.slug, editing.value.id)
+    ui.success('Helfer pseudonymisiert')
+    showModal.value = false
     await load()
   } catch (e) {
     ui.err(e.response?.data?.error || 'Fehler')

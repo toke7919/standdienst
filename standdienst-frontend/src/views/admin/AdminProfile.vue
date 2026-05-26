@@ -201,7 +201,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 
 // ── Benachrichtigungen (Organisatoren) ─────────────────────────────────────
-const notificationsEnabled = ref(auth.user?.notifications_enabled ?? true)
+const notificationsEnabled = ref(false)
 
 async function saveNotifications() {
   try {
@@ -216,9 +216,9 @@ async function saveNotifications() {
 
 // ── Profil ─────────────────────────────────────────────────────────────────
 const profileForm = ref({
-  first_name: auth.user?.first_name || '',
-  last_name: auth.user?.last_name || '',
-  email: auth.user?.email || '',
+  first_name: '',
+  last_name: '',
+  email: '',
   password: '',
   passwordConfirm: '',
 })
@@ -325,6 +325,14 @@ onMounted(async () => {
     navigator.credentials?.create &&
     window.isSecureContext
   )
+  await auth.fetchMe()
+  const u = auth.user
+  if (u) {
+    profileForm.value.first_name = u.first_name || ''
+    profileForm.value.last_name = u.last_name || ''
+    profileForm.value.email = u.email || ''
+    notificationsEnabled.value = u.notifications_enabled ?? true
+  }
   await loadPasskeys()
 })
 

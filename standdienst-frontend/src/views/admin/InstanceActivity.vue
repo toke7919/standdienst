@@ -30,7 +30,6 @@
               <EventBadge :type="log.event_type" />
               <span class="text-xs text-ink/80 truncate">{{ log.volunteer_name || '—' }}</span>
             </div>
-            <p v-if="log.ip_address" class="text-xs text-muted font-mono">{{ log.ip_address }}</p>
             <p v-if="log.details" class="text-xs text-muted truncate">{{ log.details }}</p>
           </div>
           <span class="text-xs text-sand flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
@@ -45,7 +44,6 @@
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="timestamp" @sort="toggleSort">Zeit</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="event_type" @sort="toggleSort">Ereignis</SortTh>
             <SortTh :sort-key="sortKey" :sort-dir="sortDir" field="volunteer_name" @sort="toggleSort">Benutzer</SortTh>
-            <th class="px-4 py-3 text-left font-medium text-muted">IP</th>
             <th class="px-4 py-3 text-left font-medium text-muted">Details</th>
           </tr>
         </thead>
@@ -56,11 +54,10 @@
               <EventBadge :type="log.event_type" />
             </td>
             <td class="px-4 py-3 text-ink/80 text-xs">{{ log.volunteer_name || '—' }}</td>
-            <td class="px-4 py-3 text-muted font-mono text-xs">{{ log.ip_address || '—' }}</td>
             <td class="px-4 py-3 text-muted text-xs max-w-xs truncate" :title="log.details">{{ log.details || '' }}</td>
           </tr>
           <tr v-if="!logs.length">
-            <td colspan="5" class="px-4 py-8 text-center text-muted">Keine Einträge</td>
+            <td colspan="4" class="px-4 py-8 text-center text-muted">Keine Einträge</td>
           </tr>
         </tbody>
       </table>

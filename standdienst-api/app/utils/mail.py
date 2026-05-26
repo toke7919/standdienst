@@ -162,9 +162,13 @@ def build_email_template(
             f'</div>'
         )
 
-    # Impressum/Datenschutz-URLs: explizit übergeben oder aus Slug berechnen
-    _impressum = impressum_url or (f'{base_url}/{slug}/impressum' if slug else None)
-    _datenschutz = datenschutz_url or (f'{base_url}/{slug}/datenschutz' if slug else None)
+    # Impressum/Datenschutz-URLs: explizit → Slug-basiert → Plattform-Fallback
+    _impressum = (impressum_url
+                  or (f'{base_url}/{slug}/impressum' if slug else None)
+                  or (f'{base_url}/impressum' if base_url else None))
+    _datenschutz = (datenschutz_url
+                    or (f'{base_url}/{slug}/datenschutz' if slug else None)
+                    or (f'{base_url}/datenschutz' if base_url else None))
 
     if _impressum or _datenschutz:
         parts = []
