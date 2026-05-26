@@ -11,9 +11,11 @@
         <div>
           <label class="label">Primärfarbe</label>
           <div class="flex items-center gap-3">
-            <input v-model="form.primary_color" type="color" class="h-10 w-20 rounded cursor-pointer border border-sand" />
-            <input v-model="form.primary_color" class="input max-w-32" placeholder="#4f46e5" />
+            <input v-model="form.primary_color" type="color" class="h-10 w-20 rounded cursor-pointer border border-sand" :disabled="!form.primary_color" />
+            <input v-model="form.primary_color" class="input max-w-32" placeholder="Anwendungsstandard" />
+            <button v-if="form.primary_color" type="button" class="btn-secondary text-xs py-1.5" @click="form.primary_color = null">Zurücksetzen</button>
           </div>
+          <p class="text-xs text-muted mt-1">Leer lassen = Anwendungsstandard-Farbschema verwenden</p>
         </div>
         <div>
           <label class="label">Logo</label>

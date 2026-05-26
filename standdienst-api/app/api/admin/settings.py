@@ -53,6 +53,8 @@ def update_site_settings(slug):
             data[key] = sanitize_html(data[key])
 
     for key, value in data.items():
+        if key == 'primary_color' and value == '':
+            value = None
         setattr(settings, key, value)
 
     _log(g.instance.id, 'Instanz-Einstellungen geändert', g.current_user)

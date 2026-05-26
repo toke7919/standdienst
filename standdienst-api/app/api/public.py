@@ -358,7 +358,10 @@ def _find_volunteer_by_welcome_token(slug: str, raw_token: str):
 
 
 def _build_instance_info(instance, settings, global_settings) -> dict:
-    has_policy = bool(settings and settings.privacy_policy_html)
+    has_policy = bool(
+        (settings and settings.privacy_policy_html)
+        or (global_settings and global_settings.datenschutz_template_html)
+    )
     return {
         'id': instance.id,
         'slug': instance.slug,

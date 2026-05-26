@@ -16,7 +16,7 @@ class SiteSettingsUpdateSchema(Schema):
         unknown = EXCLUDE
 
     site_title = fields.Str(validate=validate.Length(min=1, max=200))
-    primary_color = fields.Str(validate=validate.Regexp(r'^#[0-9a-fA-F]{6}$'))
+    primary_color = fields.Str(allow_none=True, validate=validate.Regexp(r'^(#[0-9a-fA-F]{6})?$'))
     mail_sender_name = fields.Str(validate=validate.Length(max=200))
     shifts_enabled = fields.Bool()
     food_donations_enabled = fields.Bool()
