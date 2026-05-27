@@ -133,6 +133,7 @@ export const adminApi = {
     }),
   deleteBackup: (name) => client.delete(`/admin/backup/${name}`),
   restoreBackup: (name, data) => client.post(`/admin/backup/${name}/restore`, data || {}),
+  getRestoreStatus: (jobId) => client.get(`/admin/backup/restore-status/${jobId}`),
   lockBackup: (name) => client.post(`/admin/backup/${name}/lock`),
   unlockBackup: (name) => client.delete(`/admin/backup/${name}/lock`),
 

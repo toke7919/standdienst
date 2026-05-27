@@ -22,8 +22,10 @@ import subprocess
 import tarfile
 import tempfile
 import threading
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 from urllib.parse import urlparse, unquote
 
 from flask import current_app, g, request, send_file
@@ -42,6 +44,22 @@ _MAGIC = b'SDBK'
 _VERSION = 1
 _PBKDF2_ITER = 260_000
 MAX_BACKUPS = 20
+
+# ---------------------------------------------------------------------------
+# Restore-Job-Status (in-memory, für Fortschrittsanzeige)
+# ---------------------------------------------------------------------------
+
+_restore_jobs: dict[str, dict] = {}
+_restore_jobs_lock = threading.Lock()
+
+
+def _job_update(job_id: str, step: str, progress: int, message: str,
+                done: bool = False, error: str | None = None) -> None:
+    with _restore_jobs_lock:
+        _restore_jobs[job_id] = {
+            'step': step, 'progress': progress, 'message': message,
+            'done': done, 'error': error,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -417,11 +435,20 @@ def _schedule_restart() -> None:
     t.start()
 
 
-def run_restore(backup_path: Path, password: str) -> None:
+def run_restore(backup_path: Path, password: str,
+                progress_cb: Callable[[str, int, str], None] | None = None) -> None:
     """Stellt ein Backup vollständig wieder her."""
+
+    def report(step: str, pct: int, message: str) -> None:
+        log.info('Restore [%d%%] %s: %s', pct, step, message)
+        if progress_cb:
+            progress_cb(step, pct, message)
+
+    report('decrypt', 5, 'Entschlüssele Backup …')
     raw = backup_path.read_bytes()
     payload = _decrypt_payload(raw, password)
 
+    report('extract', 15, 'Entpacke Archiv …')
     with tempfile.TemporaryDirectory() as tmpdir:
         tar_buf = io.BytesIO(payload)
         with tarfile.open(fileobj=tar_buf, mode='r:gz') as tf:
@@ -429,33 +456,32 @@ def run_restore(backup_path: Path, password: str) -> None:
 
         tmppath = Path(tmpdir)
 
-        # Metadaten prüfen
         meta_file = tmppath / 'metadata.json'
         if meta_file.exists():
             meta = json.loads(meta_file.read_text())
-            log.info('Restore aus Backup v%s vom %s', meta.get('app_version'), meta.get('created_at'))
+            log.info('Restore aus Backup v%s vom %s',
+                     meta.get('app_version'), meta.get('created_at'))
 
-        # Datenbank wiederherstellen
         sql_file = tmppath / 'db.sql'
         if not sql_file.exists():
             raise ValueError('db.sql fehlt im Backup-Archiv')
 
         sql_bytes = sql_file.read_bytes()
+
+        report('db_restore', 30, 'Stelle Datenbank wieder her – bitte warten …')
         if _is_postgres():
             _restore_pg(sql_bytes)
         else:
             _restore_sqlalchemy(sql_bytes)
 
-        # SQLAlchemy-Session-Cache invalidieren, damit nachfolgende Queries
-        # frische Daten aus der wiederhergestellten DB lesen
         db.session.expire_all()
 
-        # Sensitive Fields re-verschlüsseln
+        report('credentials', 82, 'Verschlüssele Zugangsdaten …')
         sf_file = tmppath / 'sensitive_fields.json'
         if sf_file.exists():
             _apply_sensitive_fields(json.loads(sf_file.read_text()))
 
-        # uploads/ wiederherstellen
+        report('uploads', 90, 'Stelle Dateien wieder her …')
         uploads_src = tmppath / 'uploads'
         upload_dir = _upload_dir()
         if uploads_src.exists():
@@ -464,7 +490,7 @@ def run_restore(backup_path: Path, password: str) -> None:
             shutil.copytree(str(uploads_src), str(upload_dir))
             _fix_upload_permissions(upload_dir)
 
-    # Dienst neu starten (verzögert)
+    report('restart', 98, 'Starte Anwendung neu …')
     _schedule_restart()
 
 
@@ -535,26 +561,50 @@ def restore_backup(name):
 
     backup_password = data.get('backup_password', '').strip()
     if not backup_password:
-        # Passwort aus Einstellungen
         try:
             backup_password = _get_backup_password()
         except ValueError as e:
             return error(str(e), 400)
 
-    try:
-        run_restore(f, backup_password)
-        log.warning('Backup wiederhergestellt: %s (Admin: %s)', name,
-                    getattr(g.current_user, 'email', '?'))
-        return ok(message='Backup wiederhergestellt – Anwendung wird neu gestartet')
-    except ValueError as e:
-        log.error('Restore abgebrochen: %s', e)
-        return error(str(e), 400)
-    except RuntimeError as e:
-        log.error('Restore fehlgeschlagen: %s', e)
-        return error(str(e), 500)
-    except Exception:
-        log.exception('Restore fehlgeschlagen')
-        return error('Backup-Wiederherstellung fehlgeschlagen – Details im Server-Log', 500)
+    job_id = str(uuid.uuid4())
+    _job_update(job_id, 'starting', 0, 'Starte Wiederherstellung …')
+
+    # Restore asynchron ausführen, damit der Client den Fortschritt pollen kann
+    app = current_app._get_current_object()
+    backup_path = f  # Variable vor Ende des Request-Kontexts sichern
+    admin_email = getattr(g.current_user, 'email', '?')
+
+    def _run():
+        def cb(step: str, pct: int, msg: str) -> None:
+            _job_update(job_id, step, pct, msg)
+
+        with app.app_context():
+            try:
+                run_restore(backup_path, backup_password, progress_cb=cb)
+                log.warning('Backup wiederhergestellt: %s (Admin: %s)', name, admin_email)
+                _job_update(job_id, 'done', 100,
+                            'Wiederhergestellt – Anwendung startet neu', done=True)
+            except (ValueError, RuntimeError) as e:
+                log.error('Restore fehlgeschlagen: %s', e)
+                _job_update(job_id, 'error', 0, str(e), done=True, error=str(e))
+            except Exception as e:
+                log.exception('Restore fehlgeschlagen')
+                _job_update(job_id, 'error', 0,
+                            'Interner Fehler – Details im Server-Log',
+                            done=True, error=str(e))
+
+    threading.Thread(target=_run, daemon=True).start()
+    return ok({'job_id': job_id})
+
+
+@admin_bp.route('/backup/restore-status/<job_id>', methods=['GET'])
+@require_admin
+def restore_job_status(job_id):
+    with _restore_jobs_lock:
+        status = _restore_jobs.get(job_id)
+    if status is None:
+        return error('Job nicht gefunden', 404)
+    return ok(status)
 
 
 @admin_bp.route('/backup/<name>', methods=['DELETE'])

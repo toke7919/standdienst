@@ -56,7 +56,6 @@
                class="border-b border-sand last:border-0 hover:bg-bg-warm px-4 py-3">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0 flex items-start gap-2">
-                <!-- Lock-Icon -->
                 <button
                   :title="b.locked ? 'Entsperren' : 'Sperren'"
                   class="mt-0.5 shrink-0"
@@ -101,7 +100,7 @@
       </div>
     </div>
 
-    <!-- Restore-Modal -->
+    <!-- Restore-Bestätigungs-Modal -->
     <Teleport to="body">
       <div v-if="restoreTarget" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
         <div class="bg-soft rounded-md shadow-xl w-full max-w-md p-6 space-y-4">
@@ -138,11 +137,90 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Fortschritts-Modal -->
+    <Teleport to="body">
+      <div v-if="progressJobId" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div class="bg-soft rounded-md shadow-xl w-full max-w-md p-6 space-y-5">
+          <h2 class="text-lg font-semibold text-ink">Backup wird wiederhergestellt</h2>
+
+          <!-- Fehlerfall -->
+          <div v-if="progressError" class="space-y-4">
+            <div class="flex items-start gap-3 text-red-600 bg-red-50 rounded-lg px-3 py-3">
+              <svg class="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd" />
+              </svg>
+              <div>
+                <p class="font-medium text-sm">Wiederherstellung fehlgeschlagen</p>
+                <p class="text-xs mt-1 text-red-500 font-mono break-all">{{ progressError }}</p>
+              </div>
+            </div>
+            <button class="btn-secondary w-full" @click="closeProgressModal">Schließen</button>
+          </div>
+
+          <!-- Laufend / Abgeschlossen -->
+          <div v-else class="space-y-4">
+            <!-- Fortschrittsbalken -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <span class="text-sm text-ink/80">{{ progressMessage }}</span>
+                <span class="text-xs tabular-nums font-semibold text-muted">{{ progressPct }}%</span>
+              </div>
+              <div class="h-2.5 bg-bg-brand rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-500"
+                  :class="progressDone ? 'bg-emerald-500' : 'bg-primary-500'"
+                  :style="`width: ${progressPct}%`"
+                />
+              </div>
+            </div>
+
+            <!-- Schritt-Liste -->
+            <div class="space-y-2">
+              <div v-for="step in RESTORE_STEPS" :key="step.key"
+                   class="flex items-center gap-2.5 text-xs">
+                <!-- Erledigt -->
+                <svg v-if="stepIsDone(step.key)" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+                <!-- Aktiv (pulsierend) -->
+                <div v-else-if="stepIsActive(step.key)"
+                     class="w-3.5 h-3.5 rounded-full border-2 border-primary-500 flex-shrink-0 animate-pulse" />
+                <!-- Ausstehend -->
+                <div v-else class="w-3.5 h-3.5 rounded-full border border-sand flex-shrink-0" />
+
+                <span :class="{
+                  'text-ink font-medium': stepIsActive(step.key),
+                  'text-muted line-through': stepIsDone(step.key),
+                  'text-muted': !stepIsActive(step.key) && !stepIsDone(step.key),
+                }">{{ step.label }}</span>
+              </div>
+            </div>
+
+            <!-- Hinweis während Datenbank-Restore -->
+            <p v-if="progressStep === 'db_restore'"
+               class="text-xs text-amber-700 bg-amber-50 rounded px-2.5 py-1.5">
+              Die Datenbankwiederherstellung kann je nach Datenmenge mehrere Minuten dauern.
+            </p>
+
+            <!-- Abgeschlossen: Countdown -->
+            <div v-if="progressDone"
+                 class="pt-3 border-t border-sand text-center text-sm text-muted">
+              <svg class="w-6 h-6 text-emerald-500 mx-auto mb-1.5" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+              </svg>
+              <p class="font-medium text-emerald-700">Erfolgreich wiederhergestellt</p>
+              <p class="text-xs mt-1">Seite lädt in {{ countdown }} Sekunden neu …</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -160,6 +238,38 @@ const restoreTarget = ref(null)
 const restoreBackupPw = ref('')
 const adminPassword = ref('')
 
+// Fortschritt
+const progressJobId = ref(null)
+const progressStep = ref('')
+const progressPct = ref(0)
+const progressMessage = ref('')
+const progressDone = ref(false)
+const progressError = ref(null)
+const countdown = ref(5)
+
+let pollTimer = null
+let countdownTimer = null
+let pollStartTime = 0
+
+const RESTORE_STEPS = [
+  { key: 'decrypt',     label: 'Entschlüssele Backup' },
+  { key: 'extract',     label: 'Entpacke Archiv' },
+  { key: 'db_restore',  label: 'Stelle Datenbank wieder her' },
+  { key: 'credentials', label: 'Verschlüssele Zugangsdaten' },
+  { key: 'uploads',     label: 'Stelle Dateien wieder her' },
+  { key: 'restart',     label: 'Starte Anwendung neu' },
+]
+const STEP_ORDER = RESTORE_STEPS.map(s => s.key)
+
+function stepIsDone(key) {
+  if (progressDone.value && !progressError.value) return true
+  const cur = STEP_ORDER.indexOf(progressStep.value)
+  return STEP_ORDER.indexOf(key) < cur
+}
+function stepIsActive(key) {
+  return progressStep.value === key
+}
+
 function fmt(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleString('de-DE', {
@@ -172,13 +282,15 @@ onMounted(async () => {
   await Promise.all([loadSettings(), loadList()])
 })
 
+onUnmounted(() => {
+  stopPolling()
+})
+
 async function loadSettings() {
   try {
     const res = await adminApi.getBackupSettings()
     hasPassword.value = res.data.data.has_backup_password
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
 }
 
 async function loadList() {
@@ -259,17 +371,74 @@ function restore(name) {
 async function confirmRestore() {
   restoring.value = true
   try {
-    await adminApi.restoreBackup(restoreTarget.value, {
+    const res = await adminApi.restoreBackup(restoreTarget.value, {
       admin_password: adminPassword.value,
       backup_password: restoreBackupPw.value,
     })
-    ui.success('Backup wiederhergestellt – Anwendung wird neu gestartet')
+    const jobId = res.data.data.job_id
     restoreTarget.value = null
+    openProgressModal(jobId)
   } catch (e) {
-    ui.err(e.response?.data?.error || 'Restore fehlgeschlagen')
+    ui.err(e.response?.data?.error || 'Restore konnte nicht gestartet werden')
   } finally {
     restoring.value = false
   }
+}
+
+function openProgressModal(jobId) {
+  progressJobId.value = jobId
+  progressStep.value = 'starting'
+  progressPct.value = 0
+  progressMessage.value = 'Starte Wiederherstellung …'
+  progressDone.value = false
+  progressError.value = null
+  countdown.value = 5
+  pollStartTime = Date.now()
+  startPolling(jobId)
+}
+
+function startPolling(jobId) {
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await adminApi.getRestoreStatus(jobId)
+      const s = res.data.data
+      progressStep.value = s.step
+      progressPct.value = s.progress
+      progressMessage.value = s.message
+      progressDone.value = s.done
+      progressError.value = s.error || null
+
+      if (s.done && !s.error) {
+        stopPolling()
+        countdown.value = 5
+        countdownTimer = setInterval(() => {
+          countdown.value--
+          if (countdown.value <= 0) {
+            clearInterval(countdownTimer)
+            window.location.reload()
+          }
+        }, 1000)
+      } else if (s.done && s.error) {
+        stopPolling()
+      }
+    } catch {
+      // Netzwerkfehler – App wird vermutlich gerade neu gestartet
+      if (Date.now() - pollStartTime > 15_000) {
+        stopPolling()
+        window.location.reload()
+      }
+    }
+  }, 700)
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
+}
+
+function closeProgressModal() {
+  stopPolling()
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null }
+  progressJobId.value = null
 }
 
 async function handleUpload(event) {
