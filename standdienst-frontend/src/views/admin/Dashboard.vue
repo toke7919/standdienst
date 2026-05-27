@@ -14,6 +14,38 @@
         <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5 flex-shrink-0" />
         {{ volunteerUrl }}
       </a>
+
+      <!-- Share-Buttons -->
+      <div v-if="slug" class="flex flex-wrap items-center gap-2 mt-3">
+        <button
+          class="share-btn"
+          @click="copyUrl"
+        >
+          <CheckIcon v-if="urlCopied" class="w-3.5 h-3.5 text-emerald-500" />
+          <ClipboardIcon v-else class="w-3.5 h-3.5" />
+          {{ urlCopied ? 'Kopiert!' : 'URL kopieren' }}
+        </button>
+
+        <a :href="mailtoLink" class="share-btn">
+          <EnvelopeIcon class="w-3.5 h-3.5" />
+          Per E-Mail einladen
+        </a>
+
+        <button
+          class="share-btn"
+          :disabled="qrGenerating"
+          @click="copyQr"
+        >
+          <CheckIcon v-if="qrCopied" class="w-3.5 h-3.5 text-emerald-500" />
+          <QrCodeIcon v-else class="w-3.5 h-3.5" />
+          {{ qrCopied ? 'QR kopiert!' : qrGenerating ? 'Erstelle…' : 'Als QR-Code' }}
+        </button>
+
+        <button v-if="canShare" class="share-btn" @click="webShare">
+          <ShareIcon class="w-3.5 h-3.5" />
+          Teilen
+        </button>
+      </div>
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -491,7 +523,9 @@
 <script setup>
 import { ref, computed, onMounted, watch, defineComponent, h } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import QRCode from 'qrcode'
 import { adminApi } from '@/api/admin'
+import { publicApi } from '@/api/public'
 import { useAuthStore } from '@/stores/auth'
 import { EVENT_META, fmtTime } from '@/utils/activityLog'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -499,6 +533,7 @@ import {
   UsersIcon, ClockIcon, ClipboardDocumentListIcon,
   CheckCircleIcon, ShoppingBagIcon, ServerIcon,
   ExclamationCircleIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon,
+  ClipboardIcon, EnvelopeIcon, QrCodeIcon, ShareIcon, CheckIcon,
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
@@ -576,14 +611,170 @@ function shiftPct(n) {
   return total ? (n / total) * 100 : 0
 }
 
+// ── Instanz-Branding (für QR-Code) ───────────────────────────────
+const instanceInfo = ref(null)
+
+async function loadInstanceInfo() {
+  if (!slug.value) return
+  try {
+    const res = await publicApi.getInstanceInfo(slug.value)
+    instanceInfo.value = res.data.data
+  } catch { /* ignorieren */ }
+}
+
+// ── Share ─────────────────────────────────────────────────────────
+const urlCopied = ref(false)
+const qrCopied = ref(false)
+const qrGenerating = ref(false)
+const canShare = computed(() => typeof navigator !== 'undefined' && !!navigator.share)
+
+const shareTitle = computed(() =>
+  instanceInfo.value?.site_title || instanceInfo.value?.name || slug.value || ''
+)
+
+const mailtoLink = computed(() => {
+  const subject = encodeURIComponent(`Mach mit als Helfer – ${shareTitle.value}!`)
+  const body = encodeURIComponent(
+    `Hallo!\n\nWir suchen noch freiwillige Helfer für ${shareTitle.value} und würden uns sehr über deine Unterstützung freuen! 🎉\n\nEintragen dauert nur eine Minute – einfach deinen Namen eingeben und Dienste wählen:\n\n👉 ${volunteerUrl.value}\n\nHerzliche Grüße`
+  )
+  return `mailto:?subject=${subject}&body=${body}`
+})
+
+async function copyUrl() {
+  await navigator.clipboard.writeText(volunteerUrl.value)
+  urlCopied.value = true
+  setTimeout(() => { urlCopied.value = false }, 2000)
+}
+
+async function webShare() {
+  try {
+    await navigator.share({
+      title: `Mach mit als Helfer – ${shareTitle.value}!`,
+      text: `Wir suchen noch freiwillige Helfer für ${shareTitle.value}. Eintragen dauert nur eine Minute!`,
+      url: volunteerUrl.value,
+    })
+  } catch { /* Nutzer hat abgebrochen */ }
+}
+
+async function copyQr() {
+  if (qrGenerating.value) return
+  qrGenerating.value = true
+  try {
+    const blob = await generateQrBlob()
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+    qrCopied.value = true
+    setTimeout(() => { qrCopied.value = false }, 2500)
+  } catch (e) {
+    console.error('QR-Code kopieren fehlgeschlagen', e)
+  } finally {
+    qrGenerating.value = false
+  }
+}
+
+async function generateQrBlob() {
+  const info = instanceInfo.value
+  const primaryColor = info?.primary_color || '#4f46e5'
+  const logoUrl = info?.logo_filename ? `/uploads/${info.logo_filename}` : '/assets/mark-ticket.svg'
+  const title = shareTitle.value
+
+  const W = 520
+  const qrSize = 420
+  const footerH = 72
+  const pad = 10
+
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = qrSize + footerH + pad * 2
+  const ctx = canvas.getContext('2d')
+
+  // Weißer Hintergrund
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  // QR-Code generieren
+  const qrCanvas = document.createElement('canvas')
+  await QRCode.toCanvas(qrCanvas, volunteerUrl.value, {
+    width: qrSize,
+    margin: 2,
+    color: { dark: primaryColor, light: '#ffffff' },
+  })
+  ctx.drawImage(qrCanvas, (W - qrSize) / 2, pad, qrSize, qrSize)
+
+  // Logo-Kreis in der Mitte
+  const logoSize = 72
+  const cx = W / 2
+  const cy = pad + qrSize / 2
+
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath()
+  ctx.arc(cx, cy, logoSize / 2 + 9, 0, Math.PI * 2)
+  ctx.fill()
+
+  try {
+    const img = await loadImg(logoUrl)
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(cx, cy, logoSize / 2, 0, Math.PI * 2)
+    ctx.clip()
+    ctx.drawImage(img, cx - logoSize / 2, cy - logoSize / 2, logoSize, logoSize)
+    ctx.restore()
+  } catch { /* Logo optional */ }
+
+  // Farbiger Footer-Streifen
+  const footerY = pad + qrSize + 6
+  const fR = 10
+  ctx.fillStyle = primaryColor
+  ctx.beginPath()
+  ctx.moveTo(pad + fR, footerY)
+  ctx.lineTo(W - pad - fR, footerY)
+  ctx.arcTo(W - pad, footerY, W - pad, footerY + fR, fR)
+  ctx.lineTo(W - pad, footerY + footerH - fR)
+  ctx.arcTo(W - pad, footerY + footerH, W - pad - fR, footerY + footerH, fR)
+  ctx.lineTo(pad + fR, footerY + footerH)
+  ctx.arcTo(pad, footerY + footerH, pad, footerY + footerH - fR, fR)
+  ctx.lineTo(pad, footerY + fR)
+  ctx.arcTo(pad, footerY, pad + fR, footerY, fR)
+  ctx.closePath()
+  ctx.fill()
+
+  // Footer-Text
+  const midY = footerY + footerH / 2
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  if (title) {
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 18px system-ui, sans-serif'
+    ctx.fillText(title, W / 2, midY - 10)
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'
+  ctx.font = '13px system-ui, sans-serif'
+  ctx.fillText('Als Helfer eintragen →', W / 2, midY + 12)
+
+  return new Promise(res => canvas.toBlob(res, 'image/png'))
+}
+
+function loadImg(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
+}
+
 // ── Data loading ──────────────────────────────────────────────────
 async function loadData() {
   loading.value = true
   data.value = null
+  instanceInfo.value = null
   try {
     if (slug.value) {
-      const res = await adminApi.getDashboard(slug.value)
-      data.value = res.data.data
+      const [dashRes] = await Promise.all([
+        adminApi.getDashboard(slug.value),
+        loadInstanceInfo(),
+      ])
+      data.value = dashRes.data.data
     } else if (auth.isAdmin) {
       const res = await adminApi.getGlobalDashboard()
       data.value = res.data.data
@@ -648,3 +839,12 @@ function fillBadgeColor(rate) {
        : 'bg-bg-brand text-muted'
 }
 </script>
+
+<style scoped>
+.share-btn {
+  @apply inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-sand bg-soft hover:bg-bg-warm transition-colors text-ink/70 cursor-pointer select-none;
+}
+.share-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+</style>
