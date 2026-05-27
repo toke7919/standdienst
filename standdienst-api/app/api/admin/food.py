@@ -1,5 +1,6 @@
 from flask import request, g
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from . import admin_bp
 from ...extensions import db
@@ -29,10 +30,10 @@ _don_update = FoodDonationAdminUpdateSchema()
 @require_staff
 def list_food_types(slug):
     date_id = request.args.get('date_id', type=int)
-    q = FoodDonationType.query.filter_by(instance_id=g.instance.id)
+    stmt = select(FoodDonationType).filter_by(instance_id=g.instance.id)
     if date_id:
-        q = q.filter_by(event_date_id=date_id)
-    return ok(_type_many.dump(q.order_by(FoodDonationType.name).all()))
+        stmt = stmt.filter_by(event_date_id=date_id)
+    return ok(_type_many.dump(db.session.scalars(stmt.order_by(FoodDonationType.name)).all()))
 
 
 @admin_bp.route('/<slug>/food-types', methods=['POST'])
@@ -43,7 +44,7 @@ def create_food_type(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    date = EventDate.query.filter_by(id=data['event_date_id'], instance_id=g.instance.id).first()
+    date = db.session.scalars(select(EventDate).filter_by(id=data['event_date_id'], instance_id=g.instance.id)).first()
     if not date:
         return error('Termin nicht gefunden', 404)
 
@@ -56,9 +57,9 @@ def create_food_type(slug):
 @admin_bp.route('/<slug>/food-types/<int:type_id>', methods=['PUT'])
 @require_instance_admin
 def update_food_type(slug, type_id):
-    food_type = FoodDonationType.query.filter_by(
-        id=type_id, instance_id=g.instance.id
-    ).first_or_404()
+    food_type = db.first_or_404(
+        select(FoodDonationType).filter_by(id=type_id, instance_id=g.instance.id)
+    )
     try:
         data = _type_update.load(request.get_json() or {})
     except ValidationError as e:
@@ -74,9 +75,9 @@ def update_food_type(slug, type_id):
 @admin_bp.route('/<slug>/food-types/<int:type_id>', methods=['DELETE'])
 @require_instance_admin
 def delete_food_type(slug, type_id):
-    food_type = FoodDonationType.query.filter_by(
-        id=type_id, instance_id=g.instance.id
-    ).first_or_404()
+    food_type = db.first_or_404(
+        select(FoodDonationType).filter_by(id=type_id, instance_id=g.instance.id)
+    )
     db.session.delete(food_type)
     db.session.commit()
     return no_content()
@@ -95,15 +96,14 @@ def list_food_donations(slug):
     )
     type_id = request.args.get('type_id', type=int)
 
-    q = (FoodDonation.query
-         .join(FoodDonationType)
-         .filter(FoodDonationType.instance_id == g.instance.id))
+    stmt = (select(FoodDonation)
+            .join(FoodDonationType)
+            .where(FoodDonationType.instance_id == g.instance.id))
     if type_id:
-        q = q.filter(FoodDonation.food_type_id == type_id)
+        stmt = stmt.where(FoodDonation.food_type_id == type_id)
 
-    total = q.count()
-    items = q.paginate(page=page, per_page=per_page, error_out=False).items
-    return paginated(_don_many.dump(items), total, page, per_page)
+    pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    return paginated(_don_many.dump(pagination.items), pagination.total, page, per_page)
 
 
 @admin_bp.route('/<slug>/food-donations', methods=['POST'])
@@ -114,8 +114,8 @@ def create_food_donation(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    food_type = FoodDonationType.query.filter_by(
-        id=data['food_type_id'], instance_id=g.instance.id
+    food_type = db.session.scalars(
+        select(FoodDonationType).filter_by(id=data['food_type_id'], instance_id=g.instance.id)
     ).first()
     if not food_type:
         return error('Essenspendenart nicht gefunden', 404)
@@ -143,11 +143,12 @@ def create_food_donation(slug):
 @admin_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['PUT'])
 @require_instance_admin
 def update_food_donation(slug, donation_id):
-    donation = (FoodDonation.query
-                .join(FoodDonationType)
-                .filter(FoodDonation.id == donation_id,
-                        FoodDonationType.instance_id == g.instance.id)
-                .first_or_404())
+    donation = db.first_or_404(
+        select(FoodDonation)
+        .join(FoodDonationType)
+        .where(FoodDonation.id == donation_id,
+               FoodDonationType.instance_id == g.instance.id)
+    )
     try:
         data = _don_update.load(request.get_json() or {})
     except ValidationError as e:
@@ -163,11 +164,12 @@ def update_food_donation(slug, donation_id):
 @admin_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['DELETE'])
 @require_instance_admin
 def delete_food_donation(slug, donation_id):
-    donation = (FoodDonation.query
-                .join(FoodDonationType)
-                .filter(FoodDonation.id == donation_id,
-                        FoodDonationType.instance_id == g.instance.id)
-                .first_or_404())
+    donation = db.first_or_404(
+        select(FoodDonation)
+        .join(FoodDonationType)
+        .where(FoodDonation.id == donation_id,
+               FoodDonationType.instance_id == g.instance.id)
+    )
     db.session.delete(donation)
     db.session.commit()
     return no_content()
