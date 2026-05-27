@@ -671,11 +671,14 @@ def build_daten_auskunft_email(
         'Keine Einträge</p>'
     )
 
+    inst_url = f'{base_url}/{slug}' if slug else base_url
     content = f"""
     <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
     <p style="margin:0 0 24px;">
       gemäß <strong>Art. 15 DSGVO</strong> erhalten Sie eine Übersicht aller bei
-      <strong>{instance_title}</strong> gespeicherten Daten.
+      <strong>{instance_title}</strong>
+      (unter <a href="{inst_url}" style="color:#a51f2c;">{inst_url}</a>)
+      gespeicherten Daten.
     </p>
     <h3 style="margin:0 0 10px;font-size:14px;font-weight:600;color:#111827;">
       Personenbezogene Daten
