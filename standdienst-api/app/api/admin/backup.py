@@ -344,18 +344,25 @@ def _restore_pg(sql_bytes: bytes) -> None:
     base_cmd = ['psql', '-h', p['host'], '-p', p['port'], '-U', p['user'], '-d', p['dbname'],
                 '-v', 'ON_ERROR_STOP=1', '--no-psqlrc', '-q']
 
-    # Alle Tabellen leeren (CASCADE kümmert sich um FK-Abhängigkeiten, kein Superuser nötig)
+    # session_replication_role-Zeilen aus dem Dump entfernen (erfordert Superuser-Rechte;
+    # ältere Backups mit --disable-triggers enthalten diese Zeilen noch).
+    clean_lines = [
+        line for line in sql_bytes.decode('utf-8').splitlines()
+        if 'session_replication_role' not in line.lower()
+    ]
+    clean_dump = '\n'.join(clean_lines)
+
+    # TRUNCATE + INSERT in einer einzigen Transaktion: bei Fehler vollständiges Rollback,
+    # damit die DB nicht halb-leer zurückbleibt.
     tables = [t.name for t in reversed(db.metadata.sorted_tables)]
-    truncate_sql = 'TRUNCATE TABLE ' + ', '.join(f'"{t}"' for t in tables) + ' RESTART IDENTITY CASCADE;\n'
+    truncate = 'TRUNCATE TABLE ' + ', '.join(f'"{t}"' for t in tables) + ' RESTART IDENTITY CASCADE;\n'
 
-    r = subprocess.run(base_cmd, input=truncate_sql.encode(), capture_output=True, env=env, timeout=60)
-    if r.returncode != 0:
-        raise RuntimeError(f'Tabellen leeren fehlgeschlagen: {r.stderr.decode()}')
+    full_sql = 'BEGIN;\n' + truncate + clean_dump + '\nCOMMIT;\n'
 
-    # Daten einspielen – pg_dump ohne --disable-triggers gibt INSERTs in FK-Reihenfolge aus
-    r = subprocess.run(base_cmd, input=sql_bytes, capture_output=True, env=env, timeout=300)
+    r = subprocess.run(base_cmd, input=full_sql.encode('utf-8'),
+                       capture_output=True, env=env, timeout=300)
     if r.returncode != 0:
-        raise RuntimeError(f'Daten-Restore fehlgeschlagen: {r.stderr.decode()}')
+        raise RuntimeError(f'Datenbank-Restore fehlgeschlagen: {r.stderr.decode()}')
 
 
 def _restore_sqlalchemy(sql_bytes: bytes) -> None:
@@ -542,9 +549,12 @@ def restore_backup(name):
     except ValueError as e:
         log.error('Restore abgebrochen: %s', e)
         return error(str(e), 400)
+    except RuntimeError as e:
+        log.error('Restore fehlgeschlagen: %s', e)
+        return error(str(e), 500)
     except Exception:
         log.exception('Restore fehlgeschlagen')
-        return error('Backup-Wiederherstellung fehlgeschlagen', 500)
+        return error('Backup-Wiederherstellung fehlgeschlagen – Details im Server-Log', 500)
 
 
 @admin_bp.route('/backup/<name>', methods=['DELETE'])
