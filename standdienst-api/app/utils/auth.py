@@ -2,17 +2,19 @@ import re
 from functools import wraps
 from flask import jsonify, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
+from sqlalchemy import select
 
+from ..extensions import db
 from ..models import Admin, Organizer, Volunteer, Instance
 
 
 def _load_user(identity: str):
     if identity.startswith('admin_'):
-        return Admin.query.get(int(identity[6:]))
+        return db.session.get(Admin, int(identity[6:]))
     if identity.startswith('organizer_'):
-        return Organizer.query.get(int(identity[10:]))
+        return db.session.get(Organizer, int(identity[10:]))
     if identity.startswith('volunteer_'):
-        return Volunteer.query.get(int(identity[10:]))
+        return db.session.get(Volunteer, int(identity[10:]))
     return None
 
 
@@ -23,7 +25,7 @@ def _jwt_version_valid(user, claims: dict) -> bool:
 
 
 def _resolve_instance(slug: str):
-    instance = Instance.query.filter_by(slug=slug).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug)).first()
     if not instance:
         return None, (jsonify(error='Instanz nicht gefunden'), 404)
     return instance, None
