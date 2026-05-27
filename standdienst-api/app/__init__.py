@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from flask import Flask, g, jsonify, request, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy import select, func
 
 from .config import Config
 from .extensions import db, migrate, jwt, mail, limiter, cors
@@ -182,7 +183,7 @@ def _init_db(app):
             try:
                 from .models import MailSettings
                 from .utils.mail import apply_db_mail_config
-                ms = MailSettings.query.first()
+                ms = db.session.scalars(select(MailSettings)).first()
                 if ms and ms.mail_server:
                     apply_db_mail_config(ms)
             except Exception:
@@ -191,7 +192,7 @@ def _init_db(app):
 
 def _seed_admin(app):
     from .models import Admin, GlobalSettings
-    if Admin.query.count() > 0:
+    if db.session.scalar(select(func.count()).select_from(Admin)) > 0:
         return
     admin_email = app.config.get('ADMIN_EMAIL', 'admin@example.com')
     admin_pw = os.getenv('ADMIN_PASSWORD')
@@ -201,7 +202,7 @@ def _seed_admin(app):
     admin.set_password(admin_pw)
     db.session.add(admin)
     # Setup in Tests als abgeschlossen markieren
-    gs = GlobalSettings.query.first() or GlobalSettings()
+    gs = db.session.scalars(select(GlobalSettings)).first() or GlobalSettings()
     gs.setup_complete = True
     db.session.add(gs)
     db.session.commit()
