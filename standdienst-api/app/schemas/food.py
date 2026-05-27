@@ -18,8 +18,8 @@ class FoodDonationTypeCreateSchema(Schema):
     event_date_id = fields.Int(required=True)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     refrigeration_enabled = fields.Bool(load_default=False)
-    delivery_datetime = fields.DateTime(allow_none=True, load_default=None)
-    delivery_location = fields.Str(validate=validate.Length(max=200), allow_none=True, load_default=None)
+    delivery_datetime = fields.DateTime(required=True)
+    delivery_location = fields.Str(required=True, validate=validate.Length(min=1, max=200))
     notes = fields.Str(allow_none=True, load_default=None)
 
 
@@ -29,8 +29,8 @@ class FoodDonationTypeUpdateSchema(Schema):
 
     name = fields.Str(validate=validate.Length(min=1, max=100))
     refrigeration_enabled = fields.Bool()
-    delivery_datetime = fields.DateTime(allow_none=True)
-    delivery_location = fields.Str(validate=validate.Length(max=200), allow_none=True)
+    delivery_datetime = fields.DateTime()
+    delivery_location = fields.Str(validate=validate.Length(min=1, max=200))
     notes = fields.Str(allow_none=True)
 
 

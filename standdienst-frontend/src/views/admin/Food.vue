@@ -163,12 +163,12 @@
         </div>
         <div><label class="label">Name</label><input v-model="typeForm.name" class="input" placeholder="z.B. Kuchen" required /></div>
         <div>
-          <label class="label">Abgabezeitpunkt <span class="font-normal text-muted text-xs">(optional)</span></label>
-          <input v-model="typeForm.delivery_datetime" type="datetime-local" class="input" />
+          <label class="label">Abgabezeitpunkt</label>
+          <input v-model="typeForm.delivery_datetime" type="datetime-local" class="input" required />
         </div>
         <div>
-          <label class="label">Abgabeort <span class="font-normal text-muted text-xs">(optional)</span></label>
-          <input v-model="typeForm.delivery_location" class="input" placeholder="z.B. Festplatz" maxlength="200" />
+          <label class="label">Abgabeort</label>
+          <input v-model="typeForm.delivery_location" class="input" placeholder="z.B. Festplatz" maxlength="200" required />
         </div>
         <div>
           <label class="label">Hinweise <span class="font-normal text-muted text-xs">(optional)</span></label>
