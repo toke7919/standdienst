@@ -18,7 +18,7 @@ ALLOWED_ATTRS = {
     'td': {'colspan', 'rowspan'},
     'th': {'colspan', 'rowspan', 'scope'},
     'col': {'span'},
-    '*': {'class', 'id', 'style'},
+    '*': {'class', 'id'},
 }
 
 _URL_RE = re.compile(r'^(https?://|mailto:)', re.IGNORECASE)
