@@ -11,6 +11,7 @@ from flask_jwt_extended import (
     verify_jwt_in_request,
 )
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from ..extensions import db, limiter, _real_ip
 from ..models import Admin, Organizer, Instance, ActivityLog
@@ -80,8 +81,8 @@ def login():
     password = data.get('password', '')
     ip = _real_ip()
 
-    user = (Admin.query.filter_by(email=email).first()
-            or Organizer.query.filter_by(email=email).first())
+    user = (db.session.scalars(select(Admin).filter_by(email=email)).first()
+            or db.session.scalars(select(Organizer).filter_by(email=email)).first())
 
     if not user or not user.check_password(password):
         _fail2ban_log(ip, email)
@@ -112,11 +113,11 @@ def volunteer_login():
     password = data.get('password', '')
     ip = _real_ip()
 
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
 
-    volunteer = Volunteer.query.filter_by(instance_id=instance.id, email=email).first()
+    volunteer = db.session.scalars(select(Volunteer).filter_by(instance_id=instance.id, email=email)).first()
 
     if not volunteer or not volunteer.check_password(password) or volunteer.is_deleted:
         _fail2ban_log(ip, email)
@@ -144,7 +145,7 @@ def verify_2fa():
 
     code = (request.get_json() or {}).get('code', '').strip().upper()
     role, user_id = pending['type'], pending['id']
-    user = (Admin if role == 'admin' else Organizer).query.get(user_id)
+    user = db.session.get(Admin if role == 'admin' else Organizer, user_id)
 
     if not user or not user.totp_secret:
         return jsonify(error='Benutzer nicht gefunden'), 404
@@ -293,7 +294,9 @@ def forgot_password():
     email = (data.get('email') or '').strip().lower()
     user_type = data.get('type', 'admin')
 
-    user = (Admin if user_type == 'admin' else Organizer).query.filter_by(email=email).first()
+    user = db.session.scalars(
+        select(Admin if user_type == 'admin' else Organizer).filter_by(email=email)
+    ).first()
     if user:
         raw_token = user.generate_reset_token()
         db.session.commit()
@@ -301,7 +304,7 @@ def forgot_password():
         reset_url = f'{base_url}/admin/reset-password?token={raw_token}'
         try:
             from ..models import GlobalSettings
-            gs = GlobalSettings.query.first()
+            gs = db.session.scalars(select(GlobalSettings)).first()
             copyright_text = gs.copyright_text if gs else None
             logo_url = get_platform_logo_for_email()
             send_mail(email, 'Passwort zurücksetzen',
@@ -335,7 +338,7 @@ def reset_password():
 
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     model = Admin if user_type == 'admin' else Organizer
-    user = model.query.filter_by(reset_token=token_hash).first()
+    user = db.session.scalars(select(model).filter_by(reset_token=token_hash)).first()
 
     if not user or not user.is_reset_token_valid:
         return jsonify(error='Ungültiger oder abgelaufener Reset-Link'), 400
@@ -428,9 +431,9 @@ def _user_payload(user) -> dict:
     if hasattr(user, 'role') and user.role in ('admin', 'organizer'):
         from ..models import PasskeyCredential
         if user.role == 'admin':
-            has_pk = PasskeyCredential.query.filter_by(admin_id=user.id).first() is not None
+            has_pk = db.session.scalars(select(PasskeyCredential).filter_by(admin_id=user.id)).first() is not None
         else:
-            has_pk = PasskeyCredential.query.filter_by(organizer_id=user.id).first() is not None
+            has_pk = db.session.scalars(select(PasskeyCredential).filter_by(organizer_id=user.id)).first() is not None
         payload['has_passkey'] = has_pk
     return payload
 
@@ -456,7 +459,9 @@ def update_profile():
     if 'email' in data:
         email = (data['email'] or '').strip().lower()
         if email and email != user.email:
-            duplicate = (Admin if role == 'admin' else Organizer).query.filter_by(email=email).first()
+            duplicate = db.session.scalars(
+                select(Admin if role == 'admin' else Organizer).filter_by(email=email)
+            ).first()
             if duplicate:
                 return jsonify(error='E-Mail bereits vergeben'), 409
             user.email = email
@@ -488,7 +493,7 @@ def update_profile():
         new_ids = set(int(i) for i in (data['digest_subscription_ids'] or []))
         db.session.execute(ads_table.delete().where(ads_table.c.admin_id == user.id))
         for iid in new_ids:
-            if Instance.query.filter_by(id=iid, is_active=True).first():
+            if db.session.scalars(select(Instance).filter_by(id=iid, is_active=True)).first():
                 db.session.execute(ads_table.insert().values(admin_id=user.id, instance_id=iid))
 
     db.session.commit()
