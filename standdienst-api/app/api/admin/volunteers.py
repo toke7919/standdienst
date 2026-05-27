@@ -8,7 +8,7 @@ from ...models import Volunteer, ActivityLog, GlobalSettings, SiteSettings, Regi
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
 from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
 from ...utils.mail import is_mail_configured, send_mail, get_effective_logo_for_email, build_welcome_email, build_daten_auskunft_email
-from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination, optimistic_lock_conflict
 
 _schema = VolunteerSchema()
 _many = VolunteerSchema(many=True)
@@ -145,10 +145,14 @@ def get_volunteer_detail(slug, volunteer_id):
 @require_instance_admin
 def update_volunteer(slug, volunteer_id):
     volunteer = _get_or_404(volunteer_id, g.instance.id)
+    raw = request.get_json() or {}
     try:
-        data = _update.load(request.get_json() or {})
+        data = _update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
+
+    if optimistic_lock_conflict(volunteer, raw.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     if 'email' in data:
         email = (data['email'] or '').strip().lower() or None

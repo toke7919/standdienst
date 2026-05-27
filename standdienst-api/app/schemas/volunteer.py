@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import Volunteer
 
@@ -23,6 +23,9 @@ class VolunteerCreateSchema(Schema):
 
 
 class VolunteerUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     first_name = fields.Str(validate=validate.Length(min=1, max=100))
     last_name = fields.Str(validate=validate.Length(max=100), allow_none=True)
     email = fields.Email(allow_none=True)

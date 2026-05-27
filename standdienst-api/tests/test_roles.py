@@ -140,3 +140,29 @@ def test_permanent_delete_denied_for_instance_admin(client, instance, volunteer,
     _login(client, instance_admin_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/volunteers/{volunteer.id}/permanent')
     assert rv.status_code == 403
+
+
+def test_optimistic_lock_volunteer_update(client, instance, admin_user):
+    from app.models import Volunteer
+    from app.extensions import db as _db
+    from datetime import datetime, timezone, timedelta
+
+    v = Volunteer(
+        instance_id=instance.id,
+        name='Locktest Volunteer',
+        first_name='Lock',
+        last_name='Test',
+    )
+    _db.session.add(v)
+    _db.session.commit()
+
+    # Login als Admin
+    client.post('/api/auth/login', json={'email': admin_user.email, 'password': 'TestPass1!'})
+
+    # Stale updated_at senden
+    stale_ts = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    rv = client.put(
+        f'/api/admin/{instance.slug}/volunteers/{v.id}',
+        json={'first_name': 'Conflict', 'updated_at': stale_ts},
+    )
+    assert rv.status_code == 409
