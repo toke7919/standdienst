@@ -1,5 +1,6 @@
 from flask import request, g
 from marshmallow import ValidationError
+from sqlalchemy import select, func
 
 from . import admin_bp
 from ...extensions import db
@@ -18,7 +19,7 @@ _update = AdminUpdateSchema()
 @admin_bp.route('/admins', methods=['GET'])
 @require_admin
 def list_admins():
-    admins = Admin.query.order_by(Admin.email).all()
+    admins = db.session.scalars(select(Admin).order_by(Admin.email)).all()
     return ok(_many.dump(admins))
 
 
@@ -30,7 +31,7 @@ def create_admin():
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    if Admin.query.filter_by(email=data['email'].lower()).first():
+    if db.session.scalars(select(Admin).filter_by(email=data['email'].lower())).first():
         return error('E-Mail-Adresse bereits vergeben', 409)
     if not validate_password_strength(data['password']):
         return error('Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)', 400)
@@ -66,14 +67,14 @@ def create_admin():
 @admin_bp.route('/admins/<int:admin_id>', methods=['GET'])
 @require_admin
 def get_admin(admin_id):
-    admin = Admin.query.get_or_404(admin_id)
+    admin = db.get_or_404(Admin, admin_id)
     return ok(_schema.dump(admin))
 
 
 @admin_bp.route('/admins/<int:admin_id>', methods=['PUT'])
 @require_admin
 def update_admin(admin_id):
-    admin = Admin.query.get_or_404(admin_id)
+    admin = db.get_or_404(Admin, admin_id)
     try:
         data = _update.load(request.get_json() or {})
     except ValidationError as e:
@@ -85,7 +86,7 @@ def update_admin(admin_id):
         admin.name = f'{admin.first_name} {admin.last_name}'.strip()
     if 'email' in data:
         email = data['email'].lower()
-        existing = Admin.query.filter_by(email=email).first()
+        existing = db.session.scalars(select(Admin).filter_by(email=email)).first()
         if existing and existing.id != admin_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
         admin.email = email
@@ -93,13 +94,13 @@ def update_admin(admin_id):
         new_primary = data['is_primary']
         if new_primary and not admin.is_primary:
             # Alle bisherigen Primaries abwählen
-            for old in Admin.query.filter_by(is_primary=True).all():
+            for old in db.session.scalars(select(Admin).filter_by(is_primary=True)).all():
                 if old.id != admin_id:
                     old.is_primary = False
             admin.is_primary = True
         elif not new_primary and admin.is_primary:
             # Letzten Primary schützen
-            if Admin.query.filter_by(is_primary=True).count() <= 1:
+            if db.session.scalar(select(func.count()).select_from(Admin).filter_by(is_primary=True)) <= 1:
                 return error('Letzter primärer Admin kann nicht abgewählt werden', 400)
             admin.is_primary = False
     if 'password' in data and data['password']:
@@ -115,12 +116,12 @@ def update_admin(admin_id):
 @admin_bp.route('/admins/<int:admin_id>', methods=['DELETE'])
 @require_admin
 def delete_admin(admin_id):
-    admin = Admin.query.get_or_404(admin_id)
+    admin = db.get_or_404(Admin, admin_id)
     if admin.id == g.current_user.id:
         return error('Eigenes Konto kann nicht gelöscht werden', 400)
     if admin.is_primary:
         return error('Primärer Admin kann nicht gelöscht werden', 400)
-    if Admin.query.count() <= 1:
+    if db.session.scalar(select(func.count()).select_from(Admin)) <= 1:
         return error('Letzter Admin kann nicht gelöscht werden', 400)
     _log(f'Admin gelöscht: {admin.email}', g.current_user)
     db.session.delete(admin)
