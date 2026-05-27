@@ -31,7 +31,7 @@ from urllib.parse import urlparse, unquote
 from flask import current_app, g, request, send_file
 from werkzeug.utils import secure_filename
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from sqlalchemy import text
+from sqlalchemy import text, select
 
 from . import admin_bp
 from ...extensions import db, limiter
@@ -197,13 +197,13 @@ def _extract_sensitive_fields() -> dict:
     """Liest alle EncryptedStr-Felder im Klartext aus (werden beim Dump entschlüsselt)."""
     from ...models import GlobalSettings, MailSettings
     result = {'global_settings': {}, 'mail_settings': []}
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     if gs:
         result['global_settings'] = {
             'github_pat': gs.github_pat,
             'backup_password': gs.backup_password,
         }
-    for ms in MailSettings.query.all():
+    for ms in db.session.scalars(select(MailSettings)).all():
         result['mail_settings'].append({'id': ms.id, 'mail_password': ms.mail_password})
     return result
 
@@ -211,14 +211,14 @@ def _extract_sensitive_fields() -> dict:
 def _apply_sensitive_fields(fields: dict) -> None:
     """Schreibt entschlüsselte Felder zurück (SQLAlchemy re-verschlüsselt mit aktuellem SECRET_KEY)."""
     from ...models import GlobalSettings, MailSettings
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     if gs and 'global_settings' in fields:
         gf = fields['global_settings']
         gs.github_pat = gf.get('github_pat')
         gs.backup_password = gf.get('backup_password')
         db.session.add(gs)
     for ms_data in fields.get('mail_settings', []):
-        ms = MailSettings.query.get(ms_data['id'])
+        ms = db.session.get(MailSettings, ms_data['id'])
         if ms:
             ms.mail_password = ms_data.get('mail_password')
             db.session.add(ms)
@@ -232,7 +232,7 @@ def _apply_sensitive_fields(fields: dict) -> None:
 def _get_backup_password() -> str:
     """Liest das Backup-Passwort aus GlobalSettings. Wirft ValueError wenn nicht gesetzt."""
     from ...models import GlobalSettings
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     pw = gs.backup_password if gs else None
     if not pw:
         raise ValueError('Kein Backup-Passwort konfiguriert. Bitte unter Backup-Einstellungen setzen.')
@@ -249,7 +249,7 @@ def run_backup(label: str | None = None, password: str | None = None) -> str:
 
     # Metadaten
     from ...models import GlobalSettings
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     app_version = _read_version()
     metadata = {
         'format_version': _VERSION,
@@ -501,7 +501,7 @@ def run_restore(backup_path: Path, password: str,
 @require_admin
 def get_backup_settings():
     from ...models import GlobalSettings
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     has_password = bool(gs and gs.backup_password)
     return ok({'has_backup_password': has_password})
 
@@ -514,7 +514,7 @@ def update_backup_settings():
     new_pw = data.get('backup_password', '').strip()
     if not new_pw:
         return error('Backup-Passwort darf nicht leer sein', 400)
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     if not gs:
         return error('GlobalSettings nicht gefunden', 500)
     gs.backup_password = new_pw
