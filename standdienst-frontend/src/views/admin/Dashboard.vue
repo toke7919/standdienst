@@ -470,6 +470,18 @@
       </div>
     </template>
 
+    <div v-else-if="auth.isOrganizer && auth.user?.instances?.length" class="space-y-3">
+      <p class="text-sm text-muted mb-4">Wähle eine Instanz:</p>
+      <RouterLink
+        v-for="inst in auth.user.instances"
+        :key="inst.id"
+        :to="`/admin/${inst.slug}/dashboard`"
+        class="flex items-center justify-between rounded-md border border-sand bg-soft px-4 py-3 shadow-sm hover:bg-bg-warm transition-colors"
+      >
+        <span class="font-medium text-ink">{{ inst.name }}</span>
+        <ArrowTopRightOnSquareIcon class="w-4 h-4 text-muted flex-shrink-0" />
+      </RouterLink>
+    </div>
     <div v-else class="text-center text-muted py-16">
       Bitte eine Instanz auswählen, um das Dashboard anzuzeigen.
     </div>
@@ -478,7 +490,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, defineComponent, h } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import { EVENT_META, fmtTime } from '@/utils/activityLog'

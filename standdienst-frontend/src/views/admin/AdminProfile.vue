@@ -62,11 +62,8 @@
       <div>
         <h2 class="text-base font-semibold text-ink">Tages-Digest</h2>
         <p class="text-xs text-muted mt-1">
-          Täglich um 18:00 Uhr eine Zusammenfassung der Anmeldungen, Abmeldungen und Essensspenden.
+          Täglich um 06:00 Uhr eine Zusammenfassung der Anmeldungen, Abmeldungen und Essensspenden des Vortags.
         </p>
-      </div>
-      <div v-if="auth.isAdmin" class="text-xs text-muted -mt-1">
-        Als globaler Admin nur für explizit abonnierte Instanzen.
       </div>
       <div class="space-y-3">
         <label

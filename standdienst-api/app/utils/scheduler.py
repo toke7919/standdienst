@@ -64,7 +64,7 @@ def init_scheduler(app):
     )
     _scheduler.add_job(
         lambda: _send_organizer_digest(app),
-        CronTrigger(hour=18, minute=0),  # täglich 18:00 – Organisatoren-Digest
+        CronTrigger(hour=6, minute=0),  # täglich 06:00 – Organisatoren-Digest
         id='organizer_digest',
         replace_existing=True,
     )
@@ -273,7 +273,7 @@ def _send_reminders(app):
 
 
 def _send_organizer_digest(app):
-    """Täglich 18:00 – Zusammenfassung der heutigen Änderungen an Organisatoren und Admins."""
+    """Täglich 06:00 – Zusammenfassung der gestrigen Änderungen an Organisatoren und Admins."""
     if not _redis_lock(app, 'organizer_digest', ttl=86000):
         return
     with app.app_context():
@@ -298,13 +298,13 @@ def _send_organizer_digest(app):
             tz_name = gs.timezone if gs and gs.timezone else 'Europe/Berlin'
             tz = pytz.timezone(tz_name)
             now_local = datetime.now(tz)
-            today = now_local.date()
-            day_start = tz.localize(datetime(today.year, today.month, today.day, 0, 0, 0)).astimezone(timezone.utc)
-            day_end = now_local.astimezone(timezone.utc)
+            yesterday = (now_local - timedelta(days=1)).date()
+            day_start = tz.localize(datetime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0)).astimezone(timezone.utc)
+            day_end = tz.localize(datetime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59)).astimezone(timezone.utc)
 
             base_url = app.config.get('FRONTEND_URL', '')
             copyright_text = gs.copyright_text if gs else None
-            date_label = today.strftime('%d.%m.%Y')
+            date_label = yesterday.strftime('%d.%m.%Y')
             opt_out_url = f'{base_url}/admin/profile'
 
             def _collect_data(instance_id):

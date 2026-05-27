@@ -13,6 +13,13 @@
             <input v-model="password" type="password" class="input" required autocomplete="new-password" />
             <p class="text-xs text-muted mt-1">Mindestens 12 Zeichen, Groß-/Kleinbuchstabe, Ziffer, Sonderzeichen</p>
           </div>
+          <div>
+            <label class="label">Passwort bestätigen</label>
+            <input v-model="passwordConfirm" type="password" class="input" required autocomplete="new-password" />
+            <p v-if="passwordConfirm && password !== passwordConfirm" class="text-xs text-red-500 mt-1">
+              Passwörter stimmen nicht überein
+            </p>
+          </div>
           <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
           <button type="submit" class="btn-primary w-full" :disabled="loading">Passwort setzen</button>
         </form>
@@ -45,11 +52,16 @@ import { authApi } from '@/api/auth'
 
 const route = useRoute()
 const password = ref('')
+const passwordConfirm = ref('')
 const loading = ref(false)
 const done = ref(false)
 const errorMsg = ref('')
 
 async function submit() {
+  if (password.value !== passwordConfirm.value) {
+    errorMsg.value = 'Passwörter stimmen nicht überein'
+    return
+  }
   loading.value = true
   errorMsg.value = ''
   try {
