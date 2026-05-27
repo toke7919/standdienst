@@ -203,6 +203,7 @@ if [ -x "${PYTHON}" ]; then
     BACKUP_LABEL="vor_update_${LATEST//\//_}"
     BACKUP_OUT="$("${PYTHON}" - <<PYEOF 2>&1
 import sys, os
+os.chdir('${INSTALL_DIR}')
 sys.path.insert(0, '${INSTALL_DIR}')
 from wsgi import app
 with app.app_context():

@@ -34,7 +34,13 @@ PYTHON="${INSTALL_DIR}/.venv/bin/python3"
 
 "${PYTHON}" - <<PYEOF
 import sys, os
-sys.path.insert(0, '${INSTALL_DIR}/standdienst-api')
+# Produktiv: standdienst-api-Dateien liegen direkt in INSTALL_DIR.
+# Entwicklung: im Unterordner standdienst-api/.
+_api_dir = '${INSTALL_DIR}'
+if not os.path.exists(os.path.join(_api_dir, 'wsgi.py')):
+    _api_dir = os.path.join(_api_dir, 'standdienst-api')
+os.chdir(_api_dir)
+sys.path.insert(0, _api_dir)
 
 # Flask-App-Kontext aufbauen
 from wsgi import app
