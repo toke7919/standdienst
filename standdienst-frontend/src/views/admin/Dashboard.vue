@@ -61,20 +61,13 @@
         <!-- Instanz inaktiv -->
         <div v-if="instanceNotFound" class="rounded-xl text-sm text-red-800 bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2 mb-4">
           <ExclamationCircleIcon class="w-4 h-4 flex-shrink-0" />
-          <span>Diese Instanz ist deaktiviert – Helfer sehen keine öffentliche Seite.</span>
+          <span>Diese Instanz ist deaktiviert.</span>
         </div>
 
         <!-- Anmeldung gesperrt oder Anmeldeschluss abgelaufen -->
         <div v-else-if="instanceInfo?.site_locked || instanceInfo?.registration_open === false" class="rounded-xl text-sm text-amber-800 bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-2 mb-4">
           <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0" />
-          <span>
-            <template v-if="instanceInfo?.site_locked">
-              Anmeldung gesperrt{{ instanceInfo.lock_message ? ': ' + instanceInfo.lock_message : '' }}
-            </template>
-            <template v-else>
-              Anmeldeschluss abgelaufen – neue Anmeldungen sind nicht mehr möglich
-            </template>
-          </span>
+          <span>Die Anmeldung für Helfer ist derzeit geschlossen.</span>
         </div>
 
         <!-- ── ROW 1: Hero KPIs ─────────────────────────────────────── -->
