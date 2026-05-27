@@ -400,19 +400,27 @@ def _user_payload(user) -> dict:
         from ..models.instance import organizer_instances as oi_table
         from ..extensions import db as _db
         insts = user.instances.all()
-        admin_rows = {
-            row.instance_id
+        oi_rows = {
+            row.instance_id: row
             for row in _db.session.execute(
-                oi_table.select().where(
-                    oi_table.c.organizer_id == user.id,
-                    oi_table.c.is_instance_admin == True,
-                )
+                oi_table.select().where(oi_table.c.organizer_id == user.id)
             ).fetchall()
         }
         payload['instances'] = [
-            {'id': i.id, 'slug': i.slug, 'name': i.name, 'is_admin': i.id in admin_rows}
+            {
+                'id': i.id, 'slug': i.slug, 'name': i.name,
+                'is_admin': oi_rows[i.id].is_instance_admin if i.id in oi_rows else False,
+                'digest_enabled': oi_rows[i.id].digest_enabled if i.id in oi_rows else True,
+            }
             for i in insts
         ]
+    if user.role == 'admin':
+        from ..models.instance import admin_digest_subscriptions as ads_table
+        from ..extensions import db as _db
+        subs = _db.session.execute(
+            ads_table.select().where(ads_table.c.admin_id == user.id)
+        ).fetchall()
+        payload['digest_subscription_ids'] = [row.instance_id for row in subs]
     if hasattr(user, 'notifications_enabled'):
         payload['notifications_enabled'] = user.notifications_enabled
     if hasattr(user, 'email_confirmation_enabled'):
@@ -460,6 +468,28 @@ def update_profile():
         user.rotate_jwt()
     if 'notifications_enabled' in data and role == 'organizer':
         user.notifications_enabled = bool(data['notifications_enabled'])
+
+    if 'digest_prefs' in data and role == 'organizer':
+        from ..models.instance import organizer_instances as oi_table
+        for pref in (data['digest_prefs'] or []):
+            iid = pref.get('instance_id')
+            enabled = bool(pref.get('digest_enabled', True))
+            if iid and user.has_instance_access(iid):
+                db.session.execute(
+                    oi_table.update()
+                    .where(oi_table.c.organizer_id == user.id)
+                    .where(oi_table.c.instance_id == iid)
+                    .values(digest_enabled=enabled)
+                )
+
+    if 'digest_subscription_ids' in data and role == 'admin':
+        from ..models.instance import admin_digest_subscriptions as ads_table
+        from ..models import Instance
+        new_ids = set(int(i) for i in (data['digest_subscription_ids'] or []))
+        db.session.execute(ads_table.delete().where(ads_table.c.admin_id == user.id))
+        for iid in new_ids:
+            if Instance.query.filter_by(id=iid, is_active=True).first():
+                db.session.execute(ads_table.insert().values(admin_id=user.id, instance_id=iid))
 
     db.session.commit()
     from ..utils.responses import ok

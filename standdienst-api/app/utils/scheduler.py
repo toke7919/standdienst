@@ -273,7 +273,7 @@ def _send_reminders(app):
 
 
 def _send_organizer_digest(app):
-    """Täglich 18:00 – Zusammenfassung der heutigen Änderungen an Organisatoren."""
+    """Täglich 18:00 – Zusammenfassung der heutigen Änderungen an Organisatoren und Admins."""
     if not _redis_lock(app, 'organizer_digest', ttl=86000):
         return
     with app.app_context():
@@ -281,10 +281,13 @@ def _send_organizer_digest(app):
             import pytz
             from ..extensions import db
             from ..models import (
-                Organizer, Registration, ActivityLog, FoodDonation,
+                Admin, Organizer, Registration, ActivityLog, FoodDonation,
                 Shift, Stand, EventDate, Instance,
             )
-            from ..models.instance import organizer_instances as oi_table
+            from ..models.instance import (
+                organizer_instances as oi_table,
+                admin_digest_subscriptions as ads_table,
+            )
             from ..utils.mail import is_mail_configured, send_mail, build_organizer_digest_email, get_effective_logo_for_email
             from ..utils.settings_cache import get_global_settings, get_site_settings
 
@@ -302,99 +305,123 @@ def _send_organizer_digest(app):
             base_url = app.config.get('FRONTEND_URL', '')
             copyright_text = gs.copyright_text if gs else None
             date_label = today.strftime('%d.%m.%Y')
+            opt_out_url = f'{base_url}/admin/profile'
 
-            organizers = Organizer.query.filter(
-                Organizer.notifications_enabled.is_(True),
-                Organizer.email.isnot(None),
-            ).all()
-
-            for org in organizers:
-                for instance in org.instances.all():
-                    settings = get_site_settings(instance.id)
-                    title = settings.site_title if settings else instance.name
-                    primary_color = settings.primary_color if settings else None
-                    logo_url = get_effective_logo_for_email(
-                        settings.logo_filename if settings else None, base_url
+            def _collect_data(instance_id):
+                regs = (
+                    db.session.query(Registration, Shift, Stand)
+                    .join(Shift, Registration.shift_id == Shift.id)
+                    .join(Stand, Shift.stand_id == Stand.id)
+                    .filter(
+                        Stand.instance_id == instance_id,
+                        Registration.registered_at >= day_start,
+                        Registration.registered_at <= day_end,
                     )
+                    .all()
+                )
+                cancels = ActivityLog.query.filter(
+                    ActivityLog.instance_id == instance_id,
+                    ActivityLog.event_type == ActivityLog.SHIFT_UNREGISTER,
+                    ActivityLog.timestamp >= day_start,
+                    ActivityLog.timestamp <= day_end,
+                ).all()
+                foods = FoodDonation.query.filter(
+                    FoodDonation.instance_id == instance_id,
+                    FoodDonation.created_at >= day_start,
+                    FoodDonation.created_at <= day_end,
+                ).all()
+                return regs, cancels, foods
 
-                    # Neue Anmeldungen heute (durch Volunteers oder Admins)
-                    regs_today = (
-                        db.session.query(Registration, Shift, Stand)
-                        .join(Shift, Registration.shift_id == Shift.id)
-                        .join(Stand, Shift.stand_id == Stand.id)
-                        .filter(
-                            Stand.instance_id == instance.id,
-                            Registration.registered_at >= day_start,
-                            Registration.registered_at <= day_end,
-                        )
-                        .all()
-                    )
+            def _send_digest(recipient_email, recipient_name, instance, regs, cancels, foods):
+                settings = get_site_settings(instance.id)
+                title = settings.site_title if settings else instance.name
+                primary_color = settings.primary_color if settings else None
+                logo_url = get_effective_logo_for_email(
+                    settings.logo_filename if settings else None, base_url
+                )
+                reg_data = [
+                    {
+                        'name': (r.volunteer.display_name if r.volunteer else r.guest_name) or '—',
+                        'stand': s.name,
+                        'time': f'{sh.start_time.strftime("%H:%M")}–{sh.end_time.strftime("%H:%M")}',
+                    }
+                    for r, sh, s in regs
+                ]
+                cancel_data = [
+                    {'name': c.volunteer_name or '—', 'stand': '', 'time': c.details or ''}
+                    for c in cancels
+                ]
+                food_data = [
+                    {
+                        'name': (f.volunteer.display_name if f.volunteer else f.guest_name) or '—',
+                        'food_type': f.food_type.name if f.food_type else '—',
+                        'description': f.description,
+                    }
+                    for f in foods
+                    if f.food_type
+                ]
+                kw = dict(logo_url=logo_url, copyright_text=copyright_text, opt_out_url=opt_out_url)
+                if primary_color:
+                    kw['primary_color'] = primary_color
+                send_mail(
+                    recipient_email,
+                    f'Tagesübersicht {date_label} – {title}',
+                    build_organizer_digest_email(
+                        recipient_name or recipient_email,
+                        title, date_label, reg_data, cancel_data, food_data,
+                        base_url, instance.slug, **kw,
+                    ),
+                    sender_name=title,
+                )
 
-                    # Abmeldungen heute (ActivityLog)
-                    cancels_today = ActivityLog.query.filter(
-                        ActivityLog.instance_id == instance.id,
-                        ActivityLog.event_type == ActivityLog.SHIFT_UNREGISTER,
-                        ActivityLog.timestamp >= day_start,
-                        ActivityLog.timestamp <= day_end,
-                    ).all()
+            # ── Organisatoren: per-Instanz digest_enabled ──────────────────
+            enabled_oi = db.session.execute(
+                oi_table.select().where(oi_table.c.digest_enabled == True)
+            ).fetchall()
+            from collections import defaultdict
+            org_inst_ids = defaultdict(set)
+            for row in enabled_oi:
+                org_inst_ids[row.organizer_id].add(row.instance_id)
 
-                    # Essensspenden heute
-                    foods_today = FoodDonation.query.filter(
-                        FoodDonation.instance_id == instance.id,
-                        FoodDonation.created_at >= day_start,
-                        FoodDonation.created_at <= day_end,
-                    ).all()
-
-                    if not regs_today and not cancels_today and not foods_today:
+            for org_id, inst_ids in org_inst_ids.items():
+                org = Organizer.query.filter(
+                    Organizer.id == org_id,
+                    Organizer.email.isnot(None),
+                ).first()
+                if not org:
+                    continue
+                for instance in Instance.query.filter(Instance.id.in_(inst_ids)).all():
+                    regs, cancels, foods = _collect_data(instance.id)
+                    if not regs and not cancels and not foods:
                         continue
-
-                    reg_data = [
-                        {
-                            'name': (r.volunteer.display_name if r.volunteer else r.guest_name) or '—',
-                            'stand': s.name,
-                            'time': f'{sh.start_time.strftime("%H:%M")}–{sh.end_time.strftime("%H:%M")}',
-                        }
-                        for r, sh, s in regs_today
-                    ]
-                    cancel_data = [
-                        {'name': c.volunteer_name or '—', 'stand': '', 'time': c.details or ''}
-                        for c in cancels_today
-                    ]
-                    food_data = [
-                        {
-                            'name': (f.volunteer.display_name if f.volunteer else f.guest_name) or '—',
-                            'food_type': f.food_type.name if f.food_type else '—',
-                            'description': f.description,
-                        }
-                        for f in foods_today
-                        if f.food_type
-                    ]
-
                     try:
-                        opt_out_url = f'{base_url}/admin/profile'
-                        kw = dict(logo_url=logo_url, copyright_text=copyright_text,
-                                  opt_out_url=opt_out_url)
-                        if primary_color:
-                            kw['primary_color'] = primary_color
-                        send_mail(
-                            org.email,
-                            f'Tagesübersicht {date_label} – {title}',
-                            build_organizer_digest_email(
-                                org.name or org.email,
-                                title,
-                                date_label,
-                                reg_data,
-                                cancel_data,
-                                food_data,
-                                base_url,
-                                instance.slug,
-                                **kw,
-                            ),
-                            sender_name=title,
-                        )
+                        _send_digest(org.email, org.name or org.email, instance, regs, cancels, foods)
                         log.info('Organizer-Digest gesendet: organizer_id=%d, instance=%s', org.id, instance.slug)
                     except Exception:
                         log.exception('Organizer-Digest fehlgeschlagen: organizer_id=%d, instance=%s', org.id, instance.slug)
+
+            # ── Globale Admins: explizit abonnierte Instanzen ──────────────
+            admin_subs = db.session.execute(ads_table.select()).fetchall()
+            admin_inst_ids = defaultdict(set)
+            for row in admin_subs:
+                admin_inst_ids[row.admin_id].add(row.instance_id)
+
+            for admin_id, inst_ids in admin_inst_ids.items():
+                admin = Admin.query.filter(
+                    Admin.id == admin_id,
+                    Admin.email.isnot(None),
+                ).first()
+                if not admin:
+                    continue
+                for instance in Instance.query.filter(Instance.id.in_(inst_ids)).all():
+                    regs, cancels, foods = _collect_data(instance.id)
+                    if not regs and not cancels and not foods:
+                        continue
+                    try:
+                        _send_digest(admin.email, admin.name or admin.email, instance, regs, cancels, foods)
+                        log.info('Admin-Digest gesendet: admin_id=%d, instance=%s', admin.id, instance.slug)
+                    except Exception:
+                        log.exception('Admin-Digest fehlgeschlagen: admin_id=%d, instance=%s', admin.id, instance.slug)
 
         except Exception:
             log.exception('Organizer-Digest-Job fehlgeschlagen')

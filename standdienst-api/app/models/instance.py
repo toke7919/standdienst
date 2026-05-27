@@ -11,6 +11,17 @@ organizer_instances = db.Table(
               db.ForeignKey('instances.id', ondelete='CASCADE'), primary_key=True),
     db.Column('is_primary', db.Boolean, nullable=False, default=False),
     db.Column('is_instance_admin', db.Boolean, nullable=False, default=False),
+    db.Column('digest_enabled', db.Boolean, nullable=False, default=True,
+              server_default='true'),
+)
+
+# Globale Admins abonnieren den Digest explizit pro Instanz (Opt-in, kein Standard).
+admin_digest_subscriptions = db.Table(
+    'admin_digest_subscriptions',
+    db.Column('admin_id', db.Integer,
+              db.ForeignKey('admins.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('instance_id', db.Integer,
+              db.ForeignKey('instances.id', ondelete='CASCADE'), primary_key=True),
 )
 
 

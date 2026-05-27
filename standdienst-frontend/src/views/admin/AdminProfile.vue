@@ -57,22 +57,36 @@
       </form>
     </div>
 
-    <!-- Benachrichtigungen (nur für Organisatoren) -->
-    <div v-if="auth.isOrganizer" class="card space-y-4">
-      <h2 class="text-base font-semibold text-ink">Benachrichtigungen</h2>
-      <label class="flex items-start gap-3 cursor-pointer">
-        <div class="relative flex-shrink-0 mt-0.5">
-          <input type="checkbox" class="sr-only peer" v-model="notificationsEnabled" @change="saveNotifications" />
-          <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
-          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
-        </div>
-        <div>
-          <span class="text-sm font-medium text-ink/80">Tages-Digest per E-Mail</span>
-          <p class="text-xs text-muted mt-0.5">
-            Täglich um 18:00 Uhr eine Zusammenfassung der heutigen Anmeldungen, Abmeldungen und Essensspenden erhalten.
-          </p>
-        </div>
-      </label>
+    <!-- Benachrichtigungen: Tages-Digest per Instanz -->
+    <div v-if="digestInstances.length > 0" class="card space-y-4">
+      <div>
+        <h2 class="text-base font-semibold text-ink">Tages-Digest</h2>
+        <p class="text-xs text-muted mt-1">
+          Täglich um 18:00 Uhr eine Zusammenfassung der Anmeldungen, Abmeldungen und Essensspenden.
+        </p>
+      </div>
+      <div v-if="auth.isAdmin" class="text-xs text-muted -mt-1">
+        Als globaler Admin nur für explizit abonnierte Instanzen.
+      </div>
+      <div class="space-y-3">
+        <label
+          v-for="inst in digestInstances"
+          :key="inst.id"
+          class="flex items-center justify-between gap-3 cursor-pointer"
+        >
+          <span class="text-sm text-ink/80">{{ inst.name }}</span>
+          <div class="relative flex-shrink-0">
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="inst.digest_enabled"
+              @change="toggleDigest(inst)"
+            />
+            <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+          </div>
+        </label>
+      </div>
     </div>
 
     <!-- 2FA -->
@@ -235,6 +249,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { authApi } from '@/api/auth'
+import { adminApi } from '@/api/admin'
 import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, KeyIcon, TrashIcon, ClipboardIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { prepareRegistrationOptions, serializeRegistrationCredential } from '@/utils/webauthn'
@@ -242,17 +257,50 @@ import { prepareRegistrationOptions, serializeRegistrationCredential } from '@/u
 const auth = useAuthStore()
 const ui = useUiStore()
 
-// ── Benachrichtigungen (Organisatoren) ─────────────────────────────────────
-const notificationsEnabled = ref(false)
+// ── Tages-Digest ───────────────────────────────────────────────────────────
+const digestInstances = ref([])
 
-async function saveNotifications() {
+async function loadDigestInstances() {
+  const u = auth.user
+  if (!u) return
+  if (u.role === 'organizer') {
+    digestInstances.value = (u.instances || []).map(i => ({
+      id: i.id, name: i.name, slug: i.slug,
+      digest_enabled: i.digest_enabled ?? true,
+    }))
+  } else if (u.role === 'admin') {
+    const res = await adminApi.getInstances({ per_page: 200 })
+    const subIds = new Set(u.digest_subscription_ids || [])
+    digestInstances.value = (res.data.data || []).map(i => ({
+      id: i.id, name: i.name, slug: i.slug,
+      digest_enabled: subIds.has(i.id),
+    }))
+  }
+}
+
+async function toggleDigest(inst) {
+  inst.digest_enabled = !inst.digest_enabled
   try {
-    await authApi.updateProfile({ notifications_enabled: notificationsEnabled.value })
-    ui.success(notificationsEnabled.value ? 'Digest aktiviert' : 'Digest deaktiviert')
+    const u = auth.user
+    if (u.role === 'organizer') {
+      await authApi.updateProfile({
+        digest_prefs: digestInstances.value.map(i => ({
+          instance_id: i.id,
+          digest_enabled: i.digest_enabled,
+        })),
+      })
+    } else {
+      await authApi.updateProfile({
+        digest_subscription_ids: digestInstances.value
+          .filter(i => i.digest_enabled)
+          .map(i => i.id),
+      })
+    }
+    ui.success(inst.digest_enabled ? 'Digest aktiviert' : 'Digest deaktiviert')
     await auth.fetchMe()
   } catch (e) {
+    inst.digest_enabled = !inst.digest_enabled
     ui.err(e.response?.data?.error || 'Fehler')
-    notificationsEnabled.value = !notificationsEnabled.value
   }
 }
 
@@ -399,9 +447,8 @@ onMounted(async () => {
     profileForm.value.first_name = u.first_name || ''
     profileForm.value.last_name = u.last_name || ''
     profileForm.value.email = u.email || ''
-    notificationsEnabled.value = u.notifications_enabled ?? true
   }
-  await loadPasskeys()
+  await Promise.all([loadDigestInstances(), loadPasskeys()])
 })
 
 async function loadPasskeys() {
