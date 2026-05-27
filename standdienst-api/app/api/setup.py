@@ -1,6 +1,7 @@
 """Ersteinrichtungs-Blueprint – nur erreichbar solange setup_complete=False."""
 import os
 from flask import Blueprint, request, jsonify
+from sqlalchemy import select, func
 
 from ..extensions import db, _real_ip
 from ..models import Admin, GlobalSettings, MailSettings
@@ -30,14 +31,14 @@ def _check_setup_ip():
 
 def _check_guard():
     """403 zurückgeben wenn Setup bereits abgeschlossen."""
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     if gs and gs.setup_complete:
         return jsonify(error='Setup bereits abgeschlossen'), 403
     return None
 
 
 def _get_or_create_gs() -> GlobalSettings:
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     if not gs:
         gs = GlobalSettings()
         db.session.add(gs)
@@ -53,7 +54,7 @@ def status():
     gs = get_global_settings()
     return jsonify(data={
         'setup_complete': bool(gs and gs.setup_complete),
-        'has_admin': Admin.query.count() > 0,
+        'has_admin': db.session.scalar(select(func.count()).select_from(Admin)) > 0,
         'maintenance_mode': bool(gs and gs.maintenance_mode),
     })
 
@@ -68,7 +69,7 @@ def create_admin():
     if err:
         return err
 
-    if Admin.query.count() > 0:
+    if db.session.scalar(select(func.count()).select_from(Admin)) > 0:
         return jsonify(error='Admin-Account existiert bereits'), 409
 
     data = request.get_json() or {}
@@ -125,7 +126,7 @@ def save_mail():
         return err
 
     data = request.get_json() or {}
-    ms = MailSettings.query.first()
+    ms = db.session.scalars(select(MailSettings)).first()
     if not ms:
         ms = MailSettings()
         db.session.add(ms)
@@ -151,7 +152,7 @@ def finish():
     if err:
         return err
 
-    if Admin.query.count() == 0:
+    if db.session.scalar(select(func.count()).select_from(Admin)) == 0:
         return jsonify(error='Bitte zuerst einen Admin-Account anlegen (Schritt 1)'), 400
 
     gs = _get_or_create_gs()
