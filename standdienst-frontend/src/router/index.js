@@ -124,6 +124,9 @@ const router = createRouter({
       ],
     },
 
+    // Wartungsmodus
+    { path: '/maintenance', component: () => import('@/views/Maintenance.vue'), meta: { maintenance: true } },
+
     // 404
     { path: '/:pathMatch(.*)*', component: () => import('@/views/NotFound.vue') },
   ],
@@ -142,6 +145,14 @@ router.beforeEach(async (to) => {
 
   // Alle anderen Seiten: Setup muss zuerst abgeschlossen sein
   if (!setupDone) return '/setup'
+
+  // Wartungsmodus: Nicht-Admin-Routen auf /maintenance umleiten
+  if (setup.maintenanceMode && !to.path.startsWith('/admin') && !to.meta.maintenance) {
+    return '/maintenance'
+  }
+  if (!setup.maintenanceMode && to.meta.maintenance) {
+    return '/'
+  }
 
   // Standard Auth-Guards
   const auth = useAuthStore()

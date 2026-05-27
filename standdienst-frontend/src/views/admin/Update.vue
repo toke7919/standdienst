@@ -3,6 +3,26 @@
     <h1 class="text-2xl font-bold text-ink mb-6">System-Update</h1>
 
     <div class="max-w-2xl space-y-4">
+      <!-- Wartungsmodus -->
+      <div class="card flex items-center justify-between gap-4">
+        <div>
+          <p class="font-medium text-ink text-sm">Wartungsmodus</p>
+          <p class="text-xs text-muted mt-0.5">
+            {{ setup.maintenanceMode
+              ? 'Aktiv – alle öffentlichen Seiten zeigen die Wartungsseite.'
+              : 'Inaktiv – Anwendung läuft normal.' }}
+          </p>
+        </div>
+        <button
+          class="btn-secondary text-sm flex-shrink-0"
+          :class="{ 'border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100': setup.maintenanceMode }"
+          :disabled="togglingMaintenance"
+          @click="toggleMaintenance"
+        >
+          <LoadingSpinner v-if="togglingMaintenance" size="sm" />
+          {{ setup.maintenanceMode ? 'Deaktivieren' : 'Aktivieren' }}
+        </button>
+      </div>
       <div class="card space-y-4">
         <div v-if="checking" class="flex items-center gap-2 text-muted text-sm">
           <LoadingSpinner size="sm" />
@@ -95,11 +115,14 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { useSetupStore } from '@/stores/setup'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const ui = useUiStore()
+const setup = useSetupStore()
 const checking = ref(false)
 const applying = ref(false)
+const togglingMaintenance = ref(false)
 const updateInfo = ref(null)
 const updateLog = ref([])
 const showCurrentNotes = ref(false)
@@ -124,7 +147,7 @@ async function checkUpdate() {
 async function applyUpdate() {
   const confirmed = await ui.confirm({
     title: 'Update anwenden',
-    message: 'Das System wird aktualisiert. Danach ist ein Neustart erforderlich. Fortfahren?',
+    message: 'Das System wird aktualisiert und der Wartungsmodus automatisch aktiviert. Danach ist ein Neustart erforderlich. Fortfahren?',
     confirmText: 'Update starten',
   })
   if (!confirmed) return
@@ -134,6 +157,7 @@ async function applyUpdate() {
   try {
     const res = await adminApi.applyUpdate()
     updateLog.value = res.data.data.log
+    setup.setMaintenance(true)
     ui.success(res.data.message)
     updateInfo.value = null
   } catch (e) {
@@ -141,6 +165,20 @@ async function applyUpdate() {
     updateLog.value = e.response?.data?.errors?.log || []
   } finally {
     applying.value = false
+  }
+}
+
+async function toggleMaintenance() {
+  togglingMaintenance.value = true
+  try {
+    const newMode = !setup.maintenanceMode
+    await adminApi.setMaintenance(newMode)
+    setup.setMaintenance(newMode)
+    ui.success(newMode ? 'Wartungsmodus aktiviert' : 'Wartungsmodus deaktiviert')
+  } catch (e) {
+    ui.err(e.response?.data?.error || 'Fehler beim Umschalten')
+  } finally {
+    togglingMaintenance.value = false
   }
 }
 </script>

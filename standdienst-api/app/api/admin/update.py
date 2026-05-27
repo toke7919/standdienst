@@ -206,6 +206,7 @@ def apply_update():
         if not tarball_url:
             return error('Kein Tarball im GitHub-Release gefunden', 500)
 
+        _set_maintenance_mode(True, log)
         target_version = latest.get('tag_name', '').lstrip('v')
         _auto_backup(log, target_version)
         _apply_tarball(tarball_url, pat, log)
@@ -215,6 +216,23 @@ def apply_update():
     except Exception:
         current_app.logger.exception('Update fehlgeschlagen')
         return error('Update fehlgeschlagen', 500)
+
+
+def _set_maintenance_mode(enabled: bool, log: list | None = None):
+    try:
+        from ...models import GlobalSettings
+        from ...extensions import db
+        gs = GlobalSettings.query.first()
+        if gs:
+            gs.maintenance_mode = enabled
+            db.session.commit()
+        if log is not None:
+            log.append({'step': 'maintenance', 'ok': True,
+                        'output': f'Wartungsmodus {"aktiviert" if enabled else "deaktiviert"}'})
+    except Exception as e:
+        current_app.logger.warning('Wartungsmodus konnte nicht gesetzt werden: %s', e)
+        if log is not None:
+            log.append({'step': 'maintenance', 'ok': False, 'output': str(e)})
 
 
 def _auto_backup(log: list, target_version: str | None = None):

@@ -47,6 +47,7 @@ def platform_info():
     return jsonify(data={
         'copyright_text': gs.copyright_text if gs else '',
         'has_impressum': bool(gs and gs.provider_impressum_html) if gs else True,
+        'maintenance_mode': bool(gs and gs.maintenance_mode),
     }), 200
 
 

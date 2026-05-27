@@ -101,6 +101,12 @@
       class="flex-1 lg:ml-64 flex flex-col min-h-screen overflow-x-hidden"
       :class="mobileContentPad"
     >
+      <!-- Wartungsmodus-Banner -->
+      <div v-if="setup.maintenanceMode" class="bg-amber-500 text-white text-xs font-medium text-center py-1.5 px-4 flex items-center justify-center gap-2">
+        <WrenchScrewdriverIcon class="w-3.5 h-3.5 flex-shrink-0" />
+        Wartungsmodus aktiv – öffentliche Seiten zeigen die Wartungsseite
+        <RouterLink to="/admin/update" class="underline ml-1 opacity-80 hover:opacity-100">Deaktivieren →</RouterLink>
+      </div>
       <main class="flex-1 p-4 lg:p-6">
         <RouterView v-slot="{ Component }">
           <Transition name="page" mode="out-in">
@@ -309,6 +315,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
+import { useSetupStore } from '@/stores/setup'
 import { adminApi } from '@/api/admin'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -319,10 +326,12 @@ import {
   AdjustmentsHorizontalIcon, EnvelopeIcon, CloudArrowUpIcon, ArrowPathIcon,
   LockClosedIcon, ArrowRightOnRectangleIcon, KeyIcon, XMarkIcon,
   EllipsisHorizontalCircleIcon, UserCircleIcon, ExclamationTriangleIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const instanceStore = useInstanceStore()
+const setup = useSetupStore()
 const router = useRouter()
 const route = useRoute()
 const instances = ref([])

@@ -72,6 +72,7 @@ class GlobalSettings(db.Model):
     smb_username = db.Column(db.String(200), nullable=True)
     smb_password = db.Column(EncryptedStr(500), nullable=True)
     setup_complete = db.Column(db.Boolean, nullable=False, default=False)
+    maintenance_mode = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     github_pat = db.Column(EncryptedStr(500), nullable=True)
     github_repo = db.Column(db.String(200), nullable=True)
     timezone = db.Column(db.String(100), nullable=False, default='Europe/Berlin')

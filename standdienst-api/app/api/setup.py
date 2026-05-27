@@ -53,6 +53,7 @@ def status():
     return jsonify(data={
         'setup_complete': bool(gs and gs.setup_complete),
         'has_admin': Admin.query.count() > 0,
+        'maintenance_mode': bool(gs and gs.maintenance_mode),
     })
 
 

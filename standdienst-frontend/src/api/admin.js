@@ -140,4 +140,7 @@ export const adminApi = {
   // Update
   checkUpdate: () => client.get('/admin/update/check'),
   applyUpdate: () => client.post('/admin/update/apply'),
+
+  // Wartungsmodus
+  setMaintenance: (enabled) => client.put('/admin/maintenance', { enabled }),
 }
