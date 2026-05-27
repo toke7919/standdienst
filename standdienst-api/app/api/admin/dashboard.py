@@ -1,8 +1,9 @@
 from datetime import date as _date, timedelta
 from flask import g
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from . import admin_bp
+from ...extensions import db
 from ...models import (
     Volunteer, Stand, Shift, Registration, FoodDonation, FoodDonationType,
     EventDate, Instance, ActivityLog,
@@ -27,23 +28,26 @@ def dashboard(slug):
 @admin_bp.route('/dashboard/global', methods=['GET'])
 @require_admin
 def global_dashboard():
-    instances = Instance.query.filter_by(is_active=True).all()
+    instances = db.session.scalars(select(Instance).filter_by(is_active=True)).all()
     instance_ids = [i.id for i in instances]
 
-    total_volunteers = Volunteer.query.filter(
-        Volunteer.instance_id.in_(instance_ids), Volunteer.deleted_at.is_(None)
-    ).count() if instance_ids else 0
+    total_volunteers = db.session.scalar(
+        select(func.count()).select_from(Volunteer).filter(
+            Volunteer.instance_id.in_(instance_ids), Volunteer.deleted_at.is_(None)
+        )
+    ) if instance_ids else 0
 
-    total_registrations = (Registration.query
-                           .join(Shift)
-                           .join(Stand)
-                           .filter(Stand.instance_id.in_(instance_ids))
-                           .count()) if instance_ids else 0
+    total_registrations = db.session.scalar(
+        select(func.count()).select_from(Registration)
+        .join(Shift).join(Stand)
+        .where(Stand.instance_id.in_(instance_ids))
+    ) if instance_ids else 0
 
-    total_food = (FoodDonation.query
-                  .join(FoodDonationType)
-                  .filter(FoodDonationType.instance_id.in_(instance_ids))
-                  .count()) if instance_ids else 0
+    total_food = db.session.scalar(
+        select(func.count()).select_from(FoodDonation)
+        .join(FoodDonationType)
+        .where(FoodDonationType.instance_id.in_(instance_ids))
+    ) if instance_ids else 0
 
     instance_stats = [
         {'id': i.id, 'name': i.name, 'slug': i.slug, **_instance_stats(i.id)}
@@ -61,14 +65,17 @@ def global_dashboard():
     seven_days_ago = today - timedelta(days=6)
     _day_names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
     if instance_ids:
-        daily_q = (Registration.query
-                   .join(Shift).join(Stand)
-                   .filter(Stand.instance_id.in_(instance_ids),
-                           func.date(Registration.registered_at) >= seven_days_ago)
-                   .with_entities(func.date(Registration.registered_at).label('day'),
-                                  func.count().label('cnt'))
-                   .group_by(func.date(Registration.registered_at))
-                   .all())
+        daily_q = db.session.execute(
+            select(
+                func.date(Registration.registered_at).label('day'),
+                func.count().label('cnt'),
+            )
+            .select_from(Registration)
+            .join(Shift).join(Stand)
+            .where(Stand.instance_id.in_(instance_ids),
+                   func.date(Registration.registered_at) >= seven_days_ago)
+            .group_by(func.date(Registration.registered_at))
+        ).all()
         daily_map = {}
         for r in daily_q:
             key = r.day.isoformat() if hasattr(r.day, 'isoformat') else str(r.day)
@@ -84,11 +91,12 @@ def global_dashboard():
         for i in range(7)
     ]
 
-    recent = (ActivityLog.query
-              .filter(ActivityLog.event_type.in_(_ORGANIZER_TYPES))
-              .order_by(ActivityLog.timestamp.desc())
-              .limit(10)
-              .all())
+    recent = db.session.scalars(
+        select(ActivityLog)
+        .filter(ActivityLog.event_type.in_(_ORGANIZER_TYPES))
+        .order_by(ActivityLog.timestamp.desc())
+        .limit(10)
+    ).all()
 
     return ok({
         'instance_count': len(instances),
@@ -106,41 +114,50 @@ def global_dashboard():
 
 
 def _instance_stats(instance_id: int, event_types=None) -> dict:
-    volunteers = Volunteer.query.filter_by(instance_id=instance_id, deleted_at=None).count()
+    volunteers = db.session.scalar(
+        select(func.count()).select_from(Volunteer).filter_by(instance_id=instance_id, deleted_at=None)
+    )
 
-    shifts_all = (Shift.query.join(Stand).filter(Stand.instance_id == instance_id).all())
+    shifts_all = db.session.scalars(
+        select(Shift).join(Stand).where(Stand.instance_id == instance_id)
+    ).all()
     shifts = len(shifts_all)
     shifts_full = sum(1 for s in shifts_all if s.is_full)
     shifts_empty = sum(1 for s in shifts_all if s.current_count == 0)
     shifts_free = shifts - shifts_full
     fill_rate = round(shifts_full / shifts * 100) if shifts else 0
 
-    registrations = (Registration.query
-                     .join(Shift).join(Stand)
-                     .filter(Stand.instance_id == instance_id)
-                     .count())
+    registrations = db.session.scalar(
+        select(func.count()).select_from(Registration)
+        .join(Shift).join(Stand)
+        .where(Stand.instance_id == instance_id)
+    )
 
     # Helfer ohne Dienst: aktive Volunteers mit 0 Anmeldungen
-    volunteers_with_shift = (Registration.query
-                             .join(Shift).join(Stand)
-                             .filter(Stand.instance_id == instance_id,
-                                     Registration.volunteer_id.isnot(None))
-                             .with_entities(Registration.volunteer_id)
-                             .distinct()
-                             .count())
-    volunteers_registered = (Volunteer.query
-                              .filter_by(instance_id=instance_id, deleted_at=None)
-                              .filter(Volunteer.email.isnot(None))
-                              .count())
+    volunteers_with_shift = db.session.scalar(
+        select(func.count(func.distinct(Registration.volunteer_id)))
+        .select_from(Registration)
+        .join(Shift).join(Stand)
+        .where(Stand.instance_id == instance_id,
+               Registration.volunteer_id.isnot(None))
+    )
+    volunteers_registered = db.session.scalar(
+        select(func.count()).select_from(Volunteer)
+        .filter_by(instance_id=instance_id, deleted_at=None)
+        .filter(Volunteer.email.isnot(None))
+    )
     volunteers_without_shift = max(0, volunteers_registered - volunteers_with_shift)
 
-    food_donations = (FoodDonation.query
-                      .join(FoodDonationType)
-                      .filter(FoodDonationType.instance_id == instance_id)
-                      .count())
+    food_donations = db.session.scalar(
+        select(func.count()).select_from(FoodDonation)
+        .join(FoodDonationType)
+        .where(FoodDonationType.instance_id == instance_id)
+    )
 
     # Auslastung je Termin
-    dates_all = EventDate.query.filter_by(instance_id=instance_id).order_by(EventDate.date).all()
+    dates_all = db.session.scalars(
+        select(EventDate).filter_by(instance_id=instance_id).order_by(EventDate.date)
+    ).all()
     dates_fill = []
     for d in dates_all:
         d_shifts = [s for s in shifts_all if s.event_date_id == d.id]
@@ -162,14 +179,17 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
     today = _date.today()
     seven_days_ago = today - timedelta(days=6)
     _day_names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
-    daily_q = (Registration.query
-               .join(Shift).join(Stand)
-               .filter(Stand.instance_id == instance_id,
-                       func.date(Registration.registered_at) >= seven_days_ago)
-               .with_entities(func.date(Registration.registered_at).label('day'),
-                              func.count().label('cnt'))
-               .group_by(func.date(Registration.registered_at))
-               .all())
+    daily_q = db.session.execute(
+        select(
+            func.date(Registration.registered_at).label('day'),
+            func.count().label('cnt'),
+        )
+        .select_from(Registration)
+        .join(Shift).join(Stand)
+        .where(Stand.instance_id == instance_id,
+               func.date(Registration.registered_at) >= seven_days_ago)
+        .group_by(func.date(Registration.registered_at))
+    ).all()
     daily_map = {}
     for r in daily_q:
         key = r.day.isoformat() if hasattr(r.day, 'isoformat') else str(r.day)
@@ -193,13 +213,12 @@ def _instance_stats(instance_id: int, event_types=None) -> dict:
             'days_until': (n.date - today).days,
         }
 
-    recent_q = ActivityLog.query.filter_by(instance_id=instance_id)
+    recent_stmt = select(ActivityLog).filter_by(instance_id=instance_id)
     if event_types is not None:
-        recent_q = recent_q.filter(ActivityLog.event_type.in_(event_types))
-    recent = (recent_q
-              .order_by(ActivityLog.timestamp.desc())
-              .limit(10)
-              .all())
+        recent_stmt = recent_stmt.filter(ActivityLog.event_type.in_(event_types))
+    recent = db.session.scalars(
+        recent_stmt.order_by(ActivityLog.timestamp.desc()).limit(10)
+    ).all()
 
     return {
         'volunteers': volunteers,
