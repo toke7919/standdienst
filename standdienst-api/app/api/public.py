@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, request, jsonify, current_app
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from ..extensions import db, limiter, _real_ip
 from ..models import Instance, SiteSettings, ActivityLog, Volunteer
@@ -53,16 +54,16 @@ def platform_info():
 
 @public_bp.route('/instances', methods=['GET'])
 def list_instances():
-    instances = Instance.query.filter_by(is_active=True).order_by(Instance.name).all()
+    instances = db.session.scalars(select(Instance).filter_by(is_active=True).order_by(Instance.name)).all()
     return jsonify(data=[{'slug': i.slug, 'name': i.name} for i in instances]), 200
 
 
 @public_bp.route('/<slug>/info', methods=['GET'])
 def instance_info(slug):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+    settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=instance.id)).first()
     global_settings = get_global_settings()
     return jsonify(data=_build_instance_info(instance, settings, global_settings)), 200
 
@@ -79,11 +80,11 @@ def captcha(slug):
 @public_bp.route('/<slug>/register', methods=['POST'])
 @limiter.limit('10 per minute')
 def register(slug):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
 
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+    settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=instance.id)).first()
     if settings and settings.site_locked:
         return jsonify(error='Anmeldung ist gesperrt'), 403
     if settings and not settings.registration_open:
@@ -107,7 +108,7 @@ def register(slug):
     if email and not is_mail_configured():
         return jsonify(error='E-Mail-Registrierung nicht verfügbar – SMTP nicht konfiguriert'), 503
 
-    if email and Volunteer.query.filter_by(instance_id=instance.id, email=email).first():
+    if email and db.session.scalars(select(Volunteer).filter_by(instance_id=instance.id, email=email)).first():
         return jsonify(error='E-Mail-Adresse bereits vergeben'), 409
 
     first_name = data['first_name'].strip()
@@ -237,7 +238,7 @@ def platform_datenschutz():
 
 @public_bp.route('/<slug>/impressum', methods=['GET'])
 def instance_impressum(slug):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
     gs = get_global_settings()
@@ -257,7 +258,7 @@ def instance_impressum(slug):
 
 @public_bp.route('/<slug>/datenschutz', methods=['GET'])
 def datenschutz(slug):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
     gs = get_global_settings()
@@ -279,19 +280,19 @@ def datenschutz(slug):
 @public_bp.route('/<slug>/forgot-password', methods=['POST'])
 @limiter.limit('5 per minute')
 def volunteer_forgot_password(slug):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
 
     email = ((request.get_json() or {}).get('email') or '').strip().lower()
-    volunteer = Volunteer.query.filter_by(instance_id=instance.id, email=email).first()
+    volunteer = db.session.scalars(select(Volunteer).filter_by(instance_id=instance.id, email=email)).first()
 
     if volunteer and not volunteer.is_deleted and is_mail_configured():
         raw_token = volunteer.generate_reset_token()
         db.session.commit()
         base_url = _base_url()
         reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
-        settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
+        settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=instance.id)).first()
         title = settings.site_title if settings else instance.name
         primary_color = settings.primary_color if settings else None
         logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
@@ -314,7 +315,7 @@ def volunteer_forgot_password(slug):
 @public_bp.route('/<slug>/reset-password', methods=['POST'])
 @limiter.limit('10 per minute')
 def volunteer_reset_password(slug):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return jsonify(error='Instanz nicht gefunden'), 404
 
@@ -326,8 +327,8 @@ def volunteer_reset_password(slug):
         return jsonify(error='Passwort zu schwach (mind. 8 Zeichen)'), 400
 
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    volunteer = Volunteer.query.filter_by(
-        instance_id=instance.id, reset_token=token_hash
+    volunteer = db.session.scalars(
+        select(Volunteer).filter_by(instance_id=instance.id, reset_token=token_hash)
     ).first()
 
     if not volunteer or not volunteer.is_reset_token_valid or volunteer.is_deleted:
@@ -345,12 +346,12 @@ def volunteer_reset_password(slug):
 # ---------------------------------------------------------------------------
 
 def _find_volunteer_by_welcome_token(slug: str, raw_token: str):
-    instance = Instance.query.filter_by(slug=slug, is_active=True).first()
+    instance = db.session.scalars(select(Instance).filter_by(slug=slug, is_active=True)).first()
     if not instance:
         return None
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    volunteer = Volunteer.query.filter_by(
-        instance_id=instance.id, welcome_token=token_hash
+    volunteer = db.session.scalars(
+        select(Volunteer).filter_by(instance_id=instance.id, welcome_token=token_hash)
     ).first()
     if not volunteer or not volunteer.is_welcome_token_valid or volunteer.is_deleted:
         return None
