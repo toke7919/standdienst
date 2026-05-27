@@ -90,7 +90,18 @@ def update_admin(admin_id):
             return error('E-Mail-Adresse bereits vergeben', 409)
         admin.email = email
     if 'is_primary' in data:
-        admin.is_primary = data['is_primary']
+        new_primary = data['is_primary']
+        if new_primary and not admin.is_primary:
+            # Alle bisherigen Primaries abwählen
+            for old in Admin.query.filter_by(is_primary=True).all():
+                if old.id != admin_id:
+                    old.is_primary = False
+            admin.is_primary = True
+        elif not new_primary and admin.is_primary:
+            # Letzten Primary schützen
+            if Admin.query.filter_by(is_primary=True).count() <= 1:
+                return error('Letzter primärer Admin kann nicht abgewählt werden', 400)
+            admin.is_primary = False
     if 'password' in data and data['password']:
         if not validate_password_strength(data['password']):
             return error('Passwort zu schwach', 400)
