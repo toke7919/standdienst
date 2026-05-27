@@ -48,7 +48,6 @@ class InstanceUpdateSchema(Schema):
 
     name = fields.Str(validate=validate.Length(min=1, max=100))
     is_active = fields.Bool()
-    branding_enabled = fields.Bool()
     contact_organisation = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_person = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_street = fields.Str(validate=validate.Length(max=200), allow_none=True)

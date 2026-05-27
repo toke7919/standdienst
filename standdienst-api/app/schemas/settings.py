@@ -22,7 +22,6 @@ class SiteSettingsUpdateSchema(Schema):
     food_donations_enabled = fields.Bool()
     site_locked = fields.Bool()
     lock_message = fields.Str(allow_none=True)
-    log_retention_months = fields.Int(validate=validate.Range(min=1, max=36))
     instance_impressum_html = fields.Str(allow_none=True)
     registration_deadline = fields.DateTime(allow_none=True)
     unregister_deadline_hours = fields.Int(allow_none=True, validate=validate.Range(min=1, max=168))

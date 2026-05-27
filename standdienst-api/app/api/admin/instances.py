@@ -70,12 +70,12 @@ def get_instance(instance_id):
 def update_instance(instance_id):
     from ...utils.settings_cache import invalidate_site
     instance = Instance.query.get_or_404(instance_id)
+    raw = request.get_json() or {}
+    branding_enabled = raw.get('branding_enabled')
     try:
-        data = _update.load(request.get_json() or {})
+        data = _update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
-
-    branding_enabled = data.pop('branding_enabled', None)
 
     for key, value in data.items():
         setattr(instance, key, value)
@@ -83,7 +83,7 @@ def update_instance(instance_id):
     if branding_enabled is not None:
         settings = SiteSettings.query.filter_by(instance_id=instance_id).first()
         if settings:
-            settings.branding_enabled = branding_enabled
+            settings.branding_enabled = bool(branding_enabled)
         invalidate_site(instance_id)
 
     _log(instance.id, 'Instanz geändert', g.current_user.email)

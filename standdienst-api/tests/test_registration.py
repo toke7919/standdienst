@@ -3,7 +3,7 @@ import base64
 import hashlib
 import json
 from app.extensions import db as _db
-from app.models import Volunteer, SiteSettings
+from app.models import Volunteer, SiteSettings, GlobalSettings
 
 
 def _altcha_solution(client, slug) -> str:
@@ -166,8 +166,9 @@ def test_register_consent_not_required_without_policy(client, instance):
 
 def test_register_consent_required_with_policy(client, instance):
     """Datenschutzerklärung konfiguriert → consent Pflicht."""
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
-    settings.privacy_policy_html = '<p>Datenschutz</p>'
+    gs = GlobalSettings()
+    gs.datenschutz_template_html = '<p>Datenschutz</p>'
+    _db.session.add(gs)
     _db.session.commit()
 
     answer = _altcha_solution(client, instance.slug)
@@ -182,8 +183,9 @@ def test_register_consent_required_with_policy(client, instance):
 
 
 def test_register_consent_accepted_with_policy(client, instance):
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
-    settings.privacy_policy_html = '<p>Datenschutz</p>'
+    gs = GlobalSettings()
+    gs.datenschutz_template_html = '<p>Datenschutz</p>'
+    _db.session.add(gs)
     _db.session.commit()
 
     answer = _altcha_solution(client, instance.slug)

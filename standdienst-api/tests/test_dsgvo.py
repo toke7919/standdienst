@@ -1,6 +1,6 @@
 """Tests für DSGVO-Funktionen: Datenauskunft, Soft-Delete."""
 from app.extensions import db as _db
-from app.models import SiteSettings
+from app.models import GlobalSettings
 
 
 def _volunteer_login(client, instance, volunteer):
@@ -37,8 +37,11 @@ def test_self_soft_delete(client, instance, volunteer):
 
 
 def test_datenschutz_route_returns_policy(client, instance):
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
-    settings.privacy_policy_html = '<p>Unsere Datenschutzerklärung</p>'
+    gs = GlobalSettings.query.first()
+    if not gs:
+        gs = GlobalSettings()
+        _db.session.add(gs)
+    gs.datenschutz_template_html = '<p>Unsere Datenschutzerklärung</p>'
     _db.session.commit()
 
     rv = client.get(f'/api/public/{instance.slug}/datenschutz')

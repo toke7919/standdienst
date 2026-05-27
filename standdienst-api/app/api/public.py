@@ -98,10 +98,7 @@ def register(slug):
         return jsonify(error='CAPTCHA-Verifizierung fehlgeschlagen'), 400
 
     gs = get_global_settings()
-    has_policy = bool(
-        (settings and settings.privacy_policy_html)
-        or (gs and gs.datenschutz_template_html)
-    )
+    has_policy = bool(gs and gs.datenschutz_template_html)
     if has_policy and not data.get('consent'):
         return jsonify(error='Datenschutzzustimmung erforderlich'), 400
 
@@ -268,10 +265,6 @@ def datenschutz(slug):
         gs.datenschutz_template_html if gs else None,
         _contact_vars(instance),
     )
-    settings = SiteSettings.query.filter_by(instance_id=instance.id).first()
-    # Fallback auf altes Feld wenn kein Template gesetzt
-    if not html and settings:
-        html = settings.privacy_policy_html
     return jsonify(data={
         'privacy_policy_html': html,
         'instance_name': instance.name,
@@ -365,10 +358,8 @@ def _find_volunteer_by_welcome_token(slug: str, raw_token: str):
 
 
 def _build_instance_info(instance, settings, global_settings) -> dict:
-    has_policy = bool(
-        (settings and settings.privacy_policy_html)
-        or (global_settings and global_settings.datenschutz_template_html)
-    )
+    has_policy = bool(global_settings and global_settings.datenschutz_template_html)
+    deadline = settings.registration_deadline if settings else None
     return {
         'id': instance.id,
         'slug': instance.slug,
@@ -382,6 +373,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'shifts_enabled': settings.shifts_enabled if settings else True,
         'food_donations_enabled': settings.food_donations_enabled if settings else True,
         'registration_open': settings.registration_open if settings else True,
+        'registration_deadline': deadline.isoformat() if deadline else None,
         'has_privacy_policy': has_policy,
         'mail_enabled': is_mail_configured(),
         'impressum_html': _merge_impressum(settings, global_settings),

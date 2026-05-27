@@ -41,7 +41,7 @@ def client(app):
 
 @pytest.fixture(autouse=True)
 def _clean_state(client):
-    """DB-Tabellen und JWT-Cookies nach jedem Test leeren."""
+    """DB-Tabellen, JWT-Cookies und Settings-Cache nach jedem Test leeren."""
     yield
     _db.session.rollback()
     for table in reversed(_db.metadata.sorted_tables):
@@ -50,6 +50,9 @@ def _clean_state(client):
     _db.session.expunge_all()
     # Werkzeug 3.x: cookie store ist _cookies dict
     client._cookies.clear()
+    # Settings-Cache leeren, damit gecachte Werte keine Tests beeinflussen
+    from app.utils.settings_cache import _cache
+    _cache.clear()
 
 
 @pytest.fixture

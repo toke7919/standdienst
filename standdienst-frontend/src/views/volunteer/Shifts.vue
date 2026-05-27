@@ -1,6 +1,18 @@
 <template>
   <div>
-    <h1 class="text-xl font-bold text-ink mb-4">Dienste</h1>
+    <h1 class="text-xl font-bold text-ink mb-2">Dienste</h1>
+
+    <p v-if="registrationDeadline && instanceStore.current?.registration_open"
+       class="text-xs text-muted flex items-center gap-1 mb-4">
+      <ClockIcon class="w-3.5 h-3.5 flex-shrink-0" />
+      Anmeldeschluss: {{ formattedDeadline }}
+    </p>
+    <p v-else-if="registrationDeadline && !instanceStore.current?.registration_open"
+       class="text-xs text-amber-600 flex items-center gap-1 mb-4">
+      <ClockIcon class="w-3.5 h-3.5 flex-shrink-0" />
+      Anmeldeschluss abgelaufen – neue Anmeldungen sind nicht mehr möglich
+    </p>
+    <div v-else class="mb-4" />
 
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-6">
@@ -128,13 +140,24 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { volunteerApi } from '@/api/volunteer'
 import { useUiStore } from '@/stores/ui'
+import { useInstanceStore } from '@/stores/instance'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { ClockIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
+const instanceStore = useInstanceStore()
 const shifts = ref([])
 const loading = ref(true)
 const toggling = ref(null)
+
+const registrationDeadline = computed(() => instanceStore.current?.registration_deadline ?? null)
+const formattedDeadline = computed(() => {
+  if (!registrationDeadline.value) return ''
+  return new Date(registrationDeadline.value).toLocaleDateString('de-DE', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+  })
+})
 let eventSource = null
 
 const grouped = computed(() => {

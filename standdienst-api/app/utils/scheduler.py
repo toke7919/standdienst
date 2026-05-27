@@ -45,12 +45,6 @@ def init_scheduler(app):
         replace_existing=True,
     )
     _scheduler.add_job(
-        lambda: _run_smb_backup(app),
-        CronTrigger(hour=2, minute=30),
-        id='smb_backup',
-        replace_existing=True,
-    )
-    _scheduler.add_job(
         lambda: _purge_old_volunteers(app),
         CronTrigger(day=1, hour=4, minute=0),  # monatlich am 1. um 04:00
         id='purge_volunteers',
@@ -429,33 +423,3 @@ def _send_organizer_digest(app):
             log.exception('Organizer-Digest-Job fehlgeschlagen')
 
 
-def _run_smb_backup(app):
-    if not _redis_lock(app, 'smb_backup', ttl=86000):
-        return
-    with app.app_context():
-        try:
-            from ..models import GlobalSettings
-            gs = GlobalSettings.query.first()
-            if not gs or not gs.smb_enabled:
-                return
-            from ..api.admin.backup import _dump_database, _encrypt_file, _smb_upload
-            import os
-            import tempfile
-            from datetime import timezone
-
-            data = _encrypt_file(_dump_database())
-            ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
-            name = f'standdienst_auto_{ts}.sql.enc'
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.enc') as tmp:
-                tmp.write(data)
-                tmp_path = tmp.name
-
-            try:
-                _smb_upload(gs, tmp_path, name)
-                log.info('Automatisches SMB-Backup: %s', name)
-            finally:
-                os.unlink(tmp_path)
-
-        except Exception:
-            log.exception('Automatisches SMB-Backup fehlgeschlagen')

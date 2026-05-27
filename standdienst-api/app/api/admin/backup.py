@@ -200,7 +200,6 @@ def _extract_sensitive_fields() -> dict:
     gs = GlobalSettings.query.first()
     if gs:
         result['global_settings'] = {
-            'smb_password': gs.smb_password,
             'github_pat': gs.github_pat,
             'backup_password': gs.backup_password,
         }
@@ -215,7 +214,6 @@ def _apply_sensitive_fields(fields: dict) -> None:
     gs = GlobalSettings.query.first()
     if gs and 'global_settings' in fields:
         gf = fields['global_settings']
-        gs.smb_password = gf.get('smb_password')
         gs.github_pat = gf.get('github_pat')
         gs.backup_password = gf.get('backup_password')
         db.session.add(gs)

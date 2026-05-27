@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify
 
 from ..extensions import db, _real_ip
 from ..models import Admin, GlobalSettings, MailSettings
+from ..utils.settings_cache import get_global_settings, invalidate_global
 
 setup_bp = Blueprint('setup', __name__)
 
@@ -49,7 +50,7 @@ def _get_or_create_gs() -> GlobalSettings:
 
 @setup_bp.route('/status', methods=['GET'])
 def status():
-    gs = GlobalSettings.query.first()
+    gs = get_global_settings()
     return jsonify(data={
         'setup_complete': bool(gs and gs.setup_complete),
         'has_admin': Admin.query.count() > 0,
@@ -156,4 +157,5 @@ def finish():
     gs = _get_or_create_gs()
     gs.setup_complete = True
     db.session.commit()
+    invalidate_global()
     return jsonify(message='Setup abgeschlossen – Standdienst ist bereit')
