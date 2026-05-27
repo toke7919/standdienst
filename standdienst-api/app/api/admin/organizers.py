@@ -1,5 +1,6 @@
 from flask import request, g
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from . import admin_bp
 from ...extensions import db
@@ -23,10 +24,9 @@ def list_organizers():
         request.args.get('page', 1, type=int),
         request.args.get('per_page', 50, type=int),
     )
-    q = Organizer.query.order_by(Organizer.name)
-    total = q.count()
-    items = q.paginate(page=page, per_page=per_page, error_out=False).items
-    return paginated(_many.dump(items), total, page, per_page)
+    stmt = select(Organizer).order_by(Organizer.name)
+    pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    return paginated(_many.dump(pagination.items), pagination.total, page, per_page)
 
 
 @admin_bp.route('/organizers', methods=['POST'])
@@ -40,7 +40,7 @@ def create_organizer():
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    if Organizer.query.filter_by(email=data['email'].lower()).first():
+    if db.session.scalars(select(Organizer).filter_by(email=data['email'].lower())).first():
         return error('E-Mail-Adresse bereits vergeben', 409)
 
     instance_ids = data.pop('instance_ids', [])
@@ -80,7 +80,7 @@ def create_organizer():
                 {'name': inst.name, 'volunteer_url': f'{base_url}/{inst.slug}'}
                 for inst in organizer.instances.all()
             ]
-            gs = GlobalSettings.query.first()
+            gs = db.session.scalars(select(GlobalSettings)).first()
             copyright_text = gs.copyright_text if gs else None
             logo_url = get_platform_logo_for_email()
             send_mail(
@@ -106,14 +106,14 @@ def create_organizer():
 @admin_bp.route('/organizers/<int:organizer_id>', methods=['GET'])
 @require_admin
 def get_organizer(organizer_id):
-    organizer = Organizer.query.get_or_404(organizer_id)
+    organizer = db.get_or_404(Organizer, organizer_id)
     return ok(_schema.dump(organizer))
 
 
 @admin_bp.route('/organizers/<int:organizer_id>', methods=['PUT'])
 @require_admin
 def update_organizer(organizer_id):
-    organizer = Organizer.query.get_or_404(organizer_id)
+    organizer = db.get_or_404(Organizer, organizer_id)
     raw = request.get_json() or {}
     if 'password' in raw and not raw['password']:
         del raw['password']
@@ -124,7 +124,7 @@ def update_organizer(organizer_id):
 
     if 'email' in data:
         email = data['email'].lower()
-        existing = Organizer.query.filter_by(email=email).first()
+        existing = db.session.scalars(select(Organizer).filter_by(email=email)).first()
         if existing and existing.id != organizer_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
         organizer.email = email
@@ -149,7 +149,7 @@ def update_organizer(organizer_id):
 @admin_bp.route('/organizers/<int:organizer_id>', methods=['DELETE'])
 @require_admin
 def delete_organizer(organizer_id):
-    organizer = Organizer.query.get_or_404(organizer_id)
+    organizer = db.get_or_404(Organizer, organizer_id)
     _log(f'Organisator gelöscht: {organizer.email}', g.current_user)
     db.session.delete(organizer)
     db.session.commit()
@@ -159,7 +159,7 @@ def delete_organizer(organizer_id):
 @admin_bp.route('/organizers/<int:organizer_id>/resend-invite', methods=['POST'])
 @require_admin
 def resend_organizer_invite(organizer_id):
-    organizer = Organizer.query.get_or_404(organizer_id)
+    organizer = db.get_or_404(Organizer, organizer_id)
     if organizer.has_login:
         return error('Konto bereits aktiv', 400)
     if not organizer.email:
@@ -176,7 +176,7 @@ def resend_organizer_invite(organizer_id):
             {'name': inst.name, 'volunteer_url': f'{base_url}/{inst.slug}'}
             for inst in organizer.instances.all()
         ]
-        gs = GlobalSettings.query.first()
+        gs = db.session.scalars(select(GlobalSettings)).first()
         copyright_text = gs.copyright_text if gs else None
         logo_url = get_platform_logo_for_email()
         send_mail(
@@ -207,7 +207,7 @@ def _assign_instances(organizer, instance_ids: list, instance_admin_ids: list = 
         )
     )
     for iid in instance_ids:
-        instance = Instance.query.get(iid)
+        instance = db.session.get(Instance, iid)
         if instance:
             db.session.execute(
                 organizer_instances.insert().values(
