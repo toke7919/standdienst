@@ -13,7 +13,7 @@
           <div class="flex items-center gap-3">
             <input
               type="color"
-              :value="form.primary_color || '#4f46e5'"
+              :value="form.primary_color || '#a51f2c'"
               class="h-10 w-20 rounded cursor-pointer border border-sand"
               @input="form.primary_color = $event.target.value"
             />

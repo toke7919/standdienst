@@ -30,7 +30,7 @@ def _food_name(don):
 def _primary_color():
     from ...models import SiteSettings
     s = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
-    return s.primary_color if s and s.primary_color else '#4f46e5'
+    return s.primary_color if s and s.primary_color else '#a51f2c'
 
 
 # ---------------------------------------------------------------------------
@@ -310,7 +310,7 @@ def export_ods(slug):
 
     def make_header_style():
         s = Style(name='HeaderStyle', family='table-cell')
-        s.addElement(TableCellProperties(backgroundcolor='#4f46e5'))
+        s.addElement(TableCellProperties(backgroundcolor='#a51f2c'))
         s.addElement(TextProperties(fontweight='bold', color='#ffffff'))
         doc.styles.addElement(s)
         return s
@@ -549,9 +549,9 @@ def export_pdf(slug):
     html_content = f'''
     <html><head><style>
       body {{ font-family: Arial, sans-serif; font-size: 10pt; }}
-      h1 {{ color: #4f46e5; }}
+      h1 {{ color: #a51f2c; }}
       table {{ width: 100%; border-collapse: collapse; }}
-      th {{ background: #4f46e5; color: white; padding: 6px; text-align: left; }}
+      th {{ background: #a51f2c; color: white; padding: 6px; text-align: left; }}
       td {{ padding: 5px; border-bottom: 1px solid #eee; }}
       tr:nth-child(even) td {{ background: #f9f9f9; }}
     </style></head><body>

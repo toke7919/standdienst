@@ -167,7 +167,7 @@ function updateFavicon(logoFilename, primaryColor) {
     meta.name = 'theme-color'
     document.head.appendChild(meta)
   }
-  meta.content = primaryColor || '#4f46e5'
+  meta.content = primaryColor || '#a51f2c'
 
   // iOS Web-App-Titel
   let appTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')

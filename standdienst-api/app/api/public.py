@@ -373,7 +373,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'slug': instance.slug,
         'name': instance.name,
         'title': settings.site_title if settings else instance.name,
-        'primary_color': settings.primary_color if settings else '#4f46e5',
+        'primary_color': settings.primary_color if settings else None,
         'logo_filename': settings.logo_filename if settings else None,
         'site_locked': settings.site_locked if settings else False,
         'lock_message': settings.lock_message if settings else None,

@@ -673,7 +673,7 @@ async function copyQr() {
 
 async function generateQrBlob() {
   const info = instanceInfo.value
-  const primaryColor = info?.primary_color || '#4f46e5'
+  const primaryColor = info?.primary_color || '#a51f2c'
   const logoUrl = info?.logo_filename ? `/uploads/${info.logo_filename}` : '/assets/mark-ticket.svg'
   const title = shareTitle.value
   const showBranding = info?.branding_enabled !== false
