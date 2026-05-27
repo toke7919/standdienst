@@ -17,6 +17,21 @@
 
       <!-- Aktionskacheln (überlappen den Hero) -->
       <div class="relative z-10 -mt-12 space-y-3">
+
+        <!-- Instanz inaktiv -->
+        <div v-if="instanceStore.notFound" class="rounded-xl text-sm text-red-800 bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2">
+          <ExclamationCircleIcon class="w-4 h-4 flex-shrink-0" />
+          <span>Diese Instanz ist derzeit deaktiviert.</span>
+        </div>
+
+        <!-- Anmeldung gesperrt -->
+        <div v-else-if="instanceStore.current?.site_locked || instanceStore.current?.registration_open === false" class="rounded-xl text-sm text-amber-800 bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-2">
+          <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0" />
+          <span>
+            {{ instanceStore.current?.lock_message || 'Die Anmeldung zu neuen Diensten ist derzeit gesperrt.' }}
+          </span>
+        </div>
+
         <RouterLink :to="`/${slug}/shifts`" class="card-interactive block">
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-md bg-primary-100 flex items-center justify-center flex-shrink-0
@@ -54,7 +69,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import { CalendarIcon, ShoppingBagIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, ShoppingBagIcon, ChevronRightIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const router = useRouter()

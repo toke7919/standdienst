@@ -17,9 +17,16 @@
     <div class="flex-1 bg-soft rounded-t-3xl shadow-2xl px-6 pt-8 pb-8 -mt-8 overflow-y-auto">
       <div class="max-w-md mx-auto">
 
-        <div v-if="settings?.site_locked" class="rounded-md text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
+        <div v-if="instanceStore.notFound" class="rounded-md text-center text-red-800 bg-red-50 border border-red-200 p-6">
+          <p class="font-semibold text-base mb-1">Seite nicht gefunden</p>
+          <p class="text-sm text-red-700">Die aufgerufene Seite existiert nicht.</p>
+          <RouterLink to="/" class="inline-block mt-4 text-sm text-red-600 hover:text-red-800 underline">← Zur Startseite</RouterLink>
+        </div>
+
+        <div v-else-if="settings?.site_locked || settings?.registration_open === false" class="rounded-md text-center text-amber-800 bg-amber-50 border border-amber-200 p-5">
           <p class="font-medium">Anmeldung gesperrt</p>
           <p v-if="settings.lock_message" class="text-sm mt-1">{{ settings.lock_message }}</p>
+          <p v-else-if="settings?.registration_open === false" class="text-sm mt-1">Der Anmeldeschluss ist abgelaufen.</p>
         </div>
 
         <div v-else-if="loggedIn" class="rounded-md text-center text-green-800 bg-green-50 border border-green-200 p-5">
