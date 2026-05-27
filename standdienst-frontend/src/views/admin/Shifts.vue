@@ -81,13 +81,13 @@
           </select>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
+          <div class="min-w-0">
             <label class="label">Von</label>
-            <input v-model="form.start_time" type="time" class="input" required />
+            <input v-model="form.start_time" type="time" class="input max-w-full" required />
           </div>
-          <div>
+          <div class="min-w-0">
             <label class="label">Bis</label>
-            <input v-model="form.end_time" type="time" class="input" required />
+            <input v-model="form.end_time" type="time" class="input max-w-full" required />
           </div>
         </div>
         <div>
