@@ -81,13 +81,13 @@
           </select>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="overflow-x-hidden">
+          <div>
             <label class="label">Von</label>
-            <input v-model="form.start_time" type="time" class="input" required />
+            <input v-model="form.start_time" type="time" class="input appearance-none" required />
           </div>
-          <div class="overflow-x-hidden">
+          <div>
             <label class="label">Bis</label>
-            <input v-model="form.end_time" type="time" class="input" required />
+            <input v-model="form.end_time" type="time" class="input appearance-none" required />
           </div>
         </div>
         <div>
