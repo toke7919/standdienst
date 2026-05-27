@@ -1,5 +1,6 @@
 from flask import request, g
 from marshmallow import ValidationError
+from sqlalchemy import select, delete
 
 from . import admin_bp
 from ...extensions import db
@@ -28,13 +29,12 @@ def list_instances():
 
     if g.role == 'organizer':
         instance_ids = [i.id for i in g.current_user.instances.all()]
-        q = Instance.query.filter(Instance.id.in_(instance_ids)).order_by(Instance.name)
+        stmt = select(Instance).filter(Instance.id.in_(instance_ids)).order_by(Instance.name)
     else:
-        q = Instance.query.order_by(Instance.name)
+        stmt = select(Instance).order_by(Instance.name)
 
-    total = q.count()
-    items = q.paginate(page=page, per_page=per_page, error_out=False).items
-    return paginated(_many.dump(items), total, page, per_page)
+    pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    return paginated(_many.dump(pagination.items), pagination.total, page, per_page)
 
 
 @admin_bp.route('/instances', methods=['POST'])
@@ -45,7 +45,7 @@ def create_instance():
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    if Instance.query.filter_by(slug=data['slug']).first():
+    if db.session.scalars(select(Instance).filter_by(slug=data['slug'])).first():
         return error('Slug bereits vergeben', 409)
 
     instance = Instance(**data)
@@ -63,7 +63,7 @@ def create_instance():
 @admin_bp.route('/instances/<int:instance_id>', methods=['GET'])
 @require_admin
 def get_instance(instance_id):
-    instance = Instance.query.get_or_404(instance_id)
+    instance = db.get_or_404(Instance, instance_id)
     return ok(_schema.dump(instance))
 
 
@@ -71,7 +71,7 @@ def get_instance(instance_id):
 @require_admin
 def update_instance(instance_id):
     from ...utils.settings_cache import invalidate_site
-    instance = Instance.query.get_or_404(instance_id)
+    instance = db.get_or_404(Instance, instance_id)
     raw = request.get_json() or {}
     branding_enabled = raw.get('branding_enabled')
     try:
@@ -83,7 +83,7 @@ def update_instance(instance_id):
         setattr(instance, key, value)
 
     if branding_enabled is not None:
-        settings = SiteSettings.query.filter_by(instance_id=instance_id).first()
+        settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=instance_id)).first()
         if settings:
             settings.branding_enabled = bool(branding_enabled)
         invalidate_site(instance_id)
@@ -96,7 +96,7 @@ def update_instance(instance_id):
 @admin_bp.route('/instances/<int:instance_id>', methods=['DELETE'])
 @require_admin
 def delete_instance(instance_id):
-    instance = Instance.query.get_or_404(instance_id)
+    instance = db.get_or_404(Instance, instance_id)
     _log(None, f'Instanz gelöscht: {instance.name} (slug={instance.slug})', g.current_user.email)
     db.session.delete(instance)
     db.session.commit()
@@ -110,17 +110,17 @@ def clear_instance_data(slug):
         return error('Nur Admins können Instanzdaten löschen', 403)
     instance_id = g.instance.id
 
-    stand_ids = db.session.query(Stand.id).filter_by(instance_id=instance_id)
-    shift_ids = db.session.query(Shift.id).filter(Shift.stand_id.in_(stand_ids))
-    ftype_ids = db.session.query(FoodDonationType.id).filter_by(instance_id=instance_id)
+    stand_ids = select(Stand.id).filter_by(instance_id=instance_id)
+    shift_ids = select(Shift.id).filter(Shift.stand_id.in_(stand_ids))
+    ftype_ids = select(FoodDonationType.id).filter_by(instance_id=instance_id)
 
-    Registration.query.filter(Registration.shift_id.in_(shift_ids)).delete(synchronize_session=False)
-    FoodDonation.query.filter(FoodDonation.food_type_id.in_(ftype_ids)).delete(synchronize_session=False)
-    FoodDonationType.query.filter_by(instance_id=instance_id).delete()
-    Shift.query.filter(Shift.stand_id.in_(stand_ids)).delete(synchronize_session=False)
-    Stand.query.filter_by(instance_id=instance_id).delete()
-    EventDate.query.filter_by(instance_id=instance_id).delete()
-    Volunteer.query.filter_by(instance_id=instance_id).delete()
+    db.session.execute(delete(Registration).filter(Registration.shift_id.in_(shift_ids)))
+    db.session.execute(delete(FoodDonation).filter(FoodDonation.food_type_id.in_(ftype_ids)))
+    db.session.execute(delete(FoodDonationType).filter_by(instance_id=instance_id))
+    db.session.execute(delete(Shift).filter(Shift.stand_id.in_(stand_ids)))
+    db.session.execute(delete(Stand).filter_by(instance_id=instance_id))
+    db.session.execute(delete(EventDate).filter_by(instance_id=instance_id))
+    db.session.execute(delete(Volunteer).filter_by(instance_id=instance_id))
 
     _log(instance_id, 'Alle Instanzdaten gelöscht', g.current_user.email)
     db.session.commit()
