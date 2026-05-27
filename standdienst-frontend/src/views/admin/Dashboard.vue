@@ -676,10 +676,11 @@ async function generateQrBlob() {
   const primaryColor = info?.primary_color || '#4f46e5'
   const logoUrl = info?.logo_filename ? `/uploads/${info.logo_filename}` : '/assets/mark-ticket.svg'
   const title = shareTitle.value
+  const showBranding = info?.branding_enabled !== false
 
   const W = 520
   const qrSize = 420
-  const footerH = 72
+  const footerH = showBranding ? 72 : 0
   const pad = 10
 
   const canvas = document.createElement('canvas')
@@ -720,35 +721,37 @@ async function generateQrBlob() {
     ctx.restore()
   } catch { /* Logo optional */ }
 
-  // Farbiger Footer-Streifen
-  const footerY = pad + qrSize + 6
-  const fR = 10
-  ctx.fillStyle = primaryColor
-  ctx.beginPath()
-  ctx.moveTo(pad + fR, footerY)
-  ctx.lineTo(W - pad - fR, footerY)
-  ctx.arcTo(W - pad, footerY, W - pad, footerY + fR, fR)
-  ctx.lineTo(W - pad, footerY + footerH - fR)
-  ctx.arcTo(W - pad, footerY + footerH, W - pad - fR, footerY + footerH, fR)
-  ctx.lineTo(pad + fR, footerY + footerH)
-  ctx.arcTo(pad, footerY + footerH, pad, footerY + footerH - fR, fR)
-  ctx.lineTo(pad, footerY + fR)
-  ctx.arcTo(pad, footerY, pad + fR, footerY, fR)
-  ctx.closePath()
-  ctx.fill()
+  if (showBranding) {
+    // Farbiger Footer-Streifen
+    const footerY = pad + qrSize + 6
+    const fR = 10
+    ctx.fillStyle = primaryColor
+    ctx.beginPath()
+    ctx.moveTo(pad + fR, footerY)
+    ctx.lineTo(W - pad - fR, footerY)
+    ctx.arcTo(W - pad, footerY, W - pad, footerY + fR, fR)
+    ctx.lineTo(W - pad, footerY + footerH - fR)
+    ctx.arcTo(W - pad, footerY + footerH, W - pad - fR, footerY + footerH, fR)
+    ctx.lineTo(pad + fR, footerY + footerH)
+    ctx.arcTo(pad, footerY + footerH, pad, footerY + footerH - fR, fR)
+    ctx.lineTo(pad, footerY + fR)
+    ctx.arcTo(pad, footerY, pad + fR, footerY, fR)
+    ctx.closePath()
+    ctx.fill()
 
-  // Footer-Text
-  const midY = footerY + footerH / 2
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  if (title) {
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 18px system-ui, sans-serif'
-    ctx.fillText(title, W / 2, midY - 10)
+    // Footer-Text
+    const midY = footerY + footerH / 2
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    if (title) {
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 18px system-ui, sans-serif'
+      ctx.fillText(title, W / 2, midY - 10)
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'
+    ctx.font = '13px system-ui, sans-serif'
+    ctx.fillText('Als Helfer eintragen →', W / 2, midY + 12)
   }
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'
-  ctx.font = '13px system-ui, sans-serif'
-  ctx.fillText('Als Helfer eintragen →', W / 2, midY + 12)
 
   return new Promise(res => canvas.toBlob(res, 'image/png'))
 }

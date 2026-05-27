@@ -148,7 +148,8 @@ def register(slug):
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         try:
-            kw = dict(logo_url=logo_url, slug=slug, copyright_text=copyright_text)
+            kw = dict(logo_url=logo_url, slug=slug, copyright_text=copyright_text,
+                      show_branding=settings.branding_enabled if settings else True)
             if primary_color:
                 kw['primary_color'] = primary_color
             send_mail(email, f'Willkommen bei {title}',
@@ -303,7 +304,8 @@ def volunteer_forgot_password(slug):
         global_settings = get_global_settings()
         copyright_text = global_settings.copyright_text if global_settings else None
         try:
-            kw = dict(title=title, slug=slug, logo_url=logo_url, copyright_text=copyright_text)
+            kw = dict(title=title, slug=slug, logo_url=logo_url, copyright_text=copyright_text,
+                      show_branding=settings.branding_enabled if settings else True)
             if primary_color:
                 kw['primary_color'] = primary_color
             send_mail(email, 'Passwort zurücksetzen',
@@ -384,6 +386,7 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'impressum_html': _merge_impressum(settings, global_settings),
         'copyright_text': global_settings.copyright_text if global_settings else '',
         'unregister_deadline_hours': settings.unregister_deadline_hours if settings else None,
+        'branding_enabled': settings.branding_enabled if settings else True,
     }
 
 

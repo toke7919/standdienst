@@ -24,6 +24,7 @@ class SiteSettings(db.Model):
     privacy_policy_html = db.Column(db.Text, nullable=True)
     registration_deadline = db.Column(db.DateTime(timezone=True), nullable=True)
     unregister_deadline_hours = db.Column(db.Integer, nullable=True)
+    branding_enabled = db.Column(db.Boolean, nullable=False, default=True, server_default='true')
     updated_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

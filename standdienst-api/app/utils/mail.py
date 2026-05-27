@@ -145,11 +145,12 @@ def build_email_template(
     copyright_text: str = None,
     opt_out_url: str = None,
     opt_out_label: str = 'Benachrichtigungen deaktivieren',
+    show_branding: bool = True,
 ) -> str:
     """Bettet content_html in ein vollständiges, responsives HTML-E-Mail-Template ein."""
 
     # Plattform-Logo für den Werbe-Footer (immer die helle Variante auf dunklem Grund)
-    _promo_logo = get_platform_logo_for_email() or ''
+    _promo_logo = get_platform_logo_for_email() or '' if show_branding else ''
     if _promo_logo:
         _promo_footer = f"""
           <tr>
@@ -315,6 +316,7 @@ def build_welcome_email(
     logo_url: str = None,
     slug: str = None,
     copyright_text: str = None,
+    show_branding: bool = True,
 ) -> str:
     content = f"""
     <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
@@ -346,6 +348,7 @@ def build_welcome_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+        show_branding=show_branding,
     )
 
 
@@ -361,6 +364,7 @@ def build_reset_email(
     primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
+    show_branding: bool = True,
 ) -> str:
     content = f"""
     <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
@@ -391,6 +395,7 @@ def build_reset_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+        show_branding=show_branding,
     )
 
 
@@ -403,6 +408,7 @@ def build_registration_email(
     primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
+    show_branding: bool = True,
 ) -> str:
     content = f"""
     <p style="margin:0 0 16px;">Hallo <strong>{name}</strong>,</p>
@@ -426,6 +432,7 @@ def build_registration_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+        show_branding=show_branding,
     )
 
 
@@ -475,6 +482,7 @@ def build_organizer_invite_email(
     copyright_text: str = None,
     impressum_url: str = None,
     datenschutz_url: str = None,
+    show_branding: bool = True,
 ) -> str:
     """Einladungsmail für neue Organisatoren ohne Passwort.
 
@@ -540,6 +548,7 @@ def build_organizer_invite_email(
         copyright_text=copyright_text,
         impressum_url=impressum_url,
         datenschutz_url=datenschutz_url,
+        show_branding=show_branding,
     )
 
 
@@ -556,6 +565,7 @@ def build_shift_confirmation_email(
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
+    show_branding: bool = True,
 ) -> str:
     """Bestätigungsmail nach erfolgreicher Dienst-Anmeldung."""
     content = f"""
@@ -602,6 +612,7 @@ def build_shift_confirmation_email(
         copyright_text=copyright_text,
         opt_out_url=opt_out_url,
         opt_out_label='Bestätigungsmails deaktivieren',
+        show_branding=show_branding,
     )
 
 
@@ -614,6 +625,7 @@ def build_daten_auskunft_email(
     primary_color: str = _DEFAULT_PRIMARY,
     logo_url: str = None,
     copyright_text: str = None,
+    show_branding: bool = True,
 ) -> str:
     v = data['volunteer']
     regs = data['registrations']
@@ -713,6 +725,7 @@ def build_daten_auskunft_email(
         primary_color=primary_color,
         logo_url=logo_url,
         copyright_text=copyright_text,
+        show_branding=show_branding,
     )
 
 
@@ -727,6 +740,7 @@ def build_reminder_email(
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
+    show_branding: bool = True,
 ) -> str:
     """Erinnerungsmail: morgen anstehende Dienste und/oder Essensspenden."""
 
@@ -795,6 +809,7 @@ def build_reminder_email(
         copyright_text=copyright_text,
         opt_out_url=opt_out_url,
         opt_out_label='Erinnerungsmails deaktivieren',
+        show_branding=show_branding,
     )
 
 
@@ -811,6 +826,7 @@ def build_organizer_digest_email(
     logo_url: str = None,
     copyright_text: str = None,
     opt_out_url: str = None,
+    show_branding: bool = True,
 ) -> str:
     """Tägliche Zusammenfassung der Aktivitäten für Organisatoren."""
 
@@ -877,4 +893,5 @@ def build_organizer_digest_email(
         copyright_text=copyright_text,
         opt_out_url=opt_out_url,
         opt_out_label='Tägliche Zusammenfassung deaktivieren',
+        show_branding=show_branding,
     )

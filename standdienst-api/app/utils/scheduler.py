@@ -255,7 +255,8 @@ def _send_reminders(app):
                 try:
                     opt_out_url = f'{base_url}/{slug}/profile'
                     kw = dict(slug=slug, logo_url=logo_url,
-                              copyright_text=copyright_text, opt_out_url=opt_out_url)
+                              copyright_text=copyright_text, opt_out_url=opt_out_url,
+                              show_branding=settings.branding_enabled if settings else True)
                     if primary_color:
                         kw['primary_color'] = primary_color
                     send_mail(
@@ -360,7 +361,8 @@ def _send_organizer_digest(app):
                     for f in foods
                     if f.food_type
                 ]
-                kw = dict(logo_url=logo_url, copyright_text=copyright_text, opt_out_url=opt_out_url)
+                kw = dict(logo_url=logo_url, copyright_text=copyright_text, opt_out_url=opt_out_url,
+                          show_branding=settings.branding_enabled if settings else True)
                 if primary_color:
                     kw['primary_color'] = primary_color
                 send_mail(

@@ -267,7 +267,8 @@ def send_dsgvo_auskunft(slug, volunteer_id):
         ],
     }
 
-    kw = dict(slug=g.instance.slug, logo_url=logo_url, copyright_text=copyright_text)
+    kw = dict(slug=g.instance.slug, logo_url=logo_url, copyright_text=copyright_text,
+              show_branding=settings.branding_enabled if settings else True)
     if primary_color:
         kw['primary_color'] = primary_color
     send_mail(
@@ -303,7 +304,8 @@ def _send_welcome_email(volunteer, raw_token):
         primary_color = settings.primary_color if settings else None
         logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
         copyright_text = gs.copyright_text if gs else None
-        kw = dict(logo_url=logo_url, slug=g.instance.slug, copyright_text=copyright_text)
+        kw = dict(logo_url=logo_url, slug=g.instance.slug, copyright_text=copyright_text,
+                  show_branding=settings.branding_enabled if settings else True)
         if primary_color:
             kw['primary_color'] = primary_color
         html = build_welcome_email(volunteer.display_name, title, setup_url, base_url, **kw)

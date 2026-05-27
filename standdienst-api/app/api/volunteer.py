@@ -404,7 +404,8 @@ def meine_daten_export(slug):
     logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
     global_settings = get_global_settings()
     copyright_text = global_settings.copyright_text if global_settings else None
-    kw = dict(slug=g.instance.slug, copyright_text=copyright_text, logo_url=logo_url)
+    kw = dict(slug=g.instance.slug, copyright_text=copyright_text, logo_url=logo_url,
+              show_branding=settings.branding_enabled if settings else True)
     if primary_color:
         kw['primary_color'] = primary_color
     send_mail(v.email, f'Ihre Daten bei {title}',
@@ -532,7 +533,8 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         opt_out_url = f'{base_url}/{instance.slug}/profile'
         stand = Stand.query.get(shift.stand_id)
         kw = dict(slug=instance.slug, logo_url=logo_url,
-                  copyright_text=copyright_text, opt_out_url=opt_out_url)
+                  copyright_text=copyright_text, opt_out_url=opt_out_url,
+                  show_branding=settings.branding_enabled if settings else True)
         if primary_color:
             kw['primary_color'] = primary_color
         html = build_shift_confirmation_email(
