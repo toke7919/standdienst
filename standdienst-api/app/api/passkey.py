@@ -13,6 +13,7 @@ from webauthn.helpers.structs import (
     ResidentKeyRequirement,
     UserVerificationRequirement,
 )
+from sqlalchemy import select
 
 from ..extensions import db, limiter
 from ..models import Admin, Organizer, ActivityLog
@@ -60,8 +61,8 @@ def _rp_config():
 
 def _user_credentials(role, user_id):
     if role == 'admin':
-        return PasskeyCredential.query.filter_by(admin_id=user_id).all()
-    return PasskeyCredential.query.filter_by(organizer_id=user_id).all()
+        return db.session.scalars(select(PasskeyCredential).filter_by(admin_id=user_id)).all()
+    return db.session.scalars(select(PasskeyCredential).filter_by(organizer_id=user_id)).all()
 
 
 def _load_user(identity, role):
@@ -203,7 +204,7 @@ def authenticate_complete():
 
     data = request.get_json() or {}
     cred_id = data.get('id', '')
-    pk = PasskeyCredential.query.filter_by(credential_id=cred_id).first()
+    pk = db.session.scalars(select(PasskeyCredential).filter_by(credential_id=cred_id)).first()
     if not pk:
         return jsonify(error='Passkey nicht gefunden'), 401
 
