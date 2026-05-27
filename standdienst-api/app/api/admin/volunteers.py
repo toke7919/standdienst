@@ -1,6 +1,6 @@
 from flask import request, g, current_app
 from marshmallow import ValidationError
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from . import admin_bp
 from ...extensions import db
@@ -25,13 +25,14 @@ def list_volunteers(slug):
     )
     include_deleted = request.args.get('include_deleted', 'false').lower() == 'true'
 
-    q = Volunteer.query.filter_by(instance_id=g.instance.id)
+    stmt = select(Volunteer).filter_by(instance_id=g.instance.id)
     if not include_deleted:
-        q = q.filter(Volunteer.deleted_at.is_(None))
-    q = q.order_by(Volunteer.first_name, Volunteer.last_name, Volunteer.name)
+        stmt = stmt.filter(Volunteer.deleted_at.is_(None))
+    stmt = stmt.order_by(Volunteer.first_name, Volunteer.last_name, Volunteer.name)
 
-    total = q.count()
-    items = q.paginate(page=page, per_page=per_page, error_out=False).items
+    pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    items = pagination.items
+    total = pagination.total
 
     vol_ids = [v.id for v in items]
     reg_counts = dict(
@@ -61,7 +62,7 @@ def create_volunteer(slug):
         return error('Validierungsfehler', 422, e.messages)
 
     email = (data.get('email') or '').strip().lower() or None
-    if email and Volunteer.query.filter_by(instance_id=g.instance.id, email=email).first():
+    if email and db.session.scalars(select(Volunteer).filter_by(instance_id=g.instance.id, email=email)).first():
         return error('E-Mail-Adresse bereits vergeben', 409)
 
     first_name = data['first_name'].strip()
@@ -156,7 +157,7 @@ def update_volunteer(slug, volunteer_id):
 
     if 'email' in data:
         email = (data['email'] or '').strip().lower() or None
-        existing = Volunteer.query.filter_by(instance_id=g.instance.id, email=email).first()
+        existing = db.session.scalars(select(Volunteer).filter_by(instance_id=g.instance.id, email=email)).first()
         if existing and existing.id != volunteer_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
         volunteer.email = email
@@ -205,7 +206,7 @@ def permanent_delete_volunteer(slug, volunteer_id):
     """Endgültiges Löschen – nur Global-Admins. Für DSGVO-Löschanfragen."""
     from flask import g as _g
     from ...models import Instance
-    instance  = Instance.query.filter_by(slug=slug).first_or_404()
+    instance  = db.first_or_404(select(Instance).filter_by(slug=slug))
     volunteer = _get_or_404(volunteer_id, instance.id)
     reg_count  = volunteer.registrations.count()
     food_count = volunteer.food_donations.count()
@@ -236,8 +237,8 @@ def send_dsgvo_auskunft(slug, volunteer_id):
     if not is_mail_configured():
         return error('E-Mail nicht konfiguriert', 503)
 
-    gs = GlobalSettings.query.first()
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
+    settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=g.instance.id)).first()
     base_url = current_app.config.get('FRONTEND_URL', '')
     title = (settings.site_title if settings else None) or g.instance.name
     primary_color = settings.primary_color if settings else None
@@ -302,7 +303,7 @@ def reset_volunteer_password(slug, volunteer_id):
 def _send_welcome_email(volunteer, raw_token):
     try:
         from ...utils.settings_cache import get_site_settings
-        gs = GlobalSettings.query.first()
+        gs = db.session.scalars(select(GlobalSettings)).first()
         base_url = (gs.base_url or '').rstrip('/') if gs else ''
         setup_url = f'{base_url}/{g.instance.slug}/welcome/{raw_token}'
         settings = get_site_settings(g.instance.id)
@@ -322,7 +323,7 @@ def _send_welcome_email(volunteer, raw_token):
 
 def _get_or_404(volunteer_id, instance_id):
     from flask import abort
-    volunteer = Volunteer.query.filter_by(id=volunteer_id, instance_id=instance_id).first()
+    volunteer = db.session.scalars(select(Volunteer).filter_by(id=volunteer_id, instance_id=instance_id)).first()
     if not volunteer:
         abort(404)
     return volunteer
