@@ -33,6 +33,33 @@ def _primary_color():
     return s.primary_color if s and s.primary_color else '#a51f2c'
 
 
+def _pdf_branding_footer() -> str:
+    """Standdienst-Branding-Footer für PDF-Exporte. Leer wenn branding_enabled=False."""
+    from ...models import SiteSettings
+    from ...utils.mail import get_platform_logo_for_email
+    s = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    if s is not None and not s.branding_enabled:
+        return ''
+    logo = get_platform_logo_for_email() or ''
+    logo_tag = (
+        f'<img src="{logo}" alt="Standdienst"'
+        f' style="height:32px;display:block;margin:0 auto 10px;">'
+        if logo else ''
+    )
+    return f'''
+    <div style="margin-top:40px;padding:20px 32px 18px;background:#1a1311;
+                border-radius:10px;text-align:center;">
+      {logo_tag}
+      <p style="margin:0 0 4px;color:#fdf6e9;font-size:9pt;font-weight:700;
+                letter-spacing:-0.1px;">
+        Helfer koordinieren &ndash; ganz ohne Stress.
+      </p>
+      <p style="margin:0;color:#c8b8a2;font-size:8pt;">
+        Erstellt mit Standdienst
+      </p>
+    </div>'''
+
+
 # ---------------------------------------------------------------------------
 # CSV – Shifts/Registrations
 # ---------------------------------------------------------------------------
@@ -422,6 +449,7 @@ def export_pdf_dienste(slug):
       <h1>Dienstplan – {g.instance.name}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
+      {_pdf_branding_footer()}
     </body></html>'''
 
     buf = io.BytesIO()
@@ -507,6 +535,7 @@ def export_pdf_essen(slug):
       <h1>Essensspenden – {g.instance.name}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
+      {_pdf_branding_footer()}
     </body></html>'''
 
     buf = io.BytesIO()
@@ -546,12 +575,13 @@ def export_pdf(slug):
                                    shift.time_range, _vol_name(reg),
                                    v.email or '' if v else '')
 
+    color = _primary_color()
     html_content = f'''
     <html><head><style>
-      body {{ font-family: Arial, sans-serif; font-size: 10pt; }}
-      h1 {{ color: #a51f2c; }}
+      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
+      h1 {{ color: {color}; }}
       table {{ width: 100%; border-collapse: collapse; }}
-      th {{ background: #a51f2c; color: white; padding: 6px; text-align: left; }}
+      th {{ background: {color}; color: white; padding: 6px; text-align: left; }}
       td {{ padding: 5px; border-bottom: 1px solid #eee; }}
       tr:nth-child(even) td {{ background: #f9f9f9; }}
     </style></head><body>
@@ -561,6 +591,7 @@ def export_pdf(slug):
         <tr><th>Stand</th><th>Datum</th><th>Uhrzeit</th><th>Helfer</th><th>E-Mail</th></tr>
         {rows_html}
       </table>
+      {_pdf_branding_footer()}
     </body></html>'''
 
     buf = io.BytesIO()
