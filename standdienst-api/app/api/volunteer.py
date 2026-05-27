@@ -186,7 +186,8 @@ def my_registrations_ical(slug):
     cal.add('version', '2.0')
     cal.add('x-wr-calname', f'Meine Dienste – {g.instance.name}')
 
-    tz = pytz.timezone('Europe/Berlin')
+    gs = get_global_settings()
+    tz = pytz.timezone(gs.timezone if gs and gs.timezone else 'Europe/Berlin')
     regs = Registration.query.filter_by(volunteer_id=g.current_user.id).all()
 
     for reg in regs:

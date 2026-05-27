@@ -114,3 +114,26 @@ def test_volunteer_reset_password_expired_token(client, instance, volunteer):
     rv = client.post(f'/api/public/{instance.slug}/reset-password',
                      json={'token': raw, 'password': 'NeuesPasswort1!'})
     assert rv.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# iCal-Export
+# ---------------------------------------------------------------------------
+
+def test_ical_export_responds_ok(client, instance, volunteer):
+    """iCal-Export muss 200 zurückgeben."""
+    from app.models import GlobalSettings, Admin
+    admin = Admin(email='icaladmin@test.de', is_primary=True)
+    admin.set_password('TestPass1!')
+    _db.session.add(admin)
+    gs = GlobalSettings(setup_complete=True, timezone='America/New_York')
+    _db.session.add(gs)
+    _db.session.commit()
+
+    rv = client.post('/api/auth/volunteer-login',
+                     json={'slug': instance.slug, 'email': volunteer.email, 'password': 'TestPass1!'})
+    assert rv.status_code == 200
+
+    rv = client.get(f'/api/volunteer/{instance.slug}/my-registrations/ical')
+    assert rv.status_code == 200
+    assert b'VCALENDAR' in rv.data
