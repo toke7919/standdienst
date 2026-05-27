@@ -10,7 +10,7 @@
       />
       <img v-else src="/assets/mark-ticket.svg" class="w-16 h-16 mx-auto mb-4 drop-shadow-lg" alt="Standdienst" />
       <h1 class="text-2xl font-bold tracking-tight">{{ settings?.site_title || 'Standdienst' }}</h1>
-      <p class="text-primary-200 mt-1.5 text-sm">Trag dich als Helfer ein</p>
+      <p class="text-white/90 mt-2 text-base font-medium tracking-wide">Trag dich als Helfer ein</p>
     </div>
 
     <!-- Formular -->
@@ -45,7 +45,7 @@
                    placeholder="z.B. maria@beispiel.de" />
             <p class="text-xs text-muted mt-1">
               Optional – damit kannst du dich später wieder anmelden und Erinnerungen erhalten.
-              Ohne E-Mail geht's genauso.
+              Ohne E-Mail geht's auch.
             </p>
           </div>
 
