@@ -1,0 +1,20 @@
+[Unit]
+Description=Standdienst v2 – Scheduler (APScheduler)
+After=network.target postgresql.service redis-server.service standdienst.service
+Requires=standdienst.service
+
+[Service]
+Type=simple
+User=standdienst
+WorkingDirectory=INSTALL_DIR_PLACEHOLDER
+EnvironmentFile=INSTALL_DIR_PLACEHOLDER/.env
+Environment=HOME=INSTALL_DIR_PLACEHOLDER
+ExecStart=INSTALL_DIR_PLACEHOLDER/.venv/bin/python scheduler_worker.py
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=standdienst-scheduler
+
+[Install]
+WantedBy=multi-user.target

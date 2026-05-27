@@ -214,6 +214,7 @@ def apply_update():
 
         systemctl = shutil.which('systemctl') or 'systemctl'
         _run_step(['sudo', systemctl, 'restart', 'standdienst'], None, 'restart', log)
+        _run_step(['sudo', systemctl, 'restart', 'standdienst-scheduler'], None, 'restart-scheduler', log)
 
         return ok({'log': log, 'applied_at': datetime.now(timezone.utc).isoformat()},
                   'Update angewendet – Dienst wird neu gestartet')

@@ -276,9 +276,19 @@ systemctl enable --quiet standdienst
 systemctl restart standdienst
 info "standdienst.service aktiviert und gestartet"
 
-# Sudoers: Service-User darf den eigenen Dienst ohne Passwort neu starten
+# Scheduler-Service (separater Prozess, läuft Jobs genau einmal)
+sed "s|INSTALL_DIR_PLACEHOLDER|$INSTALL_DIR|g" \
+    "$API_DIR/standdienst-scheduler.service" \
+    > /etc/systemd/system/standdienst-scheduler.service
+systemctl daemon-reload
+systemctl enable --quiet standdienst-scheduler
+systemctl restart standdienst-scheduler
+info "standdienst-scheduler.service aktiviert und gestartet"
+
+# Sudoers: Service-User darf beide Dienste ohne Passwort neu starten
 SYSTEMCTL_PATH="$(command -v systemctl)"
-echo "${SERVICE_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL_PATH} restart standdienst" \
+printf '%s ALL=(ALL) NOPASSWD: %s restart standdienst, %s restart standdienst-scheduler\n' \
+    "$SERVICE_USER" "$SYSTEMCTL_PATH" "$SYSTEMCTL_PATH" \
     > /etc/sudoers.d/standdienst-restart
 chmod 440 /etc/sudoers.d/standdienst-restart
 info "Sudoers-Eintrag angelegt (${SYSTEMCTL_PATH})"
@@ -343,7 +353,8 @@ echo ""
 echo "  App läuft intern auf Port : ${APP_PORT}"
 echo "  Nginx-Proxy               : Port 80"
 echo "  Erreichbar unter          : http://${SERVER_IP}"
-echo "  Logs                      : journalctl -u standdienst -f"
+echo "  Logs (API)                : journalctl -u standdienst -f"
+echo "  Logs (Scheduler)          : journalctl -u standdienst-scheduler -f"
 echo ""
 echo -e "  ${YELLOW}Nächster Schritt:${NC}"
 echo -e "  Öffne ${CYAN}http://${SERVER_IP}/setup${NC} im Browser und"
