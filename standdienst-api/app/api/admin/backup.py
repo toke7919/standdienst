@@ -372,7 +372,8 @@ def _restore_pg(sql_bytes: bytes) -> None:
 
     # TRUNCATE + INSERT in einer einzigen Transaktion: bei Fehler vollständiges Rollback,
     # damit die DB nicht halb-leer zurückbleibt.
-    tables = [t.name for t in reversed(db.metadata.sorted_tables)]
+    # alembic_version wird von Alembic verwaltet und ist nicht in db.metadata – explizit hinzufügen.
+    tables = [t.name for t in reversed(db.metadata.sorted_tables)] + ['alembic_version']
     truncate = 'TRUNCATE TABLE ' + ', '.join(f'"{t}"' for t in tables) + ' RESTART IDENTITY CASCADE;\n'
 
     full_sql = 'BEGIN;\n' + truncate + clean_dump + '\nCOMMIT;\n'
