@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g, current_app, Response, stream_with_context
 from flask_jwt_extended import create_access_token, create_refresh_token
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from ..extensions import db, limiter
 from ..models import (
@@ -84,28 +85,27 @@ def list_shifts(slug):
     if settings and not settings.shifts_enabled:
         return error('Dienste sind deaktiviert', 403)
 
-    dates = EventDate.query.filter_by(instance_id=instance.id).order_by(EventDate.date).all()
-    stands = Stand.query.filter_by(instance_id=instance.id).order_by(Stand.sort_order).all()
+    dates = db.session.scalars(select(EventDate).filter_by(instance_id=instance.id).order_by(EventDate.date)).all()
+    stands = db.session.scalars(select(Stand).filter_by(instance_id=instance.id).order_by(Stand.sort_order)).all()
     if not dates or not stands:
         return ok([])
 
     date_ids = [d.id for d in dates]
     stand_ids = [s.id for s in stands]
 
-    shifts = (Shift.query
+    shifts = db.session.scalars(
+        select(Shift)
         .filter(Shift.stand_id.in_(stand_ids), Shift.event_date_id.in_(date_ids))
         .options(joinedload(Shift.stand), joinedload(Shift.event_date))
         .order_by(Shift.event_date_id, Shift.stand_id, Shift.start_time)
-        .all()
-    )
+    ).all()
 
     shift_ids = [sh.id for sh in shifts]
-    regs_all = (
-        Registration.query
+    regs_all = db.session.scalars(
+        select(Registration)
         .filter(Registration.shift_id.in_(shift_ids))
         .options(joinedload(Registration.volunteer))
-        .all()
-    ) if shift_ids else []
+    ).all() if shift_ids else []
 
     regs_by_shift: dict = defaultdict(list)
     for reg in regs_all:
@@ -150,16 +150,16 @@ def register_shift(slug, shift_id):
         return error('Anmeldeschluss ist überschritten', 403)
 
     # Row-Level Lock: sperrt Dienst-Zeile für Dauer der Transaktion
-    shift = Shift.query.with_for_update().get(shift_id)
+    shift = db.session.scalar(select(Shift).where(Shift.id == shift_id).with_for_update())
     if not shift:
         return error('Dienst nicht gefunden', 404)
-    stand = Stand.query.get(shift.stand_id)
+    stand = db.session.get(Stand, shift.stand_id)
     if not stand or stand.instance_id != g.instance.id:
         return error('Dienst nicht gefunden', 404)
 
     if shift.is_full:
         return error('Dienst ist bereits voll', 409)
-    if Registration.query.filter_by(volunteer_id=g.current_user.id, shift_id=shift_id).first():
+    if db.session.scalars(select(Registration).filter_by(volunteer_id=g.current_user.id, shift_id=shift_id)).first():
         return error('Bereits eingetragen', 409)
     if _has_time_overlap(g.current_user.id, shift):
         return error('Zeitüberschneidung mit einem anderen Dienst', 409)
@@ -177,13 +177,13 @@ def register_shift(slug, shift_id):
 @limiter.limit('30 per minute')
 @require_volunteer
 def unregister_shift(slug, shift_id):
-    reg = Registration.query.filter_by(
-        volunteer_id=g.current_user.id, shift_id=shift_id
+    reg = db.session.scalars(
+        select(Registration).filter_by(volunteer_id=g.current_user.id, shift_id=shift_id)
     ).first()
     if not reg:
         return error('Nicht eingetragen', 404)
 
-    shift = Shift.query.get(shift_id)
+    shift = db.session.get(Shift, shift_id)
     settings = get_site_settings(g.instance.id)
     if shift and settings and settings.unregister_deadline_hours:
         deadline_err = _unregister_deadline_error(shift, settings.unregister_deadline_hours)
@@ -201,7 +201,7 @@ def unregister_shift(slug, shift_id):
 @volunteer_bp.route('/<slug>/my-registrations', methods=['GET'])
 @require_volunteer
 def my_registrations(slug):
-    regs = Registration.query.filter_by(volunteer_id=g.current_user.id).all()
+    regs = db.session.scalars(select(Registration).filter_by(volunteer_id=g.current_user.id)).all()
     return ok(_reg_schema.dump(regs))
 
 
@@ -222,15 +222,14 @@ def my_registrations_ical(slug):
     from sqlalchemy.orm import joinedload
     gs = get_global_settings()
     tz = pytz.timezone(gs.timezone if gs and gs.timezone else 'Europe/Berlin')
-    regs = (
-        Registration.query
+    regs = db.session.scalars(
+        select(Registration)
         .filter_by(volunteer_id=g.current_user.id)
         .options(
             joinedload(Registration.shift).joinedload(Shift.stand),
             joinedload(Registration.shift).joinedload(Shift.event_date),
         )
-        .all()
-    )
+    ).all()
 
     for reg in regs:
         shift = reg.shift
@@ -261,7 +260,7 @@ def list_food_types(slug):
     if settings and not settings.food_donations_enabled:
         return error('Essensspenden sind deaktiviert', 403)
 
-    types = FoodDonationType.query.filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name).all()
+    types = db.session.scalars(select(FoodDonationType).filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name)).all()
     return ok([{
         'id': t.id,
         'name': t.name,
@@ -282,17 +281,18 @@ def list_food_donations(slug):
     if settings and not settings.food_donations_enabled:
         return error('Essensspenden sind deaktiviert', 403)
 
-    types = FoodDonationType.query.filter_by(
-        instance_id=g.instance.id
-    ).order_by(FoodDonationType.name).all()
+    types = db.session.scalars(
+        select(FoodDonationType)
+        .filter_by(instance_id=g.instance.id)
+        .order_by(FoodDonationType.name)
+    ).all()
 
     type_ids = [t.id for t in types]
-    donations_all = (
-        FoodDonation.query
+    donations_all = db.session.scalars(
+        select(FoodDonation)
         .filter(FoodDonation.food_type_id.in_(type_ids))
         .options(joinedload(FoodDonation.volunteer))
-        .all()
-    ) if type_ids else []
+    ).all() if type_ids else []
 
     donations_by_type: dict = defaultdict(list)
     for d in donations_all:
@@ -338,8 +338,8 @@ def create_food_donation(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    food_type = FoodDonationType.query.filter_by(
-        id=data['food_type_id'], instance_id=g.instance.id
+    food_type = db.session.scalars(
+        select(FoodDonationType).filter_by(id=data['food_type_id'], instance_id=g.instance.id)
     ).first()
     if not food_type:
         return error('Essenspendenart nicht gefunden', 404)
@@ -355,8 +355,8 @@ def create_food_donation(slug):
 @volunteer_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['DELETE'])
 @require_volunteer
 def delete_food_donation(slug, donation_id):
-    donation = FoodDonation.query.filter_by(
-        id=donation_id, volunteer_id=g.current_user.id
+    donation = db.session.scalars(
+        select(FoodDonation).filter_by(id=donation_id, volunteer_id=g.current_user.id)
     ).first()
     if not donation:
         return error('Essensspende nicht gefunden', 404)
@@ -513,16 +513,15 @@ def _build_volunteer_export(v) -> dict:
 
 def _has_time_overlap(volunteer_id: int, new_shift: Shift) -> bool:
     """Prüft ob Volunteer am selben Veranstaltungstag einen überlappenden Dienst hat."""
-    existing = (
-        Registration.query
+    existing = db.session.scalars(
+        select(Registration)
         .join(Shift, Registration.shift_id == Shift.id)
         .filter(
             Registration.volunteer_id == volunteer_id,
             Shift.event_date_id == new_shift.event_date_id,
             Shift.id != new_shift.id,
         )
-        .all()
-    )
+    ).all()
     for reg in existing:
         s = reg.shift
         if s.start_time < new_shift.end_time and new_shift.start_time < s.end_time:
@@ -548,7 +547,7 @@ def _shift_detail(shift) -> str:
     """Lesbare Beschreibung eines Dienstes für das Protokoll."""
     if not shift:
         return ''
-    stand = Stand.query.get(shift.stand_id)
+    stand = db.session.get(Stand, shift.stand_id)
     date  = shift.event_date
     stand_name = stand.name if stand else '?'
     date_str   = date.date.strftime('%d.%m.%Y') if date else '?'
@@ -590,7 +589,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         copyright_text = global_settings.copyright_text if global_settings else None
         my_shifts_url = f'{base_url}/{instance.slug}/my-shifts'
         opt_out_url = f'{base_url}/{instance.slug}/profile'
-        stand = Stand.query.get(shift.stand_id)
+        stand = db.session.get(Stand, shift.stand_id)
         kw = dict(slug=instance.slug, logo_url=logo_url,
                   copyright_text=copyright_text, opt_out_url=opt_out_url,
                   show_branding=settings.branding_enabled if settings else True)
