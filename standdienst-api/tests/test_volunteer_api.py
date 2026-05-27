@@ -137,3 +137,44 @@ def test_ical_export_responds_ok(client, instance, volunteer):
     rv = client.get(f'/api/volunteer/{instance.slug}/my-registrations/ical')
     assert rv.status_code == 200
     assert b'VCALENDAR' in rv.data
+
+
+def test_list_shifts_counts_are_correct(client, instance, volunteer):
+    """current_count/spots_left/is_full müssen stimmen."""
+    from app.models import Stand, EventDate, Shift, Registration, Admin, GlobalSettings
+    from app.extensions import db as _db
+    from datetime import date, time
+
+    admin = Admin(email='shiftsadmin@test.de', is_primary=True)
+    admin.set_password('TestPass1!')
+    _db.session.add(admin)
+    gs = GlobalSettings(setup_complete=True)
+    _db.session.add(gs)
+
+    stand = Stand(instance_id=instance.id, name='Stand A')
+    _db.session.add(stand)
+    _db.session.flush()
+    ev = EventDate(instance_id=instance.id, date=date(2026, 6, 1))
+    _db.session.add(ev)
+    _db.session.flush()
+    shift = Shift(stand_id=stand.id, event_date_id=ev.id,
+                  start_time=time(10, 0), end_time=time(12, 0), max_volunteers=2)
+    _db.session.add(shift)
+    _db.session.flush()
+    reg = Registration(volunteer_id=volunteer.id, shift_id=shift.id)
+    _db.session.add(reg)
+    _db.session.commit()
+
+    rv = client.post('/api/auth/volunteer-login',
+                     json={'slug': instance.slug, 'email': volunteer.email, 'password': 'TestPass1!'})
+    assert rv.status_code == 200
+
+    rv = client.get(f'/api/volunteer/{instance.slug}/shifts')
+    assert rv.status_code == 200
+    shifts = rv.get_json()['data']
+    assert len(shifts) == 1
+    s = shifts[0]
+    assert s['current_count'] == 1
+    assert s['spots_left'] == 1
+    assert s['is_full'] is False
+    assert s['is_registered'] is True

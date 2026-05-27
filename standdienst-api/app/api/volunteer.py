@@ -76,32 +76,65 @@ def shift_events(slug):
 @volunteer_bp.route('/<slug>/shifts', methods=['GET'])
 @require_volunteer
 def list_shifts(slug):
+    from collections import defaultdict
+    from sqlalchemy.orm import joinedload
+
     instance = g.instance
     settings = get_site_settings(instance.id)
     if settings and not settings.shifts_enabled:
         return error('Dienste sind deaktiviert', 403)
 
     dates = EventDate.query.filter_by(instance_id=instance.id).order_by(EventDate.date).all()
+    stands = Stand.query.filter_by(instance_id=instance.id).order_by(Stand.sort_order).all()
+    if not dates or not stands:
+        return ok([])
+
+    date_ids = [d.id for d in dates]
+    stand_ids = [s.id for s in stands]
+
+    shifts = (Shift.query
+        .filter(Shift.stand_id.in_(stand_ids), Shift.event_date_id.in_(date_ids))
+        .options(joinedload(Shift.stand), joinedload(Shift.event_date))
+        .order_by(Shift.event_date_id, Shift.stand_id, Shift.start_time)
+        .all()
+    )
+
+    shift_ids = [sh.id for sh in shifts]
+    regs_all = (
+        Registration.query
+        .filter(Registration.shift_id.in_(shift_ids))
+        .options(joinedload(Registration.volunteer))
+        .all()
+    ) if shift_ids else []
+
+    regs_by_shift: dict = defaultdict(list)
+    for reg in regs_all:
+        regs_by_shift[reg.shift_id].append(reg)
+
+    shifts_by_date_stand: dict = defaultdict(list)
+    for shift in shifts:
+        shifts_by_date_stand[(shift.event_date_id, shift.stand_id)].append(shift)
+
+    vol_id = g.current_user.id
+    schema = ShiftSchema()
     result = []
     for date in dates:
-        stands = Stand.query.filter_by(instance_id=instance.id).order_by(Stand.sort_order).all()
         for stand in stands:
-            shifts = Shift.query.filter_by(
-                stand_id=stand.id, event_date_id=date.id
-            ).order_by(Shift.start_time).all()
-            for shift in shifts:
-                regs = Registration.query.filter_by(shift_id=shift.id).all()
-                is_registered = any(r.volunteer_id == g.current_user.id for r in regs)
-                registered_names = [
+            for shift in shifts_by_date_stand[(date.id, stand.id)]:
+                regs = regs_by_shift[shift.id]
+                reg_count = len(regs)
+                dumped = schema.dump(shift)
+                # Überschreibe dynamische Properties mit bereits geladenen Werten
+                dumped['current_count'] = reg_count
+                dumped['is_full'] = reg_count >= shift.max_volunteers
+                dumped['spots_left'] = max(0, shift.max_volunteers - reg_count)
+                dumped['is_registered'] = any(r.volunteer_id == vol_id for r in regs)
+                dumped['registered_names'] = [
                     r.volunteer.name if r.volunteer else r.guest_name
                     for r in regs
                     if (r.volunteer and not r.volunteer.is_deleted) or r.guest_name
                 ]
-                result.append({
-                    **ShiftSchema().dump(shift),
-                    'is_registered': is_registered,
-                    'registered_names': registered_names,
-                })
+                result.append(dumped)
     return ok(result)
 
 
@@ -186,9 +219,18 @@ def my_registrations_ical(slug):
     cal.add('version', '2.0')
     cal.add('x-wr-calname', f'Meine Dienste – {g.instance.name}')
 
+    from sqlalchemy.orm import joinedload
     gs = get_global_settings()
     tz = pytz.timezone(gs.timezone if gs and gs.timezone else 'Europe/Berlin')
-    regs = Registration.query.filter_by(volunteer_id=g.current_user.id).all()
+    regs = (
+        Registration.query
+        .filter_by(volunteer_id=g.current_user.id)
+        .options(
+            joinedload(Registration.shift).joinedload(Shift.stand),
+            joinedload(Registration.shift).joinedload(Shift.event_date),
+        )
+        .all()
+    )
 
     for reg in regs:
         shift = reg.shift
@@ -233,17 +275,33 @@ def list_food_types(slug):
 @volunteer_bp.route('/<slug>/food-donations', methods=['GET'])
 @require_volunteer
 def list_food_donations(slug):
+    from collections import defaultdict
+    from sqlalchemy.orm import joinedload
+
     settings = get_site_settings(g.instance.id)
     if settings and not settings.food_donations_enabled:
         return error('Essensspenden sind deaktiviert', 403)
 
-    # Alle Spenden der Instanz, gruppiert nach Essensart
-    types = FoodDonationType.query.filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name).all()
+    types = FoodDonationType.query.filter_by(
+        instance_id=g.instance.id
+    ).order_by(FoodDonationType.name).all()
+
+    type_ids = [t.id for t in types]
+    donations_all = (
+        FoodDonation.query
+        .filter(FoodDonation.food_type_id.in_(type_ids))
+        .options(joinedload(FoodDonation.volunteer))
+        .all()
+    ) if type_ids else []
+
+    donations_by_type: dict = defaultdict(list)
+    for d in donations_all:
+        donations_by_type[d.food_type_id].append(d)
+
     result = []
     for t in types:
-        donations = FoodDonation.query.filter_by(food_type_id=t.id).all()
         visible = []
-        for d in donations:
+        for d in donations_by_type[t.id]:
             if d.volunteer_id is not None:
                 if not d.volunteer or d.volunteer.is_deleted:
                     continue
