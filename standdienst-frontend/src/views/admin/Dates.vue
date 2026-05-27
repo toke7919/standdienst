@@ -35,7 +35,7 @@
       <form @submit.prevent="save" class="space-y-4">
         <div>
           <label class="label">Datum</label>
-          <input v-model="form.date" type="date" class="input" required />
+          <input v-model="form.date" type="date" class="input appearance-none" required />
         </div>
         <div>
           <label class="label">Beschriftung (optional)</label>
