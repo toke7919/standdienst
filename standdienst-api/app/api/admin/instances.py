@@ -10,7 +10,7 @@ from ...models import (
 )
 from ...schemas.instance import InstanceSchema, InstanceCreateSchema, InstanceUpdateSchema
 from ...utils.auth import require_admin, require_staff
-from ...utils.responses import ok, created, no_content, error, paginated
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
 
 _schema = InstanceSchema()
 _many = InstanceSchema(many=True)
@@ -21,8 +21,10 @@ _update = InstanceUpdateSchema()
 @admin_bp.route('/instances', methods=['GET'])
 @require_staff
 def list_instances():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 20, type=int),
+    )
 
     if g.role == 'organizer':
         instance_ids = [i.id for i in g.current_user.instances.all()]

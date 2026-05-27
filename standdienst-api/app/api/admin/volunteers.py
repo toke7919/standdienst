@@ -8,7 +8,7 @@ from ...models import Volunteer, ActivityLog, GlobalSettings, SiteSettings, Regi
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
 from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
 from ...utils.mail import is_mail_configured, send_mail, get_effective_logo_for_email, build_welcome_email, build_daten_auskunft_email
-from ...utils.responses import ok, created, no_content, error, paginated
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
 
 _schema = VolunteerSchema()
 _many = VolunteerSchema(many=True)
@@ -19,8 +19,10 @@ _update = VolunteerUpdateSchema()
 @admin_bp.route('/<slug>/volunteers', methods=['GET'])
 @require_staff
 def list_volunteers(slug):
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 50, type=int),
+    )
     include_deleted = request.args.get('include_deleted', 'false').lower() == 'true'
 
     q = Volunteer.query.filter_by(instance_id=g.instance.id)

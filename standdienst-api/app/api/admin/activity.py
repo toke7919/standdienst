@@ -4,7 +4,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import ActivityLog, Instance
 from ...utils.auth import require_admin, require_instance_admin
-from ...utils.responses import paginated
+from ...utils.responses import paginated, clamp_pagination
 
 _SORT_COLUMNS = {
     'timestamp':      ActivityLog.timestamp,
@@ -48,8 +48,10 @@ def _serialize(entry, include_ip: bool = True, instance_map: dict | None = None)
 @admin_bp.route('/activity', methods=['GET'])
 @require_admin
 def global_activity():
-    page        = request.args.get('page', 1, type=int)
-    per_page    = request.args.get('per_page', 50, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 50, type=int),
+    )
     sort        = request.args.get('sort', 'timestamp')
     direction   = request.args.get('dir', 'desc')
     event_types = request.args.get('event_types')
@@ -75,8 +77,10 @@ def global_activity():
 @admin_bp.route('/<slug>/activity', methods=['GET'])
 @require_instance_admin
 def instance_activity(slug):
-    page        = request.args.get('page', 1, type=int)
-    per_page    = request.args.get('per_page', 50, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 50, type=int),
+    )
     sort        = request.args.get('sort', 'timestamp')
     direction   = request.args.get('dir', 'desc')
     event_types = request.args.get('event_types')

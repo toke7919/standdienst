@@ -56,3 +56,8 @@ def paginated(items, total, page, per_page):
         'per_page': per_page,
         'pages': (total + per_page - 1) // per_page,
     }), 200
+
+
+def clamp_pagination(page: int, per_page: int, max_per_page: int = 500) -> tuple[int, int]:
+    """Bereinigt Pagination-Parameter: page ≥ 1, 1 ≤ per_page ≤ max_per_page."""
+    return max(1, page), max(1, min(per_page, max_per_page))

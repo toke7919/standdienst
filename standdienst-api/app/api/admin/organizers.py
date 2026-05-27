@@ -8,7 +8,7 @@ from ...models.instance import organizer_instances
 from ...schemas.organizer import OrganizerSchema, OrganizerCreateSchema, OrganizerUpdateSchema
 from ...utils.auth import require_admin, validate_password_strength
 from ...utils.mail import is_mail_configured, send_mail, build_organizer_invite_email, get_platform_logo_for_email
-from ...utils.responses import ok, created, no_content, error, paginated
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
 
 _schema = OrganizerSchema()
 _many = OrganizerSchema(many=True)
@@ -19,8 +19,10 @@ _update = OrganizerUpdateSchema()
 @admin_bp.route('/organizers', methods=['GET'])
 @require_admin
 def list_organizers():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 50, type=int),
+    )
     q = Organizer.query.order_by(Organizer.name)
     total = q.count()
     items = q.paginate(page=page, per_page=per_page, error_out=False).items

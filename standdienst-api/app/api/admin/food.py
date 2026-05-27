@@ -9,7 +9,7 @@ from ...schemas.food import (
     FoodDonationSchema, FoodDonationAdminCreateSchema, FoodDonationAdminUpdateSchema,
 )
 from ...utils.auth import require_staff, require_instance_admin
-from ...utils.responses import ok, created, no_content, error, paginated
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
 
 _type_schema = FoodDonationTypeSchema()
 _type_many = FoodDonationTypeSchema(many=True)
@@ -89,8 +89,10 @@ def delete_food_type(slug, type_id):
 @admin_bp.route('/<slug>/food-donations', methods=['GET'])
 @require_staff
 def list_food_donations(slug):
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 50, type=int),
+    )
     type_id = request.args.get('type_id', type=int)
 
     q = (FoodDonation.query

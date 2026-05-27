@@ -9,7 +9,7 @@ from ...extensions import db
 from ...models import Registration, Shift, Stand, EventDate, ActivityLog, Volunteer
 from ...schemas.shifts import RegistrationSchema, RegistrationCreateSchema
 from ...utils.auth import require_staff, require_instance_admin
-from ...utils.responses import ok, created, no_content, error, paginated
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
 
 _schema = RegistrationSchema()
 _many = RegistrationSchema(many=True)
@@ -19,8 +19,10 @@ _create = RegistrationCreateSchema()
 @admin_bp.route('/<slug>/registrations', methods=['GET'])
 @require_staff
 def list_registrations(slug):
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    page, per_page = clamp_pagination(
+        request.args.get('page', 1, type=int),
+        request.args.get('per_page', 50, type=int),
+    )
     shift_id = request.args.get('shift_id', type=int)
     date_id = request.args.get('date_id', type=int)
 
