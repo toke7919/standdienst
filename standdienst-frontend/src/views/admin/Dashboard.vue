@@ -635,7 +635,7 @@ const shareTitle = computed(() =>
 const mailtoLink = computed(() => {
   const subject = encodeURIComponent(`Mach mit als Helfer – ${shareTitle.value}!`)
   const body = encodeURIComponent(
-    `Hallo!\n\nWir suchen noch freiwillige Helfer für ${shareTitle.value} und würden uns sehr über deine Unterstützung freuen! 🎉\n\nEintragen dauert nur eine Minute – einfach deinen Namen eingeben und Dienste wählen:\n\n👉 ${volunteerUrl.value}\n\nHerzliche Grüße`
+    `Hallo!\n\nWir suchen noch freiwillige Helfer beim ${shareTitle.value} und würden uns sehr über deine Unterstützung freuen! 🎉\n\nEintragen dauert nur eine Minute – einfach deinen Namen eingeben und Dienste wählen:\n\n👉 ${volunteerUrl.value}\n\nHerzliche Grüße`
   )
   return `mailto:?subject=${subject}&body=${body}`
 })
@@ -650,7 +650,7 @@ async function webShare() {
   try {
     await navigator.share({
       title: `Mach mit als Helfer – ${shareTitle.value}!`,
-      text: `Wir suchen noch freiwillige Helfer für ${shareTitle.value}. Eintragen dauert nur eine Minute!`,
+      text: `Wir suchen noch freiwillige Helfer beim ${shareTitle.value}. Eintragen dauert nur eine Minute!`,
       url: volunteerUrl.value,
     })
   } catch { /* Nutzer hat abgebrochen */ }
