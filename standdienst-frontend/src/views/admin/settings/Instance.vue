@@ -77,19 +77,6 @@
         </div>
       </div>
 
-      <!-- Branding: nur für globale Admins -->
-      <div v-if="auth.isAdmin" class="card space-y-4">
-        <h2 class="text-base font-semibold text-ink">Plattform-Branding</h2>
-        <div class="flex items-center gap-2">
-          <input v-model="form.branding_enabled" type="checkbox" id="branding" />
-          <label for="branding" class="text-sm text-ink/80">Standdienst-Branding anzeigen</label>
-        </div>
-        <p class="text-xs text-muted">
-          Steuert den Standdienst-Werbeblock in E-Mails und den Branding-Streifen im QR-Code.
-          Nur von globalen Admins änderbar.
-        </p>
-      </div>
-
       <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
       <div class="flex items-center gap-3">
         <button type="submit" class="btn-primary" :disabled="saving || resetting">

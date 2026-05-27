@@ -26,4 +26,3 @@ class SiteSettingsUpdateSchema(Schema):
     instance_impressum_html = fields.Str(allow_none=True)
     registration_deadline = fields.DateTime(allow_none=True)
     unregister_deadline_hours = fields.Int(allow_none=True, validate=validate.Range(min=1, max=168))
-    branding_enabled = fields.Bool()

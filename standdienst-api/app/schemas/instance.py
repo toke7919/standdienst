@@ -10,6 +10,13 @@ class InstanceSchema(SQLAlchemyAutoSchema):
         load_instance = False
         exclude = ()
 
+    branding_enabled = fields.Method('get_branding_enabled')
+
+    def get_branding_enabled(self, obj):
+        from ..models import SiteSettings
+        s = SiteSettings.query.filter_by(instance_id=obj.id).first()
+        return s.branding_enabled if s is not None else True
+
 
 class InstanceCreateSchema(Schema):
     class Meta:
@@ -41,6 +48,7 @@ class InstanceUpdateSchema(Schema):
 
     name = fields.Str(validate=validate.Length(min=1, max=100))
     is_active = fields.Bool()
+    branding_enabled = fields.Bool()
     contact_organisation = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_person = fields.Str(validate=validate.Length(max=200), allow_none=True)
     contact_street = fields.Str(validate=validate.Length(max=200), allow_none=True)

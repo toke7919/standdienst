@@ -48,10 +48,6 @@ def update_site_settings(slug):
     if optimistic_lock_conflict(settings, raw.get('updated_at')):
         return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
-    # branding_enabled darf nur globale Admins ändern
-    if 'branding_enabled' in data and g.role != 'admin':
-        data.pop('branding_enabled')
-
     for key in ('instance_impressum_html', 'lock_message'):
         if key in data and data[key]:
             data[key] = sanitize_html(data[key])

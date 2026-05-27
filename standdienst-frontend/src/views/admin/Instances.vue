@@ -76,6 +76,10 @@
           <input v-model="form.is_active" type="checkbox" id="active" class="rounded" />
           <label for="active" class="text-sm text-ink/80">Aktiv</label>
         </div>
+        <div v-if="editing" class="flex items-center gap-2">
+          <input v-model="form.branding_enabled" type="checkbox" id="branding" class="rounded" />
+          <label for="branding" class="text-sm text-ink/80">Standdienst-Branding anzeigen (Mails, PDFs, QR-Code)</label>
+        </div>
 
         <div class="border-t border-sand pt-4 space-y-3">
           <h3 class="text-sm font-semibold text-ink/80">Kontaktdaten (Impressum / Datenschutz)</h3>
@@ -142,7 +146,7 @@ const { sortKey, sortDir, sorted, toggleSort } = useSort(instances, 'name')
 const showModal = ref(false)
 const editing = ref(null)
 const _emptyForm = () => ({
-  name: '', slug: '', is_active: true,
+  name: '', slug: '', is_active: true, branding_enabled: true,
   contact_organisation: '', contact_person: '', contact_street: '',
   contact_zip_city: '', contact_email: '', contact_phone: '',
   contact_asp: '', contact_asp_email: '',
@@ -169,6 +173,7 @@ function openEdit(inst) {
   editing.value = inst
   form.value = {
     name: inst.name, slug: inst.slug, is_active: inst.is_active,
+    branding_enabled: inst.branding_enabled !== false,
     contact_organisation: inst.contact_organisation || '',
     contact_person: inst.contact_person || '',
     contact_street: inst.contact_street || '',
