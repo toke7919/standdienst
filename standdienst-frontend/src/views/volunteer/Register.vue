@@ -10,7 +10,7 @@
       />
       <img v-else src="/assets/mark-ticket.svg" class="w-16 h-16 mx-auto mb-4 drop-shadow-lg" alt="Standdienst" />
       <h1 class="text-2xl font-bold tracking-tight">{{ settings?.site_title || 'Standdienst' }}</h1>
-      <p class="text-primary-200 mt-1.5 text-sm">Als Helfer registrieren</p>
+      <p class="text-primary-200 mt-1.5 text-sm">Trag dich als Helfer ein</p>
     </div>
 
     <!-- Formular -->
@@ -42,14 +42,18 @@
           <div>
             <label class="label">E-Mail <span class="text-muted text-xs">(optional)</span></label>
             <input v-model="form.email" type="email" class="input" autocomplete="email"
-                   placeholder="Für Passwort-Einrichtung per Mail" />
-            <p class="text-xs text-muted mt-1">Ohne E-Mail wirst du direkt eingeloggt (anonymer Zugang).</p>
+                   placeholder="z.B. maria@beispiel.de" />
+            <p class="text-xs text-muted mt-1">
+              Optional – damit kannst du dich später wieder anmelden und Erinnerungen erhalten.
+              Ohne E-Mail geht's genauso.
+            </p>
           </div>
 
-          <div>
+          <div class="altcha-hidden" aria-hidden="true">
             <altcha-widget
               :challengeurl="`/api/public/${slug}/captcha`"
               workerurl="/altcha-worker.js"
+              auto="onload"
               :hidefooter="true"
               :hidelogo="true"
               :strings="altchaStrings"
@@ -73,13 +77,13 @@
 
           <button type="submit" class="btn-primary w-full" :disabled="loading || !altchaPayload || (hasPrivacyPolicy && !form.consent)">
             <LoadingSpinner v-if="loading" size="sm" class="mr-2" />
-            Registrieren
+            Eintragen
           </button>
         </form>
 
         <div class="mt-5 text-center">
           <RouterLink :to="`/${slug}/login`" class="text-sm text-muted hover:text-ink/80">
-            Bereits registriert? Anmelden
+            Bereits eingetragen? → Anmelden
           </RouterLink>
         </div>
 
@@ -97,7 +101,6 @@
 </template>
 
 <style>
-/* ALTCHA-Widget: Schriftgröße und Einrückung an umliegende Formularfelder anpassen */
 .altcha-field {
   --altcha-font-size: 0.875rem;
   --altcha-max-width: 100%;
@@ -105,6 +108,15 @@
   font-size: 0.875rem;
   font-family: inherit;
   display: block;
+}
+/* ALTCHA läuft im Hintergrund – Widget nicht sichtbar */
+.altcha-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
 }
 </style>
 

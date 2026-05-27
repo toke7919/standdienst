@@ -34,34 +34,8 @@
         </div>
 
         <template v-else>
-          <!-- Primäre Aktion: Neu anmelden -->
-          <div class="mb-6">
-            <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Neu dabei?</p>
-            <RouterLink
-              :to="`/${slug}/register`"
-              class="flex items-center justify-between w-full rounded-md bg-primary-600 text-white px-5 py-4 shadow-md hover:bg-primary-700 active:scale-[0.98] transition-all duration-150"
-            >
-              <div class="text-left">
-                <p class="font-semibold text-base leading-tight">Jetzt registrieren</p>
-                <p class="text-primary-200 text-xs mt-0.5">Kostenlos anmelden &amp; Dienste wählen</p>
-              </div>
-              <ChevronRightIcon class="w-5 h-5 text-primary-200 flex-shrink-0" />
-            </RouterLink>
-          </div>
-
-          <!-- Trennlinie -->
-          <div class="relative my-6">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-sand" />
-            </div>
-            <div class="relative flex justify-center">
-              <span class="bg-soft px-3 text-xs text-muted font-medium">Bereits registriert?</span>
-            </div>
-          </div>
-
-          <!-- Sekundäre Aktion: Login -->
+          <!-- Login-Formular -->
           <div>
-            <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Anmelden</p>
             <form @submit.prevent="submit" class="space-y-3">
               <div>
                 <label class="label">E-Mail</label>
@@ -87,7 +61,7 @@
               <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
               <button
                 type="submit"
-                class="btn-secondary w-full flex items-center justify-center gap-2"
+                class="btn-primary w-full flex items-center justify-center gap-2"
                 :disabled="loading"
               >
                 <LoadingSpinner v-if="loading" size="sm" />
@@ -95,9 +69,12 @@
               </button>
             </form>
 
-            <div class="text-center mt-3">
-              <RouterLink :to="`/${slug}/forgot-password`" class="text-sm text-muted hover:text-ink/80">
+            <div class="text-center mt-3 space-y-2">
+              <RouterLink :to="`/${slug}/forgot-password`" class="block text-sm text-muted hover:text-ink/80">
                 Passwort vergessen?
+              </RouterLink>
+              <RouterLink :to="`/${slug}/register`" class="block text-sm text-muted hover:text-ink/80">
+                Noch nicht eingetragen? → Hier eintragen
               </RouterLink>
             </div>
           </div>
@@ -129,7 +106,6 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const instanceStore = useInstanceStore()
