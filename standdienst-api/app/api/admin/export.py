@@ -33,31 +33,32 @@ def _primary_color():
     return s.primary_color if s and s.primary_color else '#a51f2c'
 
 
-def _pdf_branding_footer() -> str:
-    """Standdienst-Branding-Footer für PDF-Exporte. Leer wenn branding_enabled=False."""
+def _pdf_branding() -> dict:
+    """Gibt {'css': str, 'html': str} für den Seiten-Footer zurück.
+    Beide Strings sind leer wenn branding_enabled=False."""
     from ...models import SiteSettings
     from ...utils.mail import get_platform_logo_for_email
     s = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
     if s is not None and not s.branding_enabled:
-        return ''
+        return {'css': '', 'html': ''}
     logo = get_platform_logo_for_email() or ''
     logo_tag = (
         f'<img src="{logo}" alt="Standdienst"'
-        f' style="height:32px;display:block;margin:0 auto 10px;">'
+        f' style="height:13px;vertical-align:middle;margin-right:5px;">'
         if logo else ''
     )
-    return f'''
-    <div style="margin-top:40px;padding:20px 32px 18px;background:#1a1311;
-                border-radius:10px;text-align:center;">
-      {logo_tag}
-      <p style="margin:0 0 4px;color:#fdf6e9;font-size:9pt;font-weight:700;
-                letter-spacing:-0.1px;">
-        Helfer koordinieren &ndash; ganz ohne Stress.
-      </p>
-      <p style="margin:0;color:#c8b8a2;font-size:8pt;">
-        Erstellt mit Standdienst
-      </p>
-    </div>'''
+    css = '''
+      .pdf-brand { position: running(footer); background: #a51f2c; color: #ffffff;
+                   text-align: center; padding: 2px 10px; font-size: 6.5pt;
+                   font-family: Arial, sans-serif; white-space: nowrap; }
+      @page { margin-bottom: 1.4cm; @bottom-center { content: element(footer); } }
+    '''
+    html = (
+        f'<div class="pdf-brand">'
+        f'{logo_tag}Erstellt mit <strong>Standdienst</strong>'
+        f'</div>'
+    )
+    return {'css': css, 'html': html}
 
 
 # ---------------------------------------------------------------------------
@@ -431,6 +432,7 @@ def export_pdf_dienste(slug):
     if not sections:
         sections = '<p>Keine Dienste vorhanden.</p>'
 
+    brand = _pdf_branding()
     html_content = f'''
     <html><head><style>
       body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
@@ -445,11 +447,12 @@ def export_pdf_dienste(slug):
       td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
                  width: 1%; }}
       tr:nth-child(even) td {{ background: #f9fafb; }}
+      {brand['css']}
     </style></head><body>
       <h1>Dienstplan – {g.instance.name}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
-      {_pdf_branding_footer()}
+      {brand['html']}
     </body></html>'''
 
     buf = io.BytesIO()
@@ -521,6 +524,7 @@ def export_pdf_essen(slug):
     if not sections:
         sections = '<p>Keine Essensspenden vorhanden.</p>'
 
+    brand = _pdf_branding()
     html_content = f'''
     <html><head><style>
       body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
@@ -531,11 +535,12 @@ def export_pdf_essen(slug):
       th {{ background: {color}; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }}
       td {{ padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 9pt; }}
       tr:nth-child(even) td {{ background: #f9fafb; }}
+      {brand['css']}
     </style></head><body>
       <h1>Essensspenden – {g.instance.name}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
-      {_pdf_branding_footer()}
+      {brand['html']}
     </body></html>'''
 
     buf = io.BytesIO()
@@ -576,6 +581,7 @@ def export_pdf(slug):
                                    v.email or '' if v else '')
 
     color = _primary_color()
+    brand = _pdf_branding()
     html_content = f'''
     <html><head><style>
       body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
@@ -584,6 +590,7 @@ def export_pdf(slug):
       th {{ background: {color}; color: white; padding: 6px; text-align: left; }}
       td {{ padding: 5px; border-bottom: 1px solid #eee; }}
       tr:nth-child(even) td {{ background: #f9f9f9; }}
+      {brand['css']}
     </style></head><body>
       <h1>Dienstplan – {g.instance.name}</h1>
       <p>Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
@@ -591,7 +598,7 @@ def export_pdf(slug):
         <tr><th>Stand</th><th>Datum</th><th>Uhrzeit</th><th>Helfer</th><th>E-Mail</th></tr>
         {rows_html}
       </table>
-      {_pdf_branding_footer()}
+      {brand['html']}
     </body></html>'''
 
     buf = io.BytesIO()
