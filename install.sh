@@ -303,11 +303,16 @@ server {
     }
 
     location / {
-        # X-Forwarded-Proto vom vorgelagerten Proxy bewahren (z.B. externer HTTPS-Reverse-Proxy).
-        # Ohne upstream-Proxy wird \$scheme (http/https der nginx-Verbindung) verwendet.
+        # Scheme-Normalisierung: X-Forwarded-Proto aus vorgelagertem Proxy ermitteln.
+        # Priorität: X-Forwarded-Ssl: on > X-Forwarded-Proto > \$scheme (eigene Verbindung).
+        # X-Forwarded-Ssl und X-Forwarded-Protocol werden danach gelöscht, damit Gunicorn
+        # nur einen einzigen, konsistenten Scheme-Header sieht (kein "Contradictory scheme headers").
         set \$proto \$scheme;
         if (\$http_x_forwarded_proto) {
             set \$proto \$http_x_forwarded_proto;
+        }
+        if (\$http_x_forwarded_ssl = "on") {
+            set \$proto https;
         }
         proxy_pass http://127.0.0.1:${APP_PORT};
         proxy_set_header Forwarded "";
@@ -315,6 +320,8 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$proto;
+        proxy_set_header X-Forwarded-Ssl "";
+        proxy_set_header X-Forwarded-Protocol "";
         proxy_read_timeout 120s;
     }
 }
