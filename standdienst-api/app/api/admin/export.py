@@ -449,10 +449,10 @@ def export_pdf_dienste(slug):
       tr:nth-child(even) td {{ background: #f9fafb; }}
       {brand['css']}
     </style></head><body>
+      {brand['html']}
       <h1>Dienstplan – {g.instance.name}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
-      {brand['html']}
     </body></html>'''
 
     buf = io.BytesIO()
@@ -537,10 +537,10 @@ def export_pdf_essen(slug):
       tr:nth-child(even) td {{ background: #f9fafb; }}
       {brand['css']}
     </style></head><body>
+      {brand['html']}
       <h1>Essensspenden – {g.instance.name}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
-      {brand['html']}
     </body></html>'''
 
     buf = io.BytesIO()
@@ -592,13 +592,13 @@ def export_pdf(slug):
       tr:nth-child(even) td {{ background: #f9f9f9; }}
       {brand['css']}
     </style></head><body>
+      {brand['html']}
       <h1>Dienstplan – {g.instance.name}</h1>
       <p>Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       <table>
         <tr><th>Stand</th><th>Datum</th><th>Uhrzeit</th><th>Helfer</th><th>E-Mail</th></tr>
         {rows_html}
       </table>
-      {brand['html']}
     </body></html>'''
 
     buf = io.BytesIO()
