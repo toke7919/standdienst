@@ -5,7 +5,32 @@
       <button class="btn-primary" @click="openCreate">Neue Instanz</button>
     </div>
 
-    <div class="card overflow-hidden p-0">
+    <!-- Mobile: Karten -->
+    <div class="md:hidden space-y-2">
+      <div
+        v-for="inst in sorted"
+        :key="inst.id"
+        class="card flex items-start justify-between gap-3 py-3"
+      >
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-ink truncate">{{ inst.name }}</p>
+          <p class="text-xs text-muted mt-0.5">{{ inst.slug }}</p>
+        </div>
+        <div class="flex flex-col items-end gap-2 flex-shrink-0">
+          <span :class="inst.is_active ? 'badge-green' : 'badge-red'">
+            {{ inst.is_active ? 'Aktiv' : 'Inaktiv' }}
+          </span>
+          <div class="flex gap-3">
+            <button class="text-xs text-primary-600 hover:underline" @click="openEdit(inst)">Bearbeiten</button>
+            <button class="text-xs text-red-600 hover:underline" @click="deleteInst(inst)">Löschen</button>
+          </div>
+        </div>
+      </div>
+      <p v-if="!sorted.length" class="text-center text-muted text-sm py-8">Keine Instanzen vorhanden</p>
+    </div>
+
+    <!-- Desktop: Tabelle -->
+    <div class="hidden md:block card overflow-hidden p-0">
       <table class="w-full text-sm">
         <thead class="bg-bg-brand border-b border-sand">
           <tr>

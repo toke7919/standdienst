@@ -24,7 +24,7 @@
         </div>
         <div>
           <label class="label">Logo</label>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 flex-wrap">
             <input type="file" accept="image/*" class="text-sm" @change="uploadLogo" />
             <button v-if="form.logo_filename" type="button" class="btn-secondary text-xs py-1.5" @click="removeLogo">Entfernen</button>
           </div>

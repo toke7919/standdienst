@@ -80,7 +80,7 @@
             <option v-for="d in dates" :key="d.id" :value="d.id">{{ d.formatted }}</option>
           </select>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="label">Von</label>
             <input v-model="form.start_time" type="time" class="input" required />

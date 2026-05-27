@@ -5,7 +5,36 @@
       <button class="btn-primary" @click="openCreate">Neuer Admin</button>
     </div>
 
-    <div class="card overflow-hidden p-0">
+    <!-- Mobile: Karten -->
+    <div class="md:hidden space-y-2">
+      <div
+        v-for="a in sorted"
+        :key="a.id"
+        class="card flex items-start justify-between gap-3 py-3"
+      >
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-ink truncate">{{ a.name || '—' }}</p>
+          <p class="text-xs text-muted mt-0.5 truncate">{{ a.email }}</p>
+          <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            <span :class="a.is_primary ? 'badge-blue' : 'badge-yellow'">
+              {{ a.is_primary ? 'Primär' : 'Standard' }}
+            </span>
+            <span :class="a.totp_enabled ? 'badge-green' : 'badge-red'">
+              2FA {{ a.totp_enabled ? 'aktiv' : 'inaktiv' }}
+            </span>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-2 flex-shrink-0">
+          <button class="text-xs text-primary-600 hover:underline" @click="openEdit(a)">Bearbeiten</button>
+          <button v-if="!a.is_primary" class="text-xs text-red-600 hover:underline" @click="deleteAdmin(a)">Löschen</button>
+          <span v-else class="text-xs text-sand" title="Primärer Admin ist löschgeschützt">Löschen</span>
+        </div>
+      </div>
+      <p v-if="!admins.length" class="text-center text-muted text-sm py-8">Keine Admins gefunden</p>
+    </div>
+
+    <!-- Desktop: Tabelle -->
+    <div class="hidden md:block card overflow-hidden p-0">
       <table class="w-full text-sm">
         <thead class="bg-bg-brand border-b border-sand">
           <tr>

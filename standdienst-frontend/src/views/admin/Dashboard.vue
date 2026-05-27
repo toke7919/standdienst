@@ -301,10 +301,10 @@
       <template v-else>
 
         <!-- ── ROW 1: Hero KPIs ─────────────────────────────────────── -->
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
 
           <!-- Plattform-Belegungsring -->
-          <div class="card flex flex-col items-center col-span-2 lg:col-span-1">
+          <div class="card flex flex-col items-center">
             <p class="self-start text-xs font-semibold text-muted uppercase tracking-wider mb-3">Plattform-Belegung</p>
             <div class="relative w-28 h-28 lg:w-36 lg:h-36 mb-3">
               <svg viewBox="0 0 100 100" class="w-full h-full">
@@ -370,7 +370,7 @@
           </div>
 
           <!-- Plattform-Zählkacheln -->
-          <div class="grid grid-cols-2 gap-3 col-span-2 lg:col-span-1">
+          <div class="grid grid-cols-2 gap-3 sm:col-span-2 lg:col-span-1">
             <StatCard label="Instanzen" :value="data.instance_count" color="blue" :icon="ServerIcon" />
             <StatCard label="Helfer" :value="data.total_volunteers" color="emerald" :icon="UsersIcon" />
             <StatCard label="Dienste" :value="data.total_shifts" color="violet" :icon="ClipboardDocumentListIcon" />

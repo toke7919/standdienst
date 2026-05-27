@@ -24,10 +24,10 @@
           <BuildingStorefrontIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-ink">{{ stand.name }}</p>
+          <p class="font-semibold text-ink truncate">{{ stand.name }}</p>
           <p v-if="stand.description" class="text-sm text-muted mt-0.5 truncate">{{ stand.description }}</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-shrink-0">
           <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(stand)">Bearbeiten</button>
           <span class="text-sand">|</span>
           <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteStand(stand)">Löschen</button>
