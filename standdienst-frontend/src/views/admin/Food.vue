@@ -161,14 +161,14 @@
             <option v-for="d in eventDates" :key="d.id" :value="d.id">{{ d.formatted }}</option>
           </select>
         </div>
-        <div><label class="label">Name</label><input v-model="typeForm.name" class="input" required /></div>
+        <div><label class="label">Name</label><input v-model="typeForm.name" class="input" placeholder="z.B. Kuchen" required /></div>
         <div>
           <label class="label">Abgabezeitpunkt <span class="font-normal text-muted text-xs">(optional)</span></label>
           <input v-model="typeForm.delivery_datetime" type="datetime-local" class="input" />
         </div>
         <div>
           <label class="label">Abgabeort <span class="font-normal text-muted text-xs">(optional)</span></label>
-          <input v-model="typeForm.delivery_location" class="input" maxlength="200" />
+          <input v-model="typeForm.delivery_location" class="input" placeholder="z.B. Festplatz" maxlength="200" />
         </div>
         <div>
           <label class="label">Hinweise <span class="font-normal text-muted text-xs">(optional)</span></label>
