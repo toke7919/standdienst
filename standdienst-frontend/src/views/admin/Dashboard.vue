@@ -58,6 +58,25 @@
            ================================================================ -->
       <template v-if="slug">
 
+        <!-- Instanz inaktiv -->
+        <div v-if="instanceNotFound" class="rounded-xl text-sm text-red-800 bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2 mb-4">
+          <ExclamationCircleIcon class="w-4 h-4 flex-shrink-0" />
+          <span>Diese Instanz ist deaktiviert – Helfer sehen keine öffentliche Seite.</span>
+        </div>
+
+        <!-- Anmeldung gesperrt oder Anmeldeschluss abgelaufen -->
+        <div v-else-if="instanceInfo?.site_locked || instanceInfo?.registration_open === false" class="rounded-xl text-sm text-amber-800 bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-2 mb-4">
+          <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0" />
+          <span>
+            <template v-if="instanceInfo?.site_locked">
+              Anmeldung gesperrt{{ instanceInfo.lock_message ? ': ' + instanceInfo.lock_message : '' }}
+            </template>
+            <template v-else>
+              Anmeldeschluss abgelaufen – neue Anmeldungen sind nicht mehr möglich
+            </template>
+          </span>
+        </div>
+
         <!-- ── ROW 1: Hero KPIs ─────────────────────────────────────── -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
@@ -532,7 +551,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import {
   UsersIcon, ClockIcon, ClipboardDocumentListIcon,
   CheckCircleIcon, ShoppingBagIcon, ServerIcon,
-  ExclamationCircleIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon,
+  ExclamationCircleIcon, ExclamationTriangleIcon, CalendarDaysIcon, ArrowTopRightOnSquareIcon,
   ClipboardIcon, EnvelopeIcon, QrCodeIcon, ShareIcon, CheckIcon,
 } from '@heroicons/vue/24/outline'
 
@@ -613,13 +632,18 @@ function shiftPct(n) {
 
 // ── Instanz-Branding (für QR-Code) ───────────────────────────────
 const instanceInfo = ref(null)
+const instanceNotFound = ref(false)
 
 async function loadInstanceInfo() {
   if (!slug.value) return
+  instanceNotFound.value = false
   try {
     const res = await publicApi.getInstanceInfo(slug.value)
     instanceInfo.value = res.data.data
-  } catch { /* ignorieren */ }
+  } catch (e) {
+    instanceInfo.value = null
+    if (e.response?.status === 404) instanceNotFound.value = true
+  }
 }
 
 // ── Share ─────────────────────────────────────────────────────────

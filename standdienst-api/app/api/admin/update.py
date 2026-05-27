@@ -210,6 +210,10 @@ def apply_update():
         target_version = latest.get('tag_name', '').lstrip('v')
         _auto_backup(log, target_version)
         _apply_tarball(tarball_url, pat, log)
+        _set_maintenance_mode(False, log)
+
+        systemctl = shutil.which('systemctl') or 'systemctl'
+        _run_step(['sudo', systemctl, 'restart', 'standdienst'], None, 'restart', log)
 
         return ok({'log': log, 'applied_at': datetime.now(timezone.utc).isoformat()},
                   'Update angewendet – Dienst wird neu gestartet')
@@ -222,10 +226,12 @@ def _set_maintenance_mode(enabled: bool, log: list | None = None):
     try:
         from ...models import GlobalSettings
         from ...extensions import db
+        from ...utils.settings_cache import invalidate_global
         gs = GlobalSettings.query.first()
         if gs:
             gs.maintenance_mode = enabled
             db.session.commit()
+            invalidate_global()
         if log is not None:
             log.append({'step': 'maintenance', 'ok': True,
                         'output': f'Wartungsmodus {"aktiviert" if enabled else "deaktiviert"}'})
@@ -276,8 +282,6 @@ def _apply_tarball(tarball_url: str, pat: str | None, log: list):
     _run_step(['pip', 'install', '-r', 'requirements.txt', '-q'], api_root, 'pip install', log, use_python=True)
     _run_step(['flask', 'db', 'upgrade'], api_root, 'db upgrade', log,
               use_python=True, extra_env={'FLASK_APP': 'wsgi'})
-    systemctl = shutil.which('systemctl') or 'systemctl'
-    _run_step(['sudo', systemctl, 'restart', 'standdienst'], None, 'restart', log)
 
 
 def _rebuild_frontend(extracted: str, log: list):
