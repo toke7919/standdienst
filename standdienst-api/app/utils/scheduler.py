@@ -3,6 +3,7 @@ import logging
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
+from sqlalchemy import select, delete
 
 log = logging.getLogger(__name__)
 _scheduler = BlockingScheduler(timezone='Europe/Berlin')
@@ -51,9 +52,11 @@ def _purge_expired_tokens(app):
             from ..models import Admin, Organizer, Volunteer
             now = datetime.now(timezone.utc)
             for model in (Admin, Organizer, Volunteer):
-                expired = model.query.filter(
-                    model.reset_token.isnot(None),
-                    model.reset_token_expires < now,
+                expired = db.session.scalars(
+                    select(model).filter(
+                        model.reset_token.isnot(None),
+                        model.reset_token_expires < now,
+                    )
                 ).all()
                 for user in expired:
                     user.clear_reset_token()
@@ -68,10 +71,12 @@ def _purge_old_logs(app):
         try:
             from ..extensions import db
             from ..models import ActivityLog, GlobalSettings
-            gs = GlobalSettings.query.first()
+            gs = db.session.scalars(select(GlobalSettings)).first()
             months = gs.log_retention_months if gs else 3
             cutoff = datetime.now(timezone.utc) - timedelta(days=months * 30)
-            deleted = ActivityLog.query.filter(ActivityLog.created_at < cutoff).delete()
+            deleted = db.session.execute(
+                delete(ActivityLog).filter(ActivityLog.created_at < cutoff)
+            ).rowcount
             db.session.commit()
             log.info('Protokoll-Bereinigung: %d Einträge gelöscht (älter als %d Monate)',
                      deleted, months)
@@ -86,29 +91,30 @@ def _purge_old_volunteers(app):
             from ..extensions import db
             from ..models import GlobalSettings, Volunteer, Registration, Shift, EventDate
 
-            gs = GlobalSettings.query.first()
+            gs = db.session.scalars(select(GlobalSettings)).first()
             if not gs or not gs.volunteer_retention_months:
                 return
 
             cutoff = datetime.now(timezone.utc) - timedelta(days=gs.volunteer_retention_months * 30)
-            candidates = Volunteer.query.filter(
-                Volunteer.deleted_at.is_(None),
-                Volunteer.created_at < cutoff,
+            candidates = db.session.scalars(
+                select(Volunteer).filter(
+                    Volunteer.deleted_at.is_(None),
+                    Volunteer.created_at < cutoff,
+                )
             ).all()
 
             count = 0
             for v in candidates:
                 # Nicht löschen wenn Volunteer noch zukünftige Dienste hat
-                has_future = (
-                    Registration.query
+                has_future = db.session.scalars(
+                    select(Registration)
                     .join(Shift, Registration.shift_id == Shift.id)
                     .join(EventDate, Shift.event_date_id == EventDate.id)
                     .filter(
                         Registration.volunteer_id == v.id,
                         EventDate.date >= datetime.now(timezone.utc).date(),
                     )
-                    .first()
-                )
+                ).first()
                 if not has_future:
                     v.soft_delete()
                     count += 1
@@ -154,40 +160,40 @@ def _send_reminders(app):
             base_url = app.config.get('FRONTEND_URL', '')
             copyright_text = gs.copyright_text if gs else None
 
-            volunteers = Volunteer.query.filter(
-                Volunteer.notifications_enabled.is_(True),
-                Volunteer.email.isnot(None),
-                Volunteer.deleted_at.is_(None),
+            volunteers = db.session.scalars(
+                select(Volunteer).filter(
+                    Volunteer.notifications_enabled.is_(True),
+                    Volunteer.email.isnot(None),
+                    Volunteer.deleted_at.is_(None),
+                )
             ).all()
 
             for v in volunteers:
-                shifts_tomorrow = (
-                    Registration.query
+                shifts_tomorrow = db.session.scalars(
+                    select(Registration)
                     .join(Shift, Registration.shift_id == Shift.id)
                     .join(EventDate, Shift.event_date_id == EventDate.id)
                     .filter(
                         Registration.volunteer_id == v.id,
                         EventDate.date == tomorrow,
                     )
-                    .all()
-                )
+                ).all()
 
-                food_tomorrow = (
-                    FoodDonation.query
+                food_tomorrow = db.session.scalars(
+                    select(FoodDonation)
                     .join(FoodDonationType, FoodDonation.food_type_id == FoodDonationType.id)
                     .filter(
                         FoodDonation.volunteer_id == v.id,
                         FoodDonationType.delivery_datetime >= tomorrow_start,
                         FoodDonationType.delivery_datetime <= tomorrow_end,
                     )
-                    .all()
-                )
+                ).all()
 
                 if not shifts_tomorrow and not food_tomorrow:
                     continue
 
                 settings = get_site_settings(v.instance_id)
-                instance = Instance.query.get(v.instance_id)
+                instance = db.session.get(Instance, v.instance_id)
                 title = settings.site_title if settings else (instance.name if instance else 'Standdienst')
                 primary_color = settings.primary_color if settings else None
                 logo_url = get_effective_logo_for_email(
@@ -281,16 +287,20 @@ def _send_organizer_digest(app):
                     )
                     .all()
                 )
-                cancels = ActivityLog.query.filter(
-                    ActivityLog.instance_id == instance_id,
-                    ActivityLog.event_type == ActivityLog.SHIFT_UNREGISTER,
-                    ActivityLog.timestamp >= day_start,
-                    ActivityLog.timestamp <= day_end,
+                cancels = db.session.scalars(
+                    select(ActivityLog).filter(
+                        ActivityLog.instance_id == instance_id,
+                        ActivityLog.event_type == ActivityLog.SHIFT_UNREGISTER,
+                        ActivityLog.timestamp >= day_start,
+                        ActivityLog.timestamp <= day_end,
+                    )
                 ).all()
-                foods = FoodDonation.query.filter(
-                    FoodDonation.instance_id == instance_id,
-                    FoodDonation.created_at >= day_start,
-                    FoodDonation.created_at <= day_end,
+                foods = db.session.scalars(
+                    select(FoodDonation).filter(
+                        FoodDonation.instance_id == instance_id,
+                        FoodDonation.created_at >= day_start,
+                        FoodDonation.created_at <= day_end,
+                    )
                 ).all()
                 return regs, cancels, foods
 
@@ -347,13 +357,15 @@ def _send_organizer_digest(app):
                 org_inst_ids[row.organizer_id].add(row.instance_id)
 
             for org_id, inst_ids in org_inst_ids.items():
-                org = Organizer.query.filter(
-                    Organizer.id == org_id,
-                    Organizer.email.isnot(None),
+                org = db.session.scalars(
+                    select(Organizer).filter(
+                        Organizer.id == org_id,
+                        Organizer.email.isnot(None),
+                    )
                 ).first()
                 if not org:
                     continue
-                for instance in Instance.query.filter(Instance.id.in_(inst_ids)).all():
+                for instance in db.session.scalars(select(Instance).filter(Instance.id.in_(inst_ids))).all():
                     regs, cancels, foods = _collect_data(instance.id)
                     if not regs and not cancels and not foods:
                         continue
@@ -370,13 +382,15 @@ def _send_organizer_digest(app):
                 admin_inst_ids[row.admin_id].add(row.instance_id)
 
             for admin_id, inst_ids in admin_inst_ids.items():
-                admin = Admin.query.filter(
-                    Admin.id == admin_id,
-                    Admin.email.isnot(None),
+                admin = db.session.scalars(
+                    select(Admin).filter(
+                        Admin.id == admin_id,
+                        Admin.email.isnot(None),
+                    )
                 ).first()
                 if not admin:
                     continue
-                for instance in Instance.query.filter(Instance.id.in_(inst_ids)).all():
+                for instance in db.session.scalars(select(Instance).filter(Instance.id.in_(inst_ids))).all():
                     regs, cancels, foods = _collect_data(instance.id)
                     if not regs and not cancels and not foods:
                         continue
