@@ -2,6 +2,7 @@ import os
 from flask import request, g, current_app
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
+from sqlalchemy import select
 
 from . import admin_bp
 from ...extensions import db
@@ -30,7 +31,7 @@ _ALLOWED_LOGO = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 @admin_bp.route('/<slug>/settings', methods=['GET'])
 @require_instance_admin
 def get_site_settings(slug):
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+    settings = db.first_or_404(select(SiteSettings).filter_by(instance_id=g.instance.id))
     return ok(_site_schema.dump(settings))
 
 
@@ -43,7 +44,7 @@ def update_site_settings(slug):
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+    settings = db.first_or_404(select(SiteSettings).filter_by(instance_id=g.instance.id))
 
     if optimistic_lock_conflict(settings, raw.get('updated_at')):
         return error('Datensatz wurde zwischenzeitlich geändert', 409)
@@ -92,7 +93,7 @@ def upload_logo(slug):
     os.makedirs(upload_dir, exist_ok=True)
 
     # Alte Datei mit ggf. anderem Format entfernen
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+    settings = db.first_or_404(select(SiteSettings).filter_by(instance_id=g.instance.id))
     old = settings.logo_filename
     if old and old != filename:
         old_path = os.path.join(upload_dir, old)
@@ -113,7 +114,7 @@ def upload_logo(slug):
 @admin_bp.route('/<slug>/settings/logo', methods=['DELETE'])
 @require_instance_admin
 def delete_logo(slug):
-    settings = SiteSettings.query.filter_by(instance_id=g.instance.id).first_or_404()
+    settings = db.first_or_404(select(SiteSettings).filter_by(instance_id=g.instance.id))
     if settings.logo_filename:
         upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
         old_path = os.path.join(upload_dir, settings.logo_filename)
@@ -129,7 +130,7 @@ def delete_logo(slug):
 @admin_bp.route('/settings/global', methods=['GET'])
 @require_admin
 def get_global_settings():
-    settings = GlobalSettings.query.first()
+    settings = db.session.scalars(select(GlobalSettings)).first()
     if not settings:
         settings = GlobalSettings()
         db.session.add(settings)
@@ -146,7 +147,7 @@ def update_global_settings():
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    settings = GlobalSettings.query.first()
+    settings = db.session.scalars(select(GlobalSettings)).first()
     if not settings:
         settings = GlobalSettings()
         db.session.add(settings)
@@ -170,7 +171,7 @@ def update_global_settings():
 @admin_bp.route('/settings/mail', methods=['GET'])
 @require_admin
 def get_mail_settings():
-    settings = MailSettings.query.first()
+    settings = db.session.scalars(select(MailSettings)).first()
     if not settings:
         settings = MailSettings()
         db.session.add(settings)
@@ -189,7 +190,7 @@ def update_mail_settings():
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    settings = MailSettings.query.first()
+    settings = db.session.scalars(select(MailSettings)).first()
     if not settings:
         settings = MailSettings()
         db.session.add(settings)
@@ -209,7 +210,7 @@ def update_mail_settings():
 
 def _reload_mail_config():
     """Lädt aktuelle DB-Mail-Einstellungen in den Flask-Config des laufenden Workers."""
-    ms = MailSettings.query.first()
+    ms = db.session.scalars(select(MailSettings)).first()
     if not (ms and ms.mail_server):
         return
     from ...extensions import mail as _mail
@@ -283,7 +284,7 @@ def send_typed_test_mail():
 
     if slug:
         from ...models import Instance
-        inst = Instance.query.filter_by(slug=slug).first()
+        inst = db.session.scalars(select(Instance).filter_by(slug=slug)).first()
         if inst:
             inst_name = inst.name
             settings = get_site_settings(inst.id)
