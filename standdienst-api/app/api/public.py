@@ -96,7 +96,11 @@ def register(slug):
     if not verify_solution(data['altcha']):
         return jsonify(error='CAPTCHA-Verifizierung fehlgeschlagen'), 400
 
-    has_policy = bool(settings and settings.privacy_policy_html)
+    gs = get_global_settings()
+    has_policy = bool(
+        (settings and settings.privacy_policy_html)
+        or (gs and gs.datenschutz_template_html)
+    )
     if has_policy and not data.get('consent'):
         return jsonify(error='Datenschutzzustimmung erforderlich'), 400
 
@@ -378,7 +382,6 @@ def _build_instance_info(instance, settings, global_settings) -> dict:
         'has_privacy_policy': has_policy,
         'mail_enabled': is_mail_configured(),
         'impressum_html': _merge_impressum(settings, global_settings),
-        'privacy_policy_html': settings.privacy_policy_html if settings else None,
         'copyright_text': global_settings.copyright_text if global_settings else '',
         'unregister_deadline_hours': settings.unregister_deadline_hours if settings else None,
     }

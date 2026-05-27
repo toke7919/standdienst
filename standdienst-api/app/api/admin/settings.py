@@ -48,7 +48,7 @@ def update_site_settings(slug):
     if optimistic_lock_conflict(settings, raw.get('updated_at')):
         return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
-    for key in ('instance_impressum_html', 'privacy_policy_html', 'lock_message'):
+    for key in ('instance_impressum_html', 'lock_message'):
         if key in data and data[key]:
             data[key] = sanitize_html(data[key])
 
