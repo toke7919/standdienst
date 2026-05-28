@@ -15,34 +15,7 @@
 
         <!-- Termin-Selektion Dienste -->
         <div v-if="!dates.length" class="text-sm text-muted mb-4">Keine Termine vorhanden.</div>
-        <div v-else class="space-y-1.5 mb-4">
-          <label class="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              :checked="allDiensteSelected"
-              :indeterminate.prop="someDiensteSelected && !allDiensteSelected"
-              class="rounded border-sand text-primary-600 focus:ring-primary-500"
-              @change="toggleAll('dienste', $event)"
-            />
-            <span class="text-sm font-semibold text-ink">Alle auswählen</span>
-          </label>
-          <div class="border-t border-sand pt-2 space-y-1.5">
-            <label v-for="d in dates" :key="d.id" class="flex items-center gap-2 cursor-pointer">
-              <input
-                v-model="selectedDiensteIds"
-                :value="d.id"
-                type="checkbox"
-                class="rounded border-sand text-primary-600 focus:ring-primary-500"
-              />
-              <span class="text-sm text-ink">{{ d.formatted }}</span>
-              <span v-if="d.label" class="text-xs text-muted">{{ d.label }}</span>
-              <span
-                v-if="d.is_draft"
-                class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800"
-              >Entwurf</span>
-            </label>
-          </div>
-        </div>
+        <DateSelector v-else v-model="selectedDiensteIds" :dates="dates" class="mb-4" />
 
         <div class="flex flex-wrap gap-3 mb-3">
           <button
@@ -88,34 +61,7 @@
 
         <!-- Termin-Selektion Essen -->
         <div v-if="!dates.length" class="text-sm text-muted mb-4">Keine Termine vorhanden.</div>
-        <div v-else class="space-y-1.5 mb-4">
-          <label class="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              :checked="allEssenSelected"
-              :indeterminate.prop="someEssenSelected && !allEssenSelected"
-              class="rounded border-sand text-primary-600 focus:ring-primary-500"
-              @change="toggleAll('essen', $event)"
-            />
-            <span class="text-sm font-semibold text-ink">Alle auswählen</span>
-          </label>
-          <div class="border-t border-sand pt-2 space-y-1.5">
-            <label v-for="d in dates" :key="d.id" class="flex items-center gap-2 cursor-pointer">
-              <input
-                v-model="selectedEssenIds"
-                :value="d.id"
-                type="checkbox"
-                class="rounded border-sand text-primary-600 focus:ring-primary-500"
-              />
-              <span class="text-sm text-ink">{{ d.formatted }}</span>
-              <span v-if="d.label" class="text-xs text-muted">{{ d.label }}</span>
-              <span
-                v-if="d.is_draft"
-                class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800"
-              >Entwurf</span>
-            </label>
-          </div>
-        </div>
+        <DateSelector v-else v-model="selectedEssenIds" :dates="dates" class="mb-4" />
 
         <div class="flex flex-wrap gap-3 mb-3">
           <button
@@ -165,6 +111,7 @@ import { ArrowDownTrayIcon, EnvelopeIcon } from '@heroicons/vue/24/outline'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import DateSelector from '@/components/DateSelector.vue'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -184,15 +131,6 @@ const busyEssen = ref(false)
 const errorDienste = ref('')
 const errorEssen = ref('')
 
-const allDiensteSelected = computed(() =>
-  dates.value.length > 0 && selectedDiensteIds.value.length === dates.value.length
-)
-const someDiensteSelected = computed(() => selectedDiensteIds.value.length > 0)
-const allEssenSelected = computed(() =>
-  dates.value.length > 0 && selectedEssenIds.value.length === dates.value.length
-)
-const someEssenSelected = computed(() => selectedEssenIds.value.length > 0)
-
 onMounted(async () => {
   try {
     const res = await adminApi.getDates(slug.value)
@@ -204,11 +142,6 @@ onMounted(async () => {
     loadingDates.value = false
   }
 })
-
-function toggleAll(type, e) {
-  const target = type === 'dienste' ? selectedDiensteIds : selectedEssenIds
-  target.value = e.target.checked ? dates.value.map(d => d.id) : []
-}
 
 function toggleSendForm(type) {
   showSendForm.value = showSendForm.value === type ? null : type
