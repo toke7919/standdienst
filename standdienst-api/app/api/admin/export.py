@@ -154,13 +154,11 @@ def _build_essen_pdf_html(food_types: list, color: str, brand: dict,
         event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
         date_formatted = ft.event_date.formatted if ft.event_date else ''
         date_heading = date_formatted + (f' – {event_label}' if event_label else '')
-        date_line = (f'<p style="color:#6b7280;font-size:9pt;margin:0 0 4px;">'
-                     f'{date_heading}</p>') if date_heading else ''
+        heading = ft.name + (f' · {date_heading}' if date_heading else '')
         info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
         sections += f'''
         <div style="{break_style}">
-          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{ft.name}</h2>
-          {date_line}
+          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{heading}</h2>
           {info_line}
           <table>
             <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
@@ -585,7 +583,6 @@ def export_pdf_dienste_post(slug):
         subject, html_body = build_export_email(
             instance_name=g.instance.name,
             export_type='Dienstplan',
-            filename=filename,
             sender_name=sender,
             date_summaries=date_summaries,
             base_url=frontend_url,
@@ -699,7 +696,6 @@ def export_pdf_essen_post(slug):
         subject, html_body = build_export_email(
             instance_name=g.instance.name,
             export_type='Essensspenden',
-            filename=filename,
             sender_name=sender,
             date_summaries=date_summaries,
             base_url=frontend_url,

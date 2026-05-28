@@ -89,3 +89,48 @@ def test_duplicate_date_missing_date(admin_client, date_setup):
         json={},
     )
     assert rv.status_code == 422
+
+
+def test_list_dates_has_shifts_filter(admin_client, date_setup):
+    """has_shifts=1 gibt nur Termine zurück, die mindestens eine Schicht haben."""
+    from app.models import EventDate
+    from app.extensions import db as _db
+    from datetime import date as d
+    instance = date_setup['instance']
+    # Termin ohne Schicht anlegen
+    empty = EventDate(instance_id=instance.id, date=d(2026, 9, 1), is_draft=False)
+    _db.session.add(empty)
+    _db.session.commit()
+
+    rv = admin_client.get(f'/api/admin/{instance.slug}/dates?has_shifts=1')
+    assert rv.status_code == 200
+    data = rv.get_json()['data']
+    assert len(data) == 1
+    assert data[0]['date'] == '2026-08-01'
+
+
+def test_list_dates_has_food_types_filter(admin_client, instance):
+    """has_food_types=1 gibt nur Termine zurück, die mindestens eine Essensspendenkategorie haben."""
+    from app.models import EventDate, FoodDonationType
+    from app.extensions import db as _db
+    from datetime import date as d, datetime, timezone
+    date_with = EventDate(instance_id=instance.id, date=d(2026, 8, 1), is_draft=False)
+    date_without = EventDate(instance_id=instance.id, date=d(2026, 9, 1), is_draft=False)
+    _db.session.add_all([date_with, date_without])
+    _db.session.flush()
+    ft = FoodDonationType(
+        instance_id=instance.id,
+        event_date_id=date_with.id,
+        name='Kuchen',
+        refrigeration_enabled=False,
+        delivery_datetime=datetime(2026, 8, 1, 12, 0, tzinfo=timezone.utc),
+        delivery_location='Festplatz',
+    )
+    _db.session.add(ft)
+    _db.session.commit()
+
+    rv = admin_client.get(f'/api/admin/{instance.slug}/dates?has_food_types=1')
+    assert rv.status_code == 200
+    data = rv.get_json()['data']
+    assert len(data) == 1
+    assert data[0]['date'] == '2026-08-01'

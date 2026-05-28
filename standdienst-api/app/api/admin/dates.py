@@ -19,8 +19,12 @@ _update = EventDateUpdateSchema()
 @admin_bp.route('/<slug>/dates', methods=['GET'])
 @require_staff
 def list_dates(slug):
-    dates = db.session.scalars(select(EventDate).filter_by(instance_id=g.instance.id).order_by(EventDate.date)).all()
-    return ok(_many.dump(dates))
+    stmt = select(EventDate).filter_by(instance_id=g.instance.id).order_by(EventDate.date)
+    if request.args.get('has_shifts', type=int):
+        stmt = stmt.where(EventDate.shifts.any())
+    if request.args.get('has_food_types', type=int):
+        stmt = stmt.where(EventDate.food_types.any())
+    return ok(_many.dump(db.session.scalars(stmt).all()))
 
 
 @admin_bp.route('/<slug>/dates', methods=['POST'])

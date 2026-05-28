@@ -825,7 +825,6 @@ def build_reminder_email(
 def build_export_email(
     instance_name: str,
     export_type: str,
-    filename: str,
     sender_name: str | None = None,
     date_summaries: list | None = None,
     base_url: str = '',
@@ -852,11 +851,7 @@ def build_export_email(
     else:
         dates_block = ''
 
-    content = f'''
-    {intro}
-    {dates_block}
-    <p style="color:#6b7280;font-size:13px;margin-top:12px;">Datei: {filename}</p>
-    '''
+    content = f'{intro}\n{dates_block}'
 
     html = build_email_template(
         content,
