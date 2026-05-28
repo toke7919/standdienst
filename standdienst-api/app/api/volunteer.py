@@ -85,7 +85,11 @@ def list_shifts(slug):
     if settings and not settings.shifts_enabled:
         return error('Dienste sind deaktiviert', 403)
 
-    dates = db.session.scalars(select(EventDate).filter_by(instance_id=instance.id).order_by(EventDate.date)).all()
+    dates = db.session.scalars(
+        select(EventDate)
+        .filter_by(instance_id=instance.id, is_draft=False)
+        .order_by(EventDate.date)
+    ).all()
     stands = db.session.scalars(select(Stand).filter_by(instance_id=instance.id).order_by(Stand.sort_order)).all()
     if not dates or not stands:
         return ok([])
@@ -156,6 +160,10 @@ def register_shift(slug, shift_id):
     stand = db.session.get(Stand, shift.stand_id)
     if not stand or stand.instance_id != g.instance.id:
         return error('Dienst nicht gefunden', 404)
+
+    event_date = db.session.get(EventDate, shift.event_date_id)
+    if event_date and event_date.is_draft:
+        return error('Dienst nicht verfügbar', 404)
 
     if shift.is_full:
         return error('Dienst ist bereits voll', 409)
@@ -260,7 +268,12 @@ def list_food_types(slug):
     if settings and not settings.food_donations_enabled:
         return error('Essensspenden sind deaktiviert', 403)
 
-    types = db.session.scalars(select(FoodDonationType).filter_by(instance_id=g.instance.id).order_by(FoodDonationType.name)).all()
+    types = db.session.scalars(
+        select(FoodDonationType)
+        .join(EventDate, FoodDonationType.event_date_id == EventDate.id)
+        .filter(FoodDonationType.instance_id == g.instance.id, EventDate.is_draft == False)
+        .order_by(FoodDonationType.name)
+    ).all()
     return ok([{
         'id': t.id,
         'name': t.name,
@@ -283,7 +296,8 @@ def list_food_donations(slug):
 
     types = db.session.scalars(
         select(FoodDonationType)
-        .filter_by(instance_id=g.instance.id)
+        .join(EventDate, FoodDonationType.event_date_id == EventDate.id)
+        .filter(FoodDonationType.instance_id == g.instance.id, EventDate.is_draft == False)
         .order_by(FoodDonationType.name)
     ).all()
 

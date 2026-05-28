@@ -36,11 +36,13 @@ class EventDateSchema(SQLAlchemyAutoSchema):
 class EventDateCreateSchema(Schema):
     date = fields.Date(required=True)
     label = fields.Str(validate=validate.Length(max=100), load_default='')
+    is_draft = fields.Bool(load_default=False)
 
 
 class EventDateUpdateSchema(Schema):
     date = fields.Date()
     label = fields.Str(validate=validate.Length(max=100))
+    is_draft = fields.Bool()
 
 
 class ShiftSchema(SQLAlchemyAutoSchema):
