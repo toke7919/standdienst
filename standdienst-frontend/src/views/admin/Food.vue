@@ -11,10 +11,12 @@
     <div class="card mb-8 space-y-2">
       <div v-for="t in foodTypes" :key="t.id" class="flex items-center justify-between p-3 rounded-lg border border-sand bg-bg-brand">
         <div>
-          <p class="font-medium text-ink">{{ t.name }}</p>
-          <p class="text-xs text-muted">
-            {{ t.event_date_label || '' }}
-            <span v-if="t.delivery_datetime"> · Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <p class="font-medium text-ink">{{ t.name }}</p>
+            <span v-if="t.event_date_formatted" class="text-sm text-muted">{{ t.event_date_formatted }}</span>
+          </div>
+          <p v-if="t.delivery_datetime || t.delivery_location" class="text-xs text-muted">
+            <span v-if="t.delivery_datetime">Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
             <span v-if="t.delivery_location"> · {{ t.delivery_location }}</span>
           </p>
         </div>
@@ -42,9 +44,12 @@
             <div class="flex items-center gap-2.5">
               <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
               <div>
-                <p class="font-semibold text-ink text-sm">{{ t.name }}</p>
-                <p v-if="t.event_date_label || t.delivery_datetime" class="text-xs text-muted mt-0.5">
-                  {{ t.event_date_label }}<span v-if="t.delivery_datetime"> · Abgabe: {{ fmtDt(t.delivery_datetime) }}</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="font-semibold text-ink text-sm">{{ t.name }}</p>
+                  <span v-if="t.event_date_formatted" class="text-sm text-muted">{{ t.event_date_formatted }}</span>
+                </div>
+                <p v-if="t.delivery_datetime" class="text-xs text-muted mt-0.5">
+                  Abgabe: {{ fmtDt(t.delivery_datetime) }}
                 </p>
               </div>
             </div>
