@@ -34,6 +34,7 @@ class EventDate(db.Model):
     )
     date = db.Column(db.Date, nullable=False, index=True)
     label = db.Column(db.String(100), default='')
+    is_draft = db.Column(db.Boolean, nullable=False, default=False)
 
     shifts = db.relationship(
         'Shift', backref='event_date', lazy='dynamic', cascade='all, delete-orphan'
