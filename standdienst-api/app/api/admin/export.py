@@ -76,6 +76,120 @@ def _pdf_branding() -> dict:
     return {'css': css, 'html': html}
 
 
+def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: str) -> str:
+    sections = ''
+    for i, (ed, stands_map) in enumerate(days.items()):
+        break_style = 'page-break-before: always;' if i > 0 else ''
+        stand_tables = ''
+        for stand, shifts in stands_map.items():
+            rows = ''
+            for sh in shifts:
+                regs = list(sh.registrations)
+                names = '<br>'.join(_vol_name(r) for r in regs) if regs else \
+                        '<span style="color:#9ca3af">—</span>'
+                rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
+            stand_tables += f'''
+            <div style="margin-bottom:16px;">
+              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{stand.name}</p>
+              <table>
+                <thead><tr><th>Uhrzeit</th><th>Helfer</th></tr></thead>
+                <tbody>{rows}</tbody>
+              </table>
+            </div>'''
+        label_line = (f'<p style="color:#6b7280;font-size:10pt;font-weight:400;'
+                      f'margin:0 0 12px;">{ed.label}</p>') if ed.label else ''
+        sections += f'''
+        <div style="{break_style} margin-bottom: 2em;">
+          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;font-weight:700;">
+            {ed.formatted}
+          </h2>
+          {label_line}
+          {stand_tables}
+        </div>'''
+
+    if not sections:
+        sections = '<p>Keine Dienste vorhanden.</p>'
+
+    return f'''
+    <html><head><style>
+      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
+      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; font-weight: 800; }}
+      h2 {{ color: {color}; font-size: 14pt; font-weight: 700; }}
+      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 20px; }}
+      table {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
+      th {{ background: {color}; color: white; padding: 6px 10px; text-align: left;
+            font-size: 9pt; font-weight: 700; }}
+      td {{ padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
+            vertical-align: top; }}
+      td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
+                 width: 1%; }}
+      tr:nth-child(even) td {{ background: #f9fafb; }}
+      {brand['css']}
+    </style></head><body>
+      {brand['html']}
+      <h1>Dienstplan – {instance_name}</h1>
+      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
+      {sections}
+    </body></html>'''
+
+
+def _build_essen_pdf_html(food_types: list, color: str, brand: dict,
+                           instance_name: str, tz) -> str:
+    sections = ''
+    for i, ft in enumerate(food_types):
+        break_style = 'page-break-before: always;' if i > 0 else ''
+        delivery_info = ''
+        if ft.delivery_datetime:
+            delivery_info += 'Abgabe: ' + ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
+        if ft.delivery_location:
+            delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
+        donations = list(ft.donations.order_by(FoodDonation.registered_at))
+        rows = ''
+        if not donations:
+            rows = '<tr><td>—</td><td></td><td></td></tr>'
+        for don in donations:
+            refrig = 'Ja' if don.needs_refrigeration else 'Nein'
+            rows += (f'<tr><td>{_food_name(don)}</td>'
+                     f'<td>{don.description}</td><td>{refrig}</td></tr>')
+        event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
+        date_formatted = ft.event_date.formatted if ft.event_date else ''
+        date_heading = date_formatted + (f' – {event_label}' if event_label else '')
+        date_line = (f'<p style="color:#6b7280;font-size:9pt;margin:0 0 4px;">'
+                     f'{date_heading}</p>') if date_heading else ''
+        info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
+        sections += f'''
+        <div style="{break_style}">
+          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{ft.name}</h2>
+          {date_line}
+          {info_line}
+          <table>
+            <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
+            {rows}
+          </table>
+        </div>'''
+
+    if not sections:
+        sections = '<p>Keine Essensspenden vorhanden.</p>'
+
+    return f'''
+    <html><head><style>
+      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
+      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; }}
+      h2 {{ color: {color}; margin: 0 0 2px; font-size: 14pt; }}
+      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 12px; }}
+      table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
+      th {{ background: {color}; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }}
+      td {{ padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 9pt; }}
+      tr:nth-child(even) td {{ background: #f9fafb; }}
+      {brand['css']}
+    </style></head><body>
+      {brand['html']}
+      <h1>Essensspenden – {instance_name}</h1>
+      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
+      {sections}
+    </body></html>'''
+
+
 # ---------------------------------------------------------------------------
 # CSV – Shifts/Registrations
 # ---------------------------------------------------------------------------
@@ -421,67 +535,9 @@ def export_pdf_dienste(slug):
         return error('WeasyPrint nicht installiert', 500)
 
     color = _primary_color()
-    days = _dienste_by_day(g.instance.id)
-
-    sections = ''
-    for i, (ed, stands_map) in enumerate(days.items()):
-        break_style = 'page-break-before: always;' if i > 0 else ''
-        stand_tables = ''
-
-        for stand, shifts in stands_map.items():
-            rows = ''
-            for sh in shifts:
-                regs = list(sh.registrations)
-                names = '<br>'.join(_vol_name(r) for r in regs) if regs else \
-                        '<span style="color:#9ca3af">—</span>'
-                rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
-
-            stand_tables += f'''
-            <div style="margin-bottom:16px;">
-              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{stand.name}</p>
-              <table>
-                <thead><tr><th>Uhrzeit</th><th>Helfer</th></tr></thead>
-                <tbody>{rows}</tbody>
-              </table>
-            </div>'''
-
-        label_line = (f'<p style="color:#6b7280;font-size:10pt;font-weight:400;'
-                      f'margin:0 0 12px;">{ed.label}</p>') if ed.label else ''
-        sections += f'''
-        <div style="{break_style} margin-bottom: 2em;">
-          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;font-weight:700;">
-            {ed.formatted}
-          </h2>
-          {label_line}
-          {stand_tables}
-        </div>'''
-
-    if not sections:
-        sections = '<p>Keine Dienste vorhanden.</p>'
-
     brand = _pdf_branding()
-    html_content = f'''
-    <html><head><style>
-      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
-      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; font-weight: 800; }}
-      h2 {{ color: {color}; font-size: 14pt; font-weight: 700; }}
-      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 20px; }}
-      table {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
-      th {{ background: {color}; color: white; padding: 6px 10px; text-align: left;
-            font-size: 9pt; font-weight: 700; }}
-      td {{ padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
-            vertical-align: top; }}
-      td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
-                 width: 1%; }}
-      tr:nth-child(even) td {{ background: #f9fafb; }}
-      {brand['css']}
-    </style></head><body>
-      {brand['html']}
-      <h1>Dienstplan – {g.instance.name}</h1>
-      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
-      {sections}
-    </body></html>'''
-
+    days = _dienste_by_day(g.instance.id)
+    html_content = _build_dienste_pdf_html(days, color, brand, g.instance.name)
     buf = io.BytesIO()
     HTML(string=html_content).write_pdf(buf)
     buf.seek(0)
@@ -506,64 +562,9 @@ def export_pdf_dienste_post(slug):
         return error('Keine Termine ausgewählt', 422)
 
     color = _primary_color()
-    days = _dienste_by_day(g.instance.id, date_ids=date_ids)
-
-    sections = ''
-    for i, (ed, stands_map) in enumerate(days.items()):
-        break_style = 'page-break-before: always;' if i > 0 else ''
-        stand_tables = ''
-        for stand, shifts in stands_map.items():
-            rows = ''
-            for sh in shifts:
-                regs = list(sh.registrations)
-                names = '<br>'.join(_vol_name(r) for r in regs) if regs else \
-                        '<span style="color:#9ca3af">—</span>'
-                rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
-            stand_tables += f'''
-            <div style="margin-bottom:16px;">
-              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{stand.name}</p>
-              <table>
-                <thead><tr><th>Uhrzeit</th><th>Helfer</th></tr></thead>
-                <tbody>{rows}</tbody>
-              </table>
-            </div>'''
-        label_line = (f'<p style="color:#6b7280;font-size:10pt;font-weight:400;'
-                      f'margin:0 0 12px;">{ed.label}</p>') if ed.label else ''
-        sections += f'''
-        <div style="{break_style} margin-bottom: 2em;">
-          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;font-weight:700;">
-            {ed.formatted}
-          </h2>
-          {label_line}
-          {stand_tables}
-        </div>'''
-
-    if not sections:
-        sections = '<p>Keine Dienste vorhanden.</p>'
-
     brand = _pdf_branding()
-    html_content = f'''
-    <html><head><style>
-      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
-      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; font-weight: 800; }}
-      h2 {{ color: {color}; font-size: 14pt; font-weight: 700; }}
-      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 20px; }}
-      table {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
-      th {{ background: {color}; color: white; padding: 6px 10px; text-align: left;
-            font-size: 9pt; font-weight: 700; }}
-      td {{ padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
-            vertical-align: top; }}
-      td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
-                 width: 1%; }}
-      tr:nth-child(even) td {{ background: #f9fafb; }}
-      {brand['css']}
-    </style></head><body>
-      {brand['html']}
-      <h1>Dienstplan – {g.instance.name}</h1>
-      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
-      {sections}
-    </body></html>'''
-
+    days = _dienste_by_day(g.instance.id, date_ids=date_ids)
+    html_content = _build_dienste_pdf_html(days, color, brand, g.instance.name)
     buf = io.BytesIO()
     HTML(string=html_content).write_pdf(buf)
     buf.seek(0)
@@ -618,7 +619,6 @@ def export_pdf_essen(slug):
     except ImportError:
         return error('WeasyPrint nicht installiert', 500)
 
-    color = _primary_color()
     tz_name = 'Europe/Berlin'
     try:
         from ...utils.settings_cache import get_global_settings
@@ -629,71 +629,14 @@ def export_pdf_essen(slug):
         pass
     tz = pytz.timezone(tz_name)
 
+    color = _primary_color()
+    brand = _pdf_branding()
     food_types = db.session.scalars(
         select(FoodDonationType)
         .filter_by(instance_id=g.instance.id)
         .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
     ).all()
-
-    sections = ''
-    for i, ft in enumerate(food_types):
-        break_style = 'page-break-before: always;' if i > 0 else ''
-
-        delivery_info = ''
-        if ft.delivery_datetime:
-            delivery_info += 'Abgabe: ' + ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
-        if ft.delivery_location:
-            delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
-
-        donations = list(ft.donations.order_by(FoodDonation.registered_at))
-        rows = ''
-        if not donations:
-            rows = '<tr><td>—</td><td></td><td></td></tr>'
-        for don in donations:
-            refrig = 'Ja' if don.needs_refrigeration else 'Nein'
-            rows += (f'<tr><td>{_food_name(don)}</td>'
-                     f'<td>{don.description}</td><td>{refrig}</td></tr>')
-
-        event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
-        date_formatted = ft.event_date.formatted if ft.event_date else ''
-        date_heading = date_formatted + (f' – {event_label}' if event_label else '')
-        date_line = (f'<p style="color:#6b7280;font-size:9pt;margin:0 0 4px;">'
-                     f'{date_heading}</p>') if date_heading else ''
-        info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
-
-        sections += f'''
-        <div style="{break_style}">
-          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{ft.name}</h2>
-          {date_line}
-          {info_line}
-          <table>
-            <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
-            {rows}
-          </table>
-        </div>'''
-
-    if not sections:
-        sections = '<p>Keine Essensspenden vorhanden.</p>'
-
-    brand = _pdf_branding()
-    html_content = f'''
-    <html><head><style>
-      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
-      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; }}
-      h2 {{ color: {color}; margin: 0 0 4px; font-size: 14pt; }}
-      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 12px; }}
-      table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
-      th {{ background: {color}; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }}
-      td {{ padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 9pt; }}
-      tr:nth-child(even) td {{ background: #f9fafb; }}
-      {brand['css']}
-    </style></head><body>
-      {brand['html']}
-      <h1>Essensspenden – {g.instance.name}</h1>
-      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
-      {sections}
-    </body></html>'''
-
+    html_content = _build_essen_pdf_html(food_types, color, brand, g.instance.name, tz)
     buf = io.BytesIO()
     HTML(string=html_content).write_pdf(buf)
     buf.seek(0)
@@ -717,7 +660,6 @@ def export_pdf_essen_post(slug):
     if not date_ids:
         return error('Keine Termine ausgewählt', 422)
 
-    color = _primary_color()
     tz_name = 'Europe/Berlin'
     try:
         from ...utils.settings_cache import get_global_settings
@@ -728,68 +670,15 @@ def export_pdf_essen_post(slug):
         pass
     tz = pytz.timezone(tz_name)
 
+    color = _primary_color()
+    brand = _pdf_branding()
     food_types = db.session.scalars(
         select(FoodDonationType)
         .filter_by(instance_id=g.instance.id)
         .filter(FoodDonationType.event_date_id.in_(date_ids))
         .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
     ).all()
-
-    sections = ''
-    for i, ft in enumerate(food_types):
-        break_style = 'page-break-before: always;' if i > 0 else ''
-        delivery_info = ''
-        if ft.delivery_datetime:
-            delivery_info += 'Abgabe: ' + ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
-        if ft.delivery_location:
-            delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
-        donations = list(ft.donations.order_by(FoodDonation.registered_at))
-        rows = ''
-        if not donations:
-            rows = '<tr><td>—</td><td></td><td></td></tr>'
-        for don in donations:
-            refrig = 'Ja' if don.needs_refrigeration else 'Nein'
-            rows += (f'<tr><td>{_food_name(don)}</td>'
-                     f'<td>{don.description}</td><td>{refrig}</td></tr>')
-        event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
-        date_formatted = ft.event_date.formatted if ft.event_date else ''
-        date_heading = date_formatted + (f' – {event_label}' if event_label else '')
-        date_line = (f'<p style="color:#6b7280;font-size:9pt;margin:0 0 4px;">'
-                     f'{date_heading}</p>') if date_heading else ''
-        info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
-        sections += f'''
-        <div style="{break_style}">
-          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{ft.name}</h2>
-          {date_line}
-          {info_line}
-          <table>
-            <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
-            {rows}
-          </table>
-        </div>'''
-
-    if not sections:
-        sections = '<p>Keine Essensspenden vorhanden.</p>'
-
-    brand = _pdf_branding()
-    html_content = f'''
-    <html><head><style>
-      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
-      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; }}
-      h2 {{ color: {color}; margin: 0 0 4px; font-size: 14pt; }}
-      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 12px; }}
-      table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
-      th {{ background: {color}; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }}
-      td {{ padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 9pt; }}
-      tr:nth-child(even) td {{ background: #f9fafb; }}
-      {brand['css']}
-    </style></head><body>
-      {brand['html']}
-      <h1>Essensspenden – {g.instance.name}</h1>
-      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
-      {sections}
-    </body></html>'''
-
+    html_content = _build_essen_pdf_html(food_types, color, brand, g.instance.name, tz)
     buf = io.BytesIO()
     HTML(string=html_content).write_pdf(buf)
     buf.seek(0)
