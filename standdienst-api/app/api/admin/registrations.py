@@ -89,6 +89,7 @@ def registration_grid(slug):
                 'date_id': date_id,
                 'date_formatted': shift.event_date.formatted,
                 'date_sort': shift.event_date.date,
+                'is_draft': shift.event_date.is_draft,
             }
         stands_per_date[date_id][stand_id] = shift.stand
         slots_per_date[date_id].add(slot)
@@ -126,6 +127,7 @@ def registration_grid(slug):
         result.append({
             'date_id': date_meta['date_id'],
             'date_formatted': date_meta['date_formatted'],
+            'is_draft': date_meta['is_draft'],
             'stands': [{'id': s.id, 'name': s.name} for s in stands],
             'rows': rows,
         })

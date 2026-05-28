@@ -23,6 +23,10 @@
           <div class="px-5 py-4 border-b border-sand flex items-center gap-2.5">
             <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
             <h2 class="font-semibold text-ink">{{ section.date_formatted }}</h2>
+            <span
+              v-if="section.is_draft"
+              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+            >Entwurf</span>
           </div>
           <!-- Stand-Spaltenheader -->
           <div class="flex border-b border-sand bg-bg-brand">
