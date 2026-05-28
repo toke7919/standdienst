@@ -380,4 +380,3 @@ gh release create vX.Y.Z --title "vX.Y.Z – Kurzbeschreibung" --notes "..."
 | Bereich | Problem | Schwere |
 |---------|---------|---------|
 | CSP | `'unsafe-inline'` im Frontend (Tailwind) | Mittel |
-| APScheduler | Worker-lokal – bei Multi-Worker-Gunicorn laufen Jobs mehrfach | Mittel |

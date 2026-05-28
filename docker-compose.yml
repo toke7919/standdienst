@@ -28,6 +28,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FLASK_DEBUG: "0"
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
     volumes:
       - uploads:/app/uploads
       - logs:/app/logs

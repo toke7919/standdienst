@@ -20,3 +20,9 @@ standdienst-api/logs/
 
 # OS
 .DS_Store
+
+# Docker
+.env
+
+# Superpowers-Planungsdateien (interne KI-Artefakte)
+docs/superpowers/plans/
