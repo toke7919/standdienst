@@ -379,4 +379,4 @@ gh release create vX.Y.Z --title "vX.Y.Z – Kurzbeschreibung" --notes "..."
 
 | Bereich | Problem | Schwere |
 |---------|---------|---------|
-| CSP | `'unsafe-inline'` im Frontend (Tailwind) | Mittel |
+| CSP | `style-src 'unsafe-inline'` nötig für Vue `:style`-Bindings und `colorPalette.js` (`element.style.setProperty`). `script-src 'self'` (kein `unsafe-inline`) ist gesetzt. | Niedrig |
