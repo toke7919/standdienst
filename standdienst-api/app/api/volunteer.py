@@ -161,6 +161,10 @@ def register_shift(slug, shift_id):
     if not stand or stand.instance_id != g.instance.id:
         return error('Dienst nicht gefunden', 404)
 
+    event_date = db.session.get(EventDate, shift.event_date_id)
+    if event_date and event_date.is_draft:
+        return error('Dienst nicht verfügbar', 404)
+
     if shift.is_full:
         return error('Dienst ist bereits voll', 409)
     if db.session.scalars(select(Registration).filter_by(volunteer_id=g.current_user.id, shift_id=shift_id)).first():
@@ -292,7 +296,8 @@ def list_food_donations(slug):
 
     types = db.session.scalars(
         select(FoodDonationType)
-        .filter_by(instance_id=g.instance.id)
+        .join(EventDate, FoodDonationType.event_date_id == EventDate.id)
+        .filter(FoodDonationType.instance_id == g.instance.id, EventDate.is_draft == False)
         .order_by(FoodDonationType.name)
     ).all()
 
