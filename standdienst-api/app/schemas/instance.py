@@ -13,8 +13,10 @@ class InstanceSchema(SQLAlchemyAutoSchema):
     branding_enabled = fields.Method('get_branding_enabled')
 
     def get_branding_enabled(self, obj):
+        from sqlalchemy import select
+        from ..extensions import db
         from ..models import SiteSettings
-        s = SiteSettings.query.filter_by(instance_id=obj.id).first()
+        s = db.session.scalars(select(SiteSettings).filter_by(instance_id=obj.id)).first()
         return s.branding_enabled if s is not None else True
 
 
