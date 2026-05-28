@@ -15,7 +15,7 @@ from ...models import (
     Volunteer, FoodDonation, FoodDonationType,
 )
 from ...utils.auth import require_staff, require_admin
-from ...utils.responses import error
+from ...utils.responses import error, ok
 
 
 def _vol_name(reg):
@@ -139,15 +139,18 @@ def export_csv_volunteers(slug):
 # Hilfsfunktionen für Dienste-Exports
 # ---------------------------------------------------------------------------
 
-def _dienste_by_day(instance_id):
+def _dienste_by_day(instance_id, date_ids=None):
     """Gibt {EventDate: {Stand: [Shift]}} zurück, geordnet nach Datum + sort_order."""
-    event_dates = db.session.scalars(
+    q = (
         select(EventDate)
         .join(Shift, Shift.event_date_id == EventDate.id)
         .join(Stand, Stand.id == Shift.stand_id)
         .filter(Stand.instance_id == instance_id)
-        .distinct()
-        .order_by(EventDate.date)
+    )
+    if date_ids:
+        q = q.filter(EventDate.id.in_(date_ids))
+    event_dates = db.session.scalars(
+        q.distinct().order_by(EventDate.date)
     ).all()
 
     result = {}
@@ -469,6 +472,109 @@ def export_pdf_dienste(slug):
     return send_file(buf, mimetype='application/pdf', as_attachment=True, download_name=filename)
 
 
+@admin_bp.route('/<slug>/export/pdf/dienste', methods=['POST'])
+@require_staff
+def export_pdf_dienste_post(slug):
+    """POST-Variante: date_ids-Filterung + optionaler E-Mail-Versand."""
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        return error('WeasyPrint nicht installiert', 500)
+
+    body = request.get_json() or {}
+    date_ids = body.get('date_ids') or []
+    email = (body.get('email') or '').strip() or None
+
+    if not date_ids:
+        return error('Keine Termine ausgewählt', 422)
+
+    color = _primary_color()
+    days = _dienste_by_day(g.instance.id, date_ids=date_ids)
+
+    sections = ''
+    for i, (ed, stands_map) in enumerate(days.items()):
+        break_style = 'page-break-before: always;' if i > 0 else ''
+        stand_tables = ''
+        for stand, shifts in stands_map.items():
+            rows = ''
+            for sh in shifts:
+                regs = list(sh.registrations)
+                names = '<br>'.join(_vol_name(r) for r in regs) if regs else \
+                        '<span style="color:#9ca3af">—</span>'
+                rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
+            stand_tables += f'''
+            <div style="margin-bottom:16px;">
+              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{stand.name}</p>
+              <table>
+                <thead><tr><th>Uhrzeit</th><th>Helfer</th></tr></thead>
+                <tbody>{rows}</tbody>
+              </table>
+            </div>'''
+        sections += f'''
+        <div style="{break_style} margin-bottom: 2em;">
+          <h2 style="color:{color};margin:0 0 12px;font-size:14pt;font-weight:700;">
+            {ed.formatted}
+          </h2>
+          {stand_tables}
+        </div>'''
+
+    if not sections:
+        sections = '<p>Keine Dienste vorhanden.</p>'
+
+    brand = _pdf_branding()
+    html_content = f'''
+    <html><head><style>
+      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
+      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; font-weight: 800; }}
+      h2 {{ color: {color}; font-size: 14pt; font-weight: 700; }}
+      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 20px; }}
+      table {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
+      th {{ background: {color}; color: white; padding: 6px 10px; text-align: left;
+            font-size: 9pt; font-weight: 700; }}
+      td {{ padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11pt;
+            vertical-align: top; }}
+      td.time {{ font-size: 9pt; color: #4b5563; white-space: nowrap; font-weight: 600;
+                 width: 1%; }}
+      tr:nth-child(even) td {{ background: #f9fafb; }}
+      {brand['css']}
+    </style></head><body>
+      {brand['html']}
+      <h1>Dienstplan – {g.instance.name}</h1>
+      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
+      {sections}
+    </body></html>'''
+
+    buf = io.BytesIO()
+    HTML(string=html_content).write_pdf(buf)
+    buf.seek(0)
+    filename = f'dienste_{g.instance.slug}_{date.today()}.pdf'
+    pdf_bytes = buf.read()
+
+    if email:
+        from ...utils.mail import is_mail_configured, send_mail, build_export_email
+        if not is_mail_configured(current_app):
+            return error('E-Mail nicht konfiguriert', 503)
+        subject, html_body = build_export_email(
+            instance_name=g.instance.name,
+            export_type='Dienstplan',
+            filename=filename,
+        )
+        send_mail(
+            to=email,
+            subject=subject,
+            html=html_body,
+            attachments=[(filename, 'application/pdf', pdf_bytes)],
+        )
+        return ok(message=f'PDF an {email} gesendet')
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
 # ---------------------------------------------------------------------------
 # PDF – Essensspenden (je Spendenart eine Seite, ohne E-Mail)
 # ---------------------------------------------------------------------------
@@ -556,6 +662,120 @@ def export_pdf_essen(slug):
     buf.seek(0)
     filename = f'essensspenden_{g.instance.slug}_{date.today()}.pdf'
     return send_file(buf, mimetype='application/pdf', as_attachment=True, download_name=filename)
+
+
+@admin_bp.route('/<slug>/export/pdf/essen', methods=['POST'])
+@require_staff
+def export_pdf_essen_post(slug):
+    """POST-Variante: date_ids-Filterung + optionaler E-Mail-Versand."""
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        return error('WeasyPrint nicht installiert', 500)
+
+    body = request.get_json() or {}
+    date_ids = body.get('date_ids') or []
+    email = (body.get('email') or '').strip() or None
+
+    if not date_ids:
+        return error('Keine Termine ausgewählt', 422)
+
+    color = _primary_color()
+    tz_name = 'Europe/Berlin'
+    try:
+        from ...utils.settings_cache import get_global_settings
+        gs = get_global_settings()
+        if gs and gs.timezone:
+            tz_name = gs.timezone
+    except Exception:
+        pass
+    tz = pytz.timezone(tz_name)
+
+    food_types = db.session.scalars(
+        select(FoodDonationType)
+        .filter_by(instance_id=g.instance.id)
+        .filter(FoodDonationType.event_date_id.in_(date_ids))
+        .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
+    ).all()
+
+    sections = ''
+    for i, ft in enumerate(food_types):
+        break_style = 'page-break-before: always;' if i > 0 else ''
+        delivery_info = ''
+        if ft.delivery_datetime:
+            delivery_info += ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
+        if ft.delivery_location:
+            delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
+        donations = list(ft.donations.order_by(FoodDonation.registered_at))
+        rows = ''
+        if not donations:
+            rows = '<tr><td>—</td><td></td><td></td></tr>'
+        for don in donations:
+            refrig = 'Ja' if don.needs_refrigeration else 'Nein'
+            rows += (f'<tr><td>{_food_name(don)}</td>'
+                     f'<td>{don.description}</td><td>{refrig}</td></tr>')
+        info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
+        sections += f'''
+        <div style="{break_style}">
+          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;">{ft.name}</h2>
+          {info_line}
+          <table>
+            <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
+            {rows}
+          </table>
+        </div>'''
+
+    if not sections:
+        sections = '<p>Keine Essensspenden vorhanden.</p>'
+
+    brand = _pdf_branding()
+    html_content = f'''
+    <html><head><style>
+      body {{ font-family: Arial, sans-serif; font-size: 10pt; margin: 1.5cm; }}
+      h1 {{ color: {color}; margin: 0 0 4px; font-size: 16pt; }}
+      h2 {{ color: {color}; margin: 0 0 4px; font-size: 14pt; }}
+      p.meta {{ color: #6b7280; font-size: 9pt; margin: 0 0 12px; }}
+      table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
+      th {{ background: {color}; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }}
+      td {{ padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 9pt; }}
+      tr:nth-child(even) td {{ background: #f9fafb; }}
+      {brand['css']}
+    </style></head><body>
+      {brand['html']}
+      <h1>Essensspenden – {g.instance.name}</h1>
+      <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
+      {sections}
+    </body></html>'''
+
+    buf = io.BytesIO()
+    HTML(string=html_content).write_pdf(buf)
+    buf.seek(0)
+    filename = f'essensspenden_{g.instance.slug}_{date.today()}.pdf'
+    pdf_bytes = buf.read()
+
+    if email:
+        from ...utils.mail import is_mail_configured, send_mail, build_export_email
+        if not is_mail_configured(current_app):
+            return error('E-Mail nicht konfiguriert', 503)
+        subject, html_body = build_export_email(
+            instance_name=g.instance.name,
+            export_type='Essensspenden',
+            filename=filename,
+        )
+        send_mail(
+            to=email,
+            subject=subject,
+            html=html_body,
+            attachments=[(filename, 'application/pdf', pdf_bytes)],
+        )
+        return ok(message=f'PDF an {email} gesendet')
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -53,13 +53,17 @@ def _html_to_text(html: str) -> str:
 
 
 def send_mail(to: str, subject: str, html: str, sender_name: str = None,
-              retries: int = 3, plain_text: str = None):
+              retries: int = 3, plain_text: str = None,
+              attachments: list | None = None):
     """Sendet eine E-Mail (HTML + Plain-Text) mit bis zu `retries` Versuchen."""
     default_sender = current_app.config.get('MAIL_DEFAULT_SENDER', '')
     _name = sender_name or current_app.config.get('MAIL_SENDER_NAME', '')
     sender = f'{_name} <{default_sender}>' if _name else default_sender
     body = plain_text or _html_to_text(html)
     msg = Message(subject=subject, recipients=[to], html=html, body=body, sender=sender)
+    if attachments:
+        for filename, content_type, data in attachments:
+            msg.attach(filename, content_type, data)
     last_exc: Exception | None = None
     for attempt in range(retries):
         try:
