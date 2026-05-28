@@ -1,5 +1,6 @@
 from flask import request, g
 from marshmallow import ValidationError
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from . import admin_bp
@@ -18,7 +19,7 @@ _update = EventDateUpdateSchema()
 @admin_bp.route('/<slug>/dates', methods=['GET'])
 @require_staff
 def list_dates(slug):
-    dates = EventDate.query.filter_by(instance_id=g.instance.id).order_by(EventDate.date).all()
+    dates = db.session.scalars(select(EventDate).filter_by(instance_id=g.instance.id).order_by(EventDate.date)).all()
     return ok(_many.dump(dates))
 
 
@@ -72,7 +73,7 @@ def delete_date(slug, date_id):
 
 def _get_or_404(date_id, instance_id):
     from flask import abort
-    date = EventDate.query.filter_by(id=date_id, instance_id=instance_id).first()
+    date = db.session.scalars(select(EventDate).filter_by(id=date_id, instance_id=instance_id)).first()
     if not date:
         abort(404)
     return date
