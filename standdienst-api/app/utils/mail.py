@@ -826,18 +826,43 @@ def build_export_email(
     instance_name: str,
     export_type: str,
     filename: str,
+    sender_name: str | None = None,
+    date_summaries: list | None = None,
+    base_url: str = '',
+    instance_slug: str | None = None,
     logo_url: str | None = None,
     primary_color: str | None = None,
     copyright_text: str | None = None,
 ) -> tuple[str, str]:
     subject = f'{export_type} – {instance_name}'
+
+    if export_type == 'Essensspenden':
+        action = 'die Übersicht der Essensspenden'
+    else:
+        action = 'den Dienstplan'
+
+    if sender_name:
+        intro = f'<p><strong>{sender_name}</strong> sendet dir {action} für folgende Termine:</p>'
+    else:
+        intro = f'<p>Anbei {action} für folgende Termine:</p>'
+
+    if date_summaries:
+        items = ''.join(f'<li style="margin-bottom:2px;">{ds}</li>' for ds in date_summaries)
+        dates_block = f'<ul style="margin:6px 0 12px;padding-left:20px;color:#374151;">{items}</ul>'
+    else:
+        dates_block = ''
+
+    content = f'''
+    {intro}
+    {dates_block}
+    <p style="color:#6b7280;font-size:13px;margin-top:12px;">Datei: {filename}</p>
+    '''
+
     html = build_email_template(
-        f'''
-        <p>Anbei der angeforderte Export <strong>{export_type}</strong> für <strong>{instance_name}</strong>.</p>
-        <p style="color:#6b7280;font-size:13px;">Datei: {filename}</p>
-        ''',
+        content,
         title=f'{export_type} – {instance_name}',
-        base_url='',
+        base_url=base_url,
+        slug=instance_slug,
         logo_url=logo_url,
         primary_color=primary_color or _DEFAULT_PRIMARY,
         copyright_text=copyright_text,

@@ -28,6 +28,20 @@ def _food_name(don):
     return v.name if v else (don.guest_name or '—')
 
 
+def _sender_name(user) -> str:
+    fn = (getattr(user, 'first_name', None) or '').strip()
+    ln = (getattr(user, 'last_name', None) or '').strip()
+    full = f'{fn} {ln}'.strip()
+    return full or getattr(user, 'name', None) or ''
+
+
+def _date_summary(ed) -> str:
+    s = ed.formatted
+    if ed.label:
+        s += f' – {ed.label}'
+    return s
+
+
 def _primary_color():
     from ...models import SiteSettings
     s = db.session.scalars(select(SiteSettings).filter_by(instance_id=g.instance.id)).first()
@@ -431,11 +445,14 @@ def export_pdf_dienste(slug):
               </table>
             </div>'''
 
+        label_line = (f'<p style="color:#6b7280;font-size:10pt;font-weight:400;'
+                      f'margin:0 0 12px;">{ed.label}</p>') if ed.label else ''
         sections += f'''
         <div style="{break_style} margin-bottom: 2em;">
-          <h2 style="color:{color};margin:0 0 12px;font-size:14pt;font-weight:700;">
+          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;font-weight:700;">
             {ed.formatted}
           </h2>
+          {label_line}
           {stand_tables}
         </div>'''
 
@@ -510,11 +527,14 @@ def export_pdf_dienste_post(slug):
                 <tbody>{rows}</tbody>
               </table>
             </div>'''
+        label_line = (f'<p style="color:#6b7280;font-size:10pt;font-weight:400;'
+                      f'margin:0 0 12px;">{ed.label}</p>') if ed.label else ''
         sections += f'''
         <div style="{break_style} margin-bottom: 2em;">
-          <h2 style="color:{color};margin:0 0 12px;font-size:14pt;font-weight:700;">
+          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;font-weight:700;">
             {ed.formatted}
           </h2>
+          {label_line}
           {stand_tables}
         </div>'''
 
@@ -550,6 +570,13 @@ def export_pdf_dienste_post(slug):
     filename = f'dienste_{g.instance.slug}_{date.today()}.pdf'
     pdf_bytes = buf.read()
 
+    event_dates_for_mail = db.session.scalars(
+        select(EventDate).filter(EventDate.id.in_(date_ids)).order_by(EventDate.date)
+    ).all()
+    date_summaries = [_date_summary(ed) for ed in event_dates_for_mail]
+    sender = _sender_name(g.current_user)
+    frontend_url = current_app.config.get('FRONTEND_URL', '')
+
     if email:
         from ...utils.mail import is_mail_configured, send_mail, build_export_email
         if not is_mail_configured(current_app):
@@ -558,6 +585,10 @@ def export_pdf_dienste_post(slug):
             instance_name=g.instance.name,
             export_type='Dienstplan',
             filename=filename,
+            sender_name=sender,
+            date_summaries=date_summaries,
+            base_url=frontend_url,
+            instance_slug=g.instance.slug,
         )
         send_mail(
             to=email,
@@ -610,7 +641,7 @@ def export_pdf_essen(slug):
 
         delivery_info = ''
         if ft.delivery_datetime:
-            delivery_info += ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
+            delivery_info += 'Abgabe: ' + ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
         if ft.delivery_location:
             delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
 
@@ -623,11 +654,17 @@ def export_pdf_essen(slug):
             rows += (f'<tr><td>{_food_name(don)}</td>'
                      f'<td>{don.description}</td><td>{refrig}</td></tr>')
 
+        event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
+        date_formatted = ft.event_date.formatted if ft.event_date else ''
+        date_heading = date_formatted + (f' – {event_label}' if event_label else '')
+        date_line = (f'<p style="color:#6b7280;font-size:9pt;margin:0 0 4px;">'
+                     f'{date_heading}</p>') if date_heading else ''
         info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
 
         sections += f'''
         <div style="{break_style}">
-          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;">{ft.name}</h2>
+          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{ft.name}</h2>
+          {date_line}
           {info_line}
           <table>
             <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
@@ -703,7 +740,7 @@ def export_pdf_essen_post(slug):
         break_style = 'page-break-before: always;' if i > 0 else ''
         delivery_info = ''
         if ft.delivery_datetime:
-            delivery_info += ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
+            delivery_info += 'Abgabe: ' + ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
         if ft.delivery_location:
             delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
         donations = list(ft.donations.order_by(FoodDonation.registered_at))
@@ -714,10 +751,16 @@ def export_pdf_essen_post(slug):
             refrig = 'Ja' if don.needs_refrigeration else 'Nein'
             rows += (f'<tr><td>{_food_name(don)}</td>'
                      f'<td>{don.description}</td><td>{refrig}</td></tr>')
+        event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
+        date_formatted = ft.event_date.formatted if ft.event_date else ''
+        date_heading = date_formatted + (f' – {event_label}' if event_label else '')
+        date_line = (f'<p style="color:#6b7280;font-size:9pt;margin:0 0 4px;">'
+                     f'{date_heading}</p>') if date_heading else ''
         info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
         sections += f'''
         <div style="{break_style}">
-          <h2 style="color:{color};margin:0 0 4px;font-size:14pt;">{ft.name}</h2>
+          <h2 style="color:{color};margin:0 0 2px;font-size:14pt;">{ft.name}</h2>
+          {date_line}
           {info_line}
           <table>
             <tr><th>Helfer</th><th>Was wird mitgebracht</th><th>Kühlpflichtig</th></tr>
@@ -753,6 +796,13 @@ def export_pdf_essen_post(slug):
     filename = f'essensspenden_{g.instance.slug}_{date.today()}.pdf'
     pdf_bytes = buf.read()
 
+    event_dates_for_mail = db.session.scalars(
+        select(EventDate).filter(EventDate.id.in_(date_ids)).order_by(EventDate.date)
+    ).all()
+    date_summaries = [_date_summary(ed) for ed in event_dates_for_mail]
+    sender = _sender_name(g.current_user)
+    frontend_url = current_app.config.get('FRONTEND_URL', '')
+
     if email:
         from ...utils.mail import is_mail_configured, send_mail, build_export_email
         if not is_mail_configured(current_app):
@@ -761,6 +811,10 @@ def export_pdf_essen_post(slug):
             instance_name=g.instance.name,
             export_type='Essensspenden',
             filename=filename,
+            sender_name=sender,
+            date_summaries=date_summaries,
+            base_url=frontend_url,
+            instance_slug=g.instance.slug,
         )
         send_mail(
             to=email,
