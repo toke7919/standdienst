@@ -11,7 +11,7 @@ Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden 
 - **Multi-Instanz** – beliebig viele Organisationen auf einer Installation, je mit eigenem Slug + Logo
 - **Rollen** – Global-Admin, Instanz-Admin, Organisator, Volunteer (Self-Service)
 - **Export** – ODS/PDF Dienstplan als Stundenplan-Tabelle, Essensspenden-Listen, iCal
-- **Backup/Restore** – AES-256-GCM-verschlüsselte pg_dump-Backups, Auto-Rotation
+- **Backup/Restore** – AES-256-GCM-verschlüsselte Backups, Download und Wiederherstellung über Web-UI
 - **E-Mail** – Anmeldebestätigung, Erinnerung (24 h vorher), Welcome-Link, Passwort-Reset
 - **2FA** – TOTP + Backup-Codes für Admins und Organisatoren
 - **Passkeys** – WebAuthn-Anmeldung für Admins und Organisatoren
@@ -20,18 +20,31 @@ Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden 
 
 ---
 
-## Voraussetzungen
-
-- Debian 12 / Ubuntu 22.04+
-- Root-Zugriff
-- Öffentlich erreichbarer Server (für HTTPS + E-Mail optional)
-
-Das Installationsskript installiert alle Abhängigkeiten automatisch:
-Python 3, PostgreSQL, Redis, Node.js 20, Nginx, WeasyPrint.
-
----
-
 ## Installation
+
+### Option A: Docker (empfohlen)
+
+```bash
+git clone https://github.com/toke7919/standdienst_v2.git
+cd standdienst_v2
+cp .env.example .env
+# SECRET_KEY generieren und in .env eintragen:
+python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32))" >> .env
+docker compose up --build -d
+```
+
+Danach im Browser `http://localhost/setup` aufrufen und die Erstkonfiguration abschließen.
+
+**Voraussetzungen:** Docker + Docker Compose v2
+
+**HTTPS** (mit Reverse Proxy davor):
+In `.env` setzen:
+```bash
+FRONTEND_URL=https://deine-domain.de
+SESSION_COOKIE_SECURE=true
+```
+
+### Option B: Bare-Metal (Debian/Ubuntu)
 
 ```bash
 git clone https://github.com/toke7919/standdienst_v2.git
@@ -39,7 +52,9 @@ cd standdienst_v2
 sudo bash install.sh
 ```
 
-Das Skript fragt nach Installationspfad und Port, richtet PostgreSQL, Redis, Gunicorn (systemd) und Nginx ein. Am Ende öffnest du `/setup` im Browser und schließt die Erstkonfiguration ab (Admin-Account, Basis-URL, Mail optional).
+Das Skript fragt nach Installationspfad und Port, richtet PostgreSQL, Redis, Gunicorn (systemd) und Nginx ein. Am Ende öffnest du `/setup` im Browser und schließt die Erstkonfiguration ab.
+
+**Voraussetzungen:** Debian 12 / Ubuntu 22.04+, Root-Zugriff
 
 **HTTPS** (nach der Installation):
 ```bash
@@ -58,40 +73,44 @@ sudo bash update.sh --check  # nur prüfen, nicht anwenden
 
 Das Update-Skript erstellt automatisch ein Backup vor dem Update.
 
+Bei Docker:
+```bash
+git pull
+docker compose up --build -d
+```
+
 ---
 
 ## Backup & Restore
 
-```bash
-# Backup erstellen (AES-256-GCM + HMAC-Signatur, automatische Rotation auf 20 Dateien)
-./backup.sh
-
-# Backup wiederherstellen (interaktive Auswahl)
-./restore.sh
-```
-
-Backups liegen in `standdienst-api/backups/` als `.pgdump.enc`-Dateien. Der gleiche `SECRET_KEY` aus `.env` wird zum Ver- und Entschlüsseln benötigt – bei Serverwechsel `.env` und Backup-Datei kopieren.
-
-Alternativ: Backups können im Admin-Bereich unter **Backup** erstellt, heruntergeladen und wiederhergestellt werden.
+Backups werden im Admin-Bereich unter **Einstellungen → Backup** erstellt, heruntergeladen und wiederhergestellt. Das Format ist AES-256-GCM-verschlüsselt (`.sdbackup`).
 
 ---
 
 ## Konfiguration
 
-Alle Einstellungen liegen in `standdienst-api/.env` (wird bei Installation generiert):
+### Docker (`.env`)
+
+| Variable | Pflicht | Beschreibung |
+|----------|---------|--------------|
+| `SECRET_KEY` | ✓ | Flask-Session + JWT (min. 32 Zeichen) |
+| `POSTGRES_PASSWORD` | – | Datenbankpasswort (Standard: `standdienst`) |
+| `FRONTEND_URL` | – | Öffentliche URL für E-Mail-Links (Standard: `http://localhost`) |
+| `FRONTEND_PORT` | – | Port des Frontend-Containers (Standard: `80`) |
+| `SESSION_COOKIE_SECURE` | – | `true` bei HTTPS (Standard: `false`) |
+
+### Bare-Metal (`standdienst-api/.env`)
 
 | Variable | Pflicht | Beschreibung |
 |----------|---------|--------------|
 | `SECRET_KEY` | ✓ | Flask-Session + JWT (min. 32 Zeichen) |
 | `DATABASE_URL` | ✓ | `postgresql://user:pass@host:5432/dbname` |
-| `FRONTEND_URL` | – | Basis-URL für E-Mail-Links (z. B. `https://example.com`) |
+| `FRONTEND_URL` | – | Basis-URL für E-Mail-Links |
 | `RATELIMIT_STORAGE_URI` | – | Redis: `redis://127.0.0.1:6379/0` |
 | `FAIL2BAN_LOG` | – | Pfad für Login-Fail-Log (Standard: `logs/auth.log`) |
 | `SETUP_ALLOWED_IPS` | – | Kommagetrennte IPs für `/setup`; leer = alle erlaubt |
 | `ALTCHA_MAX_NUMBER` | – | CAPTCHA-Schwierigkeit (Standard: `100000`) |
 | `MAIL_SERVER` | – | SMTP-Host (alternativ über Web-UI konfigurierbar) |
-
-Mail und globale Einstellungen können auch nach der Installation über das Admin-Interface geändert werden.
 
 ---
 
@@ -124,12 +143,13 @@ cd standdienst-api
 ```
 standdienst-api/        Flask REST-API (Gunicorn, Port 8420)
 standdienst-frontend/   Vue 3 SPA (Vite-Build → api/static/dist/)
-backup.sh / restore.sh  Backup-Skripte (Shell + Python-Crypto)
-install.sh              Einmaliges Installationsskript
+docker-compose.yml      Docker-Setup (db, redis, api, scheduler, frontend)
+install.sh              Bare-Metal-Installationsskript
 update.sh               Update auf neues GitHub-Release
+uninstall.sh            Vollständige Deinstallation
 ```
 
-Die SPA wird als statische Dateien aus `standdienst-api/static/dist/` serviert. Nginx leitet Port 80 an Gunicorn weiter und serviert `/static/` + `/uploads/` direkt.
+Die SPA wird als statische Dateien aus `standdienst-api/static/dist/` serviert. Im Docker-Setup übernimmt nginx (Port 80) das Routing; bei Bare-Metal leitet Nginx Port 80/443 an Gunicorn weiter.
 
 ---
 
