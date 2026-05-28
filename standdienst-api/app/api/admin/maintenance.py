@@ -1,4 +1,5 @@
 from flask import request
+from sqlalchemy import select
 from . import admin_bp
 from ...extensions import db
 from ...models import GlobalSettings
@@ -13,7 +14,7 @@ def set_maintenance_mode():
     if 'enabled' not in enabled:
         return error('Feld "enabled" fehlt', 400)
     mode = bool(enabled['enabled'])
-    gs = GlobalSettings.query.first()
+    gs = db.session.scalars(select(GlobalSettings)).first()
     if not gs:
         return error('GlobalSettings nicht gefunden', 500)
     gs.maintenance_mode = mode
