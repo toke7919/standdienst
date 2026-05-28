@@ -381,4 +381,3 @@ gh release create vX.Y.Z --title "vX.Y.Z – Kurzbeschreibung" --notes "..."
 |---------|---------|---------|
 | CSP | `'unsafe-inline'` im Frontend (Tailwind) | Mittel |
 | APScheduler | Worker-lokal – bei Multi-Worker-Gunicorn laufen Jobs mehrfach | Mittel |
-| Settings-Cache | Kein Cache (jeder Request liest SiteSettings aus DB) | Niedrig |
