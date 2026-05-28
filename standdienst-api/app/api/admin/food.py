@@ -1,6 +1,7 @@
 from flask import request, g
 from marshmallow import ValidationError
 from sqlalchemy import select
+from sqlalchemy.orm import contains_eager
 
 from . import admin_bp
 from ...extensions import db
@@ -34,6 +35,7 @@ def list_food_types(slug):
         select(FoodDonationType)
         .filter_by(instance_id=g.instance.id)
         .join(FoodDonationType.event_date)
+        .options(contains_eager(FoodDonationType.event_date))
     )
     if date_id:
         stmt = stmt.filter(FoodDonationType.event_date_id == date_id)
