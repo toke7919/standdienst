@@ -178,3 +178,43 @@ def test_list_shifts_counts_are_correct(client, instance, volunteer):
     assert s['spots_left'] == 1
     assert s['is_full'] is False
     assert s['is_registered'] is True
+
+
+def test_draft_event_date_hidden_from_volunteer(client, instance, volunteer):
+    """Termine mit is_draft=True dürfen im Volunteer-Shifts-Endpunkt nicht erscheinen."""
+    from app.models import Stand, EventDate, Shift, Admin, GlobalSettings
+    from app.extensions import db as _db
+    from datetime import date, time
+
+    admin = Admin(email='draftadmin@test.de', is_primary=True)
+    admin.set_password('TestPass1!')
+    _db.session.add(admin)
+    gs = GlobalSettings(setup_complete=True)
+    _db.session.add(gs)
+
+    stand = Stand(instance_id=instance.id, name='Stand Draft')
+    _db.session.add(stand)
+    _db.session.flush()
+
+    ev_published = EventDate(instance_id=instance.id, date=date(2026, 7, 1), is_draft=False)
+    ev_draft = EventDate(instance_id=instance.id, date=date(2026, 7, 2), is_draft=True)
+    _db.session.add_all([ev_published, ev_draft])
+    _db.session.flush()
+
+    shift_pub = Shift(stand_id=stand.id, event_date_id=ev_published.id,
+                      start_time=time(10, 0), end_time=time(12, 0), max_volunteers=2)
+    shift_draft = Shift(stand_id=stand.id, event_date_id=ev_draft.id,
+                        start_time=time(10, 0), end_time=time(12, 0), max_volunteers=2)
+    _db.session.add_all([shift_pub, shift_draft])
+    _db.session.commit()
+
+    rv = client.post('/api/auth/volunteer-login',
+                     json={'slug': instance.slug, 'email': volunteer.email, 'password': 'TestPass1!'})
+    assert rv.status_code == 200
+
+    rv = client.get(f'/api/volunteer/{instance.slug}/shifts')
+    assert rv.status_code == 200
+    shifts = rv.get_json()['data']
+    # Nur der Shift des veröffentlichten Termins darf erscheinen
+    assert len(shifts) == 1
+    assert shifts[0]['event_date_id'] == ev_published.id
