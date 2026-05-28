@@ -54,25 +54,34 @@ yesno "Deinstallation wirklich durchführen?" || { echo "  Abgebrochen."; exit 0
 # ---------------------------------------------------------------------------
 # 1. systemd-Service stoppen und entfernen
 # ---------------------------------------------------------------------------
-section "1/5  systemd-Service entfernen"
-if systemctl is-active --quiet standdienst 2>/dev/null; then
-    systemctl stop standdienst
-    info "standdienst.service gestoppt"
-else
-    skip "standdienst.service war nicht aktiv"
-fi
+section "1/5  systemd-Services entfernen"
+for SVC in standdienst standdienst-scheduler; do
+    if systemctl is-active --quiet "$SVC" 2>/dev/null; then
+        systemctl stop "$SVC"
+        info "${SVC}.service gestoppt"
+    else
+        skip "${SVC}.service war nicht aktiv"
+    fi
 
-if systemctl is-enabled --quiet standdienst 2>/dev/null; then
-    systemctl disable standdienst
-    info "standdienst.service deaktiviert"
-fi
+    if systemctl is-enabled --quiet "$SVC" 2>/dev/null; then
+        systemctl disable "$SVC"
+        info "${SVC}.service deaktiviert"
+    fi
 
-if [ -f /etc/systemd/system/standdienst.service ]; then
-    rm -f /etc/systemd/system/standdienst.service
-    systemctl daemon-reload
-    info "standdienst.service entfernt"
+    if [ -f "/etc/systemd/system/${SVC}.service" ]; then
+        rm -f "/etc/systemd/system/${SVC}.service"
+        info "${SVC}.service entfernt"
+    else
+        skip "${SVC}.service war nicht vorhanden"
+    fi
+done
+systemctl daemon-reload
+
+if [ -f /etc/sudoers.d/standdienst-restart ]; then
+    rm -f /etc/sudoers.d/standdienst-restart
+    info "Sudoers-Regel entfernt"
 else
-    skip "standdienst.service war nicht vorhanden"
+    skip "Sudoers-Regel nicht vorhanden"
 fi
 
 # ---------------------------------------------------------------------------
