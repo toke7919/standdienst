@@ -14,8 +14,10 @@ def is_mail_configured(app=None) -> bool:
     if cfg.get('MAIL_SERVER'):
         return True
     try:
+        from sqlalchemy import select
+        from ..extensions import db
         from ..models import MailSettings
-        ms = MailSettings.query.first()
+        ms = db.session.scalars(select(MailSettings)).first()
         return bool(ms and ms.mail_server)
     except Exception:
         return False
