@@ -105,6 +105,12 @@ export const adminApi = {
   exportDiensteUrl: (slug, format) => `/api/admin/${slug}/export/${format}/dienste`,
   exportEssenUrl: (slug, format) => `/api/admin/${slug}/export/${format}/essen`,
 
+  // Export (POST – Datumsselektion)
+  exportPdfDienste: (slug, data) => client.post(`${a(slug)}/export/pdf/dienste`, data, { responseType: 'blob' }),
+  exportPdfEssen: (slug, data) => client.post(`${a(slug)}/export/pdf/essen`, data, { responseType: 'blob' }),
+  sendPdfDienste: (slug, data) => client.post(`${a(slug)}/export/pdf/dienste`, data),
+  sendPdfEssen: (slug, data) => client.post(`${a(slug)}/export/pdf/essen`, data),
+
   // Import
   importShiftsCsv: (slug, formData) =>
     client.post(`${a(slug)}/import/shifts/csv`, formData, {
