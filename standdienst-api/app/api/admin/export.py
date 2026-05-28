@@ -6,6 +6,7 @@ from datetime import date, datetime, timezone
 from flask import g, request, send_file, current_app
 from icalendar import Calendar, Event
 import pytz
+from sqlalchemy import select
 
 from . import admin_bp
 from ...extensions import db
@@ -29,7 +30,7 @@ def _food_name(don):
 
 def _primary_color():
     from ...models import SiteSettings
-    s = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    s = db.session.scalars(select(SiteSettings).filter_by(instance_id=g.instance.id)).first()
     return s.primary_color if s and s.primary_color else '#a51f2c'
 
 
@@ -38,7 +39,7 @@ def _pdf_branding() -> dict:
     Beide Strings sind leer wenn branding_enabled=False."""
     from ...models import SiteSettings
     from ...utils.mail import get_platform_logo_for_email
-    s = SiteSettings.query.filter_by(instance_id=g.instance.id).first()
+    s = db.session.scalars(select(SiteSettings).filter_by(instance_id=g.instance.id)).first()
     if s is not None and not s.branding_enabled:
         return {'css': '', 'html': ''}
     logo = get_platform_logo_for_email() or ''
@@ -72,11 +73,12 @@ def export_csv_registrations(slug):
     writer = csv.writer(output, delimiter=';')
     writer.writerow(['Stand', 'Datum', 'Uhrzeit', 'Helfer', 'E-Mail', 'Angemeldet am'])
 
-    shifts = (Shift.query
-              .join(Stand, Stand.id == Shift.stand_id)
-              .filter(Stand.instance_id == g.instance.id)
-              .order_by(Shift.event_date_id, Stand.sort_order)
-              .all())
+    shifts = db.session.scalars(
+        select(Shift)
+        .join(Stand, Stand.id == Shift.stand_id)
+        .filter(Stand.instance_id == g.instance.id)
+        .order_by(Shift.event_date_id, Stand.sort_order)
+    ).all()
 
     for shift in shifts:
         for reg in shift.registrations:
@@ -107,11 +109,12 @@ def export_csv_volunteers(slug):
     writer = csv.writer(output, delimiter=';')
     writer.writerow(['Name', 'E-Mail', 'Angemeldet', 'Dienste'])
 
-    volunteers = (Volunteer.query
-                  .filter_by(instance_id=g.instance.id)
-                  .filter(Volunteer.deleted_at.is_(None))
-                  .order_by(Volunteer.name)
-                  .all())
+    volunteers = db.session.scalars(
+        select(Volunteer)
+        .filter_by(instance_id=g.instance.id)
+        .filter(Volunteer.deleted_at.is_(None))
+        .order_by(Volunteer.name)
+    ).all()
 
     for v in volunteers:
         shift_count = v.registrations.count()
@@ -138,23 +141,25 @@ def export_csv_volunteers(slug):
 
 def _dienste_by_day(instance_id):
     """Gibt {EventDate: {Stand: [Shift]}} zurück, geordnet nach Datum + sort_order."""
-    event_dates = (EventDate.query
-                   .join(Shift, Shift.event_date_id == EventDate.id)
-                   .join(Stand, Stand.id == Shift.stand_id)
-                   .filter(Stand.instance_id == instance_id)
-                   .distinct()
-                   .order_by(EventDate.date)
-                   .all())
+    event_dates = db.session.scalars(
+        select(EventDate)
+        .join(Shift, Shift.event_date_id == EventDate.id)
+        .join(Stand, Stand.id == Shift.stand_id)
+        .filter(Stand.instance_id == instance_id)
+        .distinct()
+        .order_by(EventDate.date)
+    ).all()
 
     result = {}
     for ed in event_dates:
         stands_map = {}
-        shifts = (Shift.query
-                  .join(Stand, Stand.id == Shift.stand_id)
-                  .filter(Stand.instance_id == instance_id,
-                          Shift.event_date_id == ed.id)
-                  .order_by(Stand.sort_order, Shift.start_time)
-                  .all())
+        shifts = db.session.scalars(
+            select(Shift)
+            .join(Stand, Stand.id == Shift.stand_id)
+            .filter(Stand.instance_id == instance_id,
+                    Shift.event_date_id == ed.id)
+            .order_by(Stand.sort_order, Shift.start_time)
+        ).all()
         for shift in shifts:
             stands_map.setdefault(shift.stand, []).append(shift)
         if stands_map:
@@ -279,10 +284,11 @@ def export_ods_essen(slug):
         cell.addElement(P(text=str(text or '')))
         row.addElement(cell)
 
-    food_types = (FoodDonationType.query
-                  .filter_by(instance_id=g.instance.id)
-                  .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
-                  .all())
+    food_types = db.session.scalars(
+        select(FoodDonationType)
+        .filter_by(instance_id=g.instance.id)
+        .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
+    ).all()
 
     for ft in food_types:
         sheet = Table(name=ft.name[:28])
@@ -357,11 +363,12 @@ def export_ods(slug):
         add_cell(header_row, col, hstyle)
     sheet.addElement(header_row)
 
-    shifts = (Shift.query
-              .join(Stand, Stand.id == Shift.stand_id)
-              .filter(Stand.instance_id == g.instance.id)
-              .order_by(Shift.event_date_id, Stand.sort_order)
-              .all())
+    shifts = db.session.scalars(
+        select(Shift)
+        .join(Stand, Stand.id == Shift.stand_id)
+        .filter(Stand.instance_id == g.instance.id)
+        .order_by(Shift.event_date_id, Stand.sort_order)
+    ).all()
 
     for shift in shifts:
         for reg in shift.registrations:
@@ -485,10 +492,11 @@ def export_pdf_essen(slug):
         pass
     tz = pytz.timezone(tz_name)
 
-    food_types = (FoodDonationType.query
-                  .filter_by(instance_id=g.instance.id)
-                  .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
-                  .all())
+    food_types = db.session.scalars(
+        select(FoodDonationType)
+        .filter_by(instance_id=g.instance.id)
+        .order_by(FoodDonationType.event_date_id, FoodDonationType.name)
+    ).all()
 
     sections = ''
     for i, ft in enumerate(food_types):
@@ -562,11 +570,12 @@ def export_pdf(slug):
     except ImportError:
         return error('WeasyPrint nicht installiert', 500)
 
-    shifts = (Shift.query
-              .join(Stand, Stand.id == Shift.stand_id)
-              .filter(Stand.instance_id == g.instance.id)
-              .order_by(Shift.event_date_id, Stand.sort_order)
-              .all())
+    shifts = db.session.scalars(
+        select(Shift)
+        .join(Stand, Stand.id == Shift.stand_id)
+        .filter(Stand.instance_id == g.instance.id)
+        .order_by(Shift.event_date_id, Stand.sort_order)
+    ).all()
 
     rows_html = ''
     for shift in shifts:
@@ -627,10 +636,11 @@ def export_ical(slug):
 
     tz = pytz.timezone('Europe/Berlin')
 
-    shifts = (Shift.query
-              .join(Stand, Stand.id == Shift.stand_id)
-              .filter(Stand.instance_id == g.instance.id)
-              .all())
+    shifts = db.session.scalars(
+        select(Shift)
+        .join(Stand, Stand.id == Shift.stand_id)
+        .filter(Stand.instance_id == g.instance.id)
+    ).all()
 
     for shift in shifts:
         regs = list(shift.registrations)
