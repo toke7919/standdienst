@@ -8,10 +8,6 @@
         <h2 class="text-base font-semibold text-ink mb-1">Dienste</h2>
         <p class="text-sm text-muted mb-4">Alle Anmeldungen, je Tag auf einer eigenen Seite / Tabelle.</p>
         <div class="flex flex-wrap gap-3">
-          <a :href="adminApi.exportDiensteUrl(slug, 'ods')" class="btn-secondary">
-            <ArrowDownTrayIcon class="w-4 h-4" />
-            ODS herunterladen
-          </a>
           <a :href="adminApi.exportDiensteUrl(slug, 'pdf')" class="btn-secondary">
             <ArrowDownTrayIcon class="w-4 h-4" />
             PDF herunterladen
@@ -24,17 +20,12 @@
         <h2 class="text-base font-semibold text-ink mb-1">Essensspenden</h2>
         <p class="text-sm text-muted mb-4">Alle Spenden, je Spendenart auf einer eigenen Seite / Tabelle.</p>
         <div class="flex flex-wrap gap-3">
-          <a :href="adminApi.exportEssenUrl(slug, 'ods')" class="btn-secondary">
-            <ArrowDownTrayIcon class="w-4 h-4" />
-            ODS herunterladen
-          </a>
           <a :href="adminApi.exportEssenUrl(slug, 'pdf')" class="btn-secondary">
             <ArrowDownTrayIcon class="w-4 h-4" />
             PDF herunterladen
           </a>
         </div>
       </div>
-
     </div>
   </div>
 </template>

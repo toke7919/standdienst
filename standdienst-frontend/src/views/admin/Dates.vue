@@ -52,7 +52,7 @@
         </div>
         <div class="flex items-center gap-3">
           <input id="is_draft" v-model="form.is_draft" type="checkbox" class="rounded border-sand text-primary-600 focus:ring-primary-500" />
-          <label for="is_draft" class="text-sm text-ink">Als Entwurf (für Freiwillige unsichtbar)</label>
+          <label for="is_draft" class="text-sm text-ink">Entwurf</label>
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
         <div class="flex gap-3 justify-end pt-2">

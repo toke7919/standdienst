@@ -28,10 +28,10 @@
 
         <template v-if="selectedSlug">
           <p class="px-3 pt-4 pb-1 text-[10px] font-semibold text-white/35 uppercase tracking-widest">Instanz</p>
-          <NavItem :to="`/admin/${selectedSlug}/volunteers`" :icon="UsersIcon">Helfer</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/stands`" :icon="BuildingStorefrontIcon">Stände</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/dates`" :icon="CalendarIcon">Termine</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/shifts`" :icon="ClockIcon">Dienste</NavItem>
+          <NavItem :to="`/admin/${selectedSlug}/volunteers`" :icon="UsersIcon">Helfer</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/registrations`" :icon="ClipboardDocumentListIcon">Anmeldungen</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/food`" :icon="ShoppingBagIcon">Essensspenden</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/export`" :icon="ArrowDownTrayIcon">Export</NavItem>
@@ -227,10 +227,10 @@
                 <div>
                   <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-3">Instanz</p>
                   <div class="grid grid-cols-3 gap-2">
-                    <MoreTile :to="`/admin/${mobileSlug}/volunteers`" :icon="UsersIcon" @nav="moreOpen = false">Helfer</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/stands`" :icon="BuildingStorefrontIcon" @nav="moreOpen = false">Stände</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/dates`" :icon="CalendarIcon" @nav="moreOpen = false">Termine</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/shifts`" :icon="ClockIcon" @nav="moreOpen = false">Dienste</MoreTile>
+                    <MoreTile :to="`/admin/${mobileSlug}/volunteers`" :icon="UsersIcon" @nav="moreOpen = false">Helfer</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/food`" :icon="ShoppingBagIcon" @nav="moreOpen = false">Essen</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/export`" :icon="ArrowDownTrayIcon" @nav="moreOpen = false">Export</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/import`" :icon="ArrowUpTrayIcon" @nav="moreOpen = false">Import</MoreTile>
