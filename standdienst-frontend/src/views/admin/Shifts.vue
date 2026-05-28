@@ -226,7 +226,10 @@ async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateShift(route.params.slug, editing.value.id, form.value)
+      await adminApi.updateShift(route.params.slug, editing.value.id, {
+        ...form.value,
+        updated_at: editing.value.updated_at,
+      })
       ui.success('Dienst aktualisiert')
     } else {
       await adminApi.createShift(route.params.slug, form.value)

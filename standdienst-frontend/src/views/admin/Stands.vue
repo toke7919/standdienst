@@ -136,7 +136,10 @@ async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateStand(route.params.slug, editing.value.id, form.value)
+      await adminApi.updateStand(route.params.slug, editing.value.id, {
+        ...form.value,
+        updated_at: editing.value.updated_at,
+      })
       ui.success('Stand aktualisiert')
     } else {
       await adminApi.createStand(route.params.slug, form.value)

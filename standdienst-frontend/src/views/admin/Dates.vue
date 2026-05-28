@@ -129,7 +129,10 @@ async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateDate(route.params.slug, editing.value.id, form.value)
+      await adminApi.updateDate(route.params.slug, editing.value.id, {
+        ...form.value,
+        updated_at: editing.value.updated_at,
+      })
       ui.success('Termin aktualisiert')
     } else {
       await adminApi.createDate(route.params.slug, form.value)

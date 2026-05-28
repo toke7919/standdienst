@@ -270,7 +270,10 @@ async function saveType() {
       refrigeration_enabled: typeForm.value.refrigeration_enabled,
     }
     if (editingType.value) {
-      await adminApi.updateFoodType(route.params.slug, editingType.value.id, payload)
+      await adminApi.updateFoodType(route.params.slug, editingType.value.id, {
+        ...payload,
+        updated_at: editingType.value.updated_at,
+      })
       ui.success('Aktualisiert')
     } else {
       await adminApi.createFoodType(route.params.slug, { ...payload, event_date_id: typeForm.value.event_date_id })
