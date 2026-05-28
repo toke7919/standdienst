@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from flask import request, g, current_app
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
@@ -269,7 +270,7 @@ def send_typed_test_mail():
         get_logo_for_email,
         build_welcome_email, build_reset_email, build_organizer_invite_email,
         build_shift_confirmation_email, build_reminder_email, build_organizer_digest_email,
-        build_daten_auskunft_email,
+        build_daten_auskunft_email, build_export_email,
     )
     from ...utils.settings_cache import get_site_settings, get_global_settings
     from ..public import _base_url
@@ -400,6 +401,14 @@ def send_typed_test_mail():
                 base_url=base_url,
                 **_kw(slug=slug),
             ),
+        ),
+        'export_pdf': lambda: build_export_email(
+            instance_name=inst_name,
+            export_type='Dienstplan',
+            filename=f'dienste_beispiel_{datetime.now().strftime("%Y-%m-%d")}.pdf',
+            logo_url=logo_url,
+            primary_color=primary_color,
+            copyright_text=copyright_text,
         ),
     }
 

@@ -129,6 +129,7 @@ const MAIL_TYPES = [
   { value: 'reminder',          label: 'Erinnerungsmail',          desc: 'Wird täglich um 08:00 Uhr an Volunteers mit aktivierten Benachrichtigungen gesendet' },
   { value: 'digest',            label: 'Organisator-Tages-Digest', desc: 'Wird täglich um 18:00 Uhr an Organisatoren gesendet' },
   { value: 'dsgvo_auskunft',    label: 'DSGVO-Datenauskunft',      desc: 'Wird auf Anfrage des Volunteers versendet (Art. 15 DSGVO)' },
+  { value: 'export_pdf',        label: 'Export-PDF-Mail',           desc: 'Wird beim Versand eines Export-PDFs per E-Mail gesendet' },
 ]
 
 const ui = useUiStore()

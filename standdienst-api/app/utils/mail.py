@@ -822,6 +822,29 @@ def build_reminder_email(
     )
 
 
+def build_export_email(
+    instance_name: str,
+    export_type: str,
+    filename: str,
+    logo_url: str | None = None,
+    primary_color: str | None = None,
+    copyright_text: str | None = None,
+) -> tuple[str, str]:
+    subject = f'{export_type} – {instance_name}'
+    html = build_email_template(
+        f'''
+        <p>Anbei der angeforderte Export <strong>{export_type}</strong> für <strong>{instance_name}</strong>.</p>
+        <p style="color:#6b7280;font-size:13px;">Datei: {filename}</p>
+        ''',
+        title=f'{export_type} – {instance_name}',
+        base_url='',
+        logo_url=logo_url,
+        primary_color=primary_color or _DEFAULT_PRIMARY,
+        copyright_text=copyright_text,
+    )
+    return subject, html
+
+
 def build_organizer_digest_email(
     organizer_name: str,
     instance_title: str,
