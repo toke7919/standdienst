@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Standdienst — Brand Reference</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    body {
+      margin: 0;
+      background: var(--color-bg);
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      padding: 48px 56px;
+    }
+    .section { margin-bottom: 56px; }
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      letter-spacing: var(--tracking-uppercase);
+      text-transform: uppercase;
+      color: var(--color-primary);
+      margin-bottom: 12px;
+    }
+    h1, h2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: var(--tracking-display);
+      margin: 0;
+    }
+    h1 { font-size: var(--text-hero); line-height: 1; }
+    h2 { font-size: var(--text-3xl); margin-bottom: 22px; }
+    .lockup { display: inline-flex; align-items: center; gap: 22px; }
+    .wordmark {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: var(--tracking-display);
+      line-height: 1;
+      color: var(--color-ink);
+    }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .swatch {
+      background: var(--color-soft); border: var(--border-default);
+      border-radius: var(--radius-md); padding: 18px; display: flex; align-items: center; gap: 14px;
+    }
+    .swatch-color { width: 56px; height: 56px; border-radius: 6px; flex-shrink: 0; }
+    .mono { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.04em; color: var(--color-muted); }
+    .shift-card {
+      background: var(--color-soft);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 16px;
+      border: 1px solid transparent;
+    }
+    .shift-card.urgent { border-color: var(--color-primary); }
+    .pill {
+      padding: 6px 12px; border-radius: 999px;
+      font-size: var(--text-sm); font-weight: 500;
+      border: 1px solid var(--color-sand);
+    }
+    .pill.active { background: var(--color-ink); color: var(--color-soft); border-color: var(--color-ink); }
+    .btn {
+      padding: 8px 14px; background: var(--color-ink); color: var(--color-soft);
+      border: 0; border-radius: var(--radius-sm);
+      font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500;
+      cursor: pointer; transition: background var(--t-fast);
+    }
+    .btn:hover { background: var(--color-primary); }
+    .btn:active { background: var(--color-primary-deep); }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <div class="kicker">Standdienst · Brand Reference</div>
+  <h1>Eine Karte,<br>eine Schicht.</h1>
+</div>
+
+<!-- LOCKUP -->
+<div class="section">
+  <div class="kicker">01 · Lockup</div>
+  <div class="lockup">
+    <img src="assets/mark-ticket.svg" height="120" alt="Standdienst Mark">
+    <div class="wordmark" style="font-size: 84px;">
+      Standdienst
+      <div style="border-top: 3px dashed var(--color-primary); margin-top: 14px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- COLORS -->
+<div class="section">
+  <div class="kicker">02 · Farben</div>
+  <div class="grid-3">
+    <div class="swatch"><div class="swatch-color" style="background:#a51f2c;"></div><div><div>Karmin</div><div class="mono">#a51f2c</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#6c0d18;"></div><div><div>Bordeaux</div><div class="mono">#6c0d18</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#e8b94a;"></div><div><div>Gold</div><div class="mono">#e8b94a</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#dbc8a8;"></div><div><div>Sand</div><div class="mono">#dbc8a8</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#fdf6e9;border:1px solid #dbc8a8;"></div><div><div>Soft Cream</div><div class="mono">#fdf6e9</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#1a1311;"></div><div><div>Tinte</div><div class="mono">#1a1311</div></div></div>
+  </div>
+</div>
+
+<!-- TYPE -->
+<div class="section">
+  <div class="kicker">03 · Schrift</div>
+  <div style="font-family: var(--font-display); font-weight: 700; font-size: 92px; letter-spacing: -0.03em; line-height: 1;">Hanken Grotesk 700</div>
+  <div style="font-family: var(--font-body); font-size: 16px; line-height: 1.55; max-width: 560px; margin-top: 18px;">
+    Body in Hanken Grotesk Regular. Mit Standdienst koordinieren Vereine, Schulen und Festkomitees ihre Verpflegungsstände — eine Karte, eine Schicht, ein versorgter Tag.
+  </div>
+  <div class="mono" style="margin-top: 18px;">GEIST MONO · LABELS · TIMESTAMPS · STATUS-CODES · 12.06.2026</div>
+</div>
+
+<!-- SHIFT LIST -->
+<div class="section">
+  <div class="kicker">04 · Schichtliste · Beispiel</div>
+  <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+    <span class="pill active">Alle</span>
+    <span class="pill">Offen · 3</span>
+    <span class="pill">Meine · 2</span>
+    <span class="pill">Spenden</span>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="shift-card urgent">
+      <img src="assets/mark-ticket.svg" height="48" alt="">
+      <div style="font-family: var(--font-mono); font-size: 12px; min-width: 100px;">14:00 – 16:00</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 500;">Bratwurstgrill</div>
+        <div style="font-size: 12px; color: var(--color-muted);">1 von 3 besetzt · noch jemand gesucht</div>
+      </div>
+      <button class="btn">Eintragen</button>
+    </div>
+    <div class="shift-card">
+      <img src="assets/mark-ticket.svg" height="48" alt="">
+      <div style="font-family: var(--font-mono); font-size: 12px; min-width: 100px;">16:00 – 18:00</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 500;">Kuchentheke</div>
+        <div style="font-size: 12px; color: var(--color-muted);">2 von 2 besetzt</div>
+      </div>
+      <span class="pill">voll</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
