@@ -79,7 +79,8 @@ def _pdf_branding() -> dict:
     return {'css': css, 'html': html}
 
 
-def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: str) -> str:
+def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: str,
+                             regs_by_shift: dict = None) -> str:
     esc_instance = _html.escape(instance_name)
     sections = ''
     for i, (ed, stands_map) in enumerate(days.items()):
@@ -88,7 +89,10 @@ def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: 
         for stand, shifts in stands_map.items():
             rows = ''
             for sh in shifts:
-                regs = list(sh.registrations)
+                if regs_by_shift is not None:
+                    regs = regs_by_shift.get(sh.id, [])
+                else:
+                    regs = list(sh.registrations)
                 names = '<br>'.join(_vol_name(r) for r in regs) if regs else \
                         '<span style="color:#9ca3af">—</span>'
                 rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
@@ -271,34 +275,59 @@ def export_csv_volunteers(slug):
 # ---------------------------------------------------------------------------
 
 def _dienste_by_day(instance_id, date_ids=None):
-    """Gibt {EventDate: {Stand: [Shift]}} zurück, geordnet nach Datum + sort_order."""
-    q = (
-        select(EventDate)
-        .join(Shift, Shift.event_date_id == EventDate.id)
+    """Gibt {EventDate: {Stand: [Shift]}} zurück, geordnet nach Datum + sort_order.
+    Alle Shifts in einer Query, Stand und EventDate per contains_eager geladen.
+    """
+    from sqlalchemy.orm import contains_eager
+    stmt = (
+        select(Shift)
         .join(Stand, Stand.id == Shift.stand_id)
+        .join(EventDate, EventDate.id == Shift.event_date_id)
         .filter(Stand.instance_id == instance_id)
+        .options(
+            contains_eager(Shift.stand),
+            contains_eager(Shift.event_date),
+        )
+        .order_by(EventDate.date, Stand.sort_order, Shift.start_time)
     )
     if date_ids:
-        q = q.filter(EventDate.id.in_(date_ids))
-    event_dates = db.session.scalars(
-        q.distinct().order_by(EventDate.date)
-    ).all()
+        stmt = stmt.filter(EventDate.id.in_(date_ids))
+
+    shifts = db.session.scalars(stmt).all()
 
     result = {}
-    for ed in event_dates:
-        stands_map = {}
-        shifts = db.session.scalars(
-            select(Shift)
-            .join(Stand, Stand.id == Shift.stand_id)
-            .filter(Stand.instance_id == instance_id,
-                    Shift.event_date_id == ed.id)
-            .order_by(Stand.sort_order, Shift.start_time)
-        ).all()
-        for shift in shifts:
-            stands_map.setdefault(shift.stand, []).append(shift)
-        if stands_map:
-            result[ed] = stands_map
+    for shift in shifts:
+        ed = shift.event_date
+        stand = shift.stand
+        if ed not in result:
+            result[ed] = {}
+        result[ed].setdefault(stand, []).append(shift)
     return result
+
+
+def _load_regs_by_shift(days: dict) -> dict:
+    """Lädt alle Registrierungen für die Schichten in `days` in einem Batch.
+    Gibt {shift_id: [Registration]} zurück, Volunteer eager-loaded.
+    """
+    from sqlalchemy.orm import selectinload
+    from collections import defaultdict
+    shift_ids = [
+        sh.id
+        for stands_map in days.values()
+        for shifts in stands_map.values()
+        for sh in shifts
+    ]
+    if not shift_ids:
+        return {}
+    regs = db.session.scalars(
+        select(Registration)
+        .filter(Registration.shift_id.in_(shift_ids))
+        .options(selectinload(Registration.volunteer))
+    ).all()
+    by_shift = defaultdict(list)
+    for reg in regs:
+        by_shift[reg.shift_id].append(reg)
+    return by_shift
 
 
 # ---------------------------------------------------------------------------
@@ -540,7 +569,8 @@ def export_pdf_dienste(slug):
     color = _primary_color()
     brand = _pdf_branding()
     days = _dienste_by_day(g.instance.id)
-    html_content = _build_dienste_pdf_html(days, color, brand, g.instance.name)
+    regs_by_shift = _load_regs_by_shift(days)
+    html_content = _build_dienste_pdf_html(days, color, brand, g.instance.name, regs_by_shift)
     buf = io.BytesIO()
     HTML(string=html_content).write_pdf(buf)
     buf.seek(0)
@@ -567,7 +597,8 @@ def export_pdf_dienste_post(slug):
     color = _primary_color()
     brand = _pdf_branding()
     days = _dienste_by_day(g.instance.id, date_ids=date_ids)
-    html_content = _build_dienste_pdf_html(days, color, brand, g.instance.name)
+    regs_by_shift = _load_regs_by_shift(days)
+    html_content = _build_dienste_pdf_html(days, color, brand, g.instance.name, regs_by_shift)
     buf = io.BytesIO()
     HTML(string=html_content).write_pdf(buf)
     buf.seek(0)
