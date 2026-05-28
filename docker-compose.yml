@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: standdienst
       POSTGRES_USER: standdienst
-      POSTGRES_PASSWORD: standdienst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-standdienst}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,12 +22,12 @@ services:
     build:
       context: ./standdienst-api
     environment:
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-minimum-32-chars-!!!}
-      DATABASE_URL: postgresql://standdienst:standdienst@db:5432/standdienst
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY muss gesetzt sein}
+      DATABASE_URL: postgresql://standdienst:${POSTGRES_PASSWORD:-standdienst}@db:5432/standdienst
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FLASK_DEBUG: "0"
-      SESSION_COOKIE_SECURE: "false"
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
     volumes:
       - uploads:/app/uploads
       - logs:/app/logs
@@ -38,7 +38,26 @@ services:
       redis:
         condition: service_started
     command: >
-      sh -c "flask --app wsgi db upgrade && gunicorn wsgi:app --config gunicorn.conf.py"
+      sh -c "flask db upgrade && gunicorn wsgi:app --config gunicorn.conf.py"
+
+  scheduler:
+    build:
+      context: ./standdienst-api
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY muss gesetzt sein}
+      DATABASE_URL: postgresql://standdienst:${POSTGRES_PASSWORD:-standdienst}@db:5432/standdienst
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+    volumes:
+      - logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      api:
+        condition: service_started
+    command: python scheduler_worker.py
+    restart: unless-stopped
 
   frontend:
     build:
