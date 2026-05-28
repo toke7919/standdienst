@@ -14,8 +14,8 @@
         <p class="text-sm text-muted mb-3">Dienstplan der gewählten Termine, je Tag eine Seite.</p>
 
         <!-- Termin-Selektion Dienste -->
-        <div v-if="!dates.length" class="text-sm text-muted mb-4">Keine Termine vorhanden.</div>
-        <DateSelector v-else v-model="selectedDiensteIds" :dates="dates" class="mb-4" />
+        <div v-if="!dienstesDates.length" class="text-sm text-muted mb-4">Keine Termine vorhanden.</div>
+        <DateSelector v-else v-model="selectedDiensteIds" :dates="dienstesDates" class="mb-4" />
 
         <div class="flex flex-wrap gap-3 mb-3">
           <button
@@ -60,8 +60,8 @@
         <p class="text-sm text-muted mb-3">Spendenliste der gewählten Termine, je Spendenart eine Seite.</p>
 
         <!-- Termin-Selektion Essen -->
-        <div v-if="!dates.length" class="text-sm text-muted mb-4">Keine Termine vorhanden.</div>
-        <DateSelector v-else v-model="selectedEssenIds" :dates="dates" class="mb-4" />
+        <div v-if="!essenDates.length" class="text-sm text-muted mb-4">Keine Termine vorhanden.</div>
+        <DateSelector v-else v-model="selectedEssenIds" :dates="essenDates" class="mb-4" />
 
         <div class="flex flex-wrap gap-3 mb-3">
           <button
@@ -117,7 +117,8 @@ const route = useRoute()
 const ui = useUiStore()
 const slug = computed(() => route.params.slug)
 
-const dates = ref([])
+const dienstesDates = ref([])
+const essenDates = ref([])
 const loadingDates = ref(true)
 const selectedDiensteIds = ref([])
 const selectedEssenIds = ref([])
@@ -133,11 +134,14 @@ const errorEssen = ref('')
 
 onMounted(async () => {
   try {
-    const res = await adminApi.getDates(slug.value)
-    dates.value = res.data.data
-    const publishedIds = dates.value.filter(d => !d.is_draft).map(d => d.id)
-    selectedDiensteIds.value = [...publishedIds]
-    selectedEssenIds.value = [...publishedIds]
+    const [diensteRes, essenRes] = await Promise.all([
+      adminApi.getDates(slug.value, { has_shifts: 1 }),
+      adminApi.getDates(slug.value, { has_food_types: 1 }),
+    ])
+    dienstesDates.value = diensteRes.data.data
+    essenDates.value = essenRes.data.data
+    selectedDiensteIds.value = dienstesDates.value.filter(d => !d.is_draft).map(d => d.id)
+    selectedEssenIds.value = essenDates.value.filter(d => !d.is_draft).map(d => d.id)
   } finally {
     loadingDates.value = false
   }

@@ -37,7 +37,7 @@ export const adminApi = {
   reorderStands: (slug, ids) => client.put(`${a(slug)}/stands/reorder`, { order: ids }),
 
   // Dates
-  getDates: (slug) => client.get(`${a(slug)}/dates`),
+  getDates: (slug, params) => client.get(`${a(slug)}/dates`, { params }),
   createDate: (slug, data) => client.post(`${a(slug)}/dates`, data),
   updateDate: (slug, id, data) => client.put(`${a(slug)}/dates/${id}`, data),
   deleteDate: (slug, id) => client.delete(`${a(slug)}/dates/${id}`),
