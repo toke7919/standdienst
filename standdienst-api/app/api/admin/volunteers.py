@@ -36,14 +36,18 @@ def list_volunteers(slug):
 
     vol_ids = [v.id for v in items]
     reg_counts = dict(
-        db.session.query(Registration.volunteer_id, func.count(Registration.id))
-        .filter(Registration.volunteer_id.in_(vol_ids))
-        .group_by(Registration.volunteer_id).all()
+        db.session.execute(
+            select(Registration.volunteer_id, func.count(Registration.id))
+            .filter(Registration.volunteer_id.in_(vol_ids))
+            .group_by(Registration.volunteer_id)
+        ).all()
     ) if vol_ids else {}
     food_counts = dict(
-        db.session.query(FoodDonation.volunteer_id, func.count(FoodDonation.id))
-        .filter(FoodDonation.volunteer_id.in_(vol_ids))
-        .group_by(FoodDonation.volunteer_id).all()
+        db.session.execute(
+            select(FoodDonation.volunteer_id, func.count(FoodDonation.id))
+            .filter(FoodDonation.volunteer_id.in_(vol_ids))
+            .group_by(FoodDonation.volunteer_id)
+        ).all()
     ) if vol_ids else {}
 
     dumped = _many.dump(items)

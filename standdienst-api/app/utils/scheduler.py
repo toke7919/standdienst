@@ -276,8 +276,8 @@ def _send_organizer_digest(app):
             opt_out_url = f'{base_url}/admin/profile'
 
             def _collect_data(instance_id):
-                regs = (
-                    db.session.query(Registration, Shift, Stand)
+                regs = db.session.execute(
+                    select(Registration, Shift, Stand)
                     .join(Shift, Registration.shift_id == Shift.id)
                     .join(Stand, Shift.stand_id == Stand.id)
                     .filter(
@@ -285,8 +285,7 @@ def _send_organizer_digest(app):
                         Registration.registered_at >= day_start,
                         Registration.registered_at <= day_end,
                     )
-                    .all()
-                )
+                ).all()
                 cancels = db.session.scalars(
                     select(ActivityLog).filter(
                         ActivityLog.instance_id == instance_id,
