@@ -20,7 +20,7 @@
         <template v-else>
           <div>
             <p class="text-sm font-medium text-ink/80 mb-2">QR-Code scannen:</p>
-            <img :src="qrUrl" alt="QR-Code" class="w-48 h-48 border border-sand rounded-lg" />
+            <img :src="qrDataUrl" alt="QR-Code" class="w-48 h-48 border border-sand rounded-lg" />
           </div>
           <div>
             <p class="text-sm text-muted mb-1">Oder manuell eingeben:</p>
@@ -105,7 +105,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
+import QRCode from 'qrcode'
 import { ShieldCheckIcon, ClipboardDocumentListIcon, PrinterIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
@@ -123,10 +124,11 @@ const confirming = ref(false)
 const disabling = ref(false)
 const errorMsg = ref('')
 
-const qrUrl = computed(() => {
-  if (!setupData.value?.otpauth_url) return ''
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(setupData.value.otpauth_url)}`
-})
+const qrDataUrl = ref('')
+async function generateQr(otpauth_url) {
+  if (!otpauth_url) { qrDataUrl.value = ''; return }
+  qrDataUrl.value = await QRCode.toDataURL(otpauth_url, { width: 200, margin: 2 })
+}
 
 
 async function startSetup() {
@@ -134,6 +136,7 @@ async function startSetup() {
   try {
     const res = await authApi.setup2fa()
     setupData.value = res.data
+    await generateQr(setupData.value.otpauth_url)
   } finally {
     loading.value = false
   }
