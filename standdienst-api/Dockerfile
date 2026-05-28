@@ -14,5 +14,8 @@ COPY . .
 
 RUN mkdir -p uploads logs backups static/dist
 
+ENV GUNICORN_BIND=0.0.0.0:8420
+ENV FLASK_APP=wsgi
+
 EXPOSE 8420
 CMD ["gunicorn", "wsgi:app", "--config", "gunicorn.conf.py"]
