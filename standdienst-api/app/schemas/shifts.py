@@ -57,12 +57,16 @@ class ShiftSchema(SQLAlchemyAutoSchema):
     is_full = fields.Bool(dump_only=True)
     stand_name = fields.Method('_stand_name', dump_only=True)
     date_formatted = fields.Method('_date_formatted', dump_only=True)
+    date_iso = fields.Method('_date_iso', dump_only=True)
 
     def _stand_name(self, obj):
         return obj.stand.name if obj.stand else None
 
     def _date_formatted(self, obj):
         return obj.event_date.formatted if obj.event_date else None
+
+    def _date_iso(self, obj):
+        return obj.event_date.date.isoformat() if obj.event_date else None
 
 
 class ShiftCreateSchema(Schema):

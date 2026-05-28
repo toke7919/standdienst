@@ -10,32 +10,29 @@
     </div>
 
     <template v-else>
-      <!-- Eine Karte pro Datum, Stände als Untergruppe -->
       <div class="space-y-4">
-        <div v-for="group in groupedShifts" :key="group.date" class="card overflow-hidden !p-0">
-          <!-- Akzent-Streifen oben -->
+        <div v-for="group in groupedShifts" :key="group.date_iso" class="card overflow-hidden !p-0">
           <div class="h-1 bg-primary-500 rounded-t-md" />
-
-          <!-- Datum-Kopf -->
           <div class="px-5 py-4 border-b border-sand flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
               <h2 class="font-semibold text-ink">{{ group.date }}</h2>
+              <span
+                v-if="group.is_draft"
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+              >Entwurf</span>
             </div>
             <span class="text-xs text-muted flex-shrink-0">
               {{ group.total }} {{ group.total === 1 ? 'Dienst' : 'Dienste' }}
             </span>
           </div>
 
-          <!-- Stände als Untergruppen innerhalb des Datums -->
           <div>
             <template v-for="sg in group.standGroups" :key="sg.stand_name">
-              <!-- Stand-Subheader -->
               <div class="px-5 py-1.5 bg-bg-brand border-b border-sand flex items-center gap-2">
                 <BuildingStorefrontIcon class="w-3.5 h-3.5 text-muted flex-shrink-0" />
                 <span class="text-xs font-semibold text-muted">{{ sg.stand_name }}</span>
               </div>
-              <!-- Dienst-Zeilen -->
               <div
                 v-for="s in sg.shifts"
                 :key="s.id"
@@ -77,7 +74,9 @@
           <label class="label">Datum</label>
           <select v-model="form.event_date_id" class="input" required>
             <option value="">Bitte wählen</option>
-            <option v-for="d in dates" :key="d.id" :value="d.id">{{ d.formatted }}</option>
+            <option v-for="d in dates" :key="d.id" :value="d.id">
+              {{ d.formatted }}{{ d.is_draft ? ' (Entwurf)' : '' }}
+            </option>
           </select>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -130,30 +129,38 @@ const editing = ref(null)
 const form = ref({ stand_id: '', event_date_id: '', start_time: '08:00', end_time: '12:00', max_volunteers: 2 })
 const saveError = ref('')
 
-// Primär nach Datum, sekundär nach Stand-Sortierung, tertiär nach Uhrzeit
 const standOrderMap = computed(() => {
   const map = {}
   stands.value.forEach(s => { map[s.id] = s.sort_order ?? 0 })
   return map
 })
 
+const draftDateMap = computed(() => {
+  const map = {}
+  dates.value.forEach(d => { map[d.id] = d.is_draft ?? false })
+  return map
+})
+
 const groupedShifts = computed(() => {
   const sorted = [...shifts.value].sort((a, b) => {
-    if (a.date_formatted !== b.date_formatted) return a.date_formatted.localeCompare(b.date_formatted, 'de')
+    if (a.date_iso !== b.date_iso) return (a.date_iso || '').localeCompare(b.date_iso || '')
     const orderDiff = (standOrderMap.value[a.stand_id] ?? 999) - (standOrderMap.value[b.stand_id] ?? 999)
     if (orderDiff !== 0) return orderDiff
     return (a.start_time || '').localeCompare(b.start_time || '')
   })
   const byDate = {}
   for (const s of sorted) {
-    if (!byDate[s.date_formatted]) byDate[s.date_formatted] = {}
-    if (!byDate[s.date_formatted][s.stand_name]) byDate[s.date_formatted][s.stand_name] = []
-    byDate[s.date_formatted][s.stand_name].push(s)
+    const key = s.date_iso || s.date_formatted
+    if (!byDate[key]) byDate[key] = { date: s.date_formatted, date_iso: s.date_iso, is_draft: draftDateMap.value[s.event_date_id] ?? false, stands: {} }
+    if (!byDate[key].stands[s.stand_name]) byDate[key].stands[s.stand_name] = []
+    byDate[key].stands[s.stand_name].push(s)
   }
-  return Object.entries(byDate).map(([date, standMap]) => ({
-    date,
-    standGroups: Object.entries(standMap).map(([stand_name, shifts]) => ({ stand_name, shifts })),
-    total: Object.values(standMap).reduce((n, arr) => n + arr.length, 0),
+  return Object.values(byDate).map(g => ({
+    date: g.date,
+    date_iso: g.date_iso,
+    is_draft: g.is_draft,
+    standGroups: Object.entries(g.stands).map(([stand_name, shifts]) => ({ stand_name, shifts })),
+    total: Object.values(g.stands).reduce((n, arr) => n + arr.length, 0),
   }))
 })
 
@@ -219,11 +226,7 @@ async function save() {
   saveError.value = ''
   try {
     if (editing.value) {
-      await adminApi.updateShift(route.params.slug, editing.value.id, {
-        start_time: form.value.start_time,
-        end_time: form.value.end_time,
-        max_volunteers: form.value.max_volunteers,
-      })
+      await adminApi.updateShift(route.params.slug, editing.value.id, form.value)
       ui.success('Dienst aktualisiert')
     } else {
       await adminApi.createShift(route.params.slug, form.value)
@@ -238,8 +241,10 @@ async function save() {
 
 async function deleteShift(s) {
   const ok = await ui.confirm({
-    title: 'Dienst löschen', message: 'Dienst und alle Anmeldungen löschen?',
-    confirmText: 'Löschen', danger: true,
+    title: 'Dienst löschen',
+    message: `${s.date_formatted} – ${s.stand_name} ${s.time_range} löschen?`,
+    confirmText: 'Löschen',
+    danger: true,
   })
   if (!ok) return
   try {
