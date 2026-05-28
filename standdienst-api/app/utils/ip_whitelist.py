@@ -25,8 +25,10 @@ def invalidate():
 
 def _refresh() -> None:
     try:
+        from sqlalchemy import select
+        from ..extensions import db
         from ..models import GlobalSettings
-        gs = GlobalSettings.query.first()
+        gs = db.session.scalars(select(GlobalSettings)).first()
         raw = gs.ip_whitelist if gs else None
         networks = []
         if raw:
