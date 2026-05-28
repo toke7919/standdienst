@@ -1,4 +1,5 @@
 from flask import request, g
+from sqlalchemy import select, func
 
 from . import admin_bp
 from ...extensions import db
@@ -13,18 +14,18 @@ _SORT_COLUMNS = {
 }
 
 
-def _apply_sort(q, sort_param, dir_param):
+def _apply_sort(stmt, sort_param, dir_param):
     col = _SORT_COLUMNS.get(sort_param, ActivityLog.timestamp)
-    return q.order_by(col.asc() if dir_param == 'asc' else col.desc())
+    return stmt.order_by(col.asc() if dir_param == 'asc' else col.desc())
 
 
-def _apply_type_filter(q, raw: str | None):
+def _apply_type_filter(stmt, raw: str | None):
     if not raw:
-        return q
+        return stmt
     types = [t.strip() for t in raw.split(',') if t.strip()]
     if types:
-        q = q.filter(ActivityLog.event_type.in_(types))
-    return q
+        stmt = stmt.filter(ActivityLog.event_type.in_(types))
+    return stmt
 
 
 def _serialize(entry, include_ip: bool = True, instance_map: dict | None = None) -> dict:
@@ -57,18 +58,23 @@ def global_activity():
     event_types = request.args.get('event_types')
     instance_id = request.args.get('instance_id', type=int)
 
-    q = ActivityLog.query
+    stmt = select(ActivityLog)
     if instance_id is not None:
-        q = q.filter(ActivityLog.instance_id == instance_id)
-    q = _apply_type_filter(q, event_types)
-    q = _apply_sort(q, sort, direction)
+        stmt = stmt.filter(ActivityLog.instance_id == instance_id)
+    stmt = _apply_type_filter(stmt, event_types)
+    stmt = _apply_sort(stmt, sort, direction)
 
-    total = q.count()
-    items = q.paginate(page=page, per_page=per_page, error_out=False).items
+    total = db.session.scalar(
+        select(func.count()).select_from(
+            stmt.order_by(None).subquery()
+        )
+    )
+    pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    items = pagination.items
 
     # Instanznamen einmalig laden
     inst_ids = {e.instance_id for e in items if e.instance_id}
-    inst_map = {i.id: i for i in Instance.query.filter(Instance.id.in_(inst_ids)).all()} if inst_ids else {}
+    inst_map = {i.id: i for i in db.session.scalars(select(Instance).filter(Instance.id.in_(inst_ids))).all()} if inst_ids else {}
 
     return paginated([_serialize(e, include_ip=True, instance_map=inst_map) for e in items],
                      total, page, per_page)
@@ -85,10 +91,15 @@ def instance_activity(slug):
     direction   = request.args.get('dir', 'desc')
     event_types = request.args.get('event_types')
 
-    q = ActivityLog.query.filter_by(instance_id=g.instance.id)
-    q = _apply_type_filter(q, event_types)
-    q = _apply_sort(q, sort, direction)
+    stmt = select(ActivityLog).filter_by(instance_id=g.instance.id)
+    stmt = _apply_type_filter(stmt, event_types)
+    stmt = _apply_sort(stmt, sort, direction)
 
-    total = q.count()
-    items = q.paginate(page=page, per_page=per_page, error_out=False).items
+    total = db.session.scalar(
+        select(func.count()).select_from(
+            stmt.order_by(None).subquery()
+        )
+    )
+    pagination = db.paginate(stmt, page=page, per_page=per_page, error_out=False)
+    items = pagination.items
     return paginated([_serialize(e, include_ip=False) for e in items], total, page, per_page)
