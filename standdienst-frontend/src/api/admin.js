@@ -41,6 +41,7 @@ export const adminApi = {
   createDate: (slug, data) => client.post(`${a(slug)}/dates`, data),
   updateDate: (slug, id, data) => client.put(`${a(slug)}/dates/${id}`, data),
   deleteDate: (slug, id) => client.delete(`${a(slug)}/dates/${id}`),
+  duplicateDate: (slug, id, data) => client.post(`${a(slug)}/dates/${id}/duplicate`, data),
 
   // Shifts
   getShifts: (slug, p) => client.get(`${a(slug)}/shifts`, { params: p }),
