@@ -1,4 +1,5 @@
 import csv
+import html as _html
 import io
 from collections import defaultdict
 from datetime import date, datetime, timezone
@@ -20,12 +21,14 @@ from ...utils.responses import error, ok
 
 def _vol_name(reg):
     v = reg.volunteer
-    return v.name if v else (reg.guest_name or '—')
+    name = v.name if v else (reg.guest_name or '—')
+    return _html.escape(name)
 
 
 def _food_name(don):
     v = don.volunteer
-    return v.name if v else (don.guest_name or '—')
+    name = v.name if v else (don.guest_name or '—')
+    return _html.escape(name)
 
 
 def _sender_name(user) -> str:
@@ -77,6 +80,7 @@ def _pdf_branding() -> dict:
 
 
 def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: str) -> str:
+    esc_instance = _html.escape(instance_name)
     sections = ''
     for i, (ed, stands_map) in enumerate(days.items()):
         break_style = 'page-break-before: always;' if i > 0 else ''
@@ -90,14 +94,14 @@ def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: 
                 rows += f'<tr><td class="time">{sh.time_range}</td><td>{names}</td></tr>'
             stand_tables += f'''
             <div style="margin-bottom:16px;">
-              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{stand.name}</p>
+              <p style="margin:0 0 4px;font-weight:700;font-size:11pt;color:#1f2937;">{_html.escape(stand.name)}</p>
               <table>
                 <thead><tr><th>Uhrzeit</th><th>Helfer</th></tr></thead>
                 <tbody>{rows}</tbody>
               </table>
             </div>'''
         label_line = (f'<p style="color:#6b7280;font-size:10pt;font-weight:400;'
-                      f'margin:0 0 12px;">{ed.label}</p>') if ed.label else ''
+                      f'margin:0 0 12px;">{_html.escape(ed.label)}</p>') if ed.label else ''
         sections += f'''
         <div style="{break_style} margin-bottom: 2em;">
           <h2 style="color:{color};margin:0 0 4px;font-size:14pt;font-weight:700;">
@@ -127,7 +131,7 @@ def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: 
       {brand['css']}
     </style></head><body>
       {brand['html']}
-      <h1>Dienstplan – {instance_name}</h1>
+      <h1>Dienstplan – {esc_instance}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
     </body></html>'''
@@ -135,6 +139,7 @@ def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: 
 
 def _build_essen_pdf_html(food_types: list, color: str, brand: dict,
                            instance_name: str, tz) -> str:
+    esc_instance = _html.escape(instance_name)
     sections = ''
     for i, ft in enumerate(food_types):
         break_style = 'page-break-before: always;' if i > 0 else ''
@@ -142,7 +147,7 @@ def _build_essen_pdf_html(food_types: list, color: str, brand: dict,
         if ft.delivery_datetime:
             delivery_info += 'Abgabe: ' + ft.delivery_datetime.astimezone(tz).strftime('%d.%m.%Y %H:%M')
         if ft.delivery_location:
-            delivery_info += (' · ' if delivery_info else '') + ft.delivery_location
+            delivery_info += (' · ' if delivery_info else '') + _html.escape(ft.delivery_location)
         donations = list(ft.donations.order_by(FoodDonation.registered_at))
         rows = ''
         if not donations:
@@ -150,11 +155,11 @@ def _build_essen_pdf_html(food_types: list, color: str, brand: dict,
         for don in donations:
             refrig = 'Ja' if don.needs_refrigeration else 'Nein'
             rows += (f'<tr><td>{_food_name(don)}</td>'
-                     f'<td>{don.description}</td><td>{refrig}</td></tr>')
+                     f'<td>{_html.escape(don.description)}</td><td>{refrig}</td></tr>')
         event_label = ft.event_date.label if ft.event_date and ft.event_date.label else ''
         date_formatted = ft.event_date.formatted if ft.event_date else ''
-        date_heading = date_formatted + (f' – {event_label}' if event_label else '')
-        heading = ft.name + (f' · {date_heading}' if date_heading else '')
+        date_heading = date_formatted + (f' – {_html.escape(event_label)}' if event_label else '')
+        heading = _html.escape(ft.name) + (f' · {date_heading}' if date_heading else '')
         info_line = f'<p class="meta">{delivery_info}</p>' if delivery_info else ''
         sections += f'''
         <div style="{break_style}">
@@ -182,7 +187,7 @@ def _build_essen_pdf_html(food_types: list, color: str, brand: dict,
       {brand['css']}
     </style></head><body>
       {brand['html']}
-      <h1>Essensspenden – {instance_name}</h1>
+      <h1>Essensspenden – {esc_instance}</h1>
       <p class="meta">Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       {sections}
     </body></html>'''
@@ -761,7 +766,7 @@ def export_pdf(slug):
       {brand['css']}
     </style></head><body>
       {brand['html']}
-      <h1>Dienstplan – {g.instance.name}</h1>
+      <h1>Dienstplan – {_html.escape(g.instance.name)}</h1>
       <p>Exportiert am {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
       <table>
         <tr><th>Stand</th><th>Datum</th><th>Uhrzeit</th><th>Helfer</th><th>E-Mail</th></tr>
@@ -777,8 +782,8 @@ def export_pdf(slug):
 
 
 def _pdf_row(stand, datum, uhrzeit, name, email):
-    return (f'<tr><td>{stand}</td><td>{datum}</td><td>{uhrzeit}</td>'
-            f'<td>{name}</td><td>{email}</td></tr>')
+    return (f'<tr><td>{_html.escape(stand)}</td><td>{datum}</td><td>{uhrzeit}</td>'
+            f'<td>{_html.escape(name)}</td><td>{_html.escape(email)}</td></tr>')
 
 
 # ---------------------------------------------------------------------------
