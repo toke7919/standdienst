@@ -30,10 +30,15 @@ _don_update = FoodDonationAdminUpdateSchema()
 @require_staff
 def list_food_types(slug):
     date_id = request.args.get('date_id', type=int)
-    stmt = select(FoodDonationType).filter_by(instance_id=g.instance.id)
+    stmt = (
+        select(FoodDonationType)
+        .filter_by(instance_id=g.instance.id)
+        .join(FoodDonationType.event_date)
+    )
     if date_id:
-        stmt = stmt.filter_by(event_date_id=date_id)
-    return ok(_type_many.dump(db.session.scalars(stmt.order_by(FoodDonationType.name)).all()))
+        stmt = stmt.filter(FoodDonationType.event_date_id == date_id)
+    stmt = stmt.order_by(EventDate.date, FoodDonationType.name)
+    return ok(_type_many.dump(db.session.scalars(stmt).all()))
 
 
 @admin_bp.route('/<slug>/food-types', methods=['POST'])

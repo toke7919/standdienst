@@ -9,6 +9,14 @@ class FoodDonationTypeSchema(SQLAlchemyAutoSchema):
         load_instance = False
 
     donation_count = fields.Int(dump_only=True)
+    event_date_formatted = fields.Method('_event_date_formatted', dump_only=True)
+    event_date_label = fields.Method('_event_date_label', dump_only=True)
+
+    def _event_date_formatted(self, obj):
+        return obj.event_date.formatted if obj.event_date else None
+
+    def _event_date_label(self, obj):
+        return obj.event_date.label if obj.event_date else None
 
 
 class FoodDonationTypeCreateSchema(Schema):
