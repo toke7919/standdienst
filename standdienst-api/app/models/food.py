@@ -21,6 +21,9 @@ class FoodDonationType(db.Model):
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True),
                            default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime(timezone=True),
+                           default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
 
     event_date = db.relationship('EventDate',
                                  backref=db.backref('food_types', lazy='dynamic'))

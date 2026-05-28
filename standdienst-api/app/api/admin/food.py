@@ -11,7 +11,7 @@ from ...schemas.food import (
     FoodDonationSchema, FoodDonationAdminCreateSchema, FoodDonationAdminUpdateSchema,
 )
 from ...utils.auth import require_staff, require_instance_admin
-from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
+from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination, optimistic_lock_conflict
 
 _type_schema = FoodDonationTypeSchema()
 _type_many = FoodDonationTypeSchema(many=True)
@@ -67,10 +67,14 @@ def update_food_type(slug, type_id):
     food_type = db.first_or_404(
         select(FoodDonationType).filter_by(id=type_id, instance_id=g.instance.id)
     )
+    raw = request.get_json() or {}
     try:
-        data = _type_update.load(request.get_json() or {})
+        data = _type_update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
+
+    if optimistic_lock_conflict(food_type, raw.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     for key, value in data.items():
         setattr(food_type, key, value)

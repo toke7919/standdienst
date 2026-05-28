@@ -15,6 +15,9 @@ class Stand(db.Model):
     sort_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime(timezone=True),
                            default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime(timezone=True),
+                           default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
 
     shifts = db.relationship(
         'Shift', backref='stand', lazy='dynamic', cascade='all, delete-orphan'
@@ -35,6 +38,9 @@ class EventDate(db.Model):
     date = db.Column(db.Date, nullable=False, index=True)
     label = db.Column(db.String(100), default='')
     is_draft = db.Column(db.Boolean, nullable=False, default=False)
+    updated_at = db.Column(db.DateTime(timezone=True),
+                           default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
 
     shifts = db.relationship(
         'Shift', backref='event_date', lazy='dynamic', cascade='all, delete-orphan'
@@ -70,6 +76,9 @@ class Shift(db.Model):
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
     max_volunteers = db.Column(db.Integer, nullable=False, default=2)
+    updated_at = db.Column(db.DateTime(timezone=True),
+                           default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
 
     registrations = db.relationship(
         'Registration', backref='shift', lazy='dynamic', cascade='all, delete-orphan'

@@ -6,7 +6,7 @@ from ...extensions import db
 from ...models import Stand, ActivityLog
 from ...schemas.shifts import StandSchema, StandCreateSchema, StandUpdateSchema, StandReorderSchema
 from ...utils.auth import require_staff, require_instance_admin
-from ...utils.responses import ok, created, no_content, error
+from ...utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 
 _schema = StandSchema()
 _many = StandSchema(many=True)
@@ -41,10 +41,14 @@ def create_stand(slug):
 @require_instance_admin
 def update_stand(slug, stand_id):
     stand = _get_or_404(stand_id, g.instance.id)
+    raw = request.get_json() or {}
     try:
-        data = _update.load(request.get_json() or {})
+        data = _update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
+
+    if optimistic_lock_conflict(stand, raw.get('updated_at')):
+        return error('Datensatz wurde zwischenzeitlich geändert', 409)
 
     for key, value in data.items():
         setattr(stand, key, value)
