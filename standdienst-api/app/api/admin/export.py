@@ -750,7 +750,8 @@ def export_pdf(slug):
         for reg in regs:
             v = reg.volunteer
             rows_html += _pdf_row(shift.stand.name, shift.event_date.formatted,
-                                   shift.time_range, _vol_name(reg),
+                                   shift.time_range,
+                                   v.name if v else (reg.guest_name or '—'),
                                    v.email or '' if v else '')
 
     color = _primary_color()
