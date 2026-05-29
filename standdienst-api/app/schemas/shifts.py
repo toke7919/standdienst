@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import Stand, EventDate, Shift, Registration
 
@@ -16,6 +16,9 @@ class StandCreateSchema(Schema):
 
 
 class StandUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     name = fields.Str(validate=validate.Length(min=1, max=100))
     description = fields.Str(validate=validate.Length(max=500))
     sort_order = fields.Int()
@@ -40,6 +43,9 @@ class EventDateCreateSchema(Schema):
 
 
 class EventDateUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     date = fields.Date()
     label = fields.Str(validate=validate.Length(max=100))
     is_draft = fields.Bool()
@@ -78,6 +84,9 @@ class ShiftCreateSchema(Schema):
 
 
 class ShiftUpdateSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     start_time = fields.Time()
     end_time = fields.Time()
     max_volunteers = fields.Int(validate=validate.Range(min=1))
