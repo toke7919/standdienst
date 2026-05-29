@@ -298,7 +298,7 @@ Router-Guard: `beforeEach` prüft `setup_complete` via gecachtem `useSetupStore(
 
 | Rolle | Mindestanforderungen |
 |-------|----------------------|
-| **Volunteer** | 6 Zeichen |
+| **Volunteer** | 8 Zeichen |
 | **Admin / Organizer** | 12 Zeichen, mind. je 1 Groß-/Kleinbuchstabe, Ziffer, Sonderzeichen |
 
 Implementiert in `validate_password_strength(password, role='volunteer')`.

@@ -13,6 +13,7 @@ from ...utils.responses import ok, error
 
 
 _IMPORT_COLUMNS = ['Stand', 'Datum (TT.MM.JJJJ)', 'Von (HH:MM)', 'Bis (HH:MM)', 'Max. Helfer']
+_MAX_IMPORT_SIZE = 2 * 1024 * 1024  # 2 MB
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +93,10 @@ def import_template_xlsx(slug):
 def import_shifts_csv(slug):
     if 'file' not in request.files:
         return error('Keine Datei übergeben', 400)
-    content = request.files['file'].read().decode('utf-8-sig')
+    data = request.files['file'].read(_MAX_IMPORT_SIZE + 1)
+    if len(data) > _MAX_IMPORT_SIZE:
+        return error('Datei zu groß (max. 2 MB)', 413)
+    content = data.decode('utf-8-sig')
     rows = list(csv.DictReader(io.StringIO(content), delimiter=';'))
     return _process_shift_rows(rows, g.instance.id)
 
@@ -107,7 +111,10 @@ def import_shifts_xlsx(slug):
     except ImportError:
         return error('openpyxl nicht installiert', 500)
 
-    wb = openpyxl.load_workbook(request.files['file'])
+    data = request.files['file'].read(_MAX_IMPORT_SIZE + 1)
+    if len(data) > _MAX_IMPORT_SIZE:
+        return error('Datei zu groß (max. 2 MB)', 413)
+    wb = openpyxl.load_workbook(io.BytesIO(data))
     ws = wb.active
     header = [str(c.value or '').strip() for c in next(ws.iter_rows(max_row=1))]
     rows = [
@@ -129,7 +136,10 @@ def import_shifts_ods(slug):
     except ImportError:
         return error('odfpy nicht installiert', 500)
 
-    doc = odf_load(request.files['file'])
+    data = request.files['file'].read(_MAX_IMPORT_SIZE + 1)
+    if len(data) > _MAX_IMPORT_SIZE:
+        return error('Datei zu groß (max. 2 MB)', 413)
+    doc = odf_load(io.BytesIO(data))
     sheet = doc.spreadsheet.getElementsByType(Table)[0]
     raw_rows = sheet.getElementsByType(TableRow)
 

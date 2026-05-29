@@ -22,11 +22,11 @@ _register_schema = VolunteerRegisterSchema()
 
 
 def _base_url() -> str:
-    """Ermittelt die Basis-URL.
+    """Ermittelt die Basis-URL aus GlobalSettings oder FRONTEND_URL.
 
     Priorität: 1. GlobalSettings.base_url (Setup-Wizard)
                2. FRONTEND_URL Umgebungsvariable
-               3. X-Forwarded-Host / Host-Header (Reverse-Proxy-Fallback)
+    Kein Host-Header-Fallback – verhindert Password-Reset-Poisoning.
     """
     try:
         gs = get_global_settings()
@@ -35,11 +35,11 @@ def _base_url() -> str:
     except Exception:
         pass
     cfg = current_app.config.get('FRONTEND_URL', '').rstrip('/')
-    if cfg and 'localhost' not in cfg and '127.0.0.1' not in cfg:
+    if cfg:
         return cfg
-    host = request.headers.get('X-Forwarded-Host') or request.headers.get('Host', 'localhost')
-    proto = request.headers.get('X-Forwarded-Proto', 'http').split(',')[0].strip()
-    return f'{proto}://{host}'
+    raise RuntimeError(
+        'base_url nicht konfiguriert – bitte im Setup-Assistenten oder via FRONTEND_URL setzen'
+    )
 
 
 @public_bp.route('/platform-info', methods=['GET'])
@@ -69,6 +69,7 @@ def instance_info(slug):
 
 
 @public_bp.route('/<slug>/captcha', methods=['GET'])
+@limiter.limit('30 per minute')
 def captcha(slug):
     return jsonify(generate_challenge()), 200
 
@@ -136,11 +137,14 @@ def register(slug):
     ))
 
     if email:
+        try:
+            base_url = _base_url()
+        except RuntimeError:
+            return jsonify(error='E-Mail-Versand nicht möglich – Basis-URL nicht konfiguriert'), 503
         raw_token = volunteer.generate_welcome_token()
         db.session.commit()
 
         title = settings.site_title if settings else instance.name
-        base_url = _base_url()
         setup_url = f'{base_url}/{slug}/welcome/{raw_token}'
         primary_color = settings.primary_color if settings else None
         logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
@@ -288,26 +292,30 @@ def volunteer_forgot_password(slug):
     volunteer = db.session.scalars(select(Volunteer).filter_by(instance_id=instance.id, email=email)).first()
 
     if volunteer and not volunteer.is_deleted and is_mail_configured():
-        raw_token = volunteer.generate_reset_token()
-        db.session.commit()
-        base_url = _base_url()
-        reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
-        settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=instance.id)).first()
-        title = settings.site_title if settings else instance.name
-        primary_color = settings.primary_color if settings else None
-        logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
-        global_settings = get_global_settings()
-        copyright_text = global_settings.copyright_text if global_settings else None
         try:
-            kw = dict(title=title, slug=slug, logo_url=logo_url, copyright_text=copyright_text,
-                      show_branding=settings.branding_enabled if settings else True)
-            if primary_color:
-                kw['primary_color'] = primary_color
-            send_mail(email, 'Passwort zurücksetzen',
-                      build_reset_email(volunteer.name, reset_url, base_url, **kw),
-                      sender_name=title)
-        except Exception:
-            pass
+            base_url = _base_url()
+        except RuntimeError:
+            base_url = None
+        if base_url:
+            raw_token = volunteer.generate_reset_token()
+            db.session.commit()
+            reset_url = f'{base_url}/{slug}/reset-password?token={raw_token}'
+            settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=instance.id)).first()
+            title = settings.site_title if settings else instance.name
+            primary_color = settings.primary_color if settings else None
+            logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
+            global_settings = get_global_settings()
+            copyright_text = global_settings.copyright_text if global_settings else None
+            try:
+                kw = dict(title=title, slug=slug, logo_url=logo_url, copyright_text=copyright_text,
+                          show_branding=settings.branding_enabled if settings else True)
+                if primary_color:
+                    kw['primary_color'] = primary_color
+                send_mail(email, 'Passwort zurücksetzen',
+                          build_reset_email(volunteer.name, reset_url, base_url, **kw),
+                          sender_name=title)
+            except Exception:
+                pass
 
     return jsonify(message='Falls die E-Mail bekannt ist, wurde eine E-Mail gesendet'), 200
 
