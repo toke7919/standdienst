@@ -100,7 +100,29 @@
         <p class="text-sm text-muted mb-4">
           Deine Daten werden pseudonymisiert und sind danach nicht mehr zugänglich (DSGVO-konformes Soft-Delete).
         </p>
-        <button class="btn-danger" @click="deleteAccount">Konto löschen</button>
+        <div v-if="!showDeleteForm">
+          <button class="btn-danger" @click="showDeleteForm = true">Konto löschen</button>
+        </div>
+        <div v-else class="space-y-3">
+          <div v-if="auth.user?.email">
+            <label class="label">Passwort zur Bestätigung</label>
+            <input
+              v-model="deletePassword"
+              type="password"
+              class="input"
+              placeholder="Dein aktuelles Passwort"
+              autocomplete="current-password"
+              @keyup.enter="confirmDelete"
+            />
+          </div>
+          <div class="flex gap-2">
+            <button class="btn-danger" :disabled="deleteLoading" @click="confirmDelete">
+              <LoadingSpinner v-if="deleteLoading" size="sm" class="mr-2" />
+              Unwiderruflich löschen
+            </button>
+            <button class="btn-secondary" @click="showDeleteForm = false; deletePassword = ''">Abbrechen</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -135,6 +157,9 @@ const form = ref({
 })
 const saving = ref(false)
 const showPw = ref(false)
+const showDeleteForm = ref(false)
+const deletePassword = ref('')
+const deleteLoading = ref(false)
 
 async function save() {
   if (form.value.password && form.value.password !== form.value.passwordConfirm) {
@@ -209,19 +234,16 @@ async function exportData() {
   }
 }
 
-async function deleteAccount() {
-  const ok = await ui.confirm({
-    title: 'Konto löschen',
-    message: 'Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.',
-    confirmText: 'Konto löschen',
-    danger: true,
-  })
-  if (!ok) return
+async function confirmDelete() {
+  deleteLoading.value = true
   try {
-    await volunteerApi.deleteAccount(route.params.slug)
+    const body = auth.user?.email ? { password: deletePassword.value } : undefined
+    await volunteerApi.deleteAccount(route.params.slug, body)
     await auth.volunteerLogout(route.params.slug)
   } catch (e) {
     ui.err(e.response?.data?.error || 'Fehler')
+  } finally {
+    deleteLoading.value = false
   }
 }
 </script>

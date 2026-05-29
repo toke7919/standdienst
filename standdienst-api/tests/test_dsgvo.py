@@ -28,7 +28,13 @@ def test_meine_daten_requires_auth(client, instance):
 
 def test_self_soft_delete(client, instance, volunteer):
     _volunteer_login(client, instance, volunteer)
-    rv = client.delete(f'/api/volunteer/{instance.slug}/profile')
+    # Passwort-Bestätigung erforderlich (Volunteer hat Login)
+    rv = client.delete(f'/api/volunteer/{instance.slug}/profile',
+                       json={'password': 'WrongPass!'})
+    assert rv.status_code == 403
+
+    rv = client.delete(f'/api/volunteer/{instance.slug}/profile',
+                       json={'password': 'TestPass1!'})
     assert rv.status_code == 204
     _db.session.refresh(volunteer)
     assert volunteer.deleted_at is not None

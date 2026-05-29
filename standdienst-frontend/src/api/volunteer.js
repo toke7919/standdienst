@@ -13,6 +13,6 @@ export const volunteerApi = {
   removeFoodDonation: (slug, donationId) =>
     client.delete(`/volunteer/${slug}/food-donations/${donationId}`),
   updateProfile: (slug, data) => client.put(`/volunteer/${slug}/profile`, data),
-  deleteAccount: (slug) => client.delete(`/volunteer/${slug}/profile`),
+  deleteAccount: (slug, data) => client.delete(`/volunteer/${slug}/profile`, { data }),
   getMeineDaten: (slug) => client.get(`/volunteer/${slug}/meine-daten`),
 }

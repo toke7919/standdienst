@@ -430,7 +430,11 @@ def update_profile(slug):
 @volunteer_bp.route('/<slug>/profile', methods=['DELETE'])
 @require_volunteer
 def delete_profile(slug):
-    v          = g.current_user
+    v = g.current_user
+    if v.has_login:
+        password = (request.get_json(silent=True) or {}).get('password', '')
+        if not v.check_password(password):
+            return error('Passwort ungültig', 403)
     reg_count  = v.registrations.count()
     food_count = v.food_donations.count()
     name       = v.name  # Namen vor soft_delete sichern
