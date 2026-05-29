@@ -95,7 +95,7 @@ def import_shifts_csv(slug):
         return error('Keine Datei übergeben', 400)
     data = request.files['file'].read(_MAX_IMPORT_SIZE + 1)
     if len(data) > _MAX_IMPORT_SIZE:
-        return error('Datei zu groß (max. 2 MB)', 413)
+        return error('Datei zu groß (max. 2 MB)', 400)
     content = data.decode('utf-8-sig')
     rows = list(csv.DictReader(io.StringIO(content), delimiter=';'))
     return _process_shift_rows(rows, g.instance.id)
@@ -113,7 +113,7 @@ def import_shifts_xlsx(slug):
 
     data = request.files['file'].read(_MAX_IMPORT_SIZE + 1)
     if len(data) > _MAX_IMPORT_SIZE:
-        return error('Datei zu groß (max. 2 MB)', 413)
+        return error('Datei zu groß (max. 2 MB)', 400)
     wb = openpyxl.load_workbook(io.BytesIO(data))
     ws = wb.active
     header = [str(c.value or '').strip() for c in next(ws.iter_rows(max_row=1))]
@@ -138,7 +138,7 @@ def import_shifts_ods(slug):
 
     data = request.files['file'].read(_MAX_IMPORT_SIZE + 1)
     if len(data) > _MAX_IMPORT_SIZE:
-        return error('Datei zu groß (max. 2 MB)', 413)
+        return error('Datei zu groß (max. 2 MB)', 400)
     doc = odf_load(io.BytesIO(data))
     sheet = doc.spreadsheet.getElementsByType(Table)[0]
     raw_rows = sheet.getElementsByType(TableRow)

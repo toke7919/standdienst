@@ -57,7 +57,7 @@ def send_mail(to: str, subject: str, html: str, sender_name: str = None,
               attachments: list | None = None):
     """Sendet eine E-Mail (HTML + Plain-Text) mit bis zu `retries` Versuchen."""
     default_sender = current_app.config.get('MAIL_DEFAULT_SENDER', '')
-    _name = sender_name or current_app.config.get('MAIL_SENDER_NAME', '')
+    _name = (sender_name or current_app.config.get('MAIL_SENDER_NAME', '')).replace('\r', '').replace('\n', '')
     sender = f'{_name} <{default_sender}>' if _name else default_sender
     body = plain_text or _html_to_text(html)
     msg = Message(subject=subject, recipients=[to], html=html, body=body, sender=sender)
