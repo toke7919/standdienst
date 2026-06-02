@@ -250,7 +250,7 @@ def _send_organizer_digest(app):
             from ..extensions import db
             from ..models import (
                 Admin, Organizer, Registration, ActivityLog, FoodDonation,
-                Shift, Stand, EventDate, Instance,
+                FoodDonationType, Shift, Stand, EventDate, Instance,
             )
             from ..models.instance import (
                 organizer_instances as oi_table,
@@ -295,10 +295,12 @@ def _send_organizer_digest(app):
                     )
                 ).all()
                 foods = db.session.scalars(
-                    select(FoodDonation).filter(
-                        FoodDonation.instance_id == instance_id,
-                        FoodDonation.created_at >= day_start,
-                        FoodDonation.created_at <= day_end,
+                    select(FoodDonation)
+                    .join(FoodDonationType, FoodDonation.food_type_id == FoodDonationType.id)
+                    .filter(
+                        FoodDonationType.instance_id == instance_id,
+                        FoodDonation.registered_at >= day_start,
+                        FoodDonation.registered_at <= day_end,
                     )
                 ).all()
                 return regs, cancels, foods
