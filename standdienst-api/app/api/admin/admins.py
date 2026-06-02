@@ -40,7 +40,7 @@ def create_admin():
     last_name = data.get('last_name', '').strip()
     full_name = f'{first_name} {last_name}'.strip()
     admin = Admin(
-        email=data['email'].lower(),
+        email=data['email'].strip().lower(),
         is_primary=data.get('is_primary', False),
         first_name=first_name,
         last_name=last_name,
@@ -85,7 +85,7 @@ def update_admin(admin_id):
         admin.last_name = data.get('last_name', admin.last_name or '').strip()
         admin.name = f'{admin.first_name} {admin.last_name}'.strip()
     if 'email' in data:
-        email = data['email'].lower()
+        email = data['email'].strip().lower()
         existing = db.session.scalars(select(Admin).filter_by(email=email)).first()
         if existing and existing.id != admin_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
