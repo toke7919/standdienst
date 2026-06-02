@@ -40,7 +40,7 @@ def create_organizer():
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
 
-    if db.session.scalars(select(Organizer).filter_by(email=data['email'].lower())).first():
+    if db.session.scalars(select(Organizer).filter_by(email=data['email'].strip().lower())).first():
         return error('E-Mail-Adresse bereits vergeben', 409)
 
     instance_ids = data.pop('instance_ids', [])
@@ -51,7 +51,7 @@ def create_organizer():
     last_name = data.get('last_name', '').strip()
     full_name = f'{first_name} {last_name}'.strip()
     organizer = Organizer(
-        email=data['email'].lower(),
+        email=data['email'].strip().lower(),
         first_name=first_name,
         last_name=last_name,
         name=full_name or first_name,
@@ -123,7 +123,7 @@ def update_organizer(organizer_id):
         return error('Validierungsfehler', 422, e.messages)
 
     if 'email' in data:
-        email = data['email'].lower()
+        email = data['email'].strip().lower()
         existing = db.session.scalars(select(Organizer).filter_by(email=email)).first()
         if existing and existing.id != organizer_id:
             return error('E-Mail-Adresse bereits vergeben', 409)
