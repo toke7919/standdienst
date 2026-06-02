@@ -75,7 +75,7 @@ def _purge_old_logs(app):
             months = gs.log_retention_months if gs else 3
             cutoff = datetime.now(timezone.utc) - timedelta(days=months * 30)
             deleted = db.session.execute(
-                delete(ActivityLog).filter(ActivityLog.created_at < cutoff)
+                delete(ActivityLog).filter(ActivityLog.timestamp < cutoff)
             ).rowcount
             db.session.commit()
             log.info('Protokoll-Bereinigung: %d Einträge gelöscht (älter als %d Monate)',

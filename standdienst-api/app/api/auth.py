@@ -466,9 +466,8 @@ def update_profile():
                 return jsonify(error='E-Mail bereits vergeben'), 409
             user.email = email
     if data.get('password'):
-        err = validate_password_strength(data['password'], role='admin')
-        if err:
-            return jsonify(error=err), 400
+        if not validate_password_strength(data['password'], role='admin'):
+            return jsonify(error='Passwort zu schwach (mind. 12 Zeichen, Groß-/Kleinbuchstaben, Ziffer, Sonderzeichen)'), 400
         user.set_password(data['password'])
         user.rotate_jwt()
     if 'notifications_enabled' in data and role == 'organizer':
