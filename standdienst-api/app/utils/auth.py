@@ -145,6 +145,11 @@ def validate_password_strength(password: str, role: str = 'volunteer') -> bool:
     Volunteers:        mind. 8 Zeichen
     Admins/Organizer:  mind. 12 Zeichen + Groß/Klein + Ziffer + Sonderzeichen
     """
+    # bcrypt verarbeitet nur die ersten 72 Bytes; längere Passwörter würden
+    # stillschweigend abgeschnitten (zwei verschiedene Passwörter mit gleichem
+    # 72-Byte-Präfix kollidieren). Daher hart ablehnen.
+    if len(password.encode('utf-8')) > 72:
+        return False
     if role in ('admin', 'organizer'):
         if len(password) < 12:
             return False

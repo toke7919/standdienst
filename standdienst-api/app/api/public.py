@@ -158,8 +158,8 @@ def register(slug):
             send_mail(email, f'Willkommen bei {title}',
                       build_welcome_email(volunteer.name, title, setup_url, base_url, **kw),
                       sender_name=title)
-        except Exception:
-            pass
+        except Exception as exc:
+            current_app.logger.warning('Willkommens-Mail fehlgeschlagen: %s', exc)
 
         from ..api.auth import _issue_tokens, _set_token_cookies, _user_payload
         access, refresh = _issue_tokens(volunteer)
@@ -314,8 +314,8 @@ def volunteer_forgot_password(slug):
                 send_mail(email, 'Passwort zurücksetzen',
                           build_reset_email(volunteer.name, reset_url, base_url, **kw),
                           sender_name=title)
-            except Exception:
-                pass
+            except Exception as exc:
+                current_app.logger.warning('Volunteer-Reset-Mail fehlgeschlagen: %s', exc)
 
     return jsonify(message='Falls die E-Mail bekannt ist, wurde eine E-Mail gesendet'), 200
 

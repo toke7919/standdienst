@@ -1,11 +1,14 @@
 """Transparente Fernet-Verschlüsselung für sensitive DB-Spalten."""
 import base64
 import hashlib
+import logging
 
 from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 from sqlalchemy import String
 from sqlalchemy.types import TypeDecorator
+
+log = logging.getLogger(__name__)
 
 
 class EncryptedStr(TypeDecorator):
@@ -34,6 +37,11 @@ class EncryptedStr(TypeDecorator):
             return value
         try:
             return self._fernet().decrypt(value.encode()).decode()
-        except (InvalidToken, Exception):
-            # Plaintext-Wert aus der Zeit vor der Verschlüsselung
+        except InvalidToken:
+            # Entweder ein Klartextwert aus der Zeit vor der Verschlüsselung
+            # oder ein mit anderem SECRET_KEY verschlüsselter Wert. Letzteres ist
+            # ein Konfigurationsfehler (z.B. Key rotiert) – darum protokollieren,
+            # damit es nicht stillschweigend als "Klartext" durchrutscht.
+            log.warning('EncryptedStr: Entschlüsselung fehlgeschlagen – Wert wird '
+                        'als Klartext behandelt (möglicher SECRET_KEY-Wechsel?)')
             return value

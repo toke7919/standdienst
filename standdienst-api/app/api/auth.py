@@ -21,6 +21,18 @@ from ..utils.mail import send_mail, build_reset_email, get_platform_logo_for_ema
 auth_bp = Blueprint('auth', __name__)
 log = logging.getLogger(__name__)
 
+# Konstanter Dummy-Hash, um die Antwortzeit bei unbekanntem Konto an einen
+# echten bcrypt-Vergleich anzugleichen (verhindert User-Enumeration per Timing).
+import bcrypt as _bcrypt
+_DUMMY_HASH = _bcrypt.hashpw(b'timing-equalizer', _bcrypt.gensalt(rounds=12))
+
+
+def _dummy_password_check() -> None:
+    try:
+        _bcrypt.checkpw(b'invalid', _DUMMY_HASH)
+    except Exception:
+        pass
+
 
 def _log_activity(event_type, ip, user_name=None, actor_type='admin', details=None,
                   volunteer_id=None, instance_id=None):
@@ -85,6 +97,8 @@ def login():
             or db.session.scalars(select(Organizer).filter_by(email=email)).first())
 
     if not user or not user.check_password(password):
+        if not user:
+            _dummy_password_check()  # Timing angleichen
         _fail2ban_log(ip, email)
         _log_activity(ActivityLog.LOGIN_FAIL, ip, user_name=email)
         return jsonify(error='Ungültige Anmeldedaten'), 401
@@ -120,6 +134,8 @@ def volunteer_login():
     volunteer = db.session.scalars(select(Volunteer).filter_by(instance_id=instance.id, email=email)).first()
 
     if not volunteer or not volunteer.check_password(password) or volunteer.is_deleted:
+        if not volunteer:
+            _dummy_password_check()  # Timing angleichen
         _fail2ban_log(ip, email)
         _log_activity(ActivityLog.LOGIN_FAIL, ip, user_name=email, actor_type='volunteer',
                       instance_id=instance.id)
@@ -315,8 +331,8 @@ def forgot_password():
                           impressum_url=f'{base_url}/impressum',
                           datenschutz_url=f'{base_url}/datenschutz',
                       ))
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning('Admin/Org-Reset-Mail fehlgeschlagen: %s', exc)
 
     return jsonify(message='Falls die E-Mail-Adresse bekannt ist, wurde eine E-Mail gesendet'), 200
 
@@ -386,6 +402,8 @@ def _load_user_by_identity(identity: str, role: str):
 
 def _user_payload(user) -> dict:
     payload = {'id': user.id, 'email': user.email, 'role': user.role}
+    if getattr(user, 'updated_at', None) is not None:
+        payload['updated_at'] = user.updated_at.isoformat()
     if hasattr(user, 'name'):
         payload['name'] = user.name
     if hasattr(user, 'first_name'):
@@ -449,6 +467,10 @@ def update_profile():
         return jsonify(error='Nicht erlaubt'), 403
 
     data = request.get_json() or {}
+
+    from ..utils.responses import optimistic_lock_conflict
+    if optimistic_lock_conflict(user, data.get('updated_at')):
+        return jsonify(error='Datensatz wurde zwischenzeitlich geändert'), 409
 
     if 'first_name' in data:
         user.first_name = (data['first_name'] or '').strip()

@@ -224,7 +224,7 @@ def _init_db(app):
                 if ms and ms.mail_server:
                     apply_db_mail_config(ms)
             except Exception:
-                pass
+                log.warning('DB-Mail-Konfiguration konnte beim Start nicht geladen werden', exc_info=True)
 
 
 def _seed_admin(app):

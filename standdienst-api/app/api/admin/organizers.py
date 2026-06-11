@@ -97,8 +97,9 @@ def create_organizer():
                     datenschutz_url=f'{base_url}/datenschutz',
                 ),
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            from flask import current_app
+            current_app.logger.warning('Organisator-Einladungsmail fehlgeschlagen: %s', exc)
 
     return created(_schema.dump(organizer))
 
