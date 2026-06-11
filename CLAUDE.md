@@ -216,7 +216,7 @@ Nur erreichbar solange `setup_complete = False` (außer `/status`).
 | GET/PUT | `/settings/global` | require_admin | Globale Einstellungen |
 | GET/PUT | `/settings/mail` | require_admin | Mail-Einstellungen |
 | GET | `/<slug>/export/<format>` | require_staff | CSV/Excel/ODS/iCal-Export |
-| POST | `/<slug>/import/shifts/<format>` | require_instance_admin | Daten-Import |
+| POST | `/<slug>/import/shifts/<format>` | require_staff | Daten-Import (Admin + Organisator) |
 | POST | `/backup/create` | require_admin | DB-Backup (AES-GCM + SMB) |
 | GET | `/update/check` | require_admin | Update-Verfügbarkeit (GitHub Releases API) |
 | GET | `/<slug>/dsgvo/processing-record` | require_instance_admin | Art. 30 Verarbeitungsverzeichnis |

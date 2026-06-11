@@ -93,21 +93,52 @@ def _github_request(url: str, pat: str | None) -> dict | None:
     if result is not None:
         return result
 
-    # DNS-Fallback: IP über externen Resolver, URL-Host durch IP ersetzen
+    # DNS-Fallback: IP über externen Resolver auflösen, aber weiterhin das
+    # Zertifikat gegen 'api.github.com' validieren (SNI + Hostname-Check).
+    # TLS-Verifikation wird NICHT deaktiviert – sonst wären PAT-Diebstahl und
+    # manipulierte Release-Tarballs (RCE) per DNS-Spoofing möglich.
     ip = _resolve_github_api_ip()
     if ip:
-        fallback = url.replace('https://api.github.com', f'https://{ip}', 1)
-        import ssl
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False  # IP statt Hostname
-        ctx.verify_mode = ssl.CERT_NONE
-        req = urllib.request.Request(fallback, headers={**headers, 'Host': 'api.github.com'})
         try:
-            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
-                return json.loads(resp.read())
+            return _fetch_via_ip(ip, url, headers)
         except Exception:
             pass
     return None
+
+
+def _fetch_via_ip(ip: str, url: str, headers: dict) -> dict | None:
+    """Holt eine GitHub-API-Antwort über eine feste IP mit voller TLS-Prüfung.
+
+    Verbindet sich zur aufgelösten IP, erzwingt aber SNI und Zertifikatsprüfung
+    gegen den echten Hostnamen 'api.github.com'.
+    """
+    import http.client
+    import socket
+    import ssl
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    path = parsed.path + (f'?{parsed.query}' if parsed.query else '')
+    ctx = ssl.create_default_context()  # check_hostname=True, CERT_REQUIRED
+
+    raw_sock = socket.create_connection((ip, 443), timeout=10)
+    try:
+        tls_sock = ctx.wrap_socket(raw_sock, server_hostname='api.github.com')
+        conn = http.client.HTTPSConnection('api.github.com', timeout=10)
+        conn.sock = tls_sock
+        try:
+            conn.request('GET', path, headers=headers)
+            resp = conn.getresponse()
+            if resp.status >= 400:
+                return None
+            return json.loads(resp.read())
+        finally:
+            conn.close()
+    finally:
+        try:
+            raw_sock.close()
+        except OSError:
+            pass
 
 
 def _github_latest_release(repo_slug: str, pat: str | None) -> dict | None:

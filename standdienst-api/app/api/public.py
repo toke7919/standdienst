@@ -420,7 +420,11 @@ def _contact_vars(obj) -> dict:
 def _render_template(template_html: str | None, vars: dict) -> str | None:
     if not template_html:
         return None
+    # Das Template ist bereits beim Speichern sanitisiert. Die Kontakt-Werte sind
+    # reiner Text und werden hier HTML-escaped eingesetzt, damit HTML/Script in
+    # Kontaktfeldern nicht nachträglich am Sanitizer vorbei injiziert wird (XSS).
+    import html as _html
     result = template_html
     for key, value in vars.items():
-        result = result.replace('{{' + key + '}}', value)
+        result = result.replace('{{' + key + '}}', _html.escape(value or '', quote=True))
     return result

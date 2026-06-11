@@ -18,6 +18,7 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
+    _validate_production_config(app)
     init_logging(app)
     _init_extensions(app)
     _register_blueprints(app)
@@ -27,6 +28,28 @@ def create_app(config_class=Config):
     _init_db(app)
 
     return app
+
+
+def _validate_production_config(app):
+    """Erzwingt sichere Produktiv-Einstellungen.
+
+    Im Produktivbetrieb (PostgreSQL-DB) muss das Rate-Limit über Redis laufen.
+    Mit dem Default 'memory://' gelten Limits nur pro Gunicorn-Worker (real
+    Limit × Worker) und gehen bei jedem Neustart verloren – das schwächt den
+    Brute-Force-Schutz erheblich. SQLite-Dev und Tests bleiben ausgenommen.
+    """
+    if app.config.get('TESTING'):
+        return
+    is_production = str(app.config.get('SQLALCHEMY_DATABASE_URI', '')).startswith('postgresql')
+    if not is_production:
+        return
+    storage = str(app.config.get('RATELIMIT_STORAGE_URI', 'memory://'))
+    if not (storage.startswith('redis://') or storage.startswith('rediss://')):
+        raise RuntimeError(
+            'RATELIMIT_STORAGE_URI muss in Produktion auf Redis zeigen '
+            '(z.B. redis://127.0.0.1:6379/0). Der Default "memory://" ist mit '
+            'mehreren Gunicorn-Workern unsicher und nicht persistent.'
+        )
 
 
 def _init_extensions(app):
@@ -105,7 +128,21 @@ def _register_request_hooks(app):
         if not app.debug:
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         ct = response.content_type or ''
-        if 'json' in ct or 'text/plain' in ct:
+        if 'text/html' in ct:
+            # CSP für das SPA-Dokument. 'unsafe-inline' bei style-src ist für Vue
+            # :style-Bindings nötig; Google Fonts werden explizit erlaubt.
+            response.headers['Content-Security-Policy'] = (
+                "default-src 'none'; "
+                "script-src 'self'; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: blob:; "
+                "connect-src 'self'; "
+                "manifest-src 'self'; "
+                "worker-src 'self'; "
+                "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+            )
+        elif 'json' in ct or 'text/plain' in ct:
             response.headers['Content-Security-Policy'] = "default-src 'none'"
         return response
 
