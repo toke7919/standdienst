@@ -4,14 +4,57 @@ import hashlib
 import hmac as _hmac
 import json
 import secrets
+import threading
 import time
 from flask import current_app
 
 _EXPIRES = 600  # 10 Minuten Gültigkeit
 
+# Replay-Schutz: bereits eingelöste Challenges werden bis zu ihrem Ablauf als
+# "verbraucht" markiert. Bevorzugt im gemeinsamen Redis-Store (mehrere Worker),
+# sonst prozesslokal als Fallback (Dev/Test, Einzelworker).
+_local_consumed: dict[str, float] = {}
+_local_lock = threading.Lock()
+
 
 def _key() -> bytes:
     return hashlib.sha256(current_app.config['SECRET_KEY'].encode()).digest()
+
+
+def _redis_client():
+    uri = current_app.config.get('RATELIMIT_STORAGE_URI', 'memory://')
+    if uri.startswith('redis://') or uri.startswith('rediss://'):
+        try:
+            import redis as _redis
+            return _redis.from_url(uri, socket_connect_timeout=2)
+        except Exception:
+            return None
+    return None
+
+
+def _try_consume(signature: str, ttl: int) -> bool:
+    """Markiert eine Challenge atomar als verbraucht.
+
+    Gibt True zurück, wenn sie noch nicht eingelöst war (Erstnutzung), und
+    False bei einem Replay-Versuch.
+    """
+    ttl = max(ttl, 1)
+    key = f'altcha:used:{signature}'
+    r = _redis_client()
+    if r is not None:
+        try:
+            # SET key 1 NX EX ttl → True nur bei der ersten Einlösung.
+            return bool(r.set(key, b'1', nx=True, ex=ttl))
+        except Exception:
+            pass  # Fallback auf prozesslokalen Speicher
+    now = time.time()
+    with _local_lock:
+        for k in [k for k, exp in _local_consumed.items() if exp < now]:
+            _local_consumed.pop(k, None)
+        if signature in _local_consumed:
+            return False
+        _local_consumed[signature] = now + ttl
+        return True
 
 
 def _max_number() -> int:
@@ -61,13 +104,19 @@ def verify_solution(payload_b64: str) -> bool:
             return False
 
         # Ablaufzeit prüfen
+        remaining_ttl = _EXPIRES
         if '?expires=' in salt:
-            exp_str = salt.split('?expires=')[1].split('&')[0]
-            if time.time() > int(exp_str):
+            exp_ts = int(salt.split('?expires=')[1].split('&')[0])
+            if time.time() > exp_ts:
                 return False
+            remaining_ttl = int(exp_ts - time.time())
 
         # Proof-of-Work prüfen
         computed = hashlib.sha256(f'{salt}{number}'.encode()).hexdigest()
-        return _hmac.compare_digest(computed, challenge)
+        if not _hmac.compare_digest(computed, challenge):
+            return False
+
+        # Replay-Schutz: gültige Lösung genau einmal zulassen.
+        return _try_consume(signature, remaining_ttl)
     except Exception:
         return False

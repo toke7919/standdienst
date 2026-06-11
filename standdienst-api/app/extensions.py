@@ -14,17 +14,15 @@ cors = CORS()
 
 
 def _real_ip() -> str:
-    """Liest die echte Client-IP hinter Nginx.
+    """Liefert die echte Client-IP hinter dem vertrauenswürdigen Reverse-Proxy.
 
-    Nginx setzt X-Real-IP auf $remote_addr (direkte Client-IP) – zuverlässiger
-    als X-Forwarded-For, da ProxyFix(x_for=1) bei nur einem Eintrag auf
-    127.0.0.1 zurückfällt und alle Nutzer denselben Zähler teilen würden.
+    ProxyFix(x_for=1) wertet genau einen Proxy-Hop aus und setzt
+    request.remote_addr auf die von Nginx via $proxy_add_x_forwarded_for
+    angehängte echte Client-IP. Der direkt vom Client setzbare X-Real-IP-Header
+    wird bewusst NICHT mehr gelesen – sonst ließen sich Rate-Limit-, Fail2Ban-
+    und Setup-IP-Prüfungen durch Spoofing aushebeln.
     """
-    return (
-        request.environ.get('HTTP_X_REAL_IP')
-        or request.remote_addr
-        or 'unknown'
-    )
+    return request.remote_addr or 'unknown'
 
 
 limiter = Limiter(key_func=_real_ip)

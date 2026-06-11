@@ -41,6 +41,21 @@ def test_register_anonymous_direct_login(client, instance):
     assert data['user']['email'] is None
 
 
+def test_captcha_replay_rejected(client, instance):
+    """Eine einmal gelöste CAPTCHA-Lösung darf nicht wiederverwendet werden."""
+    answer = _altcha_solution(client, instance.slug)
+    rv1 = client.post(f'/api/public/{instance.slug}/register', json={
+        'first_name': 'Erst', 'last_name': 'Nutzer', 'altcha': answer,
+    })
+    assert rv1.status_code == 201
+
+    rv2 = client.post(f'/api/public/{instance.slug}/register', json={
+        'first_name': 'Zweit', 'last_name': 'Nutzer', 'altcha': answer,
+    })
+    assert rv2.status_code == 400
+    assert 'CAPTCHA' in rv2.get_json()['error']
+
+
 def test_register_anonymous_no_password_set(client, instance):
     answer = _altcha_solution(client, instance.slug)
     client.post(f'/api/public/{instance.slug}/register', json={
