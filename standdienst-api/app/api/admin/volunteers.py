@@ -298,7 +298,7 @@ def reset_volunteer_password(slug, volunteer_id):
     volunteer = _get_or_404(volunteer_id, g.instance.id)
     password = (request.get_json() or {}).get('password', '')
     if not validate_password_strength(password):
-        return error('Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)', 400)
+        return error('Passwort zu schwach (mind. 8 Zeichen)', 400)
     volunteer.set_password(password)
     db.session.commit()
     return ok(message='Passwort wurde geändert')
@@ -321,8 +321,8 @@ def _send_welcome_email(volunteer, raw_token):
             kw['primary_color'] = primary_color
         html = build_welcome_email(volunteer.display_name, title, setup_url, base_url, **kw)
         send_mail(volunteer.email, f'Willkommen bei {title}', html, sender_name=title)
-    except Exception:
-        pass  # E-Mail optional – Helfer trotzdem anlegen
+    except Exception as exc:
+        current_app.logger.warning('Willkommens-Mail (Admin-Anlage) fehlgeschlagen: %s', exc)
 
 
 def _get_or_404(volunteer_id, instance_id):

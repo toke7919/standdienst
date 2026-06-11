@@ -33,24 +33,14 @@ def _rp_config():
         rp_id = current_app.config.get('WEBAUTHN_RP_ID') or (parsed_exp.hostname or '')
         return rp_id, explicit_origin.rstrip('/')
 
+    # Origin/RP-ID werden ausschließlich aus FRONTEND_URL abgeleitet, NICHT aus
+    # client-setzbaren Headern (X-Forwarded-Host) – sonst ließe sich die erwartete
+    # WebAuthn-Origin per Header-Spoofing verbiegen. FRONTEND_URL ist die
+    # autoritative öffentliche Adresse (auch für E-Mail-Links).
     frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
     parsed = urlparse(frontend_url)
-    try:
-        from flask import request as _req
-        fwd_host = _req.headers.get('X-Forwarded-Host', '').split(',')[0].strip()
-        host = fwd_host or parsed.netloc
-        fwd_proto = _req.headers.get('X-Forwarded-Proto', '').split(',')[0].strip()
-        # FRONTEND_URL-Schema ist autoritativ wenn es 'https' ist: Ein lokales nginx kann
-        # X-Forwarded-Proto auf 'http' setzen (proxy_set_header … $scheme), obwohl der
-        # Client HTTPS verwendet. FRONTEND_URL kennt das echte öffentliche Protokoll.
-        # X-Forwarded-Proto hat Vorrang wenn FRONTEND_URL kein Schema angibt (localhost).
-        if parsed.scheme == 'https':
-            proto = 'https'
-        else:
-            proto = fwd_proto or parsed.scheme
-    except RuntimeError:
-        host = parsed.netloc
-        proto = parsed.scheme
+    host = parsed.netloc
+    proto = parsed.scheme or 'https'
     # Standard-Ports entfernen, damit origin exakt übereinstimmt
     if (proto == 'https' and host.endswith(':443')) or (proto == 'http' and host.endswith(':80')):
         host = host.rsplit(':', 1)[0]
