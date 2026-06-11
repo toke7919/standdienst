@@ -89,3 +89,25 @@ def test_reset_password_organizer_requires_complexity(client):
     rv = client.post('/api/auth/reset-password',
                      json={'token': 'fake', 'password': 'kurz', 'type': 'organizer'})
     assert rv.status_code == 400
+
+
+def test_password_over_72_bytes_rejected():
+    """Passwörter > 72 Bytes werden abgelehnt (bcrypt-Truncation vermeiden)."""
+    from app.utils.auth import validate_password_strength
+    assert validate_password_strength('Aa1!' + 'a' * 68, role='volunteer') is True   # 72 Bytes
+    assert validate_password_strength('Aa1!' + 'a' * 69, role='volunteer') is False  # 73 Bytes
+    assert validate_password_strength('Aa1!Bb2@' + 'c' * 65, role='admin') is False   # 73 Bytes
+
+
+def test_admin_profile_optimistic_lock(client, admin_token):
+    """Profil-PUT mit veraltetem updated_at → 409, mit aktuellem → 200."""
+    me = client.get('/api/auth/me').get_json()['user']
+    assert me.get('updated_at')
+
+    stale = client.put('/api/auth/profile',
+                       json={'first_name': 'Neu', 'updated_at': '2000-01-01T00:00:00+00:00'})
+    assert stale.status_code == 409
+
+    fresh = client.put('/api/auth/profile',
+                       json={'first_name': 'Neu', 'updated_at': me['updated_at']})
+    assert fresh.status_code == 200

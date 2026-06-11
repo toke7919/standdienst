@@ -233,8 +233,13 @@ const datenschutzVorlage = `<h2><strong>Datenschutzerklärung</strong><br></h2><
   Auf Anfrage erfolgt eine sofortige Löschung (Art. 17 DSGVO).<br>
 </p>
 <br>
-<h3><strong>4. Weitergabe an Dritte</strong></h3>
+<h3><strong>4. Sichtbarkeit und Weitergabe</strong></h3>
 <p>Daten werden nicht an Dritte weitergegeben, außer dies ist gesetzlich vorgeschrieben.<br></p>
+<p>
+  Zur Koordination des Standdienstes sind Ihr Name sowie Ihre Dienst- und
+  Essensspenden-Einträge für andere angemeldete Helferinnen und Helfer
+  derselben Veranstaltung innerhalb der Anwendung sichtbar.<br>
+</p>
 <br>
 <h3><strong>5. Ihre Rechte</strong></h3>
 <p>
