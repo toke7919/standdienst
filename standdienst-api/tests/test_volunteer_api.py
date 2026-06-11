@@ -218,3 +218,43 @@ def test_draft_event_date_hidden_from_volunteer(client, instance, volunteer):
     # Nur der Shift des veröffentlichten Termins darf erscheinen
     assert len(shifts) == 1
     assert shifts[0]['event_date_id'] == ev_published.id
+
+
+def test_shift_confirmation_avoids_extra_stand_query(client, instance, volunteer):
+    """Die Bestätigungsmail nutzt den vor dem Commit erfassten Stand-Namen –
+    nach dem Commit darf keine zusätzliche Refresh-Query auf `stands` entstehen
+    (genau 1 SELECT: die Instanz-Validierung)."""
+    from datetime import date, time
+    from sqlalchemy import event
+    from app.models import Stand, EventDate, Shift, GlobalSettings
+    from app.extensions import db as _db
+
+    _db.session.add(GlobalSettings(setup_complete=True))
+    stand = Stand(instance_id=instance.id, name='Kasse')
+    _db.session.add(stand); _db.session.flush()
+    ev = EventDate(instance_id=instance.id, date=date(2026, 9, 1))
+    _db.session.add(ev); _db.session.flush()
+    shift = Shift(stand_id=stand.id, event_date_id=ev.id,
+                  start_time=time(10, 0), end_time=time(12, 0), max_volunteers=2)
+    _db.session.add(shift); _db.session.commit()
+    shift_id = shift.id
+
+    rv = client.post('/api/auth/volunteer-login',
+                     json={'slug': instance.slug, 'email': volunteer.email, 'password': 'TestPass1!'})
+    assert rv.status_code == 200
+
+    stand_selects = {'n': 0}
+
+    def _count(conn, cur, statement, params, ctx, many):
+        s = statement.lower()
+        if s.lstrip().startswith('select') and 'from stands' in s:
+            stand_selects['n'] += 1
+
+    event.listen(_db.engine, 'before_cursor_execute', _count)
+    try:
+        rv = client.post(f'/api/volunteer/{instance.slug}/shifts/{shift_id}/register')
+        assert rv.status_code == 201
+    finally:
+        event.remove(_db.engine, 'before_cursor_execute', _count)
+
+    assert stand_selects['n'] == 1, f'Erwartet 1 stands-SELECT, war {stand_selects["n"]}'

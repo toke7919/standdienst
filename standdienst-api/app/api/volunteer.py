@@ -175,9 +175,12 @@ def register_shift(slug, shift_id):
     db.session.add(Registration(volunteer_id=g.current_user.id, shift_id=shift_id))
     db.session.add(_activity(g.instance.id, ActivityLog.SHIFT_REGISTER, g.current_user,
                              details=_shift_detail(shift)))
+    # Stand-Namen vor dem Commit erfassen: danach ist das ORM-Objekt expired und
+    # ein Zugriff in der Bestätigungsmail würde eine zusätzliche Query auslösen.
+    stand_name = stand.name
     db.session.commit()
     _publish_shift_update(current_app, slug, shift_id)
-    _send_shift_confirmation(g.current_user, shift, g.instance, settings)
+    _send_shift_confirmation(g.current_user, shift, g.instance, settings, stand_name=stand_name)
     return created({'shift_id': shift_id})
 
 
@@ -593,8 +596,14 @@ def _unregister_deadline_error(shift, deadline_hours: int):
     return None
 
 
-def _send_shift_confirmation(volunteer, shift, instance, settings):
-    """Sendet Bestätigungsmail nach Dienst-Anmeldung (fire-and-forget)."""
+def _send_shift_confirmation(volunteer, shift, instance, settings, stand_name=None):
+    """Sendet Bestätigungsmail nach Dienst-Anmeldung (fire-and-forget).
+
+    `stand_name` kann vom Aufrufer als String übergeben werden, der ihn bereits
+    vor dem Commit erfasst hat. Das vermeidet eine Refresh-Abfrage auf `stands`
+    (nach dem Commit sind ORM-Objekte durch expire_on_commit expired). Fallback:
+    Stand nachladen.
+    """
     if not (volunteer.email and volunteer.email_confirmation_enabled and is_mail_configured()):
         return
     try:
@@ -607,7 +616,9 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         copyright_text = global_settings.copyright_text if global_settings else None
         my_shifts_url = f'{base_url}/{instance.slug}/my-shifts'
         opt_out_url = f'{base_url}/{instance.slug}/profile'
-        stand = db.session.get(Stand, shift.stand_id)
+        if stand_name is None:
+            _stand = db.session.get(Stand, shift.stand_id)
+            stand_name = _stand.name if _stand else '?'
         kw = dict(slug=instance.slug, logo_url=logo_url,
                   copyright_text=copyright_text, opt_out_url=opt_out_url,
                   show_branding=settings.branding_enabled if settings else True)
@@ -616,7 +627,7 @@ def _send_shift_confirmation(volunteer, shift, instance, settings):
         html = build_shift_confirmation_email(
             name=volunteer.display_name,
             instance_title=title,
-            stand=stand.name if stand else '?',
+            stand=stand_name,
             date=shift.event_date.formatted,
             time_range=shift.time_range,
             my_shifts_url=my_shifts_url,
