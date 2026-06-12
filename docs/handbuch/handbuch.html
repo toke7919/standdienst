@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Standdienst · Das Handbuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#f5ece1; --warm:#e9d8bd; --cream:#fdf6e9; --ink:#1a1311; --muted:#7a695a; --sand:#dbc8a8;
+    --p50:#f8f7f7; --p100:#ece5e6; --p200:#dfc8ca; --p300:#d7a0a5; --p400:#d36973;
+    --p500:#cc2d3d; --p600:#a51f2c; --p700:#811520; --p800:#6c0d18; --p900:#180406;
+    --body:"Hanken Grotesk", system-ui, -apple-system, sans-serif;
+    --mono:"Geist Mono","IBM Plex Mono", ui-monospace, monospace;
+    --shadow:0 1px 2px rgba(26,19,17,.04), 0 8px 24px -12px rgba(26,19,17,.18);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:1.5rem}
+  body{
+    margin:0; font-family:var(--body); color:var(--ink); background:var(--paper);
+    -webkit-font-smoothing:antialiased; line-height:1.65; font-size:17px;
+  }
+  a{color:var(--p600); text-decoration:none}
+  a:hover{text-decoration:underline}
+  h1,h2,h3,h4{line-height:1.18; letter-spacing:-.02em; font-weight:800; margin:0}
+  ::selection{background:var(--p200); color:var(--p900)}
+
+  /* ---------- Layout ---------- */
+  .shell{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:262px 1fr; gap:48px; padding:0 28px}
+  .main{min-width:0; padding:56px 0 120px}
+  @media (max-width:920px){ .shell{grid-template-columns:1fr; gap:0} .main{padding:32px 0 90px} }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    background:linear-gradient(160deg, var(--p800) 0%, var(--p700) 60%, var(--p600) 130%);
+    color:var(--cream); padding:84px 28px 96px; position:relative; overflow:hidden;
+  }
+  .hero::after{content:""; position:absolute; inset:0;
+    background:radial-gradient(900px 420px at 82% -10%, rgba(255,255,255,.10), transparent 60%);}
+  .hero-in{max-width:1180px; margin:0 auto; position:relative; z-index:1}
+  .mark{display:inline-flex; align-items:center; gap:12px; margin-bottom:26px}
+  .mark svg{filter:drop-shadow(0 6px 14px rgba(0,0,0,.28))}
+  .mark b{font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:.78rem; color:rgba(253,246,233,.82)}
+  .hero h1{font-size:clamp(2.4rem,5.2vw,4rem); margin:0 0 16px; color:#fff}
+  .hero p.lead{font-size:clamp(1.05rem,2.2vw,1.32rem); max-width:640px; color:rgba(253,246,233,.92); font-weight:500}
+  .hero .meta{margin-top:34px; display:flex; flex-wrap:wrap; gap:10px}
+  .hero .meta span{
+    background:rgba(253,246,233,.12); border:1px solid rgba(253,246,233,.22);
+    color:var(--cream); padding:7px 14px; border-radius:999px; font-size:.82rem; font-weight:600;
+    backdrop-filter:blur(4px);
+  }
+
+  /* ---------- Sidebar ---------- */
+  .toc{position:sticky; top:0; align-self:start; padding:56px 0 40px; max-height:100vh; overflow:auto}
+  .toc h5{font-size:.72rem; text-transform:uppercase; letter-spacing:.13em; color:var(--muted); margin:22px 0 9px; font-weight:700}
+  .toc a{display:block; padding:6px 12px; border-radius:9px; color:var(--ink); font-size:.92rem; font-weight:500; opacity:.78; border-left:2px solid transparent}
+  .toc a:hover{opacity:1; background:var(--cream); text-decoration:none}
+  .toc a.active{opacity:1; color:var(--p600); border-left-color:var(--p600); background:var(--cream); font-weight:600}
+  .toc-top{display:flex; align-items:center; gap:9px; font-weight:800; letter-spacing:-.02em; margin-bottom:6px}
+  @media (max-width:920px){
+    .toc{position:static; max-height:none; padding:18px 0 0}
+    .toc details{background:var(--cream); border:1px solid var(--sand); border-radius:14px; padding:6px 14px}
+    .toc summary{cursor:pointer; font-weight:700; padding:8px 0; list-style:none}
+    .toc summary::-webkit-details-marker{display:none}
+    .toc summary::after{content:"☰"; float:right; color:var(--muted)}
+    .toc .nav-inner{padding-bottom:10px}
+  }
+  @media (min-width:921px){ .toc summary{display:none} .toc .nav-inner{display:block !important} }
+
+  /* ---------- Sections & typography ---------- */
+  section{scroll-margin-top:24px}
+  .kicker{display:inline-block; font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--p600); background:var(--p100); padding:5px 11px; border-radius:999px; margin-bottom:14px}
+  .main h2{font-size:clamp(1.8rem,3.6vw,2.5rem); margin:14px 0 10px}
+  .main h3{font-size:1.32rem; margin:40px 0 12px; letter-spacing:-.015em}
+  .main h4{font-size:1.05rem; margin:26px 0 8px; font-weight:700}
+  .main p{margin:0 0 16px; color:#2b211d}
+  .divider{height:1px; background:linear-gradient(90deg, var(--sand), transparent); margin:64px 0 8px; border:0}
+  .chapter{padding-top:30px}
+  .chapter + .chapter{margin-top:18px}
+  .lead-lg{font-size:1.14rem; color:#3a2c26; font-weight:500}
+
+  /* ---------- Role header band ---------- */
+  .role-band{display:flex; align-items:center; gap:18px; background:var(--cream); border:1px solid var(--sand);
+    border-radius:var(--radius); padding:20px 22px; margin:8px 0 28px; box-shadow:var(--shadow)}
+  .role-band .ico{flex:0 0 auto; width:54px; height:54px; border-radius:14px; display:grid; place-items:center;
+    background:linear-gradient(155deg,var(--p700),var(--p500)); color:#fff; font-size:1.5rem; box-shadow:0 8px 18px -8px var(--p600)}
+  .role-band .who{font-size:.76rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:700}
+  .role-band .what{font-weight:700; font-size:1.16rem; letter-spacing:-.01em}
+
+  /* ---------- Cards / feature grid ---------- */
+  .grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin:20px 0}
+  .card{background:var(--cream); border:1px solid var(--sand); border-radius:14px; padding:18px 19px; box-shadow:var(--shadow)}
+  .card h4{margin:0 0 6px; font-size:1.02rem}
+  .card p{margin:0; font-size:.95rem; color:var(--muted)}
+  .card .em{font-size:1.4rem; display:block; margin-bottom:10px}
+
+  /* ---------- Steps ---------- */
+  ol.steps{list-style:none; counter-reset:s; padding:0; margin:18px 0}
+  ol.steps>li{counter-increment:s; position:relative; padding:4px 0 18px 52px; margin:0}
+  ol.steps>li::before{content:counter(s); position:absolute; left:0; top:0; width:34px; height:34px; border-radius:10px;
+    background:var(--ink); color:var(--cream); font-weight:700; display:grid; place-items:center; font-size:.95rem; font-family:var(--mono)}
+  ol.steps>li::after{content:""; position:absolute; left:16px; top:38px; bottom:2px; width:2px; background:var(--sand)}
+  ol.steps>li:last-child::after{display:none}
+  ol.steps>li b{font-weight:700}
+  ol.steps>li .hint{display:block; color:var(--muted); font-size:.93rem; margin-top:3px}
+
+  /* ---------- Screenshot placeholder ---------- */
+  figure.shot{margin:24px 0; border-radius:16px; overflow:hidden; border:1px solid var(--sand); box-shadow:var(--shadow); background:#fff}
+  .browser{background:var(--warm); padding:11px 14px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--sand)}
+  .browser i{width:11px; height:11px; border-radius:50%; display:block; background:#d8c4a4}
+  .browser .url{margin-left:10px; background:var(--cream); border:1px solid var(--sand); border-radius:8px; padding:4px 12px;
+    font-family:var(--mono); font-size:.78rem; color:var(--muted); flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+  .shot .stage{aspect-ratio:16/9; display:grid; place-items:center; text-align:center; padding:26px;
+    background:repeating-linear-gradient(45deg, #fbf4e8, #fbf4e8 14px, #f7eddd 14px, #f7eddd 28px); color:var(--muted)}
+  .shot .stage .cam{font-size:2.1rem; opacity:.5; margin-bottom:8px}
+  .shot .stage .tag{font-family:var(--mono); font-size:.74rem; letter-spacing:.1em; text-transform:uppercase; color:var(--p600); font-weight:600}
+  .shot .stage .title{font-weight:700; color:var(--ink); font-size:1.05rem; margin:4px 0 2px}
+  figcaption{padding:13px 16px; font-size:.88rem; color:#3a2c26; background:var(--cream); border-top:1px solid var(--sand)}
+  figcaption b{color:var(--p700)}
+
+  /* ---------- Callouts ---------- */
+  .note{display:flex; gap:14px; border-radius:14px; padding:15px 17px; margin:20px 0; font-size:.96rem; border:1px solid}
+  .note .ic{flex:0 0 auto; font-size:1.2rem; line-height:1.5}
+  .note p{margin:0}
+  .note.tip{background:#f1f6ee; border-color:#cfe0c4}
+  .note.tip .ic{color:#3f7d2f}
+  .note.warn{background:#fdf3ec; border-color:#f0cdb3}
+  .note.warn .ic{color:#b5611f}
+  .note.dsgvo{background:var(--p50); border-color:var(--p200)}
+  .note.dsgvo .ic{color:var(--p600)}
+  .note.info{background:var(--cream); border-color:var(--sand)}
+  .note.info .ic{color:var(--muted)}
+  .note b{font-weight:700}
+
+  /* ---------- Code ---------- */
+  pre{background:var(--p900); color:#f3e7e8; border-radius:14px; padding:18px 20px; overflow:auto; margin:18px 0;
+    font-family:var(--mono); font-size:.86rem; line-height:1.6; box-shadow:var(--shadow)}
+  pre .c{color:#cf9aa0} /* comment */
+  pre b{color:#ffd9a3; font-weight:600}
+  code{font-family:var(--mono); font-size:.88em; background:var(--p100); color:var(--p700); padding:1.5px 6px; border-radius:6px}
+  pre code{background:none; color:inherit; padding:0}
+
+  /* ---------- Tables ---------- */
+  .tbl{width:100%; border-collapse:collapse; margin:20px 0; font-size:.94rem; background:var(--cream);
+    border:1px solid var(--sand); border-radius:14px; overflow:hidden}
+  .tbl th{text-align:left; background:var(--warm); padding:11px 14px; font-weight:700; font-size:.82rem; letter-spacing:.02em}
+  .tbl td{padding:11px 14px; border-top:1px solid var(--sand); vertical-align:top}
+  .tbl tr:hover td{background:#fbf4e8}
+  .pill{display:inline-block; font-size:.74rem; font-weight:700; padding:3px 9px; border-radius:999px; font-family:var(--mono)}
+  .pill.v{background:#eef5ea; color:#3f7d2f}
+  .pill.o{background:#eef0f6; color:#3b4a8a}
+  .pill.ia{background:var(--p100); color:var(--p700)}
+  .pill.a{background:#fdeeee; color:#b02a37}
+  .pill.s{background:var(--ink); color:var(--cream)}
+
+  /* ---------- Misc ---------- */
+  .toplink{position:fixed; right:22px; bottom:22px; width:46px; height:46px; border-radius:50%; background:var(--ink); color:var(--cream);
+    display:grid; place-items:center; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s; z-index:50; font-size:1.1rem}
+  .toplink.show{opacity:1; pointer-events:auto}
+  .toplink:hover{background:var(--p600); text-decoration:none}
+  .footer{border-top:1px solid var(--sand); margin-top:70px; padding:34px 0; color:var(--muted); font-size:.9rem}
+  .quote{border-left:3px solid var(--p400); padding:4px 0 4px 20px; margin:24px 0; font-size:1.12rem; color:#3a2c26; font-style:italic}
+  ul.clean{list-style:none; padding:0; margin:16px 0}
+  ul.clean li{padding:7px 0 7px 30px; position:relative; border-bottom:1px solid #efe4d3}
+  ul.clean li:last-child{border-bottom:0}
+  ul.clean li::before{content:"›"; position:absolute; left:8px; color:var(--p500); font-weight:800}
+  .anchor-h{display:block; height:0; visibility:hidden}
+</style>
+</head>
+<body>
+
+<!-- ============================ HERO ============================ -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="mark">
+      <svg width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <rect x="5" y="12" width="38" height="24" rx="6" fill="#fdf6e9"/>
+        <path d="M5 24a4 4 0 0 1 4-4 4 4 0 0 1 0 8 4 4 0 0 1-4-4Zm38 0a4 4 0 0 1-4 4 4 4 0 0 1 0-8 4 4 0 0 1 4 4Z" fill="#811520"/>
+        <path d="M24 17v3M24 23v2M24 28v3" stroke="#a51f2c" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 4"/>
+      </svg>
+      <b>Standdienst&nbsp;·&nbsp;Handbuch</b>
+    </div>
+    <h1>Alle ziehen am selben Strang.<br/>Dieses Handbuch zeigt, wie.</h1>
+    <p class="lead">Von der ersten Anmeldung bis zur fertigen Schichtplanung – hier findet jede Rolle genau das, was sie braucht. Kurz, klar und ohne Fachchinesisch.</p>
+    <div class="meta">
+      <span>👋 Freiwillige</span>
+      <span>🗂️ Organisator:innen</span>
+      <span>⚙️ Instanz-Admins</span>
+      <span>🛡️ Plattform-Admins</span>
+      <span>💻 Shell-Admins</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- ============================ TOC ============================ -->
+  <nav class="toc">
+    <details>
+      <summary>Inhalt</summary>
+      <div class="nav-inner">
+        <div class="toc-top">📖 Inhalt</div>
+        <a href="#start">Worum es geht</a>
+        <a href="#rollen">Die fünf Rollen</a>
+
+        <h5>Für alle Aktiven</h5>
+        <a href="#freiwillige">Freiwillige</a>
+        <a href="#organisatoren">Organisator:innen</a>
+        <a href="#instanzadmin">Instanz-Admins</a>
+        <a href="#admin">Plattform-Admins</a>
+
+        <h5>Technik</h5>
+        <a href="#shell">Shell-Admins</a>
+
+        <h5>Anhang</h5>
+        <a href="#screenshots">Screenshot-Regie</a>
+        <a href="#glossar">Glossar &amp; FAQ</a>
+      </div>
+    </details>
+  </nav>
+
+  <!-- ============================ MAIN ============================ -->
+  <main class="main">
+
+  <!-- ---------- START ---------- -->
+  <section id="start" class="chapter">
+    <span class="kicker">Willkommen</span>
+    <h2>Eine Plattform, viele Hände</h2>
+    <p class="lead-lg">Ein Fest steht und fällt mit den Menschen, die anpacken. Standdienst sorgt dafür, dass aus „Wer macht eigentlich die Kasse um vier?“ ein ruhiges „Steht alles, danke euch“ wird.</p>
+    <p>Die Anwendung verwaltet Freiwilligendienste und Essensspenden für Veranstaltungen – und zwar für beliebig viele Vereine oder Events gleichzeitig, sauber voneinander getrennt. Jede dieser Einheiten heißt bei uns <b>Instanz</b>: mit eigenem Namen, eigenem Logo, eigener Farbe, eigener Datenschutzerklärung und vor allem eigenen Daten. Was im einen Verein passiert, bleibt im einen Verein.</p>
+    <p>Dieses Handbuch ist nach Rollen sortiert. Du musst nicht alles lesen – spring direkt zu deinem Kapitel. Wenn du wissen willst, was jemand anderes sieht und kann, blätterst du eben weiter. Genau dafür ist das Inhaltsverzeichnis da.</p>
+
+    <div class="note info">
+      <span class="ic">🧭</span>
+      <p><b>So liest du dieses Handbuch.</b> Graue, gestreifte Kästen sind Platzhalter für Screenshots – darunter steht jeweils als <b>Regie</b>, welches Bild dort hingehört. Bis die echten Bilder eingesetzt sind, führen dich die nummerierten Schritte trotzdem sicher ans Ziel.</p>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ---------- ROLLEN ---------- -->
+  <section id="rollen" class="chapter">
+    <span class="kicker">Überblick</span>
+    <h2>Die fünf Rollen auf einen Blick</h2>
+    <p>Jede Rolle hat einen klaren Auftrag und genau die Rechte, die dazu passen – nicht mehr, nicht weniger. Das hält die Sache übersichtlich und sicher.</p>
+
+    <table class="tbl">
+      <thead><tr><th>Rolle</th><th>Kümmert sich um …</th><th>Bewegt sich in …</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill v">Freiwillige</span></td><td>Sich selbst eintragen: Schichten buchen, Essen spenden, Profil pflegen.</td><td>der eigenen Instanz</td></tr>
+        <tr><td><span class="pill o">Organisator:in</span></td><td>Den Betrieb: Termine, Stände, Schichten, Anmeldungen, Listen, Export/Import.</td><td>zugewiesenen Instanzen</td></tr>
+        <tr><td><span class="pill ia">Instanz-Admin</span></td><td>Alles vom Organisator – plus Einstellungen, Branding, Datenschutz der Instanz.</td><td>der eigenen Instanz, voll</td></tr>
+        <tr><td><span class="pill a">Plattform-Admin</span></td><td>Das große Ganze: Instanzen, Organisatoren, Mail, Backups, Updates.</td><td>der gesamten Plattform</td></tr>
+        <tr><td><span class="pill s">Shell-Admin</span></td><td>Den Untergrund: Installation, Update und Deinstallation auf dem Server.</td><td>der Kommandozeile</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note tip">
+      <span class="ic">💡</span>
+      <p><b>Rollen sind durchlässig nach oben.</b> Ein Instanz-Admin kann alles, was ein Organisator kann. Ein Plattform-Admin sieht und steuert ohnehin die ganze Bühne. Lies dein Kapitel – und bei Bedarf das darüber.</p>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- FREIWILLIGE                                                    -->
+  <!-- ============================================================= -->
+  <section id="freiwillige" class="chapter">
+    <span class="kicker">Kapitel 1</span>
+    <div class="role-band">
+      <div class="ico">👋</div>
+      <div><div class="who">Freiwillige</div><div class="what">Eintragen, helfen, fertig – in unter zwei Minuten</div></div>
+    </div>
+
+    <p class="lead-lg">Du willst helfen, nicht erst eine Software lernen. Versprochen: Du brauchst kein Konto-Brimborium und keine zehn Formulare. Name rein, Schicht aussuchen, eingetragen. Den Rest macht die App.</p>
+
+    <h3>Das kannst du hier</h3>
+    <div class="grid">
+      <div class="card"><span class="em">📝</span><h4>Anmelden</h4><p>Mit oder ganz ohne E-Mail-Adresse – du entscheidest.</p></div>
+      <div class="card"><span class="em">🗓️</span><h4>Schichten buchen</h4><p>Freie Plätze sehen, eintragen, wieder austragen.</p></div>
+      <div class="card"><span class="em">🍰</span><h4>Essen spenden</h4><p>Kuchen, Salat, Würstchen – sag, was du mitbringst.</p></div>
+      <div class="card"><span class="em">📅</span><h4>Termine exportieren</h4><p>Deine Dienste landen mit einem Klick im Kalender.</p></div>
+      <div class="card"><span class="em">🔔</span><h4>Erinnert werden</h4><p>Optional eine freundliche Mail am Tag davor.</p></div>
+      <div class="card"><span class="em">🔒</span><h4>Daten in der Hand</h4><p>Alles einsehen, exportieren, Konto löschen.</p></div>
+    </div>
+
+    <h3>So meldest du dich an</h3>
+    <p>Du bekommst von deinem Verein einen Link – meist sieht er aus wie <code>…/dein-verein/register</code>. Den öffnest du, und schon geht’s los.</p>
+
+    <ol class="steps">
+      <li><b>Formular öffnen.</b> Vor- und Nachname eintragen.<span class="hint">Die E-Mail-Adresse ist freiwillig. Trägst du eine ein, kannst du dich später wieder anmelden und Erinnerungen bekommen. Ohne E-Mail geht es genauso – nur eben ohne späteren Login.</span></li>
+      <li><b>Datenschutz bestätigen.</b> Falls dein Verein eine Datenschutzerklärung hinterlegt hat, setzt du einen Haken. Ein Klick auf den Link zeigt dir den vollen Text.</li>
+      <li><b>Absenden.</b> Im Hintergrund läuft eine kleine, unsichtbare Sicherheitsprüfung – du musst nichts abtippen, keine Ampeln anklicken.</li>
+      <li><b>Loslegen.</b> Ohne E-Mail bist du sofort drin. Mit E-Mail bekommst du zusätzlich eine Willkommens-Mail mit einem Link, über den du dir ein Passwort vergibst.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/register</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 01</div><div class="title">Registrierungsformular</div><div>Vorname · Nachname · E-Mail (optional) · Datenschutz-Haken</div></div></div>
+      <figcaption><b>Regie:</b> Rolle <i>Freiwillige</i>, nicht eingeloggt. Seite <code>/&lt;slug&gt;/register</code> im Branding eines Demo-Vereins. Formular leer oder mit Beispielnamen „Maria Beispiel“. Den Datenschutz-Haken sichtbar lassen.</figcaption>
+    </figure>
+
+    <div class="note dsgvo">
+      <span class="ic">🔒</span>
+      <p><b>Warum die E-Mail freiwillig ist.</b> Manche helfen einmalig und wollen keine Adresse hinterlegen – völlig in Ordnung. Wer eine angibt, bekommt eine Bestätigung, kann sich erneut einloggen und auf Wunsch Erinnerungen erhalten. Deine Adresse sieht nur dein Verein, niemand sonst.</p>
+    </div>
+
+    <h4>Passwort einrichten (nur mit E-Mail)</h4>
+    <ol class="steps">
+      <li><b>Mail öffnen.</b> Betreff „Willkommen bei …“. Darin wartet dein persönlicher Einrichtungslink – er ist sieben Tage gültig.</li>
+      <li><b>Passwort vergeben.</b> Mindestens acht Zeichen. Fertig, du bleibst direkt angemeldet.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/welcome/•••••</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 02</div><div class="title">Passwort einrichten</div><div>Willkommensgruß mit Namen · Passwortfeld</div></div></div>
+      <figcaption><b>Regie:</b> Welcome-Seite nach Klick auf den Mail-Link (<code>/&lt;slug&gt;/welcome/&lt;token&gt;</code>). Begrüßung „Hallo Maria“ und das Passwort-Eingabefeld zeigen.</figcaption>
+    </figure>
+
+    <h3>Eine Schicht übernehmen</h3>
+    <p>Nach dem Login landest du bei den Schichten. Sie sind nach Veranstaltungstagen und Ständen sortiert – du siehst sofort, wo noch Hände fehlen.</p>
+    <ol class="steps">
+      <li><b>Schichten öffnen.</b> Pro Stand und Uhrzeit steht, wie viele Plätze noch frei sind und wer sich schon eingetragen hat.</li>
+      <li><b>„Eintragen“ tippen.</b> Ein Klick genügt. Hast du eine E-Mail hinterlegt, kommt eine kurze Bestätigung.<span class="hint">Zwei Dienste, die sich zeitlich überschneiden? Das lässt die App gar nicht erst zu – du kannst schließlich nicht an zwei Orten zugleich sein.</span></li>
+      <li><b>Plan ändern?</b> Über „Austragen“ gibst du den Platz wieder frei – solange der Abmeldeschluss deines Vereins nicht überschritten ist.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/shifts</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 03</div><div class="title">Schichtenübersicht</div><div>Tage · Stände · Zeiten · freie Plätze · „Eintragen“</div></div></div>
+      <figcaption><b>Regie:</b> Eingeloggt als Freiwillige. Seite <code>/&lt;slug&gt;/shifts</code> mit mehreren Ständen und Zeiten. Mindestens eine Schicht „voll“, eine mit freien Plätzen und eine, in die der Nutzer bereits eingetragen ist (Status „Eingetragen“).</figcaption>
+    </figure>
+
+    <h3>Meine Dienste &amp; Kalender</h3>
+    <p>Unter „Meine Anmeldungen“ siehst du gebündelt, wofür du dich entschieden hast. Praktisch: Mit dem Kalender-Export wandern alle Termine als <code>.ics</code> in Google Kalender, Apple Kalender oder Outlook – inklusive Uhrzeit und Standname.</p>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/my-shifts</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 04</div><div class="title">Meine Anmeldungen</div><div>Liste der eigenen Dienste · Button „Kalender-Export (iCal)“</div></div></div>
+      <figcaption><b>Regie:</b> Seite <code>/&lt;slug&gt;/my-shifts</code> mit zwei bis drei eingetragenen Diensten. Den iCal-Export-Button gut sichtbar platzieren.</figcaption>
+    </figure>
+
+    <h3>Etwas zu essen mitbringen</h3>
+    <p>Spenden laufen genauso unkompliziert wie Schichten. Du wählst die Art (etwa „Kuchen“), beschreibst kurz, was es gibt, und gibst an, ob es gekühlt werden muss.</p>
+    <ol class="steps">
+      <li><b>Essensspenden öffnen.</b> Du siehst, was schon zugesagt wurde – so gibt es nicht dreimal Kartoffelsalat und keinen Nachtisch.</li>
+      <li><b>Spende eintragen.</b> Art auswählen, kurz beschreiben, Kühlung ankreuzen falls nötig, speichern.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/food</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 05</div><div class="title">Essensspende eintragen</div><div>Art · Beschreibung · „muss gekühlt werden“</div></div></div>
+      <figcaption><b>Regie:</b> Seite <code>/&lt;slug&gt;/food</code>. Eine Spendenart mit zwei, drei bestehenden Einträgen zeigen und das Eingabeformular geöffnet.</figcaption>
+    </figure>
+
+    <h3>Profil, Erinnerungen &amp; deine Daten</h3>
+    <p>Im Profil änderst du Name und Passwort und stellst zwei Schalter nach deinem Geschmack:</p>
+    <ul class="clean">
+      <li><b>Erinnerungs-Mail</b> am Tag vor dem Dienst – standardmäßig aus, du schaltest sie bei Bedarf ein.</li>
+      <li><b>Bestätigungs-Mail</b> nach jeder Buchung – standardmäßig an, du kannst sie abschalten.</li>
+    </ul>
+    <p>Und weil deine Daten dir gehören: Du kannst sie jederzeit als Übersicht ansehen, dir per E-Mail zuschicken lassen oder dein Konto vollständig löschen.</p>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/profile</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 06</div><div class="title">Profil &amp; Datenschutz</div><div>Name · Passwort · zwei Schalter · DSGVO-Bereich</div></div></div>
+      <figcaption><b>Regie:</b> Seite <code>/&lt;slug&gt;/profile</code> eingeloggt. Beide Benachrichtigungs-Schalter zeigen, dazu den Bereich „Meine Daten“ mit den Optionen Export und Konto löschen.</figcaption>
+    </figure>
+
+    <div class="note dsgvo">
+      <span class="ic">⚖️</span>
+      <p><b>Dein Recht, schwarz auf weiß.</b> Auskunft, Berichtigung, Export, Löschung – all das ist hier kein Behördengang, sondern ein Knopf. Löschst du dein Konto, werden dein Name und deine Kontaktdaten unkenntlich gemacht; die reine Info „dieser Dienst war besetzt“ bleibt für die Planung erhalten.</p>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- ORGANISATOREN                                                  -->
+  <!-- ============================================================= -->
+  <section id="organisatoren" class="chapter">
+    <span class="kicker">Kapitel 2</span>
+    <div class="role-band">
+      <div class="ico">🗂️</div>
+      <div><div class="who">Organisator:innen</div><div class="what">Der Maschinenraum: Termine, Stände, Schichten, Listen</div></div>
+    </div>
+
+    <p class="lead-lg">Du bist die Person, bei der die Fäden zusammenlaufen. Du legst fest, an welchen Tagen welche Stände besetzt werden, wer wann anpackt – und behältst den Überblick, wenn kurz vor knapp doch noch jemand abspringt.</p>
+
+    <h3>Anmelden im Verwaltungsbereich</h3>
+    <p>Dein Eingang ist <code>/admin/login</code>. Nach dem Login wählst du oben bzw. in der Seitenleiste die Instanz, um die du dich gerade kümmern willst – manche betreuen schließlich mehrere Vereine.</p>
+    <ol class="steps">
+      <li><b>Einloggen.</b> E-Mail und Passwort. Hast du Zwei-Faktor-Schutz aktiviert, folgt der sechsstellige Code aus deiner Authenticator-App.</li>
+      <li><b>Instanz wählen.</b> Über die Seitenleiste springst du zwischen deinen Vereinen.</li>
+      <li><b>Dashboard lesen.</b> Die Startseite fasst zusammen, wie es um Besetzung und Spenden steht.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/login</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 07</div><div class="title">Login &amp; Instanz-Auswahl</div><div>Anmeldemaske · Seitenleiste mit Instanz-Umschalter</div></div></div>
+      <figcaption><b>Regie:</b> Zwei Aufnahmen wären ideal – die Login-Maske <code>/admin/login</code> und danach das eingeloggte Layout mit der Seitenleiste und dem Instanz-Umschalter (Rolle Organisator:in).</figcaption>
+    </figure>
+
+    <div class="note tip">
+      <span class="ic">🔐</span>
+      <p><b>Schalte die Zwei-Faktor-Anmeldung ein.</b> Im Profil aktivierst du sie in zwei Minuten mit einer Authenticator-App. Ein gestohlenes Passwort allein bringt dann niemanden mehr in dein Verwaltungskonto. Die Backup-Codes notierst du dir an einem sicheren Ort.</p>
+    </div>
+
+    <h3>Das Gerüst: Termine, Stände, Schichten</h3>
+    <p>Drei Bausteine, die aufeinander aufbauen:</p>
+    <div class="grid">
+      <div class="card"><span class="em">📆</span><h4>Termine</h4><p>Die Veranstaltungstage. Solange ein Tag ein <b>Entwurf</b> ist, sehen ihn Freiwillige noch nicht.</p></div>
+      <div class="card"><span class="em">🎪</span><h4>Stände</h4><p>Die Orte, an denen geholfen wird – Kasse, Grill, Einlass. Die Reihenfolge bestimmst du.</p></div>
+      <div class="card"><span class="em">⏰</span><h4>Schichten</h4><p>Stand + Tag + Uhrzeit + Anzahl Helfer. Das eigentliche Angebot zum Eintragen.</p></div>
+    </div>
+
+    <ol class="steps">
+      <li><b>Termin anlegen.</b> Datum wählen. Lass ihn als Entwurf, bis alles steht – so plant niemand auf Sand.</li>
+      <li><b>Stände pflegen.</b> Lege die Stationen an und bring sie in eine sinnvolle Reihenfolge.</li>
+      <li><b>Schichten erzeugen.</b> Pro Stand und Tag die Zeitfenster und die Zahl der gesuchten Helfer.</li>
+      <li><b>Termin veröffentlichen.</b> Entwurf-Haken raus – ab jetzt können sich Freiwillige eintragen.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/shifts</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 08</div><div class="title">Schichten verwalten</div><div>Termine · Stände · Schichten mit Plätzen</div></div></div>
+      <figcaption><b>Regie:</b> Verwaltungsansicht für Schichten/Termine/Stände einer Demo-Instanz. Idealerweise ein veröffentlichter Tag und ein Entwurfs-Tag nebeneinander, damit der Unterschied sichtbar wird.</figcaption>
+    </figure>
+
+    <h3>Wer hilft wo? Das Anmeldungs-Raster</h3>
+    <p>Das Raster ist dein Lagebild: Tage als Abschnitte, Stände als Spalten, Zeiten als Zeilen. Auf einen Blick erkennst du Lücken – und füllst sie selbst.</p>
+    <ol class="steps">
+      <li><b>Raster öffnen.</b> Jede Zelle zeigt Plätze und bereits eingetragene Namen.</li>
+      <li><b>Person eintragen.</b> Wähle eine registrierte Helferin – oder trage einen <b>Gast</b> nur per Name ein, wenn jemand ohne Konto zusagt.</li>
+      <li><b>Korrigieren.</b> Falsch eingetragen? Eintrag entfernen, Platz ist wieder frei.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/registrations</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 09</div><div class="title">Anmeldungs-Raster</div><div>Stände × Zeiten · Namen in den Zellen · „eintragen“</div></div></div>
+      <figcaption><b>Regie:</b> Das Grid <code>/admin/&lt;slug&gt;/registrations</code> mit gefüllten und halb leeren Zellen. Mindestens ein Gast-Eintrag (ohne Konto) und ein normaler Eintrag sichtbar.</figcaption>
+    </figure>
+
+    <h3>Helfer, Spenden &amp; Listen</h3>
+    <ul class="clean">
+      <li><b>Helferliste &amp; Detailseite</b> – wer ist dabei, welche Dienste und Spenden hängen an einer Person.</li>
+      <li><b>Essensspenden</b> – der Überblick, was zugesagt ist und was noch fehlt.</li>
+      <li><b>Export</b> – Dienstpläne als CSV, Excel, ODS oder iCal herausziehen, etwa für den Aushang.</li>
+      <li><b>Import</b> – viele Schichten auf einmal aus einer Tabelle einlesen (Vorlage gibt es zum Download).</li>
+    </ul>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/volunteers</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 10</div><div class="title">Helferliste &amp; Export/Import</div><div>Liste mit Dienst-/Spendenzahl · Export-Menü</div></div></div>
+      <figcaption><b>Regie:</b> Helferliste <code>/admin/&lt;slug&gt;/volunteers</code> mit mehreren Personen und den Spalten für Dienst- und Spendenanzahl. Das Export-Menü (CSV/Excel/ODS/iCal) aufgeklappt zeigen.</figcaption>
+    </figure>
+
+    <div class="note tip">
+      <span class="ic">📥</span>
+      <p><b>Großes Programm? Importiere es.</b> Statt 60 Schichten von Hand zu klicken, lädst du die Vorlage herunter, füllst sie in der Tabellenkalkulation und spielst sie zurück. Stände und Termine, die noch nicht existieren, legt der Import gleich mit an.</p>
+    </div>
+
+    <div class="note info">
+      <span class="ic">🚧</span>
+      <p><b>Wo die Grenze verläuft.</b> Als Organisator:in steuerst du den laufenden Betrieb. Die <b>Einstellungen der Instanz</b> – Branding, Datenschutz, Funktionsschalter – bleiben den Instanz-Admins vorbehalten. Brauchst du dort etwas, ist das nächste Kapitel deins (oder ein kurzer Draht zur Instanz-Admin).</p>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- INSTANZ-ADMIN                                                  -->
+  <!-- ============================================================= -->
+  <section id="instanzadmin" class="chapter">
+    <span class="kicker">Kapitel 3</span>
+    <div class="role-band">
+      <div class="ico">⚙️</div>
+      <div><div class="who">Instanz-Admins</div><div class="what">Das Gesicht und die Regeln deines Vereins</div></div>
+    </div>
+
+    <p class="lead-lg">Du kannst alles, was Organisator:innen können – und obendrein bestimmst du, wie dein Verein auftritt und nach welchen Regeln gespielt wird. Farbe, Logo, Datenschutz, Fristen: Hier wird aus „eine Instanz“ <i>dein</i> Verein.</p>
+
+    <h3>Erscheinungsbild &amp; Identität</h3>
+    <p>Unter <code>/admin/&lt;slug&gt;/settings</code> liegt die Schaltzentrale deiner Instanz.</p>
+    <ul class="clean">
+      <li><b>Seitentitel</b> – der Name, den Freiwillige oben sehen.</li>
+      <li><b>Primärfarbe</b> – ein Klick, und die ganze Oberfläche trägt eure Vereinsfarbe.</li>
+      <li><b>Logo</b> – hochladen, fertig; es erscheint in der App und in E-Mails.</li>
+      <li><b>Branding</b> – die dezente „Standdienst“-Signatur lässt sich ein- oder ausblenden.</li>
+    </ul>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/settings</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 11</div><div class="title">Instanz-Einstellungen · Branding</div><div>Titel · Farbwähler · Logo-Upload</div></div></div>
+      <figcaption><b>Regie:</b> Einstellungsseite einer Instanz, Bereich Branding. Farbwähler und ein hochgeladenes Beispiel-Logo zeigen; idealerweise spiegelt die Oberfläche die gewählte Farbe schon wider.</figcaption>
+    </figure>
+
+    <h3>Regeln, die mitdenken</h3>
+    <p>Ein paar Schalter und Fristen entscheiden, was Freiwillige tun dürfen – und ab wann nicht mehr:</p>
+    <table class="tbl">
+      <thead><tr><th>Einstellung</th><th>Was sie bewirkt</th></tr></thead>
+      <tbody>
+        <tr><td>Schichten aktiv</td><td>Schaltet den ganzen Schicht-Bereich an oder aus.</td></tr>
+        <tr><td>Essensspenden aktiv</td><td>Dasselbe für die Spenden.</td></tr>
+        <tr><td>Seite gesperrt</td><td>Pausiert Anmeldungen vorübergehend – mit einer Nachricht deiner Wahl.</td></tr>
+        <tr><td>Anmeldeschluss</td><td>Ab diesem Zeitpunkt sind keine neuen Buchungen mehr möglich.</td></tr>
+        <tr><td>Abmeldefrist (Std.)</td><td>So viele Stunden vor Schichtbeginn ist Austragen noch erlaubt.</td></tr>
+      </tbody>
+    </table>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/settings</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 12</div><div class="title">Funktionsschalter &amp; Fristen</div><div>Schalter · Anmeldeschluss · Abmeldefrist · Sperrtext</div></div></div>
+      <figcaption><b>Regie:</b> Bereich der Einstellungen mit den Schaltern (Schichten/Spenden/Sperre) sowie den Feldern für Anmeldeschluss und Abmeldefrist. Optional die Sperr-Nachricht befüllt zeigen.</figcaption>
+    </figure>
+
+    <h3>Impressum &amp; Datenschutz deiner Instanz</h3>
+    <p>Die rechtlichen Texte setzen sich aus einer Plattform-Vorlage und deinen eigenen Angaben zusammen. Deine Kontaktdaten werden automatisch an den passenden Stellen eingesetzt – du musst keine Paragraphen schreiben, nur die Lücken füllen.</p>
+
+    <div class="note dsgvo">
+      <span class="ic">🔒</span>
+      <p><b>Sichtbarkeit ehrlich kommuniziert.</b> Damit die Planung funktioniert, sehen eingetragene Helfer die Namen der anderen Helfer desselben Tages. Die Standard-Datenschutzvorlage weist genau darauf hin – lass diesen Satz drin, dann ist alles transparent.</p>
+    </div>
+
+    <h3>Helfer betreuen &amp; Auskünfte erteilen</h3>
+    <p>Als Instanz-Admin darfst du, was im Tagesgeschäft manchmal nötig wird:</p>
+    <ul class="clean">
+      <li><b>Helfer anlegen</b> – auch im Namen von jemandem, der gerade vor dir steht.</li>
+      <li><b>Passwort zurücksetzen</b> – wenn jemand nicht mehr reinkommt.</li>
+      <li><b>Datenauskunft per Mail</b> – die DSGVO-Auskunft mit einem Klick versenden.</li>
+      <li><b>Pseudonymisieren</b> – Konto auf Wunsch entpersonalisieren (das endgültige Löschen bleibt dem Plattform-Admin vorbehalten).</li>
+      <li><b>Aktivitätsprotokoll</b> – nachvollziehen, was in deiner Instanz passiert ist.</li>
+      <li><b>Verarbeitungsverzeichnis</b> – das Art.-30-Dokument auf Knopfdruck erzeugen.</li>
+    </ul>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/activity</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 13</div><div class="title">Aktivitätsprotokoll &amp; DSGVO</div><div>Protokoll-Liste · Verarbeitungsverzeichnis</div></div></div>
+      <figcaption><b>Regie:</b> Aktivitätsprotokoll der Instanz mit einigen Ereignissen (Anmeldungen, Änderungen). Zusätzlich – falls möglich – die Ansicht des Verarbeitungsverzeichnisses (Art. 30).</figcaption>
+    </figure>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- PLATTFORM-ADMIN                                                -->
+  <!-- ============================================================= -->
+  <section id="admin" class="chapter">
+    <span class="kicker">Kapitel 4</span>
+    <div class="role-band">
+      <div class="ico">🛡️</div>
+      <div><div class="who">Plattform-Admins</div><div class="what">Die Hand über allen Instanzen</div></div>
+    </div>
+
+    <p class="lead-lg">Du hältst die Plattform am Laufen. Du legst neue Vereine an, holst Organisator:innen an Bord, kümmerst dich um Mailversand, Backups und Updates. Kurz: Wenn alle anderen ihre Arbeit gar nicht erst merken, hast du deine richtig gemacht.</p>
+
+    <h3>Die Ersteinrichtung</h3>
+    <p>Frisch installiert, führt dich ein Assistent unter <code>/setup</code> durch die ersten Schritte. Diese Tür schließt sich automatisch, sobald sie einmal durchschritten ist.</p>
+    <ol class="steps">
+      <li><b>Admin-Konto anlegen.</b> Dein Hauptzugang. Mindestens zwölf Zeichen, mit Groß- und Kleinbuchstaben, Ziffer und Sonderzeichen.</li>
+      <li><b>Basis-Adresse setzen.</b> Unter welcher URL läuft die Plattform? Davon hängen die Links in den E-Mails ab.</li>
+      <li><b>Mailserver hinterlegen</b> (optional, aber empfohlen) – sonst gibt es keine Willkommens- und Reset-Mails.</li>
+      <li><b>Rechtliches &amp; Updates.</b> Plattform-Impressum, Datenschutz-Vorlage und – falls gewünscht – das GitHub-Token für automatische Updates.</li>
+      <li><b>Abschließen.</b> Der Assistent verriegelt sich, die Plattform ist bereit.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/setup</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 14</div><div class="title">Setup-Assistent</div><div>Schritt-für-Schritt: Admin · URL · Mail · Recht</div></div></div>
+      <figcaption><b>Regie:</b> Der Setup-Wizard <code>/setup</code> – am besten der erste Schritt (Admin anlegen) mit sichtbarer Schrittanzeige. Nur auf einem frischen System aufrufbar.</figcaption>
+    </figure>
+
+    <h3>Instanzen &amp; Organisator:innen</h3>
+    <ol class="steps">
+      <li><b>Instanz erstellen.</b> Name und ein eindeutiges Kürzel (den „Slug“, der in der Adresse auftaucht). Branding und Kontaktdaten kannst du gleich mitgeben.</li>
+      <li><b>Organisator:in einladen.</b> Person anlegen, Instanz(en) zuweisen und festlegen, ob sie dort einfache Organisatorin oder Instanz-Admin ist. Bei hinterlegtem Mailserver geht automatisch eine Einladung mit Einrichtungslink raus.</li>
+      <li><b>Nachsteuern.</b> Zuweisungen ändern, Einladungen erneut senden, Rechte anpassen – alles jederzeit möglich.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/instances</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 15</div><div class="title">Instanzen &amp; Organisatoren</div><div>Instanzliste · Organisator-Anlage mit Rollenwahl</div></div></div>
+      <figcaption><b>Regie:</b> Zwei Aufnahmen – die Instanz-Übersicht mit mehreren Vereinen und der Dialog „Organisator anlegen“ mit Instanz-Zuweisung und der Auswahl „Instanz-Admin: ja/nein“.</figcaption>
+    </figure>
+
+    <h3>Mailversand</h3>
+    <p>Ohne Mail keine Willkommens-Links, keine Passwort-Resets, keine Erinnerungen. Hinterlege deinen SMTP-Server und überzeuge dich mit einer Testmail, dass alles ankommt – es gibt sogar typisierte Testmails für jede Vorlage.</p>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/settings/mail</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 16</div><div class="title">Mail-Einstellungen &amp; Test</div><div>SMTP-Felder · „Testmail senden“</div></div></div>
+      <figcaption><b>Regie:</b> Mail-Einstellungen mit ausgefüllten (anonymisierten) SMTP-Daten und der Schaltfläche für die Testmail. Passwortfeld natürlich maskiert.</figcaption>
+    </figure>
+
+    <h3>Sicherheitsnetz: Backups</h3>
+    <p>Ein Backup ist kein Luxus, sondern dein Notausgang. Standdienst verschlüsselt jedes Backup (AES-GCM) mit deinem Backup-Passwort – ohne das Passwort lässt es sich nicht wiederherstellen.</p>
+    <ol class="steps">
+      <li><b>Backup-Passwort setzen.</b> Einmalig, gut aufbewahren. Verloren heißt: kein Restore.</li>
+      <li><b>Backup erstellen.</b> Datenbank, hochgeladene Dateien und Zugangsdaten landen in einer <code>.sdbackup</code>-Datei.</li>
+      <li><b>Herunterladen oder sperren.</b> Lade Sicherungen extern weg; wichtige sperrst du gegen das automatische Aufräumen.</li>
+      <li><b>Wiederherstellen.</b> Im Ernstfall Datei hochladen, Admin-Passwort bestätigen, Backup-Passwort eingeben – die App spielt zurück und startet neu.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/backup</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 17</div><div class="title">Backup-Verwaltung</div><div>Liste der Sicherungen · erstellen · sperren · wiederherstellen</div></div></div>
+      <figcaption><b>Regie:</b> Backup-Bereich mit einer Liste vorhandener <code>.sdbackup</code>-Dateien (Datum, Größe, Schloss-Symbol bei gesperrten) und den Aktionen Erstellen/Download/Restore.</figcaption>
+    </figure>
+
+    <div class="note warn">
+      <span class="ic">⚠️</span>
+      <p><b>Eine Wiederherstellung überschreibt alles.</b> Der Restore ersetzt den kompletten Datenbestand durch den des Backups. Mach das mit Bedacht – und teste den Ablauf einmal in Ruhe, bevor du ihn im Stress brauchst.</p>
+    </div>
+
+    <h3>Updates &amp; Wartung</h3>
+    <p>Standdienst kann sich selbst aktualisieren: Es prüft das neueste GitHub-Release, legt vorher automatisch ein Backup an, baut das Frontend neu und startet den Dienst. Für größere Eingriffe gibt es den <b>Wartungsmodus</b>, der Besuchern einen freundlichen Hinweis zeigt.</p>
+
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/settings/global</span></div>
+      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 18</div><div class="title">Update-Prüfung &amp; globale Einstellungen</div><div>aktuelle/neue Version · Update anwenden · Wartungsmodus</div></div></div>
+      <figcaption><b>Regie:</b> Globale Einstellungen mit dem Update-Bereich (installierte Version, verfügbare Version, Button „Update anwenden“) und dem Schalter für den Wartungsmodus.</figcaption>
+    </figure>
+
+    <div class="note dsgvo">
+      <span class="ic">📜</span>
+      <p><b>Du siehst mehr – und trägst mehr Verantwortung.</b> Das globale Aktivitätsprotokoll zeigt dir Ereignisse aller Instanzen inklusive IP-Adressen, und nur du kannst Konten endgültig löschen. Geh mit beidem sorgsam um; es ist ein Werkzeug für den Ernstfall, kein Fernglas.</p>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- SHELL-ADMIN                                                    -->
+  <!-- ============================================================= -->
+  <section id="shell" class="chapter">
+    <span class="kicker">Kapitel 5</span>
+    <div class="role-band">
+      <div class="ico">💻</div>
+      <div><div class="who">Shell-Admins</div><div class="what">Installation, Update &amp; Deinstallation auf dem Server</div></div>
+    </div>
+
+    <p class="lead-lg">Hier geht es ans Eingemachte. Drei Skripte nehmen dir die Arbeit ab – <code>install.sh</code>, <code>update.sh</code> und <code>uninstall.sh</code>. Sie sind für Debian/Ubuntu gemacht und fragen unterwegs nach, bevor sie etwas Wichtiges tun.</p>
+
+    <h3>Voraussetzungen</h3>
+    <ul class="clean">
+      <li>Debian- oder Ubuntu-Server mit <b>root</b>-Rechten (<code>sudo</code>).</li>
+      <li>Internetzugang (für Pakete und GitHub-Releases).</li>
+      <li>Den Rest – PostgreSQL, Redis, Nginx, Node.js, Python-Venv – bringt das Installationsskript selbst mit.</li>
+    </ul>
+
+    <h3>Installation</h3>
+    <p>Ins Projektverzeichnis wechseln und das Skript als root starten. Der Installationspfad ist optional; ohne Angabe fragt das Skript danach.</p>
+    <pre><span class="c"># Installation starten (interaktiv)</span>
+sudo bash <b>install.sh</b>
+
+<span class="c"># …oder direkt mit Zielverzeichnis</span>
+sudo bash <b>install.sh</b> /opt/standdienst</pre>
+
+    <p>Das Skript führt dich Schritt für Schritt:</p>
+    <ol class="steps">
+      <li><b>Pfad &amp; Port abfragen.</b> Standard ist <code>/opt/standdienst</code> und Port <code>8420</code> (intern). Belegte Ports erkennt es und fragt nach.</li>
+      <li><b>Systempakete installieren.</b> PostgreSQL, Redis, Nginx, Node.js (≥ 20), Python samt Build-Werkzeug.</li>
+      <li><b>Service-User &amp; Verzeichnisse.</b> Legt den System-User <code>standdienst</code> an und kopiert die Dateien.</li>
+      <li><b>Datenbank &amp; Redis.</b> Erstellt Datenbank und Benutzer <code>standdienst</code>, startet Redis.</li>
+      <li><b>Konfiguration schreiben.</b> Generiert die <code>.env</code> mit frischem <code>SECRET_KEY</code>, Datenbank- und Redis-URL, sicheren Cookies und – falls erkannt – dem GitHub-Repo für Updates.</li>
+      <li><b>Migrationen &amp; Build.</b> Spielt das Datenbankschema ein und baut das Frontend.</li>
+      <li><b>Dienste &amp; Proxy.</b> Richtet die systemd-Services und Nginx (Port 80 → interner Port) ein.</li>
+    </ol>
+
+    <figure class="shot">
+      <div class="browser" style="background:var(--p900); border-color:#3a1116"><i style="background:#7a2630"></i><i style="background:#7a2630"></i><i style="background:#7a2630"></i><span class="url" style="background:#2a0a0d; border-color:#3a1116; color:#cf9aa0">root@server: ~/standdienst_v2 — sudo bash install.sh</span></div>
+      <div class="stage"><div><div class="cam">💻</div><div class="tag">Screenshot 19 · Terminal</div><div class="title">Installations-Ablauf</div><div>Abschluss-Banner „Installation abgeschlossen!“</div></div></div>
+      <figcaption><b>Regie:</b> Terminal-Mitschnitt von <code>install.sh</code> – am wirkungsvollsten das grüne Abschluss-Banner mit der Server-Adresse und dem Hinweis „Öffne …/setup“.</figcaption>
+    </figure>
+
+    <p>Zum Schluss nennt dir das Skript die Adresse. Der erste echte Schritt passiert dann im Browser:</p>
+    <pre><span class="c"># Logs live mitlesen</span>
+journalctl -u <b>standdienst</b> -f
+journalctl -u <b>standdienst-scheduler</b> -f
+
+<span class="c"># Weiter geht es im Browser – die Ersteinrichtung:</span>
+<span class="c"># http://&lt;server-adresse&gt;/setup</span></pre>
+
+    <div class="note warn">
+      <span class="ic">🔐</span>
+      <p><b>HTTPS nicht vergessen.</b> Die Installation richtet Nginx auf Port 80 ein – also unverschlüsselt. Für den echten Betrieb gehört zwingend TLS davor. Am schnellsten mit Let’s Encrypt:</p>
+    </div>
+    <pre><span class="c"># Kostenloses Zertifikat einrichten</span>
+sudo certbot --nginx -d <b>deine-domain.de</b></pre>
+
+    <h3>Aktualisieren</h3>
+    <p>Updates laufen entweder bequem über die Admin-Oberfläche (siehe Kapitel 4) oder per Skript. Das Skript prüft, sichert, baut und startet neu – in einem Rutsch.</p>
+    <pre><span class="c"># Nur nachsehen, ob es etwas Neues gibt</span>
+sudo bash <b>update.sh</b> --check
+
+<span class="c"># Update einspielen (mit Rückfrage)</span>
+sudo bash <b>update.sh</b>
+
+<span class="c"># Ohne Rückfragen, z. B. für Automatisierung</span>
+sudo bash <b>update.sh</b> --yes</pre>
+    <p>Vor jeder Aktualisierung legt das Skript automatisch ein Backup an. Sollte der System-DNS streiken, fragt es GitHub notfalls über einen zweiten Weg an – die TLS-Prüfung bleibt dabei aktiv.</p>
+
+    <div class="note tip">
+      <span class="ic">🩹</span>
+      <p><b>Falls du lieber von Hand arbeitest:</b> <code>git pull</code> → Abhängigkeiten aktualisieren (<code>pip install -r requirements.txt</code>) → <code>flask db upgrade</code> → Frontend bauen (<code>npm run build</code>) → <code>systemctl restart standdienst standdienst-scheduler</code>. Das Skript macht genau das – nur ohne Tippfehler.</p>
+    </div>
+
+    <h3>Deinstallation</h3>
+    <p>Das Deinstallationsskript räumt gründlich auf – und fragt bei jedem heiklen Schritt einzeln nach, damit nichts versehentlich verschwindet.</p>
+    <pre><span class="c"># Deinstallation starten</span>
+sudo bash <b>uninstall.sh</b></pre>
+    <p>Es arbeitet sich in fünf Etappen durch und lässt dir die Wahl:</p>
+    <ol class="steps">
+      <li><b>Dienste entfernen.</b> Stoppt und löscht die systemd-Services und die Sudo-Regel.</li>
+      <li><b>Nginx aufräumen.</b> Entfernt die Webserver-Konfiguration.</li>
+      <li><b>Verzeichnis löschen.</b> Auf Nachfrage das komplette Installationsverzeichnis – inklusive Uploads, Logs und <code>.env</code>.</li>
+      <li><b>Datenbank löschen.</b> Auf Nachfrage Datenbank und Benutzer <code>standdienst</code>.</li>
+      <li><b>System-User entfernen.</b> Auf Nachfrage den Benutzer <code>standdienst</code>.</li>
+    </ol>
+    <p>Optional bietet es an, auch PostgreSQL, Redis, Nginx und Node.js zu entfernen – aber nur, wenn du sie für nichts anderes brauchst. Drei Dinge prüfst du danach am besten von Hand: die Redis-Konfiguration, etwaige Let’s-Encrypt-Zertifikate (<code>certbot delete</code>) und – falls eingerichtet – Fail2Ban-Regeln.</p>
+
+    <div class="note warn">
+      <span class="ic">🧨</span>
+      <p><b>Das ist endgültig.</b> Löschst du Verzeichnis und Datenbank, sind die Daten weg – ohne Backup unwiederbringlich. Zieh dir vorher eine <code>.sdbackup</code>-Datei und lege sie an einen sicheren Ort.</p>
+    </div>
+
+    <h3>Gut zu wissen: die wichtigsten Stellschrauben</h3>
+    <table class="tbl">
+      <thead><tr><th>Variable in <code>.env</code></th><th>Bedeutung</th></tr></thead>
+      <tbody>
+        <tr><td><code>SECRET_KEY</code></td><td>Schlüssel für Sessions, Tokens und die Verschlüsselung sensibler Felder. <b>Niemals nachträglich ändern</b> – sonst werden gespeicherte Geheimnisse unlesbar.</td></tr>
+        <tr><td><code>DATABASE_URL</code></td><td>Verbindung zur PostgreSQL-Datenbank.</td></tr>
+        <tr><td><code>RATELIMIT_STORAGE_URI</code></td><td>Redis-Adresse für die Anfrage-Limits. Im Produktivbetrieb <b>Pflicht</b> – ohne Redis startet die App bewusst nicht.</td></tr>
+        <tr><td><code>SESSION_COOKIE_SECURE</code></td><td>Im Betrieb hinter HTTPS auf <code>true</code> (setzt das Skript bereits).</td></tr>
+        <tr><td><code>GITHUB_REPO</code> / Token</td><td>Ermöglicht die Update-Prüfung gegen die GitHub-Releases.</td></tr>
+        <tr><td><code>SETUP_ALLOWED_IPS</code></td><td>Schränkt den Zugang zum Setup-Assistenten auf bestimmte IPs ein – empfehlenswert auf frischen Servern.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- ANHANG: SCREENSHOT-REGIE                                       -->
+  <!-- ============================================================= -->
+  <section id="screenshots" class="chapter">
+    <span class="kicker">Anhang A</span>
+    <h2>Screenshot-Regie auf einen Blick</h2>
+    <p>Damit das Handbuch glänzt, fehlen nur noch die echten Bilder. Hier die komplette Klappenliste – am besten in einem aufgeräumten Demo-System mit Beispieldaten aufnehmen, jeweils im Browser bei rund 1280&nbsp;px Breite. Lege die Dateien in <code>docs/handbuch/screenshots/</code> ab und ersetze die grauen Platzhalter durch <code>&lt;img&gt;</code>.</p>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Bild</th><th>Rolle / Ort</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>Registrierungsformular</td><td><span class="pill v">Freiwillige</span> <code>/&lt;slug&gt;/register</code></td></tr>
+        <tr><td>02</td><td>Passwort einrichten</td><td><span class="pill v">Freiwillige</span> <code>/&lt;slug&gt;/welcome/&lt;token&gt;</code></td></tr>
+        <tr><td>03</td><td>Schichtenübersicht</td><td><span class="pill v">Freiwillige</span> <code>/&lt;slug&gt;/shifts</code></td></tr>
+        <tr><td>04</td><td>Meine Anmeldungen + iCal</td><td><span class="pill v">Freiwillige</span> <code>/&lt;slug&gt;/my-shifts</code></td></tr>
+        <tr><td>05</td><td>Essensspende eintragen</td><td><span class="pill v">Freiwillige</span> <code>/&lt;slug&gt;/food</code></td></tr>
+        <tr><td>06</td><td>Profil &amp; Datenschutz</td><td><span class="pill v">Freiwillige</span> <code>/&lt;slug&gt;/profile</code></td></tr>
+        <tr><td>07</td><td>Login &amp; Instanz-Auswahl</td><td><span class="pill o">Organisator:in</span> <code>/admin/login</code></td></tr>
+        <tr><td>08</td><td>Schichten verwalten</td><td><span class="pill o">Organisator:in</span> Schichten/Termine/Stände</td></tr>
+        <tr><td>09</td><td>Anmeldungs-Raster</td><td><span class="pill o">Organisator:in</span> Registrierungs-Grid</td></tr>
+        <tr><td>10</td><td>Helferliste &amp; Export</td><td><span class="pill o">Organisator:in</span> <code>/admin/&lt;slug&gt;/volunteers</code></td></tr>
+        <tr><td>11</td><td>Branding-Einstellungen</td><td><span class="pill ia">Instanz-Admin</span> <code>/admin/&lt;slug&gt;/settings</code></td></tr>
+        <tr><td>12</td><td>Funktionsschalter &amp; Fristen</td><td><span class="pill ia">Instanz-Admin</span> Einstellungen</td></tr>
+        <tr><td>13</td><td>Protokoll &amp; DSGVO</td><td><span class="pill ia">Instanz-Admin</span> Activity / Art. 30</td></tr>
+        <tr><td>14</td><td>Setup-Assistent</td><td><span class="pill a">Plattform-Admin</span> <code>/setup</code></td></tr>
+        <tr><td>15</td><td>Instanzen &amp; Organisatoren</td><td><span class="pill a">Plattform-Admin</span> <code>/admin/instances</code></td></tr>
+        <tr><td>16</td><td>Mail-Einstellungen &amp; Test</td><td><span class="pill a">Plattform-Admin</span> Mail-Settings</td></tr>
+        <tr><td>17</td><td>Backup-Verwaltung</td><td><span class="pill a">Plattform-Admin</span> Backup</td></tr>
+        <tr><td>18</td><td>Update &amp; Wartung</td><td><span class="pill a">Plattform-Admin</span> Globale Settings</td></tr>
+        <tr><td>19</td><td>Installations-Terminal</td><td><span class="pill s">Shell-Admin</span> <code>install.sh</code></td></tr>
+      </tbody>
+    </table>
+    <div class="note tip">
+      <span class="ic">🎬</span>
+      <p><b>Kleiner Regie-Tipp:</b> Lege vorher eine Demo-Instanz mit hübschem Namen, Logo und einer kräftigen Farbe an, dazu zwei, drei Veranstaltungstage mit Ständen und ein paar Beispiel-Helfern. Volle, lebendige Listen wirken auf Screenshots gleich viel überzeugender als gähnende Leere.</p>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ============================================================= -->
+  <!-- ANHANG: GLOSSAR & FAQ                                          -->
+  <!-- ============================================================= -->
+  <section id="glossar" class="chapter">
+    <span class="kicker">Anhang B</span>
+    <h2>Glossar &amp; häufige Fragen</h2>
+
+    <h3>Begriffe, kurz erklärt</h3>
+    <table class="tbl">
+      <thead><tr><th>Begriff</th><th>Bedeutung</th></tr></thead>
+      <tbody>
+        <tr><td>Instanz</td><td>Ein eigenständiger Verein bzw. ein Event auf der Plattform – mit eigenem Auftritt und eigenen Daten.</td></tr>
+        <tr><td>Slug</td><td>Das kurze Kürzel einer Instanz in der Adresse, z. B. <code>dein-verein</code>.</td></tr>
+        <tr><td>Stand</td><td>Eine Station, an der geholfen wird – Kasse, Grill, Einlass.</td></tr>
+        <tr><td>Schicht</td><td>Ein konkretes Zeitfenster an einem Stand mit einer Zahl gesuchter Helfer.</td></tr>
+        <tr><td>Entwurf</td><td>Ein Veranstaltungstag, der noch nicht öffentlich ist – für Freiwillige unsichtbar.</td></tr>
+        <tr><td>Welcome-Link</td><td>Einmaliger, sieben Tage gültiger Link aus der Willkommens-Mail zum Passwort-Einrichten.</td></tr>
+        <tr><td>.sdbackup</td><td>Das verschlüsselte Backup-Dateiformat von Standdienst.</td></tr>
+        <tr><td>Pseudonymisieren</td><td>Persönliche Daten unkenntlich machen, ohne die Planungsspur zu zerstören.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Häufige Fragen</h3>
+    <h4>Ich habe keine E-Mail bekommen – woran liegt’s?</h4>
+    <p>Meist ist der Mailserver noch nicht eingerichtet (Plattform-Admin, Kapitel 4) oder die Mail liegt im Spam. Ein Blick in den Spam-Ordner und eine Testmail aus den Mail-Einstellungen klären das schnell.</p>
+
+    <h4>Ich komme nicht mehr in mein Helfer-Konto.</h4>
+    <p>Hast du eine E-Mail hinterlegt, nutze „Passwort vergessen“. Sonst hilft dir eine Organisator:in oder Instanz-Admin, das Passwort zurückzusetzen.</p>
+
+    <h4>Warum kann ich diese eine Schicht nicht buchen?</h4>
+    <p>Entweder ist sie voll, sie überschneidet sich zeitlich mit einem deiner Dienste, oder der Anmeldeschluss ist vorbei. Die App sagt dir im Zweifel, woran es hakt.</p>
+
+    <h4>Wir machen mehrere Feste im Jahr – neu anlegen oder weiterführen?</h4>
+    <p>Beides geht. Du kannst eine bestehende Instanz mit neuen Terminen weiterführen oder für ein ganz anderes Event eine frische Instanz aufsetzen. Die Daten bleiben sauber getrennt.</p>
+
+    <h4>Sind die Daten sicher?</h4>
+    <p>Passwörter werden gehasht, sensible Felder verschlüsselt, Backups mit deinem Passwort gesichert, und die Plattform bremst automatisierte Angriffe aus. Den Rest – HTTPS, Updates, Backups – hast du als Admin in der Hand.</p>
+
+    <div class="footer">
+      <p><b>Standdienst · Handbuch.</b> Erstellt für Freiwillige, Organisator:innen, Instanz-Admins, Plattform-Admins und Shell-Admins. Sprache: Deutsch. Layout im Farbschema der Anwendung (Papier &amp; Karmin).</p>
+      <p>Tipp zum Verteilen: Diese Datei ist in sich geschlossen – im Browser öffnen und über „Drucken → Als PDF speichern“ bekommst du eine saubere PDF-Fassung.</p>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<a href="#" class="toplink" id="toplink" aria-label="Nach oben">↑</a>
+
+<script>
+  // Aktiven Menüpunkt hervorheben
+  const links = [...document.querySelectorAll('.toc a')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const a = map.get(e.target.id);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('section[id]').forEach(s => obs.observe(s));
+
+  // "Nach oben"-Knopf
+  const top = document.getElementById('toplink');
+  addEventListener('scroll', () => {
+    top.classList.toggle('show', scrollY > 700);
+  });
+</script>
+</body>
+</html>
