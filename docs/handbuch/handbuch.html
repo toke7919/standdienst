@@ -170,6 +170,17 @@
   ul.clean li:last-child{border-bottom:0}
   ul.clean li::before{content:"›"; position:absolute; left:8px; color:var(--p500); font-weight:800}
   .anchor-h{display:block; height:0; visibility:hidden}
+
+  /* ---------- In-Content Inhaltsverzeichnis ---------- */
+  .toc-card{background:var(--cream); border:1px solid var(--sand); border-radius:var(--radius); padding:22px 24px; margin:28px 0 8px; box-shadow:var(--shadow)}
+  .toc-card h3{font-size:1.12rem; margin:0 0 4px}
+  .toc-card .sub{color:var(--muted); font-size:.92rem; margin:0 0 16px}
+  .toc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(248px,1fr)); gap:8px}
+  .toc-grid a{display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:12px; color:var(--ink); font-weight:600; background:var(--paper); border:1px solid transparent; transition:all .15s}
+  .toc-grid a:hover{border-color:var(--sand); background:#fff; text-decoration:none; transform:translateX(2px)}
+  .toc-grid a .n{font-family:var(--mono); font-size:.78rem; color:var(--p600); background:var(--p100); width:30px; height:30px; border-radius:8px; display:grid; place-items:center; flex:0 0 auto}
+  .toc-grid a.plain{color:var(--muted); font-weight:500}
+  .toc-grid a.plain:hover{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -239,6 +250,21 @@
       <span class="ic">🧭</span>
       <p><b>So liest du dieses Handbuch.</b> Jedes Kapitel zeigt echte Screenshots aus einer Demo-Instanz – dem fiktiven „Stadtfest Musterstadt“ – ergänzt um nummerierte Schritt-für-Schritt-Anleitungen. Einzige Ausnahme ist die nachgestellte Terminal-Ansicht im Technik-Kapitel.</p>
     </div>
+
+    <nav class="toc-card" aria-label="Inhaltsverzeichnis">
+      <h3>Inhaltsverzeichnis</h3>
+      <p class="sub">Spring direkt zu deinem Kapitel – ein Klick genügt.</p>
+      <div class="toc-grid">
+        <a href="#freiwillige"><span class="n">1</span> Für Freiwillige</a>
+        <a href="#organisatoren"><span class="n">2</span> Für Organisator:innen</a>
+        <a href="#instanzadmin"><span class="n">3</span> Für Instanz-Admins</a>
+        <a href="#admin"><span class="n">4</span> Für Plattform-Admins</a>
+        <a href="#shell"><span class="n">5</span> Für Shell-Admins</a>
+        <a href="#rollen" class="plain">↗ Die fünf Rollen im Überblick</a>
+        <a href="#screenshots" class="plain">↗ Abbildungsverzeichnis</a>
+        <a href="#glossar" class="plain">↗ Glossar &amp; FAQ</a>
+      </div>
+    </nav>
   </section>
 
   <hr class="divider"/>
@@ -685,8 +711,8 @@ sudo bash <b>install.sh</b> /opt/standdienst</pre>
 
     <figure class="shot">
       <div class="browser" style="background:var(--p900); border-color:#3a1116"><i style="background:#7a2630"></i><i style="background:#7a2630"></i><i style="background:#7a2630"></i><span class="url" style="background:#2a0a0d; border-color:#3a1116; color:#cf9aa0">root@server: ~/standdienst_v2 — sudo bash install.sh</span></div>
-      <div class="stage"><div><div class="cam">💻</div><div class="tag">Screenshot 19 · Terminal</div><div class="title">Installations-Ablauf</div><div>Abschluss-Banner „Installation abgeschlossen!“</div></div></div>
-      <figcaption><b>Regie:</b> Terminal-Mitschnitt von <code>install.sh</code> – am wirkungsvollsten das grüne Abschluss-Banner mit der Server-Adresse und dem Hinweis „Öffne …/setup“.</figcaption>
+      <img class="real" src="screenshots/19.png" alt="Abschluss-Banner nach der Installation" loading="lazy" />
+      <figcaption>Das Abschluss-Banner von <code>install.sh</code> nennt Adresse, Logs und den nächsten Schritt – die Ersteinrichtung unter <code>/setup</code>.</figcaption>
     </figure>
 
     <p>Zum Schluss nennt dir das Skript die Adresse. Der erste echte Schritt passiert dann im Browser:</p>
