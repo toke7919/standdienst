@@ -119,6 +119,7 @@
   .shot .stage .cam{font-size:2.1rem; opacity:.5; margin-bottom:8px}
   .shot .stage .tag{font-family:var(--mono); font-size:.74rem; letter-spacing:.1em; text-transform:uppercase; color:var(--p600); font-weight:600}
   .shot .stage .title{font-weight:700; color:var(--ink); font-size:1.05rem; margin:4px 0 2px}
+  figure.shot img.real{width:100%;display:block;background:#fff}
   figcaption{padding:13px 16px; font-size:.88rem; color:#3a2c26; background:var(--cream); border-top:1px solid var(--sand)}
   figcaption b{color:var(--p700)}
 
@@ -236,7 +237,7 @@
 
     <div class="note info">
       <span class="ic">🧭</span>
-      <p><b>So liest du dieses Handbuch.</b> Graue, gestreifte Kästen sind Platzhalter für Screenshots – darunter steht jeweils als <b>Regie</b>, welches Bild dort hingehört. Bis die echten Bilder eingesetzt sind, führen dich die nummerierten Schritte trotzdem sicher ans Ziel.</p>
+      <p><b>So liest du dieses Handbuch.</b> Jedes Kapitel zeigt echte Screenshots aus einer Demo-Instanz – dem fiktiven „Stadtfest Musterstadt“ – ergänzt um nummerierte Schritt-für-Schritt-Anleitungen. Einzige Ausnahme ist die nachgestellte Terminal-Ansicht im Technik-Kapitel.</p>
     </div>
   </section>
 
@@ -301,8 +302,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/register</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 01</div><div class="title">Registrierungsformular</div><div>Vorname · Nachname · E-Mail (optional) · Datenschutz-Haken</div></div></div>
-      <figcaption><b>Regie:</b> Rolle <i>Freiwillige</i>, nicht eingeloggt. Seite <code>/&lt;slug&gt;/register</code> im Branding eines Demo-Vereins. Formular leer oder mit Beispielnamen „Maria Beispiel“. Den Datenschutz-Haken sichtbar lassen.</figcaption>
+      <img class="real" src="screenshots/01.png" alt="Registrierungsformular" loading="lazy" />
+      <figcaption>Das Registrierungsformular im Vereins-Branding – Name genügt, die E-Mail ist freiwillig.</figcaption>
     </figure>
 
     <div class="note dsgvo">
@@ -318,8 +319,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/welcome/•••••</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 02</div><div class="title">Passwort einrichten</div><div>Willkommensgruß mit Namen · Passwortfeld</div></div></div>
-      <figcaption><b>Regie:</b> Welcome-Seite nach Klick auf den Mail-Link (<code>/&lt;slug&gt;/welcome/&lt;token&gt;</code>). Begrüßung „Hallo Maria“ und das Passwort-Eingabefeld zeigen.</figcaption>
+      <img class="real" src="screenshots/02.png" alt="Passwort einrichten" loading="lazy" />
+      <figcaption>Über den Link aus der Willkommens-Mail vergeben sich neue Helfer ihr Passwort.</figcaption>
     </figure>
 
     <h3>Eine Schicht übernehmen</h3>
@@ -332,8 +333,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/shifts</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 03</div><div class="title">Schichtenübersicht</div><div>Tage · Stände · Zeiten · freie Plätze · „Eintragen“</div></div></div>
-      <figcaption><b>Regie:</b> Eingeloggt als Freiwillige. Seite <code>/&lt;slug&gt;/shifts</code> mit mehreren Ständen und Zeiten. Mindestens eine Schicht „voll“, eine mit freien Plätzen und eine, in die der Nutzer bereits eingetragen ist (Status „Eingetragen“).</figcaption>
+      <img class="real" src="screenshots/03.png" alt="Schichtenübersicht" loading="lazy" />
+      <figcaption>Die Schichtenübersicht: nach Tagen und Ständen sortiert, mit freien Plätzen und Namen.</figcaption>
     </figure>
 
     <h3>Meine Dienste &amp; Kalender</h3>
@@ -341,8 +342,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/my-shifts</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 04</div><div class="title">Meine Anmeldungen</div><div>Liste der eigenen Dienste · Button „Kalender-Export (iCal)“</div></div></div>
-      <figcaption><b>Regie:</b> Seite <code>/&lt;slug&gt;/my-shifts</code> mit zwei bis drei eingetragenen Diensten. Den iCal-Export-Button gut sichtbar platzieren.</figcaption>
+      <img class="real" src="screenshots/04.png" alt="Meine Anmeldungen" loading="lazy" />
+      <figcaption>„Meine Anmeldungen“ bündelt die eigenen Dienste – inklusive Kalender-Export.</figcaption>
     </figure>
 
     <h3>Etwas zu essen mitbringen</h3>
@@ -354,8 +355,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/food</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 05</div><div class="title">Essensspende eintragen</div><div>Art · Beschreibung · „muss gekühlt werden“</div></div></div>
-      <figcaption><b>Regie:</b> Seite <code>/&lt;slug&gt;/food</code>. Eine Spendenart mit zwei, drei bestehenden Einträgen zeigen und das Eingabeformular geöffnet.</figcaption>
+      <img class="real" src="screenshots/05.png" alt="Essensspende eintragen" loading="lazy" />
+      <figcaption>Essensspenden eintragen: Art wählen, kurz beschreiben, Kühlung angeben.</figcaption>
     </figure>
 
     <h3>Profil, Erinnerungen &amp; deine Daten</h3>
@@ -368,8 +369,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/dein-verein/profile</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 06</div><div class="title">Profil &amp; Datenschutz</div><div>Name · Passwort · zwei Schalter · DSGVO-Bereich</div></div></div>
-      <figcaption><b>Regie:</b> Seite <code>/&lt;slug&gt;/profile</code> eingeloggt. Beide Benachrichtigungs-Schalter zeigen, dazu den Bereich „Meine Daten“ mit den Optionen Export und Konto löschen.</figcaption>
+      <img class="real" src="screenshots/06.png" alt="Profil &amp; Datenschutz" loading="lazy" />
+      <figcaption>Das Profil mit den beiden Benachrichtigungs-Schaltern und dem DSGVO-Bereich.</figcaption>
     </figure>
 
     <div class="note dsgvo">
@@ -402,8 +403,13 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/login</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 07</div><div class="title">Login &amp; Instanz-Auswahl</div><div>Anmeldemaske · Seitenleiste mit Instanz-Umschalter</div></div></div>
-      <figcaption><b>Regie:</b> Zwei Aufnahmen wären ideal – die Login-Maske <code>/admin/login</code> und danach das eingeloggte Layout mit der Seitenleiste und dem Instanz-Umschalter (Rolle Organisator:in).</figcaption>
+      <img class="real" src="screenshots/07.png" alt="Login &amp; Instanz-Auswahl" loading="lazy" />
+      <figcaption>Der Zugang zum Verwaltungsbereich unter /admin/login.</figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">standdienst.example/admin</span></div>
+      <img class="real" src="screenshots/07b.png" alt="Das Verwaltungs-Dashboard mit Seitenleiste und Instanz-Umschalter." loading="lazy" />
+      <figcaption>Das Verwaltungs-Dashboard mit Seitenleiste und Instanz-Umschalter.</figcaption>
     </figure>
 
     <div class="note tip">
@@ -428,8 +434,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/shifts</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 08</div><div class="title">Schichten verwalten</div><div>Termine · Stände · Schichten mit Plätzen</div></div></div>
-      <figcaption><b>Regie:</b> Verwaltungsansicht für Schichten/Termine/Stände einer Demo-Instanz. Idealerweise ein veröffentlichter Tag und ein Entwurfs-Tag nebeneinander, damit der Unterschied sichtbar wird.</figcaption>
+      <img class="real" src="screenshots/08.png" alt="Schichten verwalten" loading="lazy" />
+      <figcaption>Schichten, Termine und Stände einer Instanz an einer Stelle verwalten.</figcaption>
     </figure>
 
     <h3>Wer hilft wo? Das Anmeldungs-Raster</h3>
@@ -442,8 +448,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/registrations</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 09</div><div class="title">Anmeldungs-Raster</div><div>Stände × Zeiten · Namen in den Zellen · „eintragen“</div></div></div>
-      <figcaption><b>Regie:</b> Das Grid <code>/admin/&lt;slug&gt;/registrations</code> mit gefüllten und halb leeren Zellen. Mindestens ein Gast-Eintrag (ohne Konto) und ein normaler Eintrag sichtbar.</figcaption>
+      <img class="real" src="screenshots/09.png" alt="Anmeldungs-Raster" loading="lazy" />
+      <figcaption>Das Anmeldungs-Raster: Stände als Spalten, Zeiten als Zeilen, Namen in den Zellen.</figcaption>
     </figure>
 
     <h3>Helfer, Spenden &amp; Listen</h3>
@@ -456,8 +462,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/volunteers</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 10</div><div class="title">Helferliste &amp; Export/Import</div><div>Liste mit Dienst-/Spendenzahl · Export-Menü</div></div></div>
-      <figcaption><b>Regie:</b> Helferliste <code>/admin/&lt;slug&gt;/volunteers</code> mit mehreren Personen und den Spalten für Dienst- und Spendenanzahl. Das Export-Menü (CSV/Excel/ODS/iCal) aufgeklappt zeigen.</figcaption>
+      <img class="real" src="screenshots/10.png" alt="Helferliste &amp; Export/Import" loading="lazy" />
+      <figcaption>Die Helferliste mit Dienst- und Spendenzahl pro Person.</figcaption>
     </figure>
 
     <div class="note tip">
@@ -496,8 +502,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/settings</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 11</div><div class="title">Instanz-Einstellungen · Branding</div><div>Titel · Farbwähler · Logo-Upload</div></div></div>
-      <figcaption><b>Regie:</b> Einstellungsseite einer Instanz, Bereich Branding. Farbwähler und ein hochgeladenes Beispiel-Logo zeigen; idealerweise spiegelt die Oberfläche die gewählte Farbe schon wider.</figcaption>
+      <img class="real" src="screenshots/11.png" alt="Instanz-Einstellungen · Branding" loading="lazy" />
+      <figcaption>Branding der Instanz: Titel, Vereinsfarbe und Logo.</figcaption>
     </figure>
 
     <h3>Regeln, die mitdenken</h3>
@@ -515,8 +521,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/settings</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 12</div><div class="title">Funktionsschalter &amp; Fristen</div><div>Schalter · Anmeldeschluss · Abmeldefrist · Sperrtext</div></div></div>
-      <figcaption><b>Regie:</b> Bereich der Einstellungen mit den Schaltern (Schichten/Spenden/Sperre) sowie den Feldern für Anmeldeschluss und Abmeldefrist. Optional die Sperr-Nachricht befüllt zeigen.</figcaption>
+      <img class="real" src="screenshots/12.png" alt="Funktionsschalter &amp; Fristen" loading="lazy" />
+      <figcaption>Funktionsschalter und Fristen steuern, was Freiwillige tun dürfen.</figcaption>
     </figure>
 
     <h3>Impressum &amp; Datenschutz deiner Instanz</h3>
@@ -540,8 +546,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/dein-verein/activity</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 13</div><div class="title">Aktivitätsprotokoll &amp; DSGVO</div><div>Protokoll-Liste · Verarbeitungsverzeichnis</div></div></div>
-      <figcaption><b>Regie:</b> Aktivitätsprotokoll der Instanz mit einigen Ereignissen (Anmeldungen, Änderungen). Zusätzlich – falls möglich – die Ansicht des Verarbeitungsverzeichnisses (Art. 30).</figcaption>
+      <img class="real" src="screenshots/13.png" alt="Aktivitätsprotokoll &amp; DSGVO" loading="lazy" />
+      <figcaption>Das Aktivitätsprotokoll der Instanz hält jede Änderung nachvollziehbar fest.</figcaption>
     </figure>
   </section>
 
@@ -571,8 +577,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/setup</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 14</div><div class="title">Setup-Assistent</div><div>Schritt-für-Schritt: Admin · URL · Mail · Recht</div></div></div>
-      <figcaption><b>Regie:</b> Der Setup-Wizard <code>/setup</code> – am besten der erste Schritt (Admin anlegen) mit sichtbarer Schrittanzeige. Nur auf einem frischen System aufrufbar.</figcaption>
+      <img class="real" src="screenshots/14.png" alt="Setup-Assistent" loading="lazy" />
+      <figcaption>Der Setup-Assistent führt in fünf Schritten durch die Ersteinrichtung.</figcaption>
     </figure>
 
     <h3>Instanzen &amp; Organisator:innen</h3>
@@ -584,8 +590,13 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/instances</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 15</div><div class="title">Instanzen &amp; Organisatoren</div><div>Instanzliste · Organisator-Anlage mit Rollenwahl</div></div></div>
-      <figcaption><b>Regie:</b> Zwei Aufnahmen – die Instanz-Übersicht mit mehreren Vereinen und der Dialog „Organisator anlegen“ mit Instanz-Zuweisung und der Auswahl „Instanz-Admin: ja/nein“.</figcaption>
+      <img class="real" src="screenshots/15.png" alt="Instanzen &amp; Organisatoren" loading="lazy" />
+      <figcaption>Die Instanz-Übersicht – jeder Verein als eigene, saubere Einheit.</figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="browser"><i></i><i></i><i></i><span class="url">standdienst.example/admin</span></div>
+      <img class="real" src="screenshots/15b.png" alt="Organisator:innen anlegen, einladen und Instanzen zuweisen." loading="lazy" />
+      <figcaption>Organisator:innen anlegen, einladen und Instanzen zuweisen.</figcaption>
     </figure>
 
     <h3>Mailversand</h3>
@@ -593,8 +604,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/settings/mail</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 16</div><div class="title">Mail-Einstellungen &amp; Test</div><div>SMTP-Felder · „Testmail senden“</div></div></div>
-      <figcaption><b>Regie:</b> Mail-Einstellungen mit ausgefüllten (anonymisierten) SMTP-Daten und der Schaltfläche für die Testmail. Passwortfeld natürlich maskiert.</figcaption>
+      <img class="real" src="screenshots/16.png" alt="Mail-Einstellungen &amp; Test" loading="lazy" />
+      <figcaption>Mail-Einstellungen mit SMTP-Zugang und Testversand.</figcaption>
     </figure>
 
     <h3>Sicherheitsnetz: Backups</h3>
@@ -608,8 +619,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/backup</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 17</div><div class="title">Backup-Verwaltung</div><div>Liste der Sicherungen · erstellen · sperren · wiederherstellen</div></div></div>
-      <figcaption><b>Regie:</b> Backup-Bereich mit einer Liste vorhandener <code>.sdbackup</code>-Dateien (Datum, Größe, Schloss-Symbol bei gesperrten) und den Aktionen Erstellen/Download/Restore.</figcaption>
+      <img class="real" src="screenshots/17.png" alt="Backup-Verwaltung" loading="lazy" />
+      <figcaption>Backup-Verwaltung: verschlüsselte Sicherungen erstellen, sperren, wiederherstellen.</figcaption>
     </figure>
 
     <div class="note warn">
@@ -622,8 +633,8 @@
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/settings/global</span></div>
-      <div class="stage"><div><div class="cam">📷</div><div class="tag">Screenshot 18</div><div class="title">Update-Prüfung &amp; globale Einstellungen</div><div>aktuelle/neue Version · Update anwenden · Wartungsmodus</div></div></div>
-      <figcaption><b>Regie:</b> Globale Einstellungen mit dem Update-Bereich (installierte Version, verfügbare Version, Button „Update anwenden“) und dem Schalter für den Wartungsmodus.</figcaption>
+      <img class="real" src="screenshots/18.png" alt="Update-Prüfung &amp; globale Einstellungen" loading="lazy" />
+      <figcaption>Update-Prüfung und Wartungsmodus in den Plattform-Einstellungen.</figcaption>
     </figure>
 
     <div class="note dsgvo">
@@ -750,8 +761,8 @@ sudo bash <b>uninstall.sh</b></pre>
   <!-- ============================================================= -->
   <section id="screenshots" class="chapter">
     <span class="kicker">Anhang A</span>
-    <h2>Screenshot-Regie auf einen Blick</h2>
-    <p>Damit das Handbuch glänzt, fehlen nur noch die echten Bilder. Hier die komplette Klappenliste – am besten in einem aufgeräumten Demo-System mit Beispieldaten aufnehmen, jeweils im Browser bei rund 1280&nbsp;px Breite. Lege die Dateien in <code>docs/handbuch/screenshots/</code> ab und ersetze die grauen Platzhalter durch <code>&lt;img&gt;</code>.</p>
+    <h2>Abbildungsverzeichnis</h2>
+    <p>Alle Screenshots stammen aus einer Demo-Instanz („Stadtfest Musterstadt“) und liegen unter <code>docs/handbuch/screenshots/</code>. Hier die Übersicht, wo welches Bild zu Hause ist. Einzig die Terminal-Ansicht (Nr. 19) ist nachgestellt, weil sich ein Server-Installationslauf nicht sinnvoll abbilden lässt.</p>
     <table class="tbl">
       <thead><tr><th>#</th><th>Bild</th><th>Rolle / Ort</th></tr></thead>
       <tbody>
@@ -778,7 +789,7 @@ sudo bash <b>uninstall.sh</b></pre>
     </table>
     <div class="note tip">
       <span class="ic">🎬</span>
-      <p><b>Kleiner Regie-Tipp:</b> Lege vorher eine Demo-Instanz mit hübschem Namen, Logo und einer kräftigen Farbe an, dazu zwei, drei Veranstaltungstage mit Ständen und ein paar Beispiel-Helfern. Volle, lebendige Listen wirken auf Screenshots gleich viel überzeugender als gähnende Leere.</p>
+      <p><b>Gut zu wissen:</b> Die Demo-Instanz im grünen Branding zeigt, wie frei sich jeder Verein einrichten lässt – Farbe, Logo und Titel bestimmt ihr selbst. Die Plattform-Ansichten (Setup, Update) erscheinen im Standard-Karminrot, solange keine Instanz gewählt ist.</p>
     </div>
   </section>
 

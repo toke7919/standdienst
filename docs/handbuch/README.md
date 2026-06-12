@@ -1,12 +1,13 @@
 # Standdienst · Handbuch
 
 Vollständiges Benutzerhandbuch für alle Rollen – als eine in sich geschlossene HTML-Datei
-im Farb- und Schriftlayout der Anwendung (Papier & Karmin, Hanken Grotesk).
+im Farb- und Schriftlayout der Anwendung (Papier & Karmin, Hanken Grotesk), mit echten
+Screenshots.
 
 ## Inhalt
 
 - **`handbuch.html`** – das komplette Handbuch. Einfach im Browser öffnen.
-- **`screenshots/`** – Ablageort für die echten Bildschirmfotos.
+- **`screenshots/`** – die eingebetteten Bildschirmfotos (`01.png` … `18.png`, plus `07b.png` und `15b.png`).
 
 ## Aufbau
 
@@ -18,23 +19,21 @@ Das Handbuch ist nach Nutzergruppen gegliedert:
 4. **Plattform-Admins** – Setup, Instanzen & Organisatoren, Mail, Backups, Updates
 5. **Shell-Admins** – `install.sh`, `update.sh`, `uninstall.sh`, `.env`-Variablen
 
-Dazu zwei Anhänge: die **Screenshot-Regie** (Klappenliste) und ein **Glossar mit FAQ**.
+Dazu zwei Anhänge: das **Abbildungsverzeichnis** und ein **Glossar mit FAQ**.
 
-## Screenshots ergänzen
+## Screenshots
 
-Das Handbuch enthält 19 gestaltete Platzhalter mit jeweils einer **Regie-Anweisung**
-(welche Rolle, welche Seite, welcher Zustand). So gehst du vor:
+Die Bilder stammen aus einer Demo-Instanz „Stadtfest Musterstadt“ (grünes Branding); die
+Plattform-Ansichten erscheinen im Standard-Karminrot. Einzige Ausnahme ist die
+Terminal-Ansicht (Nr. 19) im Technik-Kapitel – sie ist als gestaltete Vorschau angelegt,
+weil sich ein echter Server-Installationslauf nicht sinnvoll abbilden lässt.
 
-1. Ein aufgeräumtes Demo-System mit Beispieldaten vorbereiten
-   (Demo-Instanz mit Logo & Farbe, ein paar Termine/Stände/Schichten, einige Helfer).
-2. Die Screenshots laut Regie aufnehmen (Browser ~1280 px Breite) und unter
-   `screenshots/01.png`, `02.png`, … ablegen.
-3. Im `handbuch.html` den jeweiligen Platzhalter ersetzen: den Block
-   `<div class="stage">…</div>` durch
-   `<img src="screenshots/03.png" alt="Schichtenübersicht" style="width:100%;display:block" />`.
+### Bilder neu erzeugen
 
-Die `<figcaption>` mit der Regie kann danach entfernt oder durch eine echte Bildunterschrift
-ersetzt werden.
+Falls sich die Oberfläche ändert, lassen sich die Screenshots reproduzieren: ein Backend
+mit Demo-Daten starten (SQLite genügt), pro Rolle einloggen und die Seiten bei ~1280 px
+Breite aufnehmen, dann als `screenshots/NN.png` ablegen. Die Einbettung im `handbuch.html`
+erfolgt über `<img class="real" src="screenshots/NN.png" …>`.
 
 ## Als PDF weitergeben
 
