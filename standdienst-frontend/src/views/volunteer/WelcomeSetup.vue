@@ -61,7 +61,7 @@
                   class="input pr-10"
                   required
                   autocomplete="new-password"
-                  placeholder="Mindestens 6 Zeichen"
+                  placeholder="Mindestens 8 Zeichen"
                 />
                 <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80" @click="showPw = !showPw">
                   <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
@@ -114,7 +114,7 @@ function calcPwStrength(pw) {
   const hasNum = /\d/.test(pw)
   const hasSpecial = /[^A-Za-z0-9]/.test(pw)
   const bonus = (hasMixed ? 1 : 0) + (hasNum ? 1 : 0) + (hasSpecial ? 1 : 0)
-  if (len < 6) return { level: 1, barColor: 'bg-red-400', textColor: 'text-red-500', label: 'Zu kurz (mind. 6 Zeichen)' }
+  if (len < 8) return { level: 1, barColor: 'bg-red-400', textColor: 'text-red-500', label: 'Zu kurz (mind. 8 Zeichen)' }
   if (len < 8 || bonus === 0) return { level: 2, barColor: 'bg-amber-400', textColor: 'text-amber-600', label: 'Schwach' }
   if (len < 12 || bonus < 2) return { level: 3, barColor: 'bg-yellow-400', textColor: 'text-yellow-600', label: 'Mittel' }
   return { level: 4, barColor: 'bg-green-500', textColor: 'text-green-600', label: 'Stark' }
