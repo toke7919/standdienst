@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: standdienst
       POSTGRES_USER: standdienst
@@ -15,12 +16,14 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     volumes:
       - redisdata:/data
 
   api:
     build:
       context: ./standdienst-api
+    restart: unless-stopped
     environment:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY muss gesetzt sein}
       DATABASE_URL: postgresql://standdienst:${POSTGRES_PASSWORD:-standdienst}@db:5432/standdienst
@@ -63,6 +66,7 @@ services:
   frontend:
     build:
       context: ./standdienst-frontend
+    restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-80}:80"
     depends_on:

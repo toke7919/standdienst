@@ -26,3 +26,5 @@ standdienst-api/logs/
 
 # Superpowers-Planungsdateien (interne KI-Artefakte)
 docs/superpowers/plans/
+.superpowers/
+.worktrees/
