@@ -57,7 +57,7 @@
         <div>
           <label class="label">GitHub-Repository</label>
           <input v-model="form.github_repo" class="input font-mono text-sm"
-                 placeholder="owner/repo  z.B. toke7919/standdienst_v2" />
+                 placeholder="owner/repo  z.B. toke7919/standdienst" />
           <p class="text-xs text-muted mt-1">
             Wird für den Update-Check benötigt. Format: <code class="bg-bg-brand px-1 rounded">owner/repo</code>
           </p>

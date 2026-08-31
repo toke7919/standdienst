@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vollständige Deinstallation von Standdienst v2
+# Vollständige Deinstallation von Standdienst
 # Verwendung: sudo bash uninstall.sh [Installationspfad]
 set -euo pipefail
 
@@ -39,7 +39,7 @@ INSTALL_DIR="${INSTALL_DIR%/}"
 clear
 echo ""
 echo -e "${RED}╔══════════════════════════════════════════════╗${NC}"
-echo -e "${RED}║      Standdienst v2 – Deinstallation        ║${NC}"
+echo -e "${RED}║      Standdienst – Deinstallation            ║${NC}"
 echo -e "${RED}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 echo "  Installationspfad : ${INSTALL_DIR}"
@@ -187,7 +187,7 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║      Deinstallation abgeschlossen.           ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
-echo "  Standdienst v2 wurde entfernt."
+echo "  Standdienst wurde entfernt."
 echo ""
 echo "  Nicht automatisch bereinigt (manuell prüfen):"
 echo "  • Redis-Konfiguration: /etc/redis/redis.conf"

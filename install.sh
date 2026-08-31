@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Technische Installation von Standdienst v2 auf Debian/Ubuntu
+# Technische Installation von Standdienst auf Debian/Ubuntu
 # Die Erstkonfiguration erfolgt anschließend über das Web-Setup-Interface.
 # Verwendung: sudo bash install.sh [Installationspfad]
 set -euo pipefail
@@ -33,7 +33,7 @@ require_root
 clear
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║      Standdienst v2 – Installation          ║${NC}"
+echo -e "${GREEN}║      Standdienst – Installation              ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 echo "  Technische Installation. Die Erstkonfiguration"
@@ -207,7 +207,7 @@ if [[ "$GITHUB_REMOTE" =~ github\.com[:/]([^/]+/[^/]+) ]]; then
 fi
 
 cat > "$INSTALL_DIR/.env" <<EOF
-# Standdienst v2 – technische Konfiguration
+# Standdienst – technische Konfiguration
 # Ersteinrichtung (Admin, Mail, URL) erfolgt über das Web-Setup-Interface.
 # Generiert am $(date '+%Y-%m-%d %H:%M:%S')
 
@@ -248,7 +248,7 @@ section "6/6  Dienste einrichten"
 # systemd-Service
 cat > /etc/systemd/system/standdienst.service <<EOF
 [Unit]
-Description=Standdienst v2 (Flask/Gunicorn)
+Description=Standdienst (Flask/Gunicorn)
 After=network.target postgresql.service redis-server.service
 
 [Service]

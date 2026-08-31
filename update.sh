@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Update-Skript für Standdienst v2
+# Update-Skript für Standdienst
 # Holt das neueste GitHub-Release, erstellt ein Backup, baut das Frontend und startet den Dienst neu.
 # Verwendung: sudo bash update.sh [--check] [--yes] [Installationspfad]
 #   --check   Nur prüfen, ob ein Update verfügbar ist – nichts verändern
@@ -120,7 +120,7 @@ _github_get() {
 _latest_release() {
     if [ -z "${GITHUB_REPO:-}" ]; then
         die "GITHUB_REPO ist nicht in $INSTALL_DIR/.env gesetzt.
-  Bitte eintragen: echo 'GITHUB_REPO=toke7919/standdienst_v2' >> $INSTALL_DIR/.env"
+  Bitte eintragen: echo 'GITHUB_REPO=toke7919/standdienst' >> $INSTALL_DIR/.env"
     fi
     local json
     json="$(_github_get "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" 2>&1)" \
@@ -136,7 +136,7 @@ _latest_release() {
 clear
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║      Standdienst v2 – Update                ║${NC}"
+echo -e "${GREEN}║      Standdienst – Update                    ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 
