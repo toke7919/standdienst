@@ -237,18 +237,21 @@ info "Images gebaut"
 # ---------------------------------------------------------------------------
 section "6/6  Container starten"
 docker compose up -d
-sleep 3
 
-if docker compose ps --status running --services | grep -q '^api$'; then
-    info "api-Container läuft"
-else
-    die "api-Container konnte nicht gestartet werden – bitte 'docker compose logs api' prüfen"
-fi
+info "Warte auf Bereitschaft (bis zu 30s)..."
+READY=false
+for i in $(seq 1 30); do
+    if curl -fsS -o /dev/null "http://localhost:${FRONTEND_PORT}/api/setup/status" 2>/dev/null; then
+        READY=true
+        break
+    fi
+    sleep 1
+done
 
-if docker compose ps --status running --services | grep -q '^frontend$'; then
-    info "frontend-Container läuft"
+if [ "$READY" = true ]; then
+    info "Anwendung ist erreichbar (http://localhost:${FRONTEND_PORT}/api/setup/status)"
 else
-    die "frontend-Container konnte nicht gestartet werden – bitte 'docker compose logs frontend' prüfen"
+    die "Anwendung antwortet nach 30s nicht – bitte 'docker compose logs api' und 'docker compose logs frontend' prüfen"
 fi
 
 # ---------------------------------------------------------------------------

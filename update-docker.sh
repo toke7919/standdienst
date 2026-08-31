@@ -226,12 +226,21 @@ info "Quellcode aktualisiert (.env und docker-compose.override.yml unangetastet)
 section "Container neu bauen und starten"
 docker compose build
 docker compose up -d
-sleep 3
 
-if docker compose ps --status running --services | grep -q '^api$'; then
-    info "api-Container läuft"
+info "Warte auf Bereitschaft (bis zu 30s)..."
+READY=false
+for i in $(seq 1 30); do
+    if curl -fsS -o /dev/null "http://localhost:${FRONTEND_PORT}/api/setup/status" 2>/dev/null; then
+        READY=true
+        break
+    fi
+    sleep 1
+done
+
+if [ "$READY" = true ]; then
+    info "Anwendung ist erreichbar (http://localhost:${FRONTEND_PORT}/api/setup/status)"
 else
-    die "api-Container konnte nicht gestartet werden – bitte 'docker compose logs api -n 50' prüfen"
+    die "Anwendung antwortet nach 30s nicht – bitte 'docker compose logs api -n 50' und 'docker compose logs frontend -n 50' prüfen"
 fi
 
 # ---------------------------------------------------------------------------
