@@ -155,4 +155,4 @@ Die SPA wird als statische Dateien aus `standdienst-api/static/dist/` serviert. 
 
 ## Lizenz
 
-Privates Projekt – alle Rechte vorbehalten.
+[GNU Affero General Public License v3.0](LICENSE) – Quellcode und Weiterentwicklung sind unter den Bedingungen der AGPLv3 erlaubt, einschließlich Netzwerknutzung (SaaS): Wer eine modifizierte Version über ein Netzwerk anbietet, muss den Quellcode der Änderungen offenlegen.
