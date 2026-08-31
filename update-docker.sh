@@ -42,6 +42,10 @@ INSTALL_DIR="${INSTALL_DIR%/}"
 [ -f "$INSTALL_DIR/docker-compose.yml" ] || die "docker-compose.yml nicht gefunden: $INSTALL_DIR/docker-compose.yml"
 [ -f "$INSTALL_DIR/standdienst-api/version.py" ] || die "version.py nicht gefunden – kein gültiges Standdienst-Docker-Verzeichnis"
 
+# Absoluten Pfad auflösen, damit spätere Aufrufe (z.B. nach dem cd weiter unten)
+# nicht versehentlich relativ zum neuen Arbeitsverzeichnis interpretiert werden.
+INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd)"
+
 # shellcheck source=/dev/null
 set -o allexport; source "$INSTALL_DIR/.env"; set +o allexport
 GITHUB_REPO="${GITHUB_REPO:-toke7919/standdienst}"
@@ -188,7 +192,7 @@ PYEOF
 )"; then
     info "Backup erstellt: $BACKUP_OUT"
 else
-    warn "Backup fehlgeschlagen (kein Passwort gesetzt?) – Update wird trotzdem fortgesetzt"
+    warn "Backup fehlgeschlagen (kein Passwort gesetzt?) – Update wird trotzdem fortgesetzt: $BACKUP_OUT"
 fi
 
 # ---------------------------------------------------------------------------

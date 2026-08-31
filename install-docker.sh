@@ -173,6 +173,8 @@ fi
 rsync -a --delete "$EXTRACTED/standdienst-api/" "$INSTALL_DIR/standdienst-api/"
 rsync -a --delete "$EXTRACTED/standdienst-frontend/" "$INSTALL_DIR/standdienst-frontend/"
 cp "$EXTRACTED/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
+cp "$EXTRACTED/update-docker.sh" "$INSTALL_DIR/update-docker.sh"
+chmod +x "$INSTALL_DIR/update-docker.sh"
 info "Quellcode nach $INSTALL_DIR kopiert"
 
 # ---------------------------------------------------------------------------

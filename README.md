@@ -88,6 +88,7 @@ Das Update-Skript erstellt automatisch ein Backup vor dem Update.
 
 Bei Docker (mit `install-docker.sh` installiert):
 ```bash
+cd /opt/standdienst-docker
 sudo bash update-docker.sh          # interaktiv
 sudo bash update-docker.sh --yes    # ohne Rückfragen
 sudo bash update-docker.sh --check  # nur prüfen, nicht anwenden
