@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Was dieses Projekt ist
 
-**Standdienst v2** ist eine deutschsprachige REST-API + Vue-3-SPA zur Verwaltung von Freiwilligendiensten (Schichten) und Essensspenden bei Veranstaltungen.
+**Standdienst** ist eine deutschsprachige REST-API + Vue-3-SPA zur Verwaltung von Freiwilligendiensten (Schichten) und Essensspenden bei Veranstaltungen.
 
 **Multi-Instanz-Betrieb:** Eine Plattform hostet beliebig viele organisatorische Einheiten (Vereine, Events) als isolierte Instanzen mit eigenem Slug, Branding, Datenschutzerklärung und Daten.
 

@@ -1,4 +1,4 @@
-# Standdienst v2
+# Standdienst
 
 Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden bei Veranstaltungen. Mehrere Organisationen (Instanzen) laufen auf einer gemeinsamen Installation mit eigenem Branding, Datenschutzerklärung und Daten.
 
@@ -25,8 +25,8 @@ Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden 
 ### Option A: Docker (empfohlen)
 
 ```bash
-git clone https://github.com/toke7919/standdienst_v2.git
-cd standdienst_v2
+git clone https://github.com/toke7919/standdienst.git
+cd standdienst
 cp .env.example .env
 # SECRET_KEY generieren und in .env eintragen:
 python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32))" >> .env
@@ -47,8 +47,8 @@ SESSION_COOKIE_SECURE=true
 ### Option B: Bare-Metal (Debian/Ubuntu)
 
 ```bash
-git clone https://github.com/toke7919/standdienst_v2.git
-cd standdienst_v2
+git clone https://github.com/toke7919/standdienst.git
+cd standdienst
 sudo bash install.sh
 ```
 
@@ -155,4 +155,4 @@ Die SPA wird als statische Dateien aus `standdienst-api/static/dist/` serviert. 
 
 ## Lizenz
 
-Privates Projekt – alle Rechte vorbehalten.
+[GNU Affero General Public License v3.0](LICENSE) – Quellcode und Weiterentwicklung sind unter den Bedingungen der AGPLv3 erlaubt, einschließlich Netzwerknutzung (SaaS): Wer eine modifizierte Version über ein Netzwerk anbietet, muss den Quellcode der Änderungen offenlegen.

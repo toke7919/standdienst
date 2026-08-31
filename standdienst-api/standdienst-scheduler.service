@@ -1,5 +1,5 @@
 [Unit]
-Description=Standdienst v2 – Scheduler (APScheduler)
+Description=Standdienst – Scheduler (APScheduler)
 After=network.target postgresql.service redis-server.service standdienst.service
 Requires=standdienst.service
 
