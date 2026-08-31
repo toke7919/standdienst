@@ -59,10 +59,11 @@ print(ns.get('VERSION','unbekannt'))
 
 _is_newer() {
     python3 -c "
-a=tuple(int(x) for x in '$1'.lstrip('v').split('-')[0].split('.'))
-b=tuple(int(x) for x in '$2'.lstrip('v').split('-')[0].split('.'))
+import sys
+a=tuple(int(x) for x in sys.argv[1].lstrip('v').split('-')[0].split('.'))
+b=tuple(int(x) for x in sys.argv[2].lstrip('v').split('-')[0].split('.'))
 exit(0 if a > b else 1)
-" 2>/dev/null
+" "$1" "$2" 2>/dev/null
 }
 
 # ---------------------------------------------------------------------------
@@ -173,12 +174,13 @@ cd "$INSTALL_DIR"
 # ---------------------------------------------------------------------------
 section "Backup erstellen"
 BACKUP_LABEL="vor_update_${LATEST//\//_}"
-if BACKUP_OUT="$(docker compose exec -T api python3 - <<PYEOF 2>&1
+if BACKUP_OUT="$(docker compose exec -T -e BACKUP_LABEL="$BACKUP_LABEL" api python3 - <<PYEOF 2>&1
+import os
 from wsgi import app
 with app.app_context():
     from app.api.admin.backup import run_backup
     try:
-        print(run_backup(label='${BACKUP_LABEL}'))
+        print(run_backup(label=os.environ['BACKUP_LABEL']))
     except Exception as e:
         print(f'FEHLER: {e}')
         raise SystemExit(1)
