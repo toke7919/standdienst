@@ -22,7 +22,20 @@ Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden 
 
 ## Installation
 
-### Option A: Docker (empfohlen)
+### Option A: Docker – vollautomatisch (empfohlen)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/toke7919/standdienst/main/install-docker.sh -o install-docker.sh
+sudo bash install-docker.sh
+```
+
+Installiert Docker (falls nötig), fragt Installationspfad, Web-Port und öffentliche URL ab, generiert `SECRET_KEY`/`POSTGRES_PASSWORD` automatisch und startet den Stack. Lokale Anpassungen an der `docker-compose.yml` gehören in die zusätzlich angelegte `docker-compose.override.yml` im Installationsverzeichnis (Standard: `/opt/standdienst-docker`) – die wird von Updates nie überschrieben.
+
+Danach im Browser `<öffentliche URL>/setup` aufrufen und die Erstkonfiguration abschließen.
+
+**Voraussetzungen:** Debian 12 / Ubuntu 22.04+, Root-Zugriff
+
+### Option B: Docker – manuell
 
 ```bash
 git clone https://github.com/toke7919/standdienst.git
@@ -44,7 +57,7 @@ FRONTEND_URL=https://deine-domain.de
 SESSION_COOKIE_SECURE=true
 ```
 
-### Option B: Bare-Metal (Debian/Ubuntu)
+### Option C: Bare-Metal (Debian/Ubuntu)
 
 ```bash
 git clone https://github.com/toke7919/standdienst.git
@@ -73,7 +86,14 @@ sudo bash update.sh --check  # nur prüfen, nicht anwenden
 
 Das Update-Skript erstellt automatisch ein Backup vor dem Update.
 
-Bei Docker:
+Bei Docker (mit `install-docker.sh` installiert):
+```bash
+sudo bash update-docker.sh          # interaktiv
+sudo bash update-docker.sh --yes    # ohne Rückfragen
+sudo bash update-docker.sh --check  # nur prüfen, nicht anwenden
+```
+
+Bei Docker (manuell installiert):
 ```bash
 git pull
 docker compose up --build -d
@@ -98,6 +118,8 @@ Backups werden im Admin-Bereich unter **Einstellungen → Backup** erstellt, her
 | `FRONTEND_URL` | – | Öffentliche URL für E-Mail-Links (Standard: `http://localhost`) |
 | `FRONTEND_PORT` | – | Port des Frontend-Containers (Standard: `80`) |
 | `SESSION_COOKIE_SECURE` | – | `true` bei HTTPS (Standard: `false`) |
+| `GITHUB_REPO` | – | Nur von `install-docker.sh` gesetzt, für `update-docker.sh` (Standard: `toke7919/standdienst`) |
+| `COMPOSE_FILE` | – | Nur von `install-docker.sh` gesetzt: `docker-compose.yml:docker-compose.override.yml` |
 
 ### Bare-Metal (`standdienst-api/.env`)
 
