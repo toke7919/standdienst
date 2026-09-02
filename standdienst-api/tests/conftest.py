@@ -14,7 +14,7 @@ from sqlalchemy.engine import Engine
 from app import create_app
 from app.config import TestingConfig
 from app.extensions import db as _db
-from app.models import Admin, Instance, SiteSettings, Volunteer
+from app.models import Admin, Instance, Organizer, SiteSettings, Volunteer, organizer_instances
 
 
 @event.listens_for(Engine, 'connect')
@@ -76,6 +76,18 @@ def instance():
 
 
 @pytest.fixture
+def other_instance():
+    """Zweite Instanz für Cross-Instanz-Zugriffstests (Fremdzugriff darf nicht durchkommen)."""
+    inst = Instance(slug='andere-instanz', name='Andere Instanz')
+    _db.session.add(inst)
+    _db.session.flush()
+    settings = SiteSettings(instance_id=inst.id)
+    _db.session.add(settings)
+    _db.session.commit()
+    return inst
+
+
+@pytest.fixture
 def volunteer(instance):
     v = Volunteer(
         instance_id=instance.id,
@@ -86,6 +98,40 @@ def volunteer(instance):
     _db.session.add(v)
     _db.session.commit()
     return v
+
+
+@pytest.fixture
+def organizer_user():
+    org = Organizer(name='Org Tester', email='org@test.de', is_instance_admin=False)
+    org.set_password('TestPass1!')
+    _db.session.add(org)
+    _db.session.commit()
+    return org
+
+
+@pytest.fixture
+def instance_admin_user():
+    org = Organizer(name='InstAdmin Tester', email='instadmin@test.de', is_instance_admin=True)
+    org.set_password('TestPass1!')
+    _db.session.add(org)
+    _db.session.commit()
+    return org
+
+
+def assign_organizer(organizer, instance, is_instance_admin=None):
+    """Weist einen Organizer/Instanz-Admin einer Instanz zu (organizer_instances-Zuordnungstabelle)."""
+    admin_flag = organizer.is_instance_admin if is_instance_admin is None else is_instance_admin
+    _db.session.execute(organizer_instances.insert().values(
+        organizer_id=organizer.id, instance_id=instance.id,
+        is_primary=False, is_instance_admin=admin_flag,
+    ))
+    _db.session.commit()
+
+
+def login(client, email, password='TestPass1!'):
+    rv = client.post('/api/auth/login', json={'email': email, 'password': password})
+    assert rv.status_code == 200
+    return rv
 
 
 @pytest.fixture
