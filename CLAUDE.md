@@ -188,11 +188,10 @@ Nur erreichbar solange `setup_complete = False` (außer `/status`).
 
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|
-| GET | `/status` | `{setup_complete, has_admin}` |
+| GET | `/status` | `{setup_complete, has_admin, maintenance_mode}` |
 | POST | `/admin` | Ersten Admin anlegen |
-| POST | `/config` | Basis-URL, Copyright, Zeitzone |
+| POST | `/config` | Basis-URL, GitHub-PAT, Copyright, Zeitzone |
 | POST | `/mail` | SMTP-Konfiguration |
-| POST | `/legal` | Impressum + Datenschutz der Plattform |
 | POST | `/finish` | `setup_complete=True` setzen |
 
 ### auth_bp (`/api/auth`)
