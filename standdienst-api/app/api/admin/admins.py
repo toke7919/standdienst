@@ -33,8 +33,8 @@ def create_admin():
 
     if db.session.scalars(select(Admin).filter_by(email=data['email'].lower())).first():
         return error('E-Mail-Adresse bereits vergeben', 409)
-    if not validate_password_strength(data['password']):
-        return error('Passwort zu schwach (mind. 8 Zeichen, 1 Ziffer, 1 Sonderzeichen)', 400)
+    if not validate_password_strength(data['password'], role='admin'):
+        return error('Passwort zu schwach (mind. 12 Zeichen, Groß-/Kleinbuchstabe, Ziffer, Sonderzeichen)', 400)
 
     first_name = data.get('first_name', '').strip()
     last_name = data.get('last_name', '').strip()
@@ -104,8 +104,8 @@ def update_admin(admin_id):
                 return error('Letzter primärer Admin kann nicht abgewählt werden', 400)
             admin.is_primary = False
     if 'password' in data and data['password']:
-        if not validate_password_strength(data['password']):
-            return error('Passwort zu schwach', 400)
+        if not validate_password_strength(data['password'], role='admin'):
+            return error('Passwort zu schwach (mind. 12 Zeichen, Groß-/Kleinbuchstabe, Ziffer, Sonderzeichen)', 400)
         admin.set_password(data['password'])
 
     _log(f'Admin geändert: {admin.email}', g.current_user)
