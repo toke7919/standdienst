@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from unittest.mock import patch
 import pytest
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-32-bytes-minimum!!')
@@ -53,6 +54,19 @@ def _clean_state(client):
     # Settings-Cache leeren, damit gecachte Werte keine Tests beeinflussen
     from app.utils.settings_cache import _cache
     _cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def _no_real_git_repo_fallback():
+    """Sicherheitsnetz: app.api.admin.update._repo_slug_and_pat() fällt ohne
+    konfiguriertes GlobalSettings.github_repo auf den ECHTEN `git remote` dieses
+    Checkouts zurück (toke7919/standdienst). Ein Test, der das vergisst zu mocken,
+    würde sonst reale GitHub-Calls, einen echten Tarball-Download/-Copytree, echtes
+    pip install/npm run build und echte systemctl-Restarts auslösen – ist bereits
+    passiert und hat die Dev-Maschine per Swap-Erschöpfung lahmgelegt. Tests, die
+    den echten Fallback bewusst prüfen wollen, patchen ihn lokal erneut."""
+    with patch('app.api.admin.update._git_repo_slug', return_value=None):
+        yield
 
 
 @pytest.fixture
