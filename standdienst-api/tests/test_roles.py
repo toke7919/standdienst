@@ -1,44 +1,6 @@
 """Tests für das Drei-Rollen-System: Global-Admin, Instanz-Admin, Organisator."""
-import pytest
 from app.extensions import db as _db
-from app.models import Admin, Organizer, Instance, SiteSettings, organizer_instances
-
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-@pytest.fixture
-def organizer_user():
-    org = Organizer(name='Org Tester', email='org@test.de', is_instance_admin=False)
-    org.set_password('TestPass1!')
-    _db.session.add(org)
-    _db.session.commit()
-    return org
-
-
-@pytest.fixture
-def instance_admin_user():
-    org = Organizer(name='InstAdmin Tester', email='instadmin@test.de', is_instance_admin=True)
-    org.set_password('TestPass1!')
-    _db.session.add(org)
-    _db.session.commit()
-    return org
-
-
-def _assign(organizer, instance, is_instance_admin=None):
-    admin_flag = organizer.is_instance_admin if is_instance_admin is None else is_instance_admin
-    _db.session.execute(organizer_instances.insert().values(
-        organizer_id=organizer.id, instance_id=instance.id,
-        is_primary=False, is_instance_admin=admin_flag,
-    ))
-    _db.session.commit()
-
-
-def _login(client, email, password='TestPass1!'):
-    rv = client.post('/api/auth/login', json={'email': email, 'password': password})
-    assert rv.status_code == 200
-    return rv
+from tests.conftest import assign_organizer as _assign, login as _login
 
 
 # ---------------------------------------------------------------------------
