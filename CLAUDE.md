@@ -29,6 +29,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Arbeitsweise
+
+**Bei Unklarheit fragen, nicht annehmen.** Wenn für eine gute Umsetzung Informationen fehlen, nachfragen — und zwar als Auswahl konkreter Optionen mit Empfehlung, nicht als offene Frage. Mehrere offene Punkte in einer Frage bündeln.
+
+Diese Datei fortlaufend pflegen: Wenn in einer Session eine Projektentscheidung fällt, eine Konvention entsteht oder eine Korrektur zu einem wiederkehrenden Muster kommt, gehört das hier hinein — knapp, an der passenden Stelle. Chronologische Etappen-Erzählung gehört nicht hierher – die steht in der Commit-Historie; diese Datei ist ein Nachschlagewerk aus Konventionen und Entscheidungen, kein Tagebuch.
+
+---
+
+## Tests
+
+**Backend:** pytest, ein Lauf über `standdienst-api/tests/`. Läuft gegen SQLite in-memory (siehe `tests/conftest.py`) – kein separater Datenbank-Container nötig, dadurch schnell und CI-tauglich.
+
+**Frontend:** Vitest mit jsdom und `@testing-library/vue`, ein Lauf über `standdienst-frontend/src/`.
+
+**Jede neue Funktion und jeder neue Screen bringt Tests mit** — das ist verbindlich, nicht optional. Konkret heißt das:
+
+| Neu dazu | Was getestet wird |
+|---|---|
+| Vue-Komponente | Die Regeln, die beim Umbau am ehesten kaputtgehen — Props-Varianten, Zustände (leer/gefüllt/Grenzfälle), Events. Vorbild: `Pagination.test.js` prüft die Seitenzahl-Kürzung (Ellipsis) je nach aktueller Seite. |
+| View/Screen | Was bei welcher Datenlage erscheint und was nicht: Leerzustand, Lade- und Fehlerzustand. |
+| API-Route (`standdienst-api/app/api/`) | Statuscode, Antwortform und **immer die Autorisierung** — greift der Instanz-/Rollen-Filter (`require_staff`/`require_instance_admin`/`require_admin`/`require_volunteer`), kommt ein Fremdzugriff (falsche Instanz, falsche Rolle) wirklich nicht durch. Vorbild: `test_admin_guards.py`, `test_security.py`, `test_roles.py`. |
+| Geteilte Backend-Logik (`app/utils/`) | Unit-Test in `standdienst-api/tests/`. |
+| Fehlerbehebung | Zuerst der Test, der den Fehler reproduziert, dann die Behebung. |
+
+**Für reine Shell-Scripts** (`install.sh`, `update.sh`, `uninstall.sh`, `install-docker.sh`, `update-docker.sh` – kein pytest/Vitest-Test möglich) gilt stattdessen realer Ausführungsnachweis als Abnahme: `bash -n` für die Syntax, plus mindestens ein echter Lauf gegen laufende Infrastruktur (z. B. ein echter Docker-Daemon), dokumentiert mit Befehl und tatsächlichem Ergebnis – nicht nur behauptet.
+
+---
+
 ## Commands
 
 ```bash
@@ -54,6 +82,8 @@ export SECRET_KEY="dev-key-32bytes-minimum-!!!!!!" DATABASE_URL="sqlite:///dev.d
 cd standdienst-frontend
 npm run dev    # Vite Dev-Server mit Proxy auf Backend
 npm run build  # Build → standdienst-api/static/dist/
+npm run test   # Vitest, einmaliger Lauf
+npm run test:watch  # Vitest im Watch-Modus
 ```
 
 ---
@@ -342,7 +372,7 @@ Implementiert in `validate_password_strength(password, role='volunteer')`.
 2. Conventional Commits auf Deutsch: `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`
 3. Tests ausführen – kein Commit ohne bestandene Tests
 4. PR erstellen und mergen
-5. **Release Pflicht** nach `feat/` und `fix/`: `version.py` aktualisieren + Git-Tag + GitHub-Release
+5. **Release Pflicht** nach `feat/` und `fix/`: `version.py` aktualisieren + Git-Tag + GitHub-Release – direkt im Anschluss an den Merge, nicht erst auf Nachfrage warten
 
 ```bash
 # standdienst-api/version.py
