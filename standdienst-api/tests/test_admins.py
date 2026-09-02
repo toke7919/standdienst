@@ -39,6 +39,18 @@ def test_create_admin_strong_password_accepted(mock_mail, client, admin_user):
     assert rv.status_code == 201
 
 
+@patch('app.api.admin.admins.send_mail')
+@patch('app.api.admin.admins.is_mail_configured', return_value=True)
+def test_create_admin_sends_invite_mail_when_configured(mock_configured, mock_send, client, admin_user):
+    c = _admin_client(client, admin_user)
+    rv = c.post('/api/admin/admins', json={
+        'first_name': 'Neu', 'email': 'neuadmin2@test.de', 'password': 'SicheresPass1!',
+    })
+    assert rv.status_code == 201
+    mock_send.assert_called_once()
+    assert mock_send.call_args.args[0] == 'neuadmin2@test.de'
+
+
 def test_update_admin_weak_password_rejected(client, admin_user):
     other = Admin(email='andereradmin@test.de', name='Anderer', first_name='Anderer')
     other.set_password('SicheresPass1!')
