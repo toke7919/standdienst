@@ -58,7 +58,7 @@ def create_organizer():
         is_instance_admin=bool(instance_admin_ids),
     )
     if password:
-        if not validate_password_strength(password):
+        if not validate_password_strength(password, role='organizer'):
             return error('Passwort zu schwach', 400)
         organizer.set_password(password)
 
@@ -134,7 +134,7 @@ def update_organizer(organizer_id):
         organizer.last_name = data.get('last_name', organizer.last_name or '').strip()
         organizer.name = f'{organizer.first_name} {organizer.last_name}'.strip() or organizer.first_name
     if 'password' in data and data['password']:
-        if not validate_password_strength(data['password']):
+        if not validate_password_strength(data['password'], role='organizer'):
             return error('Passwort zu schwach', 400)
         organizer.set_password(data['password'])
     if 'instance_ids' in data:
