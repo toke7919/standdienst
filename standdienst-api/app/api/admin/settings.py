@@ -405,7 +405,10 @@ def send_typed_test_mail():
         'export_pdf': lambda: build_export_email(
             instance_name=inst_name,
             export_type='Dienstplan',
-            filename=f'dienste_beispiel_{datetime.now().strftime("%Y-%m-%d")}.pdf',
+            sender_name=DUMMY['name'],
+            date_summaries=[DUMMY['date']],
+            base_url=base_url,
+            instance_slug=eff_slug,
             logo_url=logo_url,
             primary_color=primary_color,
             copyright_text=copyright_text,
