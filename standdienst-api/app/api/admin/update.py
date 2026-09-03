@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from flask import current_app
 
+from version import GITHUB_REPO
 from . import admin_bp
 from ...utils.auth import require_admin
 from ...utils.responses import ok, error
@@ -32,22 +33,6 @@ def _installed_version() -> str:
 
 def _version_tag(version: str) -> str:
     return version if version.startswith('v') else f'v{version}'
-
-
-def _git_repo_slug() -> str | None:
-    """Nur in Dev-Umgebungen mit .git-Verzeichnis verfügbar."""
-    result = subprocess.run(
-        ['git', 'remote', 'get-url', 'origin'],
-        capture_output=True, text=True, timeout=5, cwd=_api_root(),
-    )
-    if result.returncode != 0:
-        return None
-    url = result.stdout.strip()
-    if 'github.com' not in url:
-        return None
-    path = url.split('github.com')[-1].lstrip('/:').removesuffix('.git')
-    parts = path.split('/')
-    return f'{parts[0]}/{parts[1]}' if len(parts) >= 2 else None
 
 
 def _resolve_github_api_ip() -> str | None:
@@ -73,13 +58,13 @@ def _resolve_github_api_ip() -> str | None:
     return None
 
 
-def _github_request(url: str, pat: str | None) -> dict | None:
+def _github_request(url: str) -> dict | None:
+    # Öffentliches Repo – keine Authentifizierung. Das anonyme GitHub-API-Limit
+    # (60 Anfragen/Stunde) genügt für den Update-Check.
     headers = {
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
     }
-    if pat:
-        headers['Authorization'] = f'Bearer {pat}'
 
     def _fetch(target_url: str) -> dict | None:
         req = urllib.request.Request(target_url, headers=headers)
@@ -141,15 +126,15 @@ def _fetch_via_ip(ip: str, url: str, headers: dict) -> dict | None:
             pass
 
 
-def _github_latest_release(repo_slug: str, pat: str | None) -> dict | None:
+def _github_latest_release() -> dict | None:
     return _github_request(
-        f'https://api.github.com/repos/{repo_slug}/releases/latest', pat
+        f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest'
     )
 
 
-def _github_release_notes(repo_slug: str, tag: str, pat: str | None) -> str:
+def _github_release_notes(tag: str) -> str:
     data = _github_request(
-        f'https://api.github.com/repos/{repo_slug}/releases/tags/{tag}', pat
+        f'https://api.github.com/repos/{GITHUB_REPO}/releases/tags/{tag}'
     )
     return data.get('body', '') if data else ''
 
@@ -164,22 +149,11 @@ def _is_newer(latest: str, current: str) -> bool:
     return _parts(latest) > _parts(current)
 
 
-def _download(url: str, dest: str, pat: str | None):
-    req = urllib.request.Request(
-        url, headers={'Authorization': f'Bearer {pat}'} if pat else {}
-    )
+def _download(url: str, dest: str):
+    req = urllib.request.Request(url)
     with urllib.request.urlopen(req, timeout=60) as resp:
         with open(dest, 'wb') as f:
             shutil.copyfileobj(resp, f)
-
-
-def _repo_slug_and_pat():
-    from ...models import GlobalSettings
-    gs = GlobalSettings.query.first()
-    pat = gs.github_pat if gs else None
-    # Priorität: DB-Einstellung → Env-Variable (von install.sh gesetzt) → git-Erkennung (Dev)
-    slug = (gs.github_repo if gs else None) or os.environ.get('GITHUB_REPO') or _git_repo_slug()
-    return slug, pat
 
 
 @admin_bp.route('/update/check', methods=['GET'])
@@ -187,18 +161,9 @@ def _repo_slug_and_pat():
 def check_update():
     try:
         current_version = _installed_version()
-        repo_slug, pat = _repo_slug_and_pat()
 
-        if not repo_slug:
-            return ok({
-                'current_version': current_version,
-                'current_release_notes': '',
-                'update_available': False,
-                'error': 'GitHub-Repository nicht konfiguriert (Einstellungen → Global)',
-            })
-
-        current_notes = _github_release_notes(repo_slug, _version_tag(current_version), pat)
-        latest = _github_latest_release(repo_slug, pat)
+        current_notes = _github_release_notes(_version_tag(current_version))
+        latest = _github_latest_release()
         if latest is None:
             return ok({
                 'current_version': current_version,
@@ -226,11 +191,7 @@ def check_update():
 def apply_update():
     log = []
     try:
-        repo_slug, pat = _repo_slug_and_pat()
-        if not repo_slug:
-            return error('GitHub-Repository nicht konfiguriert (Einstellungen → Global)', 400)
-
-        latest = _github_latest_release(repo_slug, pat)
+        latest = _github_latest_release()
         if not latest:
             return error('GitHub-Release-Abfrage fehlgeschlagen', 502)
         tarball_url = latest.get('tarball_url')
@@ -240,7 +201,7 @@ def apply_update():
         _set_maintenance_mode(True, log)
         target_version = latest.get('tag_name', '').lstrip('v')
         _auto_backup(log, target_version)
-        _apply_tarball(tarball_url, pat, log)
+        _apply_tarball(tarball_url, log)
         _set_maintenance_mode(False, log)
 
         systemctl = shutil.which('systemctl') or 'systemctl'
@@ -284,12 +245,12 @@ def _auto_backup(log: list, target_version: str | None = None):
         log.append({'step': 'backup', 'ok': False, 'output': f'Backup fehlgeschlagen (Update wird fortgesetzt): {e}'})
 
 
-def _apply_tarball(tarball_url: str, pat: str | None, log: list):
+def _apply_tarball(tarball_url: str, log: list):
     api_root = _api_root()
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tar_path = os.path.join(tmpdir, 'release.tar.gz')
-        _download(tarball_url, tar_path, pat)
+        _download(tarball_url, tar_path)
         log.append({'step': 'download', 'ok': True, 'output': 'Release heruntergeladen'})
 
         with tarfile.open(tar_path) as tf:

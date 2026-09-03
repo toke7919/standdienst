@@ -53,24 +53,6 @@
       </div>
 
       <div class="card space-y-4">
-        <h2 class="text-base font-semibold text-ink">GitHub / Updates</h2>
-        <div>
-          <label class="label">GitHub-Repository</label>
-          <input v-model="form.github_repo" class="input font-mono text-sm"
-                 placeholder="owner/repo  z.B. toke7919/standdienst" />
-          <p class="text-xs text-muted mt-1">
-            Wird für den Update-Check benötigt. Format: <code class="bg-bg-brand px-1 rounded">owner/repo</code>
-          </p>
-        </div>
-        <div>
-          <label class="label">GitHub Personal Access Token (PAT)</label>
-          <input v-model="form.github_pat" type="password" class="input font-mono text-sm"
-                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
-          <p class="text-xs text-muted mt-1">Optional – erhöht das API-Limit für private Repos.</p>
-        </div>
-      </div>
-
-      <div class="card space-y-4">
         <h2 class="text-base font-semibold text-ink">Kontaktdaten Plattformbetreiber</h2>
         <p class="text-xs text-muted -mt-2" v-pre>
           Diese Daten werden als Platzhalter <code class="bg-bg-brand px-1 rounded">{{organisation}}</code> usw. in die Vorlagen eingesetzt, wenn Impressum/Datenschutz ohne Instanz-Kontext (/impressum) aufgerufen wird.

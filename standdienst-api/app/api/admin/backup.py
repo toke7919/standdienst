@@ -200,7 +200,6 @@ def _extract_sensitive_fields() -> dict:
     gs = db.session.scalars(select(GlobalSettings)).first()
     if gs:
         result['global_settings'] = {
-            'github_pat': gs.github_pat,
             'backup_password': gs.backup_password,
         }
     for ms in db.session.scalars(select(MailSettings)).all():
@@ -214,7 +213,6 @@ def _apply_sensitive_fields(fields: dict) -> None:
     gs = db.session.scalars(select(GlobalSettings)).first()
     if gs and 'global_settings' in fields:
         gf = fields['global_settings']
-        gs.github_pat = gf.get('github_pat')
         gs.backup_password = gf.get('backup_password')
         db.session.add(gs)
     for ms_data in fields.get('mail_settings', []):

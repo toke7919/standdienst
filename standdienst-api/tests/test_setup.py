@@ -120,12 +120,11 @@ def test_create_admin_allowed_for_localhost_even_with_ip_restriction(client):
 def test_save_config_creates_global_settings(client):
     assert _db.session.query(GlobalSettings).first() is None
     rv = client.post('/api/setup/config', json={
-        'base_url': 'https://standdienst.example.test/', 'github_pat': 'ghp_x', 'timezone': 'Europe/Vienna',
+        'base_url': 'https://standdienst.example.test/', 'timezone': 'Europe/Vienna',
     })
     assert rv.status_code == 200
     gs = _db.session.query(GlobalSettings).first()
     assert gs.base_url == 'https://standdienst.example.test'  # trailing slash entfernt
-    assert gs.github_pat == 'ghp_x'
     assert gs.timezone == 'Europe/Vienna'
 
 

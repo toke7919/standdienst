@@ -17,14 +17,14 @@ from app.models import GlobalSettings
 from app.api.admin import update as update_module
 from app.api.admin.update import (
     _is_newer, _version_tag, _set_maintenance_mode, _auto_backup,
-    _run_step, _download, _rebuild_frontend, _git_repo_slug, _resolve_github_api_ip,
+    _run_step, _download, _rebuild_frontend, _resolve_github_api_ip,
     _apply_tarball,
 )
 from tests.conftest import login as _login
 
 
-def _make_global_settings(github_repo='toke7919/standdienst', github_pat=None):
-    gs = GlobalSettings(github_repo=github_repo, github_pat=github_pat)
+def _make_global_settings():
+    gs = GlobalSettings()
     _db.session.add(gs)
     _db.session.commit()
     return gs
@@ -64,21 +64,27 @@ def test_version_tag_keeps_existing_v_prefix():
 # GET /update/check
 # ---------------------------------------------------------------------------
 
-@patch('app.api.admin.update._git_repo_slug', return_value=None)
-def test_check_update_no_repo_configured(mock_slug, client, admin_user):
-    # _git_repo_slug() muss gemockt werden, sonst greift der Dev-Fallback auf
-    # den echten `git remote` dieses Repos zu und der Test testet den falschen Pfad.
+@patch('app.api.admin.update.subprocess.run')
+@patch('app.api.admin.update._github_request')
+def test_check_update_queries_hardcoded_repo(mock_request, mock_subprocess, client, admin_user):
+    # Kein GlobalSettings-Eintrag, keine Env-Variable, kein git-Remote (subprocess
+    # simuliert "kein Repo"): der Update-Check muss trotzdem funktionieren und das
+    # fest in version.py hinterlegte Repo abfragen.
+    mock_subprocess.return_value = MagicMock(returncode=128, stdout='')
+    mock_request.side_effect = [
+        {'body': ''},
+        {'tag_name': 'v99.0.0', 'body': '', 'html_url': ''},
+    ]
     _login(client, admin_user.email)
     rv = client.get('/api/admin/update/check')
     assert rv.status_code == 200
-    data = rv.get_json()['data']
-    assert data['update_available'] is False
-    assert 'nicht konfiguriert' in data['error']
+    assert rv.get_json()['data']['update_available'] is True
+    called_urls = [c.args[0] for c in mock_request.call_args_list]
+    assert called_urls and all('toke7919/standdienst' in url for url in called_urls)
 
 
 @patch('app.api.admin.update._github_request')
 def test_check_update_reports_available_update(mock_request, client, admin_user):
-    _make_global_settings()
     mock_request.side_effect = [
         {'body': 'Alte Notizen'},  # _github_release_notes(current)
         {'tag_name': 'v99.0.0', 'body': 'Neue Notizen', 'html_url': 'https://example.test/release'},
@@ -122,18 +128,8 @@ def test_check_update_handles_github_unreachable(mock_request, client, admin_use
 # POST /update/apply – Orchestrierung, alle gefährlichen Schritte gemockt
 # ---------------------------------------------------------------------------
 
-@patch('app.api.admin.update._git_repo_slug', return_value=None)
-def test_apply_update_no_repo_configured(mock_slug, client, admin_user):
-    # Ohne Mock würde der Dev-Fallback den echten `git remote` dieses Repos
-    # finden und ein ECHTES Update anwenden (Download + systemctl restart!).
-    _login(client, admin_user.email)
-    rv = client.post('/api/admin/update/apply', json={})
-    assert rv.status_code == 400
-
-
 @patch('app.api.admin.update._github_request')
 def test_apply_update_release_fetch_failed(mock_request, client, admin_user):
-    _make_global_settings()
     mock_request.return_value = None
     _login(client, admin_user.email)
     rv = client.post('/api/admin/update/apply', json={})
@@ -175,8 +171,7 @@ def test_apply_update_full_success_orchestration(
     mock_backup.assert_called_once()
     call_args = mock_apply_tarball.call_args.args
     assert call_args[0] == 'https://example.test/tarball.tar.gz'
-    assert call_args[1] is None  # kein PAT konfiguriert
-    assert isinstance(call_args[2], list)  # Log-Liste
+    assert isinstance(call_args[1], list)  # Log-Liste
     # Zwei Neustart-Schritte (Hauptdienst + Scheduler)
     assert mock_run_step.call_count == 2
 
@@ -307,7 +302,7 @@ def test_download_writes_response_body_to_dest():
     with patch('app.api.admin.update.urllib.request.urlopen', return_value=_FakeResponse()):
         with tempfile.TemporaryDirectory() as tmp:
             dest = os.path.join(tmp, 'out.tar.gz')
-            _download('https://example.test/release.tar.gz', dest, pat=None)
+            _download('https://example.test/release.tar.gz', dest)
             with open(dest, 'rb') as f:
                 assert f.read() == fake_body
 
@@ -390,7 +385,7 @@ def test_apply_tarball_extracts_and_copies_api_files(
     with tempfile.TemporaryDirectory() as prep_dir:
         fake_tar = _make_fake_release_tarball(prep_dir)
 
-        def _fake_download(url, dest, pat):
+        def _fake_download(url, dest):
             # Simuliert den Download, indem das vorbereitete Tarball an dest kopiert wird
             import shutil as _shutil
             _shutil.copy(fake_tar, dest)
@@ -398,7 +393,7 @@ def test_apply_tarball_extracts_and_copies_api_files(
         mock_download.side_effect = _fake_download
 
         log = []
-        _apply_tarball('https://example.test/tarball.tar.gz', None, log)
+        _apply_tarball('https://example.test/tarball.tar.gz', log)
 
         mock_rebuild_frontend.assert_called_once()
         mock_copytree.assert_called_once()
@@ -413,7 +408,7 @@ def test_apply_tarball_extracts_and_copies_api_files(
 
 @patch('app.api.admin.update._download')
 def test_apply_tarball_raises_when_extracted_dir_empty(mock_download):
-    def _fake_download(url, dest, pat):
+    def _fake_download(url, dest):
         # Leeres Tarball -> kein Unterverzeichnis nach dem Entpacken
         with tarfile.open(dest, 'w:gz'):
             pass
@@ -421,38 +416,10 @@ def test_apply_tarball_raises_when_extracted_dir_empty(mock_download):
     mock_download.side_effect = _fake_download
     log = []
     try:
-        _apply_tarball('https://example.test/tarball.tar.gz', None, log)
+        _apply_tarball('https://example.test/tarball.tar.gz', log)
         assert False, 'RuntimeError erwartet'
     except RuntimeError as e:
         assert 'Entpacktes Verzeichnis nicht gefunden' in str(e)
-
-
-# ---------------------------------------------------------------------------
-# _git_repo_slug – subprocess.run wird gemockt
-# ---------------------------------------------------------------------------
-
-@patch('app.api.admin.update.subprocess.run')
-def test_git_repo_slug_parses_https_github_url(mock_run):
-    mock_run.return_value = MagicMock(returncode=0, stdout='https://github.com/toke7919/standdienst.git\n')
-    assert _git_repo_slug() == 'toke7919/standdienst'
-
-
-@patch('app.api.admin.update.subprocess.run')
-def test_git_repo_slug_parses_ssh_github_url(mock_run):
-    mock_run.return_value = MagicMock(returncode=0, stdout='git@github.com:toke7919/standdienst.git\n')
-    assert _git_repo_slug() == 'toke7919/standdienst'
-
-
-@patch('app.api.admin.update.subprocess.run')
-def test_git_repo_slug_none_for_non_github_remote(mock_run):
-    mock_run.return_value = MagicMock(returncode=0, stdout='https://gitlab.com/foo/bar.git\n')
-    assert _git_repo_slug() is None
-
-
-@patch('app.api.admin.update.subprocess.run')
-def test_git_repo_slug_none_when_no_git_repo(mock_run):
-    mock_run.return_value = MagicMock(returncode=128, stdout='')
-    assert _git_repo_slug() is None
 
 
 # ---------------------------------------------------------------------------

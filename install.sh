@@ -197,15 +197,6 @@ info "Python-Pakete installiert"
 SECRET_KEY="$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9+/=' | head -c 64)"
 DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@127.0.0.1:5432/$DB_NAME"
 
-# GitHub-Repository aus Git-Remote ableiten (ermöglicht automatische Updates)
-GITHUB_REPO_LINE=""
-GITHUB_REMOTE="$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)"
-if [[ "$GITHUB_REMOTE" =~ github\.com[:/]([^/]+/[^/]+) ]]; then
-    GITHUB_SLUG="${BASH_REMATCH[1]%.git}"   # .git-Suffix entfernen
-    GITHUB_REPO_LINE="GITHUB_REPO=${GITHUB_SLUG}"
-    info "GitHub-Repository erkannt: ${GITHUB_SLUG}"
-fi
-
 cat > "$INSTALL_DIR/.env" <<EOF
 # Standdienst – technische Konfiguration
 # Ersteinrichtung (Admin, Mail, URL) erfolgt über das Web-Setup-Interface.
@@ -218,7 +209,6 @@ GUNICORN_BIND=127.0.0.1:${APP_PORT}
 SESSION_COOKIE_SECURE=true
 FLASK_DEBUG=0
 EOF
-[ -n "$GITHUB_REPO_LINE" ] && echo "$GITHUB_REPO_LINE" >> "$INSTALL_DIR/.env"
 chmod 600 "$INSTALL_DIR/.env"
 chown "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR/.env"
 info "Konfigurationsdatei geschrieben: $INSTALL_DIR/.env"

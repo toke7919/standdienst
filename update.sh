@@ -51,8 +51,15 @@ DB_NAME="standdienst"
 # shellcheck source=/dev/null
 set -o allexport; source "$INSTALL_DIR/.env"; set +o allexport
 
-GITHUB_REPO="${GITHUB_REPO:-}"
 DATABASE_URL="${DATABASE_URL:-}"
+
+# Fest hinterlegtes Upstream-Repo aus version.py (Single Source of Truth).
+GITHUB_REPO="$(python3 -c "
+ns={}
+exec(open('$INSTALL_DIR/version.py').read(), ns)
+print(ns.get('GITHUB_REPO',''))
+" 2>/dev/null || true)"
+[ -n "$GITHUB_REPO" ] || die "GITHUB_REPO fehlt in $INSTALL_DIR/version.py – Installation unvollständig."
 
 # ---------------------------------------------------------------------------
 # Versions-Hilfsfunktionen
@@ -97,9 +104,8 @@ _resolve_github_api_ip() {
 
 _github_get() {
     local url="$1"
-    local pat="${GITHUB_PAT:-}"
+    # Öffentliches Repo – keine Authentifizierung nötig.
     local args=(-fsSL -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" --connect-timeout 10)
-    [[ -n "$pat" ]] && args+=(-H "Authorization: Bearer $pat")
 
     # Erst normaler Versuch
     if curl "${args[@]}" "$url" 2>/dev/null; then
@@ -118,10 +124,6 @@ _github_get() {
 }
 
 _latest_release() {
-    if [ -z "${GITHUB_REPO:-}" ]; then
-        die "GITHUB_REPO ist nicht in $INSTALL_DIR/.env gesetzt.
-  Bitte eintragen: echo 'GITHUB_REPO=toke7919/standdienst' >> $INSTALL_DIR/.env"
-    fi
     local json
     json="$(_github_get "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" 2>&1)" \
         || die "GitHub-API nicht erreichbar (GITHUB_REPO=$GITHUB_REPO).
@@ -234,11 +236,7 @@ TMPDIR_UPDATE="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR_UPDATE"' EXIT
 
 TAR_PATH="$TMPDIR_UPDATE/release.tar.gz"
-GITHUB_PAT="${GITHUB_PAT:-}"
-curl -fsSL \
-    ${GITHUB_PAT:+-H "Authorization: Bearer $GITHUB_PAT"} \
-    -o "$TAR_PATH" \
-    "$TARBALL_URL"
+curl -fsSL -o "$TAR_PATH" "$TARBALL_URL"
 info "Heruntergeladen: $LATEST"
 
 tar -xzf "$TAR_PATH" -C "$TMPDIR_UPDATE"

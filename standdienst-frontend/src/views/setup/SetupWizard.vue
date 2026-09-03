@@ -29,7 +29,6 @@
           <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">1.</span> Admin-Account anlegen</li>
           <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">2.</span> Basis-URL konfigurieren</li>
           <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">3.</span> Mail-Server einrichten (optional)</li>
-          <li class="flex items-center gap-2"><span class="text-primary-600 font-semibold">4.</span> GitHub-Token für Updates (optional)</li>
         </ul>
         <button class="btn-primary w-full" @click="step = 2">Einrichtung starten</button>
       </div>
@@ -111,7 +110,7 @@
           geändert werden.
         </p>
         <button class="text-xs text-primary-600 underline mb-5" type="button"
-                @click="step = 5">Diesen Schritt überspringen →</button>
+                @click="finishSetup">Diesen Schritt überspringen →</button>
 
         <form @submit.prevent="submitMail" class="space-y-4">
           <div class="grid grid-cols-2 gap-3">
@@ -154,52 +153,14 @@
             <button type="button" class="btn-secondary flex-1" @click="step = 3">Zurück</button>
             <button type="submit" class="btn-primary flex-1" :disabled="loading">
               <LoadingSpinner v-if="loading" size="sm" class="mr-2" />
-              Speichern & weiter
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- ── Schritt 5: GitHub PAT ── -->
-      <div v-else-if="step === 5" class="card">
-        <h2 class="text-lg font-semibold text-ink mb-1">GitHub-Token für Updates</h2>
-        <p class="text-sm text-muted mb-1">
-          Ein GitHub Personal Access Token (PAT) ermöglicht automatische Software-Updates
-          direkt aus dem Admin-Bereich. Benötigt werden die Berechtigungen <code class="text-xs bg-bg-brand px-1 rounded">repo</code> oder <code class="text-xs bg-bg-brand px-1 rounded">contents:read</code>.
-        </p>
-        <button class="text-xs text-primary-600 underline mb-5" type="button"
-                @click="finishSetup">Diesen Schritt überspringen →</button>
-
-        <form @submit.prevent="submitPat" class="space-y-4">
-          <div>
-            <label class="label">GitHub-Repository <span class="text-muted text-xs">(optional)</span></label>
-            <input v-model="config.github_repo" class="input font-mono text-sm"
-                   placeholder="owner/repository" autocomplete="off" />
-            <p class="text-xs text-muted mt-1">
-              Format: <code class="bg-bg-brand px-1 rounded">owner/repo</code>, z.B. <code class="bg-bg-brand px-1 rounded">meinverein/standdienst</code>
-            </p>
-          </div>
-          <div>
-            <label class="label">GitHub PAT <span class="text-muted text-xs">(optional)</span></label>
-            <input v-model="config.github_pat" class="input font-mono text-sm"
-                   placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
-            <p class="text-xs text-muted mt-1">
-              Erstellen unter: GitHub → Settings → Developer settings → Personal access tokens
-            </p>
-          </div>
-          <p v-if="errors.pat" class="text-sm text-red-600">{{ errors.pat }}</p>
-          <div class="flex gap-3 pt-2">
-            <button type="button" class="btn-secondary flex-1" @click="step = 4">Zurück</button>
-            <button type="submit" class="btn-primary flex-1" :disabled="loading">
-              <LoadingSpinner v-if="loading" size="sm" class="mr-2" />
               Speichern & abschließen
             </button>
           </div>
         </form>
       </div>
 
-      <!-- ── Schritt 6: Fertig ── -->
-      <div v-else-if="step === 6" class="card text-center">
+      <!-- ── Schritt 5: Fertig ── -->
+      <div v-else-if="step === 5" class="card text-center">
         <div class="text-5xl mb-4">🎉</div>
         <h2 class="text-xl font-bold text-ink mb-2">Einrichtung abgeschlossen!</h2>
         <p class="text-ink/80 text-sm mb-6">
@@ -229,9 +190,9 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const setupStore = useSetupStore()
 const step = ref(1)
-const totalSteps = 5
+const totalSteps = 4
 const loading = ref(false)
-const errors = ref({ admin: '', config: '', mail: '', pat: '' })
+const errors = ref({ admin: '', config: '', mail: '' })
 
 const timezones = [
   'Europe/Berlin', 'Europe/Vienna', 'Europe/Zurich', 'Europe/London',
@@ -241,7 +202,7 @@ const timezones = [
 ]
 
 const admin = ref({ email: '', password: '', passwordConfirm: '' })
-const config = ref({ base_url: '', copyright_text: '', timezone: 'Europe/Berlin', github_pat: '', github_repo: '' })
+const config = ref({ base_url: '', copyright_text: '', timezone: 'Europe/Berlin' })
 const mail = ref({
   server: '', port: 587, use_tls: true,
   username: '', password: '', sender: '', sender_name: 'Standdienst',
@@ -286,30 +247,9 @@ async function submitMail() {
   loading.value = true
   try {
     await setupApi.saveMail(mail.value)
-    step.value = 5
-  } catch (e) {
-    errors.value.mail = e.response?.data?.error || 'Fehler beim Speichern'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function submitPat() {
-  errors.value.pat = ''
-  loading.value = true
-  try {
-    if (config.value.github_pat || config.value.github_repo) {
-      await setupApi.saveConfig({
-        base_url: config.value.base_url,
-        copyright_text: config.value.copyright_text,
-        timezone: config.value.timezone,
-        github_pat: config.value.github_pat,
-        github_repo: config.value.github_repo,
-      })
-    }
     await finishSetup()
   } catch (e) {
-    errors.value.pat = e.response?.data?.error || 'Fehler beim Speichern'
+    errors.value.mail = e.response?.data?.error || 'Fehler beim Speichern'
     loading.value = false
   }
 }
@@ -319,9 +259,9 @@ async function finishSetup() {
   try {
     await setupApi.finish()
     setupStore.markComplete()
-    step.value = 6
+    step.value = 5
   } catch (e) {
-    errors.value.pat = e.response?.data?.error || 'Fehler beim Abschließen'
+    errors.value.mail = e.response?.data?.error || 'Fehler beim Abschließen'
   } finally {
     loading.value = false
   }

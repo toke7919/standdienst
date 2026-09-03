@@ -57,15 +57,15 @@ def _clean_state(client):
 
 
 @pytest.fixture(autouse=True)
-def _no_real_git_repo_fallback():
-    """Sicherheitsnetz: app.api.admin.update._repo_slug_and_pat() fällt ohne
-    konfiguriertes GlobalSettings.github_repo auf den ECHTEN `git remote` dieses
-    Checkouts zurück (toke7919/standdienst). Ein Test, der das vergisst zu mocken,
-    würde sonst reale GitHub-Calls, einen echten Tarball-Download/-Copytree, echtes
-    pip install/npm run build und echte systemctl-Restarts auslösen – ist bereits
-    passiert und hat die Dev-Maschine per Swap-Erschöpfung lahmgelegt. Tests, die
-    den echten Fallback bewusst prüfen wollen, patchen ihn lokal erneut."""
-    with patch('app.api.admin.update._git_repo_slug', return_value=None):
+def _no_real_github_calls():
+    """Sicherheitsnetz: app/api/admin/update.py fragt jetzt das fest in version.py
+    hinterlegte Repo (toke7919/standdienst) ab – ein Test, der `_github_request`
+    vergisst zu mocken, würde sonst reale GitHub-Calls, einen echten
+    Tarball-Download/-Copytree, echtes pip install/npm run build und echte
+    systemctl-Restarts auslösen (ist schon passiert und hat die Dev-Maschine per
+    Swap-Erschöpfung lahmgelegt). Default: jede Anfrage schlägt fehl. Tests, die
+    echte Antworten brauchen, patchen `_github_request` lokal erneut."""
+    with patch('app.api.admin.update._github_request', return_value=None):
         yield
 
 

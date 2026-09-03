@@ -219,8 +219,6 @@ def test_run_restore_restores_data_and_uploads(mock_restart, app, instance, temp
     from app.models import MailSettings
     (temp_backup_dirs['upload_dir'] / 'logo.png').write_bytes(b'fake-png-bytes')
     password = _set_backup_password()
-    gs = GlobalSettings.query.first()
-    gs.github_pat = 'ghp_geheimestoken'
     ms = MailSettings(mail_server='smtp.test', mail_password='geheimespasswort')
     _db.session.add(ms)
     _db.session.commit()
@@ -242,7 +240,6 @@ def test_run_restore_restores_data_and_uploads(mock_restart, app, instance, temp
     mock_restart.assert_called_once()  # Neustart wurde angestoßen, aber nicht real ausgeführt
 
     restored_gs = GlobalSettings.query.first()
-    assert restored_gs.github_pat == 'ghp_geheimestoken'
     assert restored_gs.backup_password == password
     restored_ms = MailSettings.query.first()
     assert restored_ms.mail_password == 'geheimespasswort'

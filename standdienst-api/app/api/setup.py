@@ -94,7 +94,7 @@ def create_admin():
 
 
 # ---------------------------------------------------------------------------
-# Schritt 2 – Basis-Konfiguration (URL + GitHub PAT)
+# Schritt 2 – Basis-Konfiguration (URL, Copyright, Zeitzone)
 # ---------------------------------------------------------------------------
 
 @setup_bp.route('/config', methods=['POST'])
@@ -107,7 +107,6 @@ def save_config():
     gs = _get_or_create_gs()
     base_url = (data.get('base_url') or '').rstrip('/')
     gs.base_url = base_url or None
-    gs.github_pat = data.get('github_pat') or None
     gs.copyright_text = data.get('copyright_text') or None
     if data.get('timezone'):
         gs.timezone = data['timezone']

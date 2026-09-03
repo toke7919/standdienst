@@ -597,7 +597,7 @@
       <li><b>Admin-Konto anlegen.</b> Dein Hauptzugang. Mindestens zwölf Zeichen, mit Groß- und Kleinbuchstaben, Ziffer und Sonderzeichen.</li>
       <li><b>Basis-Adresse setzen.</b> Unter welcher URL läuft die Plattform? Davon hängen die Links in den E-Mails ab.</li>
       <li><b>Mailserver hinterlegen</b> (optional, aber empfohlen) – sonst gibt es keine Willkommens- und Reset-Mails.</li>
-      <li><b>Rechtliches &amp; Updates.</b> Plattform-Impressum, Datenschutz-Vorlage und – falls gewünscht – das GitHub-Token für automatische Updates.</li>
+      <li><b>Rechtliches.</b> Plattform-Impressum und Datenschutz-Vorlage.</li>
       <li><b>Abschließen.</b> Der Assistent verriegelt sich, die Plattform ist bereit.</li>
     </ol>
 
@@ -655,7 +655,7 @@
     </div>
 
     <h3>Updates &amp; Wartung</h3>
-    <p>Standdienst kann sich selbst aktualisieren: Es prüft das neueste GitHub-Release, legt vorher automatisch ein Backup an, baut das Frontend neu und startet den Dienst. Für größere Eingriffe gibt es den <b>Wartungsmodus</b>, der Besuchern einen freundlichen Hinweis zeigt.</p>
+    <p>Standdienst kann sich selbst aktualisieren: Es prüft das neueste GitHub-Release (des öffentlichen Projekt-Repos – nichts zu konfigurieren), legt vorher automatisch ein Backup an, baut das Frontend neu und startet den Dienst. Für größere Eingriffe gibt es den <b>Wartungsmodus</b>, der Besuchern einen freundlichen Hinweis zeigt.</p>
 
     <figure class="shot">
       <div class="browser"><i></i><i></i><i></i><span class="url">https://standdienst.example/admin/settings/global</span></div>
@@ -704,7 +704,7 @@ sudo bash <b>install.sh</b> /opt/standdienst</pre>
       <li><b>Systempakete installieren.</b> PostgreSQL, Redis, Nginx, Node.js (≥ 20), Python samt Build-Werkzeug.</li>
       <li><b>Service-User &amp; Verzeichnisse.</b> Legt den System-User <code>standdienst</code> an und kopiert die Dateien.</li>
       <li><b>Datenbank &amp; Redis.</b> Erstellt Datenbank und Benutzer <code>standdienst</code>, startet Redis.</li>
-      <li><b>Konfiguration schreiben.</b> Generiert die <code>.env</code> mit frischem <code>SECRET_KEY</code>, Datenbank- und Redis-URL, sicheren Cookies und – falls erkannt – dem GitHub-Repo für Updates.</li>
+      <li><b>Konfiguration schreiben.</b> Generiert die <code>.env</code> mit frischem <code>SECRET_KEY</code>, Datenbank- und Redis-URL und sicheren Cookies.</li>
       <li><b>Migrationen &amp; Build.</b> Spielt das Datenbankschema ein und baut das Frontend.</li>
       <li><b>Dienste &amp; Proxy.</b> Richtet die systemd-Services und Nginx (Port 80 → interner Port) ein.</li>
     </ol>
@@ -774,7 +774,6 @@ sudo bash <b>uninstall.sh</b></pre>
         <tr><td><code>DATABASE_URL</code></td><td>Verbindung zur PostgreSQL-Datenbank.</td></tr>
         <tr><td><code>RATELIMIT_STORAGE_URI</code></td><td>Redis-Adresse für die Anfrage-Limits. Im Produktivbetrieb <b>Pflicht</b> – ohne Redis startet die App bewusst nicht.</td></tr>
         <tr><td><code>SESSION_COOKIE_SECURE</code></td><td>Im Betrieb hinter HTTPS auf <code>true</code> (setzt das Skript bereits).</td></tr>
-        <tr><td><code>GITHUB_REPO</code> / Token</td><td>Ermöglicht die Update-Prüfung gegen die GitHub-Releases.</td></tr>
         <tr><td><code>SETUP_ALLOWED_IPS</code></td><td>Schränkt den Zugang zum Setup-Assistenten auf bestimmte IPs ein – empfehlenswert auf frischen Servern.</td></tr>
       </tbody>
     </table>
