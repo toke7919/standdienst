@@ -34,10 +34,22 @@ done
 
 require_root
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/standdienst-docker}"
+# Standard-Installationsverzeichnis bestimmen. install-docker.sh legt dieses
+# Skript als <INSTALL_DIR>/update-docker.sh ab, daher ist das eigene
+# Skriptverzeichnis der zuverlässigste Default – unabhängig davon, welchen
+# Pfad der Nutzer bei der Installation gewählt hat.
+# Priorität: explizites Argument > Skriptverzeichnis (falls Installation) > Legacy-Default.
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+if [ -z "$INSTALL_DIR" ]; then
+    if [ -f "$SCRIPT_DIR/docker-compose.yml" ] && [ -f "$SCRIPT_DIR/.env" ]; then
+        INSTALL_DIR="$SCRIPT_DIR"
+    else
+        INSTALL_DIR="/opt/standdienst-docker"
+    fi
+fi
 INSTALL_DIR="${INSTALL_DIR%/}"
 
-[ -d "$INSTALL_DIR" ] || die "Installationsverzeichnis nicht gefunden: $INSTALL_DIR"
+[ -d "$INSTALL_DIR" ] || die "Installationsverzeichnis nicht gefunden: $INSTALL_DIR – Pfad explizit angeben: sudo bash update-docker.sh /pfad/zur/installation"
 [ -f "$INSTALL_DIR/.env" ] || die ".env nicht gefunden: $INSTALL_DIR/.env"
 [ -f "$INSTALL_DIR/docker-compose.yml" ] || die "docker-compose.yml nicht gefunden: $INSTALL_DIR/docker-compose.yml"
 [ -f "$INSTALL_DIR/standdienst-api/version.py" ] || die "version.py nicht gefunden – kein gültiges Standdienst-Docker-Verzeichnis"
