@@ -20,7 +20,7 @@ cairocffi==1.7.1
     # via cairosvg
 cairosvg==2.9.0
     # via -r requirements.in
-cbor2==5.9.0
+cbor2==6.1.4
     # via webauthn
 cffi==2.1.1
     # via
@@ -172,7 +172,7 @@ tzlocal==5.4.4
     # via apscheduler
 weasyprint==68.1
     # via -r requirements.in
-webauthn==2.8.0
+webauthn==3.0.0
     # via -r requirements.in
 webencodings==0.6.1
     # via
