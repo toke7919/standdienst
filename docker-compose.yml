@@ -74,7 +74,7 @@ services:
 
   # Dev-only: Vite-Frontend mit Hot-Reload
   frontend-dev:
-    image: node:20-alpine
+    image: node:22-alpine
     working_dir: /app
     command: sh -c "npm install && npm run dev -- --host"
     volumes:
