@@ -291,11 +291,11 @@ _send_shift_confirmation(...)  # fire-and-forget nach commit
 ## APScheduler-Jobs (`app/utils/scheduler.py`)
 
 ```python
-purge_tokens()       # stündlich – abgelaufene Reset-/Welcome-Tokens löschen
-purge_logs()         # täglich 03:00 – ActivityLogs nach log_retention_months
-smb_backup()         # täglich 02:30 – nur wenn GlobalSettings.smb_enabled = True
-purge_volunteers()   # monatlich 1. 04:00 – nur wenn volunteer_retention_months gesetzt
-_send_reminders()    # täglich 08:00 – für Volunteers mit notifications_enabled=True
+_purge_expired_tokens()   # stündlich – abgelaufene Reset-/Welcome-Tokens löschen
+_purge_old_logs()         # täglich 03:00 – ActivityLogs nach log_retention_months
+_purge_old_volunteers()   # monatlich 1. 04:00 – nur wenn volunteer_retention_months gesetzt
+_send_organizer_digest()  # täglich 06:00 – Tagesübersicht für Organizer/Admins mit Digest-Abo
+_send_reminders()         # täglich 08:00 – für Volunteers mit notifications_enabled=True
 ```
 
 Scheduler startet nur wenn `not app.config['TESTING']`.
