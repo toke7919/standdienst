@@ -62,6 +62,14 @@ class Config:
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    # Config.SQLALCHEMY_ENGINE_OPTIONS setzt pool_recycle=300 (für Postgres in
+    # Produktion gedacht, damit der DB-Server keine alten Connections killt).
+    # Für sqlite:///:memory: ist das aktiv schädlich: SQLAlchemy verwirft die
+    # Connection nach 300s und öffnet eine neue – bei einer In-Memory-DB
+    # bedeutet das eine komplett leere Datenbank mitten im Testlauf ("no such
+    # table"). Mit wachsender Testsuite dauert ein Coverage-Lauf inzwischen
+    # >300s, wodurch das real reproduzierbar wurde (CI-Läufe nach #192/#195).
+    SQLALCHEMY_ENGINE_OPTIONS = {}
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_CSRF_PROTECT = False
     WTF_CSRF_ENABLED = False
