@@ -17,7 +17,7 @@
     "@heroicons/vue": "^2.1.0",
     "altcha": "^2.3.0",
     "axios": "^1.20.0",
-    "pinia": "^2.1.0",
+    "pinia": "^4.0.3",
     "qrcode": "^1.5.4",
     "vue": "^3.5.42",
     "vue-router": "^4.3.0"
