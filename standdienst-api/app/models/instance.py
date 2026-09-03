@@ -67,8 +67,6 @@ class GlobalSettings(db.Model):
     log_retention_months = db.Column(db.Integer, nullable=False, default=3)
     setup_complete = db.Column(db.Boolean, nullable=False, default=False)
     maintenance_mode = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
-    github_pat = db.Column(EncryptedStr(500), nullable=True)
-    github_repo = db.Column(db.String(200), nullable=True)
     timezone = db.Column(db.String(100), nullable=False, default='Europe/Berlin')
     volunteer_retention_months = db.Column(db.Integer, nullable=True)
     ip_whitelist = db.Column(db.Text, nullable=True)

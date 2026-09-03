@@ -119,7 +119,6 @@ Backups werden im Admin-Bereich unter **Einstellungen → Backup** erstellt, her
 | `FRONTEND_URL` | – | Öffentliche URL für E-Mail-Links (Standard: `http://localhost`) |
 | `FRONTEND_PORT` | – | Port des Frontend-Containers (Standard: `80`) |
 | `SESSION_COOKIE_SECURE` | – | `true` bei HTTPS (Standard: `false`) |
-| `GITHUB_REPO` | – | Nur von `install-docker.sh` gesetzt, für `update-docker.sh` (Standard: `toke7919/standdienst`) |
 | `COMPOSE_FILE` | – | Nur von `install-docker.sh` gesetzt: `docker-compose.yml:docker-compose.override.yml` |
 
 ### Bare-Metal (`standdienst-api/.env`)

@@ -48,7 +48,14 @@ INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd)"
 
 # shellcheck source=/dev/null
 set -o allexport; source "$INSTALL_DIR/.env"; set +o allexport
-GITHUB_REPO="${GITHUB_REPO:-toke7919/standdienst}"
+
+# Fest hinterlegtes Upstream-Repo aus version.py (Single Source of Truth).
+GITHUB_REPO="$(python3 -c "
+ns={}
+exec(open('$INSTALL_DIR/standdienst-api/version.py').read(), ns)
+print(ns.get('GITHUB_REPO',''))
+" 2>/dev/null || true)"
+[ -n "$GITHUB_REPO" ] || die "GITHUB_REPO fehlt in $INSTALL_DIR/standdienst-api/version.py – Installation unvollständig."
 
 # ---------------------------------------------------------------------------
 # Versions-Hilfsfunktionen
@@ -83,9 +90,8 @@ _resolve_github_api_ip() {
 
 _github_get() {
     local url="$1"
-    local pat="${GITHUB_PAT:-}"
+    # Öffentliches Repo – keine Authentifizierung nötig.
     local args=(-fsSL -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" --connect-timeout 10)
-    [[ -n "$pat" ]] && args+=(-H "Authorization: Bearer $pat")
 
     if curl "${args[@]}" "$url" 2>/dev/null; then
         return 0

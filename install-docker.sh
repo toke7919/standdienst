@@ -10,6 +10,9 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 DEFAULT_INSTALL_DIR="/opt/standdienst-docker"
 DEFAULT_PORT=80
+# Bootstrap-Repo: hier noch hartkodiert, weil der Code (und damit
+# standdienst-api/version.py als Single Source of Truth) erst nach dem Download
+# lokal vorliegt. Muss mit GITHUB_REPO in version.py übereinstimmen.
 GITHUB_REPO="toke7919/standdienst"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -34,9 +37,8 @@ _resolve_github_api_ip() {
 
 _github_get() {
     local url="$1"
-    local pat="${GITHUB_PAT:-}"
+    # Öffentliches Repo – keine Authentifizierung nötig.
     local args=(-fsSL -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" --connect-timeout 10)
-    [[ -n "$pat" ]] && args+=(-H "Authorization: Bearer $pat")
 
     if curl "${args[@]}" "$url" 2>/dev/null; then
         return 0
@@ -199,7 +201,6 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 FRONTEND_URL=$FRONTEND_URL
 FRONTEND_PORT=$FRONTEND_PORT
 SESSION_COOKIE_SECURE=$SESSION_COOKIE_SECURE
-GITHUB_REPO=$GITHUB_REPO
 COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml
 EOF
     chmod 600 "$ENV_FILE"

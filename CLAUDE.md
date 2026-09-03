@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **Keine hypothetischen Features.** Keine Abstraktion, keine Vorbereitung auf Szenarien, die nicht explizit angefordert wurden.
 3. **Kein Gold-Plating.** Nur das Nötigste, um die Anforderung zu erfüllen.
 4. **Fehler nie verschlucken.** Jeder Fehler wird geloggt und der aufrufenden Schicht gemeldet.
-5. **Additive-only Migrations.** Alembic-Migrationen dürfen Spalten/Tabellen nur hinzufügen, niemals entfernen oder umbenennen.
+5. **Additive-only Migrations.** Alembic-Migrationen dürfen Spalten/Tabellen nur hinzufügen, niemals entfernen oder umbenennen. (Dokumentierte Ausnahme: `b7c1e9d4a2f8` droppt `global_settings.github_pat`/`github_repo` – explizit vom Projekt-Owner freigegeben.)
 6. **Optimistic Locking bei PUT-Endpunkten.** Jeder PUT-Request muss `updated_at` senden. Backend prüft gegen DB-Wert; Abweichung → 409 Conflict.
 
 ---
@@ -101,6 +101,10 @@ Flask-App mit App-Factory-Pattern (`app/__init__.py`). Blueprints:
 
 Das Frontend wird als SPA aus `standdienst-api/static/dist/` serviert (Vite-Build-Output).
 
+### Update-Mechanismus
+
+Das Upstream-Repo ist fest: `GITHUB_REPO` in `standdienst-api/version.py` (Single Source of Truth). Backend (`app/api/admin/update.py`) und die Update-Scripts (`update.sh`, `update-docker.sh`) lesen diesen Wert; `install-docker.sh` hat ihn zusätzlich hartkodiert (Bootstrap, muss übereinstimmen). Das Repo ist öffentlich – kein PAT, keine Konfiguration über Setup/Admin/.env. GitHub-API-Calls laufen anonym (Limit 60/h genügt).
+
 ### Auth-Decorators (`app/utils/auth.py`)
 
 ```python
@@ -151,7 +155,7 @@ Admin-Views mit Tabellen verwenden `md:hidden` gestapelte Liste + `hidden md:tab
 | `Instance` | `slug` eindeutig, `is_active` |
 | `Admin` | `is_primary`, TOTP 2FA + Backup-Codes, Passkey-Support |
 | `Organizer` | `is_instance_admin`, Many-to-Many Instanzen via `organizer_instances` |
-| `GlobalSettings` | `setup_complete`, `github_pat`, `timezone` (IANA), SMB-Backup-Config |
+| `GlobalSettings` | `setup_complete`, `timezone` (IANA), SMB-Backup-Config |
 | `MailSettings` | SMTP (DB-gespeichert, überschreibt Env-Vars) |
 | `ActivityLog` | `instance_id=NULL` = globaler Eintrag |
 
@@ -190,7 +194,7 @@ Nur erreichbar solange `setup_complete = False` (außer `/status`).
 |---------|------|--------------|
 | GET | `/status` | `{setup_complete, has_admin, maintenance_mode}` |
 | POST | `/admin` | Ersten Admin anlegen |
-| POST | `/config` | Basis-URL, GitHub-PAT, Copyright, Zeitzone |
+| POST | `/config` | Basis-URL, Copyright, Zeitzone |
 | POST | `/mail` | SMTP-Konfiguration |
 | POST | `/finish` | `setup_complete=True` setzen |
 
