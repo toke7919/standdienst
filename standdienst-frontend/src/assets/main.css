@@ -1,28 +1,150 @@
-@import './tokens.css';
+@import './tokens.css' layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Default-Primary: Karmin — wird zur Laufzeit durch applyTheme() pro Instanz überschrieben */
-:root {
-  --primary-50:  #f8f7f7;
-  --primary-100: #ece5e6;
-  --primary-200: #dfc8ca;
-  --primary-300: #d7a0a5;
-  --primary-400: #d36973;
-  --primary-500: #cc2d3d;
-  --primary-600: #a51f2c;
-  --primary-700: #811520;
-  --primary-800: #6c0d18;
-  --primary-900: #180406;
-  --primary-950: #120304;
+@theme {
+  --color-ink: rgb(var(--sd-ink-rgb));
+  --color-muted: var(--sd-muted);
+  --color-sand: var(--sd-sand);
+  --color-bg-brand: var(--sd-bg);
+  --color-bg-warm: var(--sd-bg-warm);
+  --color-soft: var(--sd-soft);
+
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility scroll-pb-nav {
+  scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@utility btn {
+  /* ── Buttons ─────────────────────────────────────────────────── */
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+           cursor-pointer select-none
+           transition-all duration-150 ease-out
+           disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-[0.97];
+}
+
+@utility btn-primary {
+  @apply btn bg-ink text-soft hover:bg-primary-600 active:bg-primary-700
+           focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+}
+
+@utility btn-secondary {
+  @apply btn bg-soft text-ink border border-sand hover:bg-bg-warm
+           focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+}
+
+@utility btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-700
+           focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2;
+}
+
+@utility input {
+  /* ── Inputs ─────────────────────────────────────────────────── */
+  @apply block w-full appearance-none leading-normal rounded-lg border border-sand bg-soft px-3 py-2.5 text-[16px] md:text-sm
+           text-ink placeholder:text-muted
+           transition-colors duration-150
+           focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-0
+           disabled:bg-bg-brand disabled:text-muted disabled:cursor-not-allowed;
+}
+
+@utility label {
+  @apply block text-sm font-medium text-ink/80 mb-1.5;
+}
+
+@utility card {
+  /* ── Cards ──────────────────────────────────────────────────── */
+  @apply bg-soft rounded-md border border-sand p-4 lg:p-6;
+}
+
+@utility card-interactive {
+  @apply card cursor-pointer
+           transition-all duration-150 ease-out
+           hover:shadow-xs hover:-translate-y-0.5
+           active:scale-[0.99] active:shadow-none active:translate-y-0
+           focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+}
+
+@utility badge {
+  /* ── Badges ─────────────────────────────────────────────────── */
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+@utility badge-green {
+  @apply badge bg-[#d4edda]  text-ink;
+}
+
+@utility badge-red {
+  @apply badge bg-primary-50 text-primary-700;
+}
+
+@utility badge-yellow {
+  @apply badge bg-[#fef3cd]  text-ink;
+}
+
+@utility badge-blue {
+  @apply badge bg-[#dbeafe]  text-ink;
+}
+
+@layer utilities {
+  /* Default-Primary: Karmin — wird zur Laufzeit durch applyTheme() pro Instanz überschrieben */
+  :root {
+    --primary-50: #f8f7f7;
+    --primary-100: #ece5e6;
+    --primary-200: #dfc8ca;
+    --primary-300: #d7a0a5;
+    --primary-400: #d36973;
+    --primary-500: #cc2d3d;
+    --primary-600: #a51f2c;
+    --primary-700: #811520;
+    --primary-800: #6c0d18;
+    --primary-900: #180406;
+    --primary-950: #120304;
+  }
 }
 
 @layer base {
   body {
     @apply bg-bg-brand text-ink antialiased;
-    font-family: var(--font-body);
+    font-family: var(--sd-font-body);
     -webkit-text-size-adjust: 100%;
   }
 
@@ -37,73 +159,4 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { @apply bg-sand rounded-full; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-muted; }
-}
-
-@layer utilities {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .mb-safe {
-    margin-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .scroll-pb-nav {
-    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-@layer components {
-  /* ── Buttons ─────────────────────────────────────────────────── */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
-           cursor-pointer select-none
-           transition-all duration-150 ease-out
-           disabled:opacity-50 disabled:cursor-not-allowed
-           active:scale-[0.97];
-  }
-  .btn-primary {
-    @apply btn bg-ink text-soft hover:bg-primary-600 active:bg-primary-700
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
-  }
-  .btn-secondary {
-    @apply btn bg-soft text-ink border border-sand hover:bg-bg-warm
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
-  }
-  .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2;
-  }
-
-  /* ── Inputs ─────────────────────────────────────────────────── */
-  .input {
-    @apply block w-full appearance-none leading-normal rounded-lg border border-sand bg-soft px-3 py-2.5 text-[16px] md:text-sm
-           text-ink placeholder:text-muted
-           transition-colors duration-150
-           focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0
-           disabled:bg-bg-brand disabled:text-muted disabled:cursor-not-allowed;
-  }
-  .label {
-    @apply block text-sm font-medium text-ink/80 mb-1.5;
-  }
-
-  /* ── Cards ──────────────────────────────────────────────────── */
-  .card {
-    @apply bg-soft rounded-md border border-sand p-4 lg:p-6;
-  }
-
-  .card-interactive {
-    @apply card cursor-pointer
-           transition-all duration-150 ease-out
-           hover:shadow-sm hover:-translate-y-0.5
-           active:scale-[0.99] active:shadow-none active:translate-y-0
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
-  }
-
-  /* ── Badges ─────────────────────────────────────────────────── */
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-  .badge-green  { @apply badge bg-[#d4edda]  text-ink; }
-  .badge-red    { @apply badge bg-primary-50 text-primary-700; }
-  .badge-yellow { @apply badge bg-[#fef3cd]  text-ink; }
-  .badge-blue   { @apply badge bg-[#dbeafe]  text-ink; }
 }

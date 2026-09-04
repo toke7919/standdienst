@@ -17,20 +17,20 @@
     <div v-else class="overflow-x-auto">
     <div class="min-w-max space-y-8">
       <div v-for="section in enrichedGrid" :key="section.date_id">
-        <!-- [overflow:clip] clippt Inhalte auf die Rundungen, ohne Scroll-Container zu erzeugen -->
-        <div class="card [overflow:clip] !p-0">
+        <!-- overflow-clip clippt Inhalte auf die Rundungen, ohne Scroll-Container zu erzeugen -->
+        <div class="card overflow-clip p-0!">
           <div class="h-1 bg-primary-500 rounded-t-md" />
           <div class="px-5 py-4 border-b border-sand flex items-center gap-2.5">
-            <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+            <CalendarIcon class="w-5 h-5 text-primary-500 shrink-0" />
             <h2 class="font-semibold text-ink">{{ section.date_formatted }}</h2>
             <span
               v-if="section.is_draft"
-              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+              class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-amber-100 text-amber-800"
             >Entwurf</span>
           </div>
           <!-- Stand-Spaltenheader -->
           <div class="flex border-b border-sand bg-bg-brand">
-            <div class="w-14 flex-shrink-0 border-r border-sand" />
+            <div class="w-14 shrink-0 border-r border-sand" />
             <div class="flex flex-1" :style="`min-width: ${section.stands.length * MIN_COL_PX}px`">
               <div
                 v-for="stand in section.stands"
@@ -47,7 +47,7 @@
           <div class="flex">
             <!-- Zeitachse -->
             <div
-              class="w-14 flex-shrink-0 relative border-r border-sand bg-bg-brand/50"
+              class="w-14 shrink-0 relative border-r border-sand bg-bg-brand/50"
               :style="`height: ${section.gridHeight}px`"
             >
               <div
@@ -86,10 +86,10 @@
                   :style="`top: calc(${item.startPct}% + 2px); height: calc(${item.heightPct}% - 4px); min-height: 2.5rem`"
                 >
                   <!-- Kopfzeile: Zeit + Badge -->
-                  <div class="flex items-start justify-between gap-1 px-2 pt-2 flex-shrink-0">
+                  <div class="flex items-start justify-between gap-1 px-2 pt-2 shrink-0">
                     <span class="text-[10px] font-semibold text-ink/80 leading-tight">{{ item.timeLabel }}</span>
                     <span
-                      class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-tight flex-shrink-0"
+                      class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-tight shrink-0"
                       :class="spotBadgeClass(item.cell)"
                     >
                       {{ item.cell.spots_left === 0 ? 'Voll' : `${item.cell.spots_left} frei` }}
@@ -97,7 +97,7 @@
                   </div>
 
                   <!-- Fortschrittsbalken -->
-                  <div class="mx-2 mt-1 h-1 bg-white/60 rounded-full overflow-hidden flex-shrink-0">
+                  <div class="mx-2 mt-1 h-1 bg-white/60 rounded-full overflow-hidden shrink-0">
                     <div
                       class="h-full rounded-full transition-all duration-300"
                       :class="fillBarClass(item.cell)"
@@ -116,7 +116,7 @@
                         : 'bg-primary-100 text-primary-700'"
                       :title="reg.by_admin ? 'Eingetragen durch Admin/Organisator' : 'Selbst angemeldet'"
                     >
-                      <PencilSquareIcon v-if="reg.by_admin" class="w-2.5 h-2.5 flex-shrink-0 opacity-60" />
+                      <PencilSquareIcon v-if="reg.by_admin" class="w-2.5 h-2.5 shrink-0 opacity-60" />
                       {{ reg.name }}
                       <button
                         type="button"
@@ -130,7 +130,7 @@
                   <button
                     v-if="item.cell.spots_left > 0"
                     type="button"
-                    class="text-[10px] text-primary-600 hover:text-primary-800 font-medium px-2 pb-1.5 mt-auto text-left flex-shrink-0"
+                    class="text-[10px] text-primary-600 hover:text-primary-800 font-medium px-2 pb-1.5 mt-auto text-left shrink-0"
                     @click="openCreate(item.cell.shift_id)"
                   >+ Eintragen</button>
                 </div>

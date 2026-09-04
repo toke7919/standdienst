@@ -128,6 +128,8 @@ Das Upstream-Repo ist fest: `GITHUB_REPO` in `standdienst-api/version.py` (Singl
 - **`layouts/`** – `AdminLayout.vue` (Sidebar + Instanz-Selector), `VolunteerLayout.vue`
 - **`composables/useSort.js`** – wiederverwendbare Tabellen-Sortierung
 
+**Tailwind CSS v4** (CSS-first): Config lebt in `src/assets/main.css` (`@import 'tailwindcss'` + `@theme`), es gibt **keine `tailwind.config.js`**. Quell-Design-Tokens in `src/assets/tokens.css` tragen bewusst ein `--sd-`-Präfix, damit sie nicht mit v4-Theme-Namespaces (`--color-*`, `--text-*`, `--radius-*`, `--font-*`) kollidieren; `@theme` leitet daraus die Utilities ab. `@apply` in einem `<style scoped>`-Block braucht oben `@reference '../../assets/main.css'` (relativer Pfad, kein `@`-Alias). Die `--primary-50…950`-Palette wird zur Laufzeit von `colorPalette.js` pro Instanz gesetzt.
+
 ### ALTCHA-CAPTCHA
 
 Proof-of-Work-CAPTCHA ohne externe Abhängigkeiten (`app/utils/captcha.py`). Der Client löst SHA-256-Hashes clientseitig; das Backend verifiziert via HMAC. Challenge gültig 10 Minuten. Registrierung sendet `altcha: "<base64-payload>"`.

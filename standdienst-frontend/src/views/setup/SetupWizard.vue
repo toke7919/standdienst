@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-bg-brand to-soft flex items-center justify-center p-4">
+  <div class="min-h-screen bg-linear-to-br from-bg-brand to-soft flex items-center justify-center p-4">
     <div class="w-full max-w-lg">
 
       <!-- Header -->
@@ -124,7 +124,7 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <input v-model="mail.use_tls" type="checkbox" id="tls" class="rounded" />
+            <input v-model="mail.use_tls" type="checkbox" id="tls" class="rounded-sm" />
             <label for="tls" class="text-sm text-ink/80">TLS verwenden</label>
           </div>
           <div>

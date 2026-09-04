@@ -25,7 +25,7 @@
               <span class="text-xs text-muted">{{ v.food_count ?? 0 }} Spenden</span>
             </div>
           </div>
-          <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <div class="flex flex-col items-end gap-1.5 shrink-0">
             <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
             <button class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
           </div>

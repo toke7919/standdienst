@@ -9,9 +9,9 @@
       <div
         v-for="d in dates"
         :key="d.id"
-        class="group bg-soft rounded-md border border-sand shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
+        class="group bg-soft rounded-md border border-sand shadow-xs px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
       >
-        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
           <CalendarIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
@@ -19,7 +19,7 @@
             <p class="font-semibold text-ink">{{ d.formatted }}</p>
             <span
               v-if="d.is_draft"
-              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+              class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-amber-100 text-amber-800"
             >Entwurf</span>
           </div>
           <p v-if="d.label" class="text-sm text-muted mt-0.5">{{ d.label }}</p>
@@ -33,7 +33,7 @@
         </div>
       </div>
 
-      <div v-if="!dates.length" class="bg-soft rounded-md border border-sand shadow-sm py-16 text-center">
+      <div v-if="!dates.length" class="bg-soft rounded-md border border-sand shadow-xs py-16 text-center">
         <CalendarIcon class="w-10 h-10 text-primary-200 mx-auto mb-3" />
         <p class="text-muted text-sm">Noch keine Termine angelegt</p>
       </div>
@@ -51,7 +51,7 @@
           <input v-model="form.label" class="input" placeholder="z.B. Aufbautag" />
         </div>
         <div class="flex items-center gap-3">
-          <input id="is_draft" v-model="form.is_draft" type="checkbox" class="rounded border-sand text-primary-600 focus:ring-primary-500" />
+          <input id="is_draft" v-model="form.is_draft" type="checkbox" class="rounded-sm border-sand text-primary-600 focus:ring-primary-500" />
           <label for="is_draft" class="text-sm text-ink">Entwurf</label>
         </div>
         <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>

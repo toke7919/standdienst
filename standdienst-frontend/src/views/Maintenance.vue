@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-bg-brand flex flex-col items-center justify-center px-4">
     <div class="text-center max-w-md">
-      <img src="/assets/mark-ticket.svg" alt="Standdienst" class="h-16 mx-auto mb-4 drop-shadow" />
+      <img src="/assets/mark-ticket.svg" alt="Standdienst" class="h-16 mx-auto mb-4 drop-shadow-sm" />
       <img src="/assets/wordmark.svg" alt="Standdienst" class="h-6 mx-auto mb-10 opacity-80" />
 
       <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-5">

@@ -38,11 +38,11 @@
 
     <div v-else class="space-y-6">
       <div v-for="t in foodTypes" :key="`don-${t.id}`">
-        <div class="card overflow-hidden !p-0">
+        <div class="card overflow-hidden p-0!">
           <div class="h-1 bg-primary-500 rounded-t-md" />
           <div class="px-5 py-4 border-b border-sand flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+              <CalendarIcon class="w-5 h-5 text-primary-500 shrink-0" />
               <div>
                 <div class="flex items-center gap-2 flex-wrap">
                   <p class="font-semibold text-ink text-sm">{{ t.name }}</p>
@@ -53,7 +53,7 @@
                 </p>
               </div>
             </div>
-            <span class="text-xs text-muted flex-shrink-0">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
+            <span class="text-xs text-muted shrink-0">{{ donationsByType(t.id).length }} Spende{{ donationsByType(t.id).length !== 1 ? 'n' : '' }}</span>
           </div>
           <!-- Mobile: gestapelte Liste -->
           <div class="md:hidden divide-y divide-sand">
@@ -73,7 +73,7 @@
                 <p v-if="d.description" class="text-xs text-muted mt-0.5">{{ d.description }}</p>
                 <span v-if="d.needs_refrigeration" class="badge-blue mt-1 inline-flex">Kühlung</span>
               </div>
-              <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <div class="flex flex-col items-end gap-1.5 shrink-0">
                 <button class="text-xs text-primary-600 hover:underline" @click="openEditDonation(d)">Bearbeiten</button>
                 <button class="text-xs text-red-600 hover:underline" @click="deleteDonation(d)">Entfernen</button>
               </div>

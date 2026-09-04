@@ -24,7 +24,7 @@
           </div>
           <div>
             <p class="text-sm text-muted mb-1">Oder manuell eingeben:</p>
-            <code class="text-xs bg-bg-brand px-2 py-1 rounded font-mono">{{ setupData.secret }}</code>
+            <code class="text-xs bg-bg-brand px-2 py-1 rounded-sm font-mono">{{ setupData.secret }}</code>
           </div>
           <form @submit.prevent="confirm" class="space-y-3">
             <div>
@@ -92,7 +92,7 @@
         </div>
 
         <label class="flex items-start gap-3 cursor-pointer select-none">
-          <input type="checkbox" v-model="codesConfirmed" class="mt-0.5 h-4 w-4 rounded border-sand text-primary-600 focus:ring-primary-500" />
+          <input type="checkbox" v-model="codesConfirmed" class="mt-0.5 h-4 w-4 rounded-sm border-sand text-primary-600 focus:ring-primary-500" />
           <span class="text-sm text-ink/80">Ich habe meine Backup-Codes an einem sicheren Ort gespeichert.</span>
         </label>
 

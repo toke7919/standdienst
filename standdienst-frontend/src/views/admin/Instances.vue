@@ -16,7 +16,7 @@
           <p class="font-medium text-ink truncate">{{ inst.name }}</p>
           <p class="text-xs text-muted mt-0.5">{{ inst.slug }}</p>
         </div>
-        <div class="flex flex-col items-end gap-2 flex-shrink-0">
+        <div class="flex flex-col items-end gap-2 shrink-0">
           <span :class="inst.is_active ? 'badge-green' : 'badge-red'">
             {{ inst.is_active ? 'Aktiv' : 'Inaktiv' }}
           </span>
@@ -73,11 +73,11 @@
           <input v-model="form.slug" class="input" required :disabled="!!editing" />
         </div>
         <div class="flex items-center gap-2">
-          <input v-model="form.is_active" type="checkbox" id="active" class="rounded" />
+          <input v-model="form.is_active" type="checkbox" id="active" class="rounded-sm" />
           <label for="active" class="text-sm text-ink/80">Aktiv</label>
         </div>
         <div v-if="editing" class="flex items-center gap-2">
-          <input v-model="form.branding_enabled" type="checkbox" id="branding" class="rounded" />
+          <input v-model="form.branding_enabled" type="checkbox" id="branding" class="rounded-sm" />
           <label for="branding" class="text-sm text-ink/80">Standdienst-Branding anzeigen (Mails, PDFs, QR-Code)</label>
         </div>
 

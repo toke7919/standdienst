@@ -14,7 +14,7 @@
           </p>
         </div>
         <button
-          class="btn-secondary text-sm flex-shrink-0"
+          class="btn-secondary text-sm shrink-0"
           :class="{ 'border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100': setup.maintenanceMode }"
           :disabled="togglingMaintenance"
           @click="toggleMaintenance"

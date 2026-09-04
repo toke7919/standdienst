@@ -14,7 +14,7 @@
             <input
               type="color"
               :value="form.primary_color || '#a51f2c'"
-              class="h-10 w-20 rounded cursor-pointer border border-sand"
+              class="h-10 w-20 rounded-sm cursor-pointer border border-sand"
               @input="form.primary_color = $event.target.value"
             />
             <input v-model="form.primary_color" class="input max-w-32" placeholder="Anwendungsstandard" />

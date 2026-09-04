@@ -4,12 +4,12 @@
 
     <p v-if="registrationDeadline && instanceStore.current?.registration_open"
        class="text-xs text-muted flex items-center gap-1 mb-4">
-      <ClockIcon class="w-3.5 h-3.5 flex-shrink-0" />
+      <ClockIcon class="w-3.5 h-3.5 shrink-0" />
       Anmeldeschluss: {{ formattedDeadline }}
     </p>
     <p v-else-if="registrationDeadline && !instanceStore.current?.registration_open"
        class="text-xs text-amber-600 flex items-center gap-1 mb-4">
-      <ClockIcon class="w-3.5 h-3.5 flex-shrink-0" />
+      <ClockIcon class="w-3.5 h-3.5 shrink-0" />
       Anmeldeschluss abgelaufen – neue Anmeldungen sind nicht mehr möglich
     </p>
     <div v-else class="mb-4" />
@@ -18,25 +18,25 @@
     <div v-if="loading" class="space-y-6">
       <div v-for="i in 2" :key="i" class="mb-2">
         <div class="sticky top-14 -mx-4 px-4 py-2 bg-bg-brand border-b border-sand">
-          <div class="h-3 w-28 bg-sand rounded animate-pulse" />
+          <div class="h-3 w-28 bg-sand rounded-sm animate-pulse" />
         </div>
         <div class="space-y-4 mt-3">
           <div v-for="j in 2" :key="j">
-            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-bg-brand">
+            <div class="sticky top-23 z-9 -mx-4 px-4 bg-bg-brand">
               <div class="rounded-t-md overflow-hidden border border-b-0 border-sand">
                 <div class="h-1 bg-sand" />
                 <div class="bg-soft px-4 py-2">
-                  <div class="h-3.5 w-36 bg-bg-warm rounded animate-pulse" />
+                  <div class="h-3.5 w-36 bg-bg-warm rounded-sm animate-pulse" />
                 </div>
               </div>
             </div>
             <div class="bg-soft rounded-b-md border border-t-0 border-sand p-4 space-y-2">
               <div v-for="k in 3" :key="k" class="rounded-xl border border-sand p-3 flex items-center justify-between gap-4">
                 <div class="flex-1 space-y-2">
-                  <div class="h-3.5 w-20 bg-bg-warm rounded animate-pulse" />
-                  <div class="h-2 w-32 bg-bg-warm rounded animate-pulse" />
+                  <div class="h-3.5 w-20 bg-bg-warm rounded-sm animate-pulse" />
+                  <div class="h-2 w-32 bg-bg-warm rounded-sm animate-pulse" />
                 </div>
-                <div class="h-8 w-20 bg-bg-warm rounded-lg animate-pulse flex-shrink-0" />
+                <div class="h-8 w-20 bg-bg-warm rounded-lg animate-pulse shrink-0" />
               </div>
             </div>
           </div>
@@ -54,7 +54,7 @@
         <div class="space-y-4 mt-3">
           <div v-for="standGroup in group.stands" :key="standGroup.stand_name">
             <!-- Sticky Kartenheader: Akzentstreifen + Standname integriert -->
-            <div class="sticky top-[5.75rem] z-[9] -mx-4 px-4 bg-bg-brand">
+            <div class="sticky top-23 z-9 -mx-4 px-4 bg-bg-brand">
               <div class="rounded-t-md overflow-hidden border border-b-0 border-sand">
                 <div class="h-1 transition-colors" :class="standGroup.allFull ? 'bg-sand' : 'bg-primary-500'" />
                 <div class="bg-soft px-4 py-2 flex items-center justify-between">
@@ -97,7 +97,7 @@
                       >{{ name }}</span>
                     </div>
                   </div>
-                  <div class="ml-4 flex-shrink-0">
+                  <div class="ml-4 shrink-0">
                     <span
                       v-if="!shift.is_registered && shift.is_full"
                       class="inline-flex items-center text-sm text-muted font-medium px-3 py-1.5 rounded-lg border border-sand bg-bg-brand cursor-not-allowed select-none"

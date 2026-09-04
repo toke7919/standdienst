@@ -11,7 +11,7 @@
         rel="noopener"
         class="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 hover:underline mt-1"
       >
-        <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5 flex-shrink-0" />
+        <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5 shrink-0" />
         {{ volunteerUrl }}
       </a>
 
@@ -60,13 +60,13 @@
 
         <!-- Instanz inaktiv -->
         <div v-if="instanceNotFound" class="rounded-xl text-sm text-red-800 bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-2 mb-4">
-          <ExclamationCircleIcon class="w-4 h-4 flex-shrink-0" />
+          <ExclamationCircleIcon class="w-4 h-4 shrink-0" />
           <span>Diese Instanz ist deaktiviert.</span>
         </div>
 
         <!-- Anmeldung gesperrt oder Anmeldeschluss abgelaufen -->
         <div v-else-if="instanceInfo?.site_locked || instanceInfo?.registration_open === false" class="rounded-xl text-sm text-amber-800 bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-2 mb-4">
-          <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0" />
+          <ExclamationTriangleIcon class="w-4 h-4 shrink-0" />
           <span>Die Anmeldung für Helfer ist derzeit geschlossen.</span>
         </div>
 
@@ -116,17 +116,17 @@
             <!-- Legend -->
             <div class="w-full space-y-1.5">
               <div class="flex items-center gap-2 text-xs">
-                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
                 <span class="text-muted flex-1">Vollbesetzt</span>
                 <span class="font-bold tabular-nums text-ink/80">{{ data.shifts_full }}</span>
               </div>
               <div class="flex items-center gap-2 text-xs">
-                <div class="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0" />
+                <div class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
                 <span class="text-muted flex-1">Teilbesetzt</span>
                 <span class="font-bold tabular-nums text-ink/80">{{ data.shifts_free - data.shifts_empty }}</span>
               </div>
               <div class="flex items-center gap-2 text-xs">
-                <div class="w-2.5 h-2.5 rounded-full bg-red-300 flex-shrink-0" />
+                <div class="w-2.5 h-2.5 rounded-full bg-red-300 shrink-0" />
                 <span class="text-muted flex-1">Leer</span>
                 <span class="font-bold tabular-nums" :class="data.shifts_empty > 0 ? 'text-red-500' : 'text-muted'">
                   {{ data.shifts_empty }}
@@ -203,7 +203,7 @@
 
             <!-- Freie Plätze sub-stat -->
             <div class="mt-auto pt-4 border-t border-sand flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                 <ClockIcon class="w-4 h-4 text-blue-500" />
               </div>
               <div>
@@ -226,7 +226,7 @@
                 <p class="text-2xl font-black tabular-nums text-ink">{{ data.volunteers }}</p>
                 <p class="text-sm text-muted mt-0.5">Helfer</p>
               </div>
-              <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
                 <UsersIcon class="w-5 h-5 text-blue-600" />
               </div>
             </div>
@@ -234,11 +234,11 @@
               v-if="data.volunteers_without_shift > 0"
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium"
             >
-              <ExclamationCircleIcon class="w-3 h-3 flex-shrink-0" />
+              <ExclamationCircleIcon class="w-3 h-3 shrink-0" />
               {{ data.volunteers_without_shift }} ohne Dienst
             </span>
             <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
-              <CheckCircleIcon class="w-3 h-3 flex-shrink-0" />
+              <CheckCircleIcon class="w-3 h-3 shrink-0" />
               Alle eingeteilt
             </span>
           </div>
@@ -250,7 +250,7 @@
                 <p class="text-2xl font-black tabular-nums text-ink">{{ data.registrations }}</p>
                 <p class="text-sm text-muted mt-0.5">Anmeldungen</p>
               </div>
-              <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
                 <ClipboardDocumentListIcon class="w-5 h-5 text-primary-600" />
               </div>
             </div>
@@ -268,7 +268,7 @@
 
           <!-- Leere Dienste – Alert-Karte -->
           <div
-            :class="['rounded-md shadow-sm border p-4 lg:p-6 transition-colors duration-300',
+            :class="['rounded-md shadow-xs border p-4 lg:p-6 transition-colors duration-300',
                      data.shifts_empty > 0 ? 'bg-red-50 border-red-200' : 'bg-soft border-sand']"
           >
             <div class="flex items-start justify-between mb-3">
@@ -280,7 +280,7 @@
                 <p class="text-sm text-muted mt-0.5">Dienste leer</p>
               </div>
               <div
-                class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                 :class="data.shifts_empty > 0 ? 'bg-red-100' : 'bg-emerald-100'"
               >
                 <ExclamationCircleIcon v-if="data.shifts_empty > 0" class="w-5 h-5 text-red-500" />
@@ -297,7 +297,7 @@
         </div>
 
         <!-- ── Auslastung je Termin ──────────────────────────────────── -->
-        <div v-if="data.dates_fill?.length" class="card overflow-hidden !p-0 mb-8">
+        <div v-if="data.dates_fill?.length" class="card overflow-hidden p-0! mb-8">
           <h2 class="text-base font-semibold text-ink px-4 pt-4 pb-3">Auslastung je Termin</h2>
           <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -423,7 +423,7 @@
         </div>
 
         <!-- ── Instanzübersicht ─────────────────────────────────────── -->
-        <div v-if="data.instances?.length" class="card overflow-hidden !p-0 mb-8">
+        <div v-if="data.instances?.length" class="card overflow-hidden p-0! mb-8">
           <h2 class="text-base font-semibold text-ink px-4 pt-4 pb-3">Instanzübersicht</h2>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -469,7 +469,7 @@
       </template>
 
       <!-- ── Letzte Aktivitäten (beide Dashboards) ──────────────────── -->
-      <div v-if="data.recent_activity?.length" class="card overflow-hidden !p-0">
+      <div v-if="data.recent_activity?.length" class="card overflow-hidden p-0!">
         <h2 class="text-base font-semibold text-ink px-4 pt-4 pb-3">Letzte Aktivitäten</h2>
 
         <!-- Mobile: gestapelte Liste (kein horizontales Overflow) -->
@@ -486,7 +486,7 @@
               </div>
               <p v-if="log.details" class="text-xs text-muted truncate">{{ log.details }}</p>
             </div>
-            <span class="text-xs text-sand flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
+            <span class="text-xs text-sand shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
           </div>
         </div>
 
@@ -498,7 +498,7 @@
               :key="log.id"
               class="border-t border-sand hover:bg-bg-warm"
             >
-              <td class="px-4 py-2.5 text-muted whitespace-nowrap text-xs w-32 flex-shrink-0">
+              <td class="px-4 py-2.5 text-muted whitespace-nowrap text-xs w-32 shrink-0">
                 {{ fmtTime(log.timestamp) }}
               </td>
               <td class="px-4 py-2.5">
@@ -520,10 +520,10 @@
         v-for="inst in auth.user.instances"
         :key="inst.id"
         :to="`/admin/${inst.slug}/dashboard`"
-        class="flex items-center justify-between rounded-md border border-sand bg-soft px-4 py-3 shadow-sm hover:bg-bg-warm transition-colors"
+        class="flex items-center justify-between rounded-md border border-sand bg-soft px-4 py-3 shadow-xs hover:bg-bg-warm transition-colors"
       >
         <span class="font-medium text-ink">{{ inst.name }}</span>
-        <ArrowTopRightOnSquareIcon class="w-4 h-4 text-muted flex-shrink-0" />
+        <ArrowTopRightOnSquareIcon class="w-4 h-4 text-muted shrink-0" />
       </RouterLink>
     </div>
     <div v-else class="text-center text-muted py-16">
@@ -815,7 +815,7 @@ const EventBadge = defineComponent({
       return h('span', {
         class: `inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}`,
       }, [
-        meta.icon ? h(meta.icon, { class: 'w-3 h-3 flex-shrink-0' }) : null,
+        meta.icon ? h(meta.icon, { class: 'w-3 h-3 shrink-0' }) : null,
         h('span', meta.label),
       ])
     }
@@ -833,7 +833,7 @@ const StatCard = defineComponent({
       amber:   'bg-amber-100 text-amber-600',
       red:     'bg-red-100 text-red-600',
     }
-    return () => h('div', { class: 'bg-soft rounded-md p-4 lg:p-6 shadow-sm border border-sand' }, [
+    return () => h('div', { class: 'bg-soft rounded-md p-4 lg:p-6 shadow-xs border border-sand' }, [
       h('div', { class: `w-9 h-9 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center mb-2 lg:mb-3 ${iconColors[props.color] || iconColors.blue}` }, [
         props.icon ? h(props.icon, { class: 'w-4 h-4 lg:w-5 lg:h-5' }) : null,
       ]),
@@ -861,6 +861,8 @@ function fillBadgeColor(rate) {
 </script>
 
 <style scoped>
+@reference '../../assets/main.css';
+
 .share-btn {
   @apply inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-sand bg-soft hover:bg-bg-warm transition-colors text-ink/70 cursor-pointer select-none;
 }
