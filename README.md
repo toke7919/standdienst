@@ -32,6 +32,8 @@ sudo bash install-docker.sh
 
 Das Skript fragt nach Web-Port und öffentlicher URL, legt eine `.env` mit zufälligem `SECRET_KEY` und `POSTGRES_PASSWORD` an und startet die Container. Installiert wird im aktuellen Verzeichnis, nichts wird nach `/opt` kopiert.
 
+Datenbank, Uploads, Backups und Logs liegen als Bind-Mounts unter `./data/`. Dieser Ordner wird von Updates nicht angefasst.
+
 Eigene Änderungen an der Compose-Konfiguration gehören in die dabei angelegte `docker-compose.override.yml`. Updates lassen diese Datei unberührt.
 
 ### Von Hand
@@ -85,8 +87,8 @@ docker compose up --build -d
 
 ```bash
 cd /pfad/zur/installation
-docker compose down -v      # -v löscht auch die Datenbank
-cd .. && rm -rf standdienst
+docker compose down
+cd .. && rm -rf standdienst   # enthält auch ./data/ mit der Datenbank
 ```
 
 ---
@@ -140,6 +142,7 @@ cd standdienst-frontend && npm run test
 standdienst-api/        Flask-REST-API (Gunicorn)
 standdienst-frontend/   Vue-3-SPA, Vite-Build nach standdienst-api/static/dist/
 docker-compose.yml      Container: db, redis, api, scheduler, frontend
+data/                   Laufzeitdaten (Postgres, Redis, Uploads, Backups, Logs)
 install-docker.sh       Installation
 update-docker.sh        Update auf das neueste Release
 ```

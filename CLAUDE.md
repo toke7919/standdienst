@@ -403,10 +403,18 @@ gh release create vX.Y.Z --title "vX.Y.Z – Kurzbeschreibung" --notes "..."
 
 ## Deployment (Produktion)
 
+### Bare-Metal
+
 - **Gunicorn**: gthread Worker, `CPU*2+1` Workers, 2 Threads, Port 8420
 - **Nginx**: Reverse Proxy auf 8420; `/static/` + `/uploads/` direkt serviert
 - **systemd**: `standdienst.service` (After: postgresql + redis-server)
 - **install.sh**: Port abfragen → Pakete → Venv → `.env` generieren → Migrations → Build → systemd/Nginx → verweist auf `/setup`
+
+### Docker
+
+- `install-docker.sh` / `update-docker.sh` laufen **im Installationsverzeichnis** (kein Pfad-Argument, kein `/opt`). `install-docker.sh` setzt einen git-Checkout voraus und installiert Docker aus dem offiziellen apt-Repo.
+- Laufzeitdaten als **Bind-Mounts unter `./data/`** (`postgres`, `redis`, `uploads`, `logs`, `backups`) – keine Named Volumes. `update-docker.sh` fasst `./data/` nie an und migriert einmalig aus alten Named Volumes (`_migrate_named_volumes`).
+- Der `api`-Container braucht `postgresql-client` (`pg_dump`/`psql` für Backup/Restore) – im Dockerfile installiert.
 
 ---
 

@@ -23,6 +23,8 @@ standdienst-api/logs/
 
 # Docker
 .env
+docker-compose.override.yml
+/data/
 
 # Superpowers-Planungsdateien (interne KI-Artefakte)
 docs/superpowers/plans/

@@ -54,6 +54,58 @@ print(ns.get('GITHUB_REPO',''))
 [ -n "$GITHUB_REPO" ] || die "GITHUB_REPO fehlt in $INSTALL_DIR/standdienst-api/version.py – Installation unvollständig."
 
 # ---------------------------------------------------------------------------
+# Einmalige Migration: benannte Volumes -> ./data/ (Bind-Mounts)
+# ---------------------------------------------------------------------------
+# Ältere Installationen nutzten benannte Docker-Volumes (<projekt>_pgdata usw.).
+# Diese Funktion übernimmt deren Inhalt einmalig nach ./data/, sobald die neue
+# docker-compose.yml (mit Bind-Mounts) in Kraft ist. Postgres bleibt auf der
+# gleichen Major-Version, daher ist die rohe Kopie des Datenverzeichnisses sicher.
+_migrate_named_volumes() {
+    # Schon migriert? (./data/postgres nicht leer)
+    [ -z "$(ls -A "$INSTALL_DIR/data/postgres" 2>/dev/null || true)" ] || return 0
+
+    local proj
+    proj="${COMPOSE_PROJECT_NAME:-$(basename "$INSTALL_DIR" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]//g')}"
+    if ! docker volume inspect "${proj}_pgdata" >/dev/null 2>&1; then
+        # Fallback: genau ein *_pgdata-Volume auf dem Host?
+        if [ "$(docker volume ls --format '{{.Name}}' | grep -cE '_pgdata$' || true)" = "1" ]; then
+            proj="$(docker volume ls --format '{{.Name}}' | grep -E '_pgdata$' | sed 's/_pgdata$//')"
+        else
+            return 0   # nichts zu migrieren
+        fi
+    fi
+    docker volume inspect "${proj}_pgdata" >/dev/null 2>&1 || return 0
+
+    section "Einmalige Datenmigration: benannte Volumes → ./data/"
+    warn "Gefunden: Volume-Satz '${proj}_*' – Inhalt wird nach ./data/ übernommen."
+
+    docker compose down 2>/dev/null || true
+    mkdir -p "$INSTALL_DIR"/data/postgres "$INSTALL_DIR"/data/redis \
+             "$INSTALL_DIR"/data/uploads "$INSTALL_DIR"/data/logs "$INSTALL_DIR"/data/backups
+
+    _copy_volume() {  # $1 = Volume-Suffix, $2 = Zielordner unter data/
+        local vol="${proj}_$1"
+        docker volume inspect "$vol" >/dev/null 2>&1 || return 0
+        if docker run --rm -v "$vol:/from:ro" -v "$INSTALL_DIR/data/$2:/to" alpine:3 \
+               sh -c 'cp -a /from/. /to/'; then
+            info "  $vol → data/$2"
+        else
+            die "Kopie von $vol nach data/$2 fehlgeschlagen – Update abgebrochen, Daten unverändert."
+        fi
+    }
+    # Redis (nur Rate-Limit-Cache + ALTCHA-Replay) wird bewusst nicht übernommen.
+    _copy_volume pgdata  postgres
+    _copy_volume uploads uploads
+    _copy_volume logs    logs
+    _copy_volume backups backups
+    chmod 700 "$INSTALL_DIR/data/postgres" 2>/dev/null || true
+
+    info "Migration abgeschlossen. Die alten Volumes bleiben vorerst erhalten."
+    info "Nach erfolgreichem Start entfernbar mit:"
+    info "  docker volume rm ${proj}_pgdata ${proj}_redisdata ${proj}_uploads ${proj}_logs ${proj}_backups"
+}
+
+# ---------------------------------------------------------------------------
 # Versions-Hilfsfunktionen
 # ---------------------------------------------------------------------------
 _current_version() {
@@ -217,15 +269,25 @@ if ! command -v rsync &>/dev/null; then
     warn "rsync nicht gefunden – wird installiert"
     apt-get update -qq && apt-get install -y -qq rsync
 fi
+# rsync betrifft nur standdienst-api/ und standdienst-frontend/. ./data/ (Bind-Mounts
+# für Datenbank, Uploads, Backups, Logs), .env und docker-compose.override.yml
+# liegen daneben und werden nie angefasst.
 rsync -a --delete "$EXTRACTED/standdienst-api/" "$INSTALL_DIR/standdienst-api/"
 rsync -a --delete "$EXTRACTED/standdienst-frontend/" "$INSTALL_DIR/standdienst-frontend/"
 cp "$EXTRACTED/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
-info "Quellcode aktualisiert (.env und docker-compose.override.yml unangetastet)"
+info "Quellcode aktualisiert (.env, docker-compose.override.yml und data/ unangetastet)"
+
+# ---------------------------------------------------------------------------
+# Datenmigration (nur beim ersten Update nach der Umstellung auf ./data/)
+# ---------------------------------------------------------------------------
+_migrate_named_volumes
 
 # ---------------------------------------------------------------------------
 # Container neu bauen und starten
 # ---------------------------------------------------------------------------
 section "Container neu bauen und starten"
+mkdir -p "$INSTALL_DIR"/data/postgres "$INSTALL_DIR"/data/redis \
+         "$INSTALL_DIR"/data/uploads "$INSTALL_DIR"/data/logs "$INSTALL_DIR"/data/backups
 docker compose build
 docker compose up -d
 

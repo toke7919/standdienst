@@ -185,6 +185,10 @@ fi
 # ---------------------------------------------------------------------------
 section "4/4  Container bauen und starten"
 cd "$INSTALL_DIR"
+
+# Datenverzeichnisse für die Bind-Mounts (Postgres/Redis chownen selbst beim Start).
+mkdir -p data/postgres data/redis data/uploads data/logs data/backups
+
 docker compose build
 info "Images gebaut"
 docker compose up -d
@@ -216,6 +220,7 @@ echo ""
 echo "  Installationspfad : ${INSTALL_DIR}"
 echo "  Erreichbar unter  : ${FRONTEND_URL}"
 echo "  Konfiguration     : ${INSTALL_DIR}/.env"
+echo "  Daten             : ${INSTALL_DIR}/data/  (Datenbank, Uploads, Backups)"
 echo "  Lokale Anpassungen: ${INSTALL_DIR}/docker-compose.override.yml"
 echo "  Update            : cd ${INSTALL_DIR} && sudo bash update-docker.sh"
 echo "  Logs              : docker compose logs -f"
