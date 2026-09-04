@@ -1,9 +1,8 @@
 services:
   db:
-    # postgres:16 bewusst gehalten – Major-Upgrade nicht datenverzeichnis-kompatibel,
-    # bestehende pgdata-Volumes würden nicht mehr starten. PG16 EOL Nov 2028.
-    # Beim Anheben: Migrationspfad in update-docker.sh (pg_dumpall/restore) oder
-    # pgautoupgrade-Image nötig.
+    # postgres:16 bewusst gehalten – ein Major-Upgrade ist nicht
+    # datenverzeichnis-kompatibel und bräuchte pg_upgrade bzw. dump/restore.
+    # PG16 EOL Nov 2028.
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -11,7 +10,7 @@ services:
       POSTGRES_USER: standdienst
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-standdienst}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U standdienst"]
       interval: 5s
@@ -22,7 +21,7 @@ services:
     image: redis:8-alpine
     restart: unless-stopped
     volumes:
-      - redisdata:/data
+      - ./data/redis:/data
 
   api:
     build:
@@ -37,9 +36,9 @@ services:
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
     volumes:
-      - uploads:/app/uploads
-      - logs:/app/logs
-      - backups:/app/backups
+      - ./data/uploads:/app/uploads
+      - ./data/logs:/app/logs
+      - ./data/backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
@@ -56,7 +55,7 @@ services:
       DATABASE_URL: postgresql://standdienst:${POSTGRES_PASSWORD:-standdienst}@db:5432/standdienst
       RATELIMIT_STORAGE_URI: redis://redis:6379/0
     volumes:
-      - logs:/app/logs
+      - ./data/logs:/app/logs
     depends_on:
       db:
         condition: service_healthy
@@ -89,10 +88,3 @@ services:
       VITE_API_BASE: http://api:8420
     profiles:
       - dev
-
-volumes:
-  pgdata:
-  redisdata:
-  uploads:
-  logs:
-  backups:

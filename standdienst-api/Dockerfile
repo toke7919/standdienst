@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 RUN apt-get update -qq && apt-get install -y -qq \
-    libpq-dev build-essential \
+    libpq-dev build-essential postgresql-client \
     libpangocairo-1.0-0 libpango-1.0-0 libglib2.0-0 \
     fonts-liberation fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
