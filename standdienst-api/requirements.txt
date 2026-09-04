@@ -170,7 +170,7 @@ tzdata==2026.3
     # via icalendar
 tzlocal==5.4.4
     # via apscheduler
-weasyprint==68.1
+weasyprint==69.0
     # via -r requirements.in
 webauthn==3.0.0
     # via -r requirements.in
