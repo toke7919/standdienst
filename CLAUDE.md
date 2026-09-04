@@ -415,3 +415,4 @@ gh release create vX.Y.Z --title "vX.Y.Z – Kurzbeschreibung" --notes "..."
 | Bereich | Problem | Schwere |
 |---------|---------|---------|
 | CSP | `style-src 'unsafe-inline'` nötig für Vue `:style`-Bindings und `colorPalette.js` (`element.style.setProperty`). `script-src 'self'` (kein `unsafe-inline`) ist gesetzt. | Niedrig |
+| Dependencies | Bewusst gehalten (Stand 2026-09, Begründung als Kommentar an der jeweiligen Stelle): `redis` Python-Client `<8` in `requirements.in` (`limits` pinnt so), `postgres:16-alpine` in `docker-compose.yml` (Major = kein Datenverzeichnis-Upgrade), `altcha` npm `^2` (v3 = Protokoll-Rewrite, keine CVE). | Niedrig |
