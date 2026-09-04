@@ -127,6 +127,12 @@ npm install
 npm run dev   # Vite-Dev-Server auf Port 5173, Proxy auf das Backend
 ```
 
+Alternativ komplett in Containern, mit Hot-Reload-Frontend auf Port 5173:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
 Tests:
 
 ```bash
@@ -142,6 +148,7 @@ cd standdienst-frontend && npm run test
 standdienst-api/        Flask-REST-API (Gunicorn)
 standdienst-frontend/   Vue-3-SPA, Vite-Build nach standdienst-api/static/dist/
 docker-compose.yml      Container: db, redis, api, scheduler, frontend
+docker-compose.dev.yml  Overlay für lokale Entwicklung (Vite-Hot-Reload)
 data/                   Laufzeitdaten (Postgres, Redis, Uploads, Backups, Logs)
 install-docker.sh       Installation
 update-docker.sh        Update auf das neueste Release

@@ -74,17 +74,3 @@ services:
       - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - api
-
-  # Dev-only: Vite-Frontend mit Hot-Reload
-  frontend-dev:
-    image: node:22-alpine
-    working_dir: /app
-    command: sh -c "npm install && npm run dev -- --host"
-    volumes:
-      - ./standdienst-frontend:/app
-    ports:
-      - "5173:5173"
-    environment:
-      VITE_API_BASE: http://api:8420
-    profiles:
-      - dev

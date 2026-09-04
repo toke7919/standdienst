@@ -20,6 +20,7 @@ standdienst-api/logs/
 
 # OS
 .DS_Store
+@eaDir/
 
 # Docker
 .env
