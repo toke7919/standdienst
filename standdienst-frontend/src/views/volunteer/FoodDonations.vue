@@ -4,11 +4,11 @@
 
     <!-- Skeleton -->
     <div v-if="!loaded" class="space-y-6">
-      <div v-for="i in 2" :key="i" class="card overflow-hidden !p-0">
+      <div v-for="i in 2" :key="i" class="card overflow-hidden p-0!">
         <div class="h-1 bg-sand rounded-t-md" />
         <div class="p-6 space-y-3">
-          <div class="h-4 w-40 bg-bg-warm rounded animate-pulse" />
-          <div class="h-3 w-56 bg-bg-warm rounded animate-pulse" />
+          <div class="h-4 w-40 bg-bg-warm rounded-sm animate-pulse" />
+          <div class="h-3 w-56 bg-bg-warm rounded-sm animate-pulse" />
           <div class="border-t border-sand my-1" />
           <div class="h-10 bg-bg-warm rounded-lg animate-pulse" />
           <div class="h-8 w-24 bg-bg-warm rounded-lg animate-pulse" />
@@ -21,7 +21,7 @@
     </p>
 
     <div v-else class="space-y-6">
-      <div v-for="t in combinedTypes" :key="t.id" class="card overflow-hidden !p-0">
+      <div v-for="t in combinedTypes" :key="t.id" class="card overflow-hidden p-0!">
         <!-- farbiger Streifen oben -->
         <div class="h-1 bg-primary-500 rounded-t-md" />
 
@@ -79,7 +79,7 @@
                 <p class="text-xs text-muted mt-0.5 truncate">{{ d.volunteer_name }}</p>
               </div>
               <button
-                class="flex-shrink-0 text-sand hover:text-red-500 transition-colors"
+                class="shrink-0 text-sand hover:text-red-500 transition-colors"
                 title="Entfernen"
                 @click="remove(d)"
               >
@@ -101,7 +101,7 @@
                 {{ t.otherDonations.length === 1 ? 'Eintragung' : 'Eintragungen' }}
               </span>
               <ChevronDownIcon
-                class="w-3.5 h-3.5 text-muted flex-shrink-0 transition-transform duration-200"
+                class="w-3.5 h-3.5 text-muted shrink-0 transition-transform duration-200"
                 :class="donationsOpen[t.id] ? '' : '-rotate-90'"
               />
             </button>

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <img src="/assets/mark-ticket.svg" alt="Standdienst" class="h-12 mx-auto mb-4 drop-shadow-lg" />

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 flex flex-col">
+  <div class="min-h-screen bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 flex flex-col">
 
     <!-- ===== HERO ===== -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center">
@@ -23,7 +23,7 @@
     </div>
 
     <!-- ===== FEATURES ===== -->
-    <div class="bg-white/5 backdrop-blur-sm border-t border-white/10">
+    <div class="bg-white/5 backdrop-blur-xs border-t border-white/10">
       <div class="max-w-5xl mx-auto px-6 py-16">
         <h2 class="text-center text-white/70 text-sm font-semibold uppercase tracking-widest mb-10">Was Standdienst bietet</h2>
 
@@ -100,9 +100,9 @@
               <p class="text-xs font-semibold text-muted uppercase tracking-widest mb-2">Letzte Aktivitäten</p>
               <div class="space-y-1.5">
                 <div v-for="(a, i) in mockActivity" :key="i" class="flex items-center gap-2 text-xs text-muted">
-                  <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" :class="a.color"></div>
+                  <div class="w-1.5 h-1.5 rounded-full shrink-0" :class="a.color"></div>
                   <span class="truncate">{{ a.text }}</span>
-                  <span class="ml-auto text-sand flex-shrink-0">{{ a.time }}</span>
+                  <span class="ml-auto text-sand shrink-0">{{ a.time }}</span>
                 </div>
               </div>
             </div>
@@ -126,7 +126,7 @@
                     <p class="text-sm font-semibold text-ink truncate">{{ s.stand }}</p>
                     <p class="text-xs text-muted">{{ s.time }} · {{ s.spots }} Plätze frei</p>
                   </div>
-                  <div class="flex-shrink-0">
+                  <div class="shrink-0">
                     <span v-if="s.registered"
                           class="text-xs font-medium text-primary-600 bg-primary-100 rounded-lg px-2 py-1">
                       Angemeldet
@@ -220,7 +220,7 @@ const FeatureCard = defineComponent({
     return () => h('div', {
       class: 'bg-white/10 border border-white/10 rounded-2xl p-5 flex flex-col gap-3',
     }, [
-      h('div', { class: 'w-10 h-10 bg-primary-700/60 rounded-xl flex items-center justify-center flex-shrink-0' }, [
+      h('div', { class: 'w-10 h-10 bg-primary-700/60 rounded-xl flex items-center justify-center shrink-0' }, [
         props.icon ? h(props.icon, { class: 'w-5 h-5 text-primary-200' }) : null,
       ]),
       h('div', {}, [

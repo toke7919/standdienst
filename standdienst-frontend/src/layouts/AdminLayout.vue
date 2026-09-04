@@ -8,16 +8,16 @@
           <img
             v-if="instanceInfo?.logo_filename"
             :src="`/uploads/${instanceInfo.logo_filename}`"
-            class="h-8 w-8 object-contain rounded-lg flex-shrink-0"
+            class="h-8 w-8 object-contain rounded-lg shrink-0"
             alt="Logo"
           />
-          <img v-else src="/assets/mark-ticket.svg" class="w-8 h-8 rounded-lg flex-shrink-0" alt="Standdienst" />
+          <img v-else src="/assets/mark-ticket.svg" class="w-8 h-8 rounded-lg shrink-0" alt="Standdienst" />
           <span class="font-semibold text-white truncate">{{ instanceInfo?.site_title || 'Standdienst' }}</span>
         </RouterLink>
       </div>
 
       <div v-if="auth.isLoggedIn" class="p-3 border-b border-white/10">
-        <select v-model="selectedSlug" class="w-full text-sm text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none" @change="onInstanceChange">
+        <select v-model="selectedSlug" class="w-full text-sm text-white bg-white/10 border border-white/20 rounded-lg px-3 py-2 cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-white/30 appearance-none" @change="onInstanceChange">
           <option value="" class="text-ink bg-soft">Plattform</option>
           <option v-for="inst in instances" :key="inst.id" :value="inst.slug" class="text-ink bg-soft">{{ inst.name }}</option>
         </select>
@@ -57,7 +57,7 @@
         <NavItem to="/admin/profile" :icon="UserCircleIcon">
           <span class="flex items-center gap-1.5">
             Profil
-            <span v-if="showSecurityHint" class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" title="Sicherheit einrichten" />
+            <span v-if="showSecurityHint" class="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Sicherheit einrichten" />
           </span>
         </NavItem>
         <button
@@ -76,10 +76,10 @@
         <img
           v-if="instanceInfo?.logo_filename"
           :src="`/uploads/${instanceInfo.logo_filename}`"
-          class="h-7 w-7 object-contain rounded-md flex-shrink-0"
+          class="h-7 w-7 object-contain rounded-md shrink-0"
           alt="Logo"
         />
-        <img v-else src="/favicon.svg" class="w-7 h-7 rounded-md flex-shrink-0" alt="Standdienst" />
+        <img v-else src="/favicon.svg" class="w-7 h-7 rounded-md shrink-0" alt="Standdienst" />
         <span class="font-semibold text-white text-sm truncate">
           {{ instanceInfo?.site_title || (mobileSlug ? (instances.find(i => i.slug === mobileSlug)?.name || mobileSlug) : 'Admin') }}
         </span>
@@ -88,7 +88,7 @@
       <select
         v-if="auth.isLoggedIn && instances.length > 1"
         v-model="selectedSlug"
-        class="text-xs border border-white/20 rounded-lg px-2 py-1.5 bg-white/10 text-white max-w-[9rem] flex-shrink-0 focus:outline-none"
+        class="text-xs border border-white/20 rounded-lg px-2 py-1.5 bg-white/10 text-white max-w-36 shrink-0 focus:outline-hidden"
         @change="onInstanceChange"
       >
         <option value="" class="text-ink bg-soft">Plattform</option>
@@ -103,7 +103,7 @@
     >
       <!-- Wartungsmodus-Banner -->
       <div v-if="setup.maintenanceMode" class="bg-amber-500 text-white text-xs font-medium text-center py-1.5 px-4 flex items-center justify-center gap-2">
-        <WrenchScrewdriverIcon class="w-3.5 h-3.5 flex-shrink-0" />
+        <WrenchScrewdriverIcon class="w-3.5 h-3.5 shrink-0" />
         Wartungsmodus aktiv – öffentliche Seiten zeigen die Wartungsseite
         <RouterLink to="/admin/update" class="underline ml-1 opacity-80 hover:opacity-100">Deaktivieren →</RouterLink>
       </div>
@@ -122,7 +122,7 @@
       class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-soft border-t border-sand"
       style="padding-bottom: env(safe-area-inset-bottom, 0px); transform: translateZ(0); -webkit-transform: translateZ(0)"
     >
-      <div class="flex items-stretch h-[4.25rem]">
+      <div class="flex items-stretch h-17">
         <!-- Dashboard -->
         <RouterLink
           :to="mobileSlug ? `/admin/${mobileSlug}/dashboard` : '/admin/dashboard'"
@@ -209,12 +209,12 @@
             style="padding-bottom: env(safe-area-inset-bottom, 0px)"
           >
             <!-- Header -->
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-sand flex-shrink-0">
+            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-sand shrink-0">
               <div class="min-w-0">
                 <p class="font-semibold text-ink truncate">{{ auth.user?.first_name || auth.user?.name || 'Administrator' }}</p>
                 <p class="text-xs text-muted truncate">{{ auth.user?.email }}</p>
               </div>
-              <button class="p-1.5 rounded-full hover:bg-bg-warm text-muted flex-shrink-0 ml-3" @click="moreOpen = false">
+              <button class="p-1.5 rounded-full hover:bg-bg-warm text-muted shrink-0 ml-3" @click="moreOpen = false">
                 <XMarkIcon class="w-5 h-5" />
               </button>
             </div>
@@ -259,7 +259,7 @@
                 <div class="grid grid-cols-3 gap-2">
                   <MoreTile to="/admin/profile" :icon="UserCircleIcon" @nav="moreOpen = false">Profil</MoreTile>
                   <button
-                    class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-bg-brand hover:bg-red-50 text-ink/80 hover:text-red-600 transition-colors active:scale-95 min-h-[4rem]"
+                    class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-bg-brand hover:bg-red-50 text-ink/80 hover:text-red-600 transition-colors active:scale-95 min-h-16"
                     @click="auth.logout"
                   >
                     <ArrowRightOnRectangleIcon class="w-6 h-6" />
@@ -277,11 +277,11 @@
     <!-- Sicherheitswarnung: weder 2FA noch Passkey konfiguriert -->
     <Teleport to="body">
       <Transition name="sheet">
-        <div v-if="showSecurityModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div v-if="showSecurityModal" class="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50" />
           <div class="relative bg-soft rounded-md shadow-2xl max-w-sm w-full p-6">
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                 <ExclamationTriangleIcon class="w-5 h-5 text-amber-600" />
               </div>
               <h2 class="text-base font-semibold text-ink">Konto nicht ausreichend gesichert</h2>
@@ -444,7 +444,7 @@ export const NavItem = defineComponent({
       to: props.to,
       class: 'flex items-center gap-2.5 px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white rounded-lg transition-colors [&.router-link-active]:bg-white/15 [&.router-link-active]:text-white [&.router-link-active]:font-semibold',
     }, () => [
-      props.icon ? h(props.icon, { class: 'w-4 h-4 flex-shrink-0' }) : null,
+      props.icon ? h(props.icon, { class: 'w-4 h-4 shrink-0' }) : null,
       slots.default?.(),
     ])
   },
@@ -457,7 +457,7 @@ export const MoreTile = defineComponent({
   setup(props, { slots, emit }) {
     return () => h(RouterLink, {
       to: props.to,
-      class: 'flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-bg-brand hover:bg-primary-50 text-ink/80 hover:text-primary-700 transition-colors active:scale-95 min-h-[4rem] [&.router-link-active]:bg-primary-50 [&.router-link-active]:text-primary-700',
+      class: 'flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-bg-brand hover:bg-primary-50 text-ink/80 hover:text-primary-700 transition-colors active:scale-95 min-h-16 [&.router-link-active]:bg-primary-50 [&.router-link-active]:text-primary-700',
       onClick: () => emit('nav'),
     }, () => [
       props.icon ? h(props.icon, { class: 'w-6 h-6' }) : null,

@@ -1,7 +1,7 @@
 <template>
   <!-- Instanz-Kontext: Branding wie Login/Register -->
-  <div v-if="slug" class="min-h-screen flex flex-col bg-gradient-to-b from-primary-800 to-primary-700">
-    <div class="flex-shrink-0 pt-16 pb-24 px-6 text-white text-center">
+  <div v-if="slug" class="min-h-screen flex flex-col bg-linear-to-b from-primary-800 to-primary-700">
+    <div class="shrink-0 pt-16 pb-24 px-6 text-white text-center">
       <img
         v-if="settings?.logo_filename"
         :src="`/uploads/${settings.logo_filename}`"
@@ -24,7 +24,7 @@
   </div>
 
   <!-- Plattform-Kontext / kein Slug: Layout wie Admin-Login -->
-  <div v-else class="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 py-16 px-4">
+  <div v-else class="min-h-screen bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 py-16 px-4">
     <div class="w-full max-w-2xl mx-auto">
       <div class="text-center mb-8">
         <img src="/assets/mark-ticket.svg" class="h-12 mx-auto mb-4 drop-shadow-lg" alt="Standdienst" />

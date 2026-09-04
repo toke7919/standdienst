@@ -28,7 +28,7 @@
               <span v-else class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Einladung ausstehend</span>
             </div>
           </div>
-          <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <div class="flex flex-col items-end gap-1.5 shrink-0">
             <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
             <button v-if="!o.has_login" class="text-xs text-amber-600 hover:underline" @click="resendInvite(o)">Einladung senden</button>
             <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
@@ -112,7 +112,7 @@
                 :value="inst.id"
                 v-model="form.instance_ids"
                 :id="`inst-${inst.id}`"
-                class="rounded"
+                class="rounded-sm"
                 @change="onInstanceToggle(inst.id)"
               />
               <label :for="`inst-${inst.id}`" class="flex-1 text-sm text-ink/80 cursor-pointer">
@@ -127,7 +127,7 @@
                   type="checkbox"
                   :value="inst.id"
                   v-model="form.instance_admin_ids"
-                  class="rounded"
+                  class="rounded-sm"
                 />
                 Instanz-Admin
               </label>

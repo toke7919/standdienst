@@ -8,7 +8,7 @@
         :class="colorClass(toast.type)"
         @click="ui.removeToast(toast.id)"
       >
-        <component :is="iconFor(toast.type)" class="w-5 h-5 flex-shrink-0 mt-0.5" />
+        <component :is="iconFor(toast.type)" class="w-5 h-5 shrink-0 mt-0.5" />
         <span>{{ toast.message }}</span>
       </div>
     </TransitionGroup>

@@ -48,10 +48,10 @@
       <h2 class="text-base font-semibold text-ink mb-3">Benachrichtigungen</h2>
       <div class="space-y-3">
         <label class="flex items-start gap-3 cursor-pointer">
-          <div class="relative flex-shrink-0 mt-0.5">
+          <div class="relative shrink-0 mt-0.5">
             <input type="checkbox" class="sr-only peer" v-model="form.email_confirmation_enabled" @change="saveEmailConfirmation" />
             <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
-            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4"></div>
           </div>
           <div>
             <span class="text-sm text-ink/80">Anmeldebestätigung per E-Mail</span>
@@ -59,10 +59,10 @@
           </div>
         </label>
         <label class="flex items-start gap-3 cursor-pointer">
-          <div class="relative flex-shrink-0 mt-0.5">
+          <div class="relative shrink-0 mt-0.5">
             <input type="checkbox" class="sr-only peer" v-model="form.notifications_enabled" @change="saveNotifications" />
             <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
-            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4"></div>
           </div>
           <div>
             <span class="text-sm text-ink/80">Erinnerungsmails aktivieren</span>

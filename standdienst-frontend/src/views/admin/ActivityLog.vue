@@ -5,7 +5,7 @@
     <!-- Filter-Leiste -->
     <div class="mb-3 flex flex-wrap gap-2 items-center">
       <!-- Instanz-Filter -->
-      <select v-model="selectedInstanceId" class="input text-xs py-1.5 max-w-[14rem]" @change="onFilterChange">
+      <select v-model="selectedInstanceId" class="input text-xs py-1.5 max-w-56" @change="onFilterChange">
         <option :value="null">Alle Instanzen</option>
         <option v-for="inst in instances" :key="inst.id" :value="inst.id">{{ inst.name }}</option>
       </select>
@@ -48,7 +48,7 @@
             <p v-if="log.ip_address" class="text-xs text-muted font-mono mt-0.5">{{ log.ip_address }}</p>
             <p v-if="log.details" class="text-xs text-muted truncate mt-0.5">{{ log.details }}</p>
           </div>
-          <span class="text-xs text-sand flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
+          <span class="text-xs text-sand shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
         </div>
         <div v-if="!logs.length" class="px-4 py-8 text-center text-muted text-sm">Keine Einträge</div>
       </div>
@@ -118,7 +118,7 @@ const EventBadge = defineComponent({
     return () => {
       const meta = EVENT_META[props.type] || { icon: null, label: props.type, color: 'bg-bg-brand text-ink/80' }
       return h('span', { class: `inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}` }, [
-        meta.icon ? h(meta.icon, { class: 'w-3 h-3 flex-shrink-0' }) : null,
+        meta.icon ? h(meta.icon, { class: 'w-3 h-3 shrink-0' }) : null,
         h('span', meta.label),
       ])
     }

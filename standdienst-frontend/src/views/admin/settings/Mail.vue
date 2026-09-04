@@ -78,7 +78,7 @@
             :key="mt.value"
             class="flex items-start gap-3 px-3 py-2.5 hover:bg-bg-warm cursor-pointer"
           >
-            <input type="checkbox" :value="mt.value" v-model="selectedTypes" class="mt-0.5 rounded" />
+            <input type="checkbox" :value="mt.value" v-model="selectedTypes" class="mt-0.5 rounded-sm" />
             <div class="min-w-0">
               <span class="text-sm font-medium text-ink">{{ mt.label }}</span>
               <span class="text-xs text-muted block">{{ mt.desc }}</span>

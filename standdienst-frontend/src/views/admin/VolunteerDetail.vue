@@ -25,7 +25,7 @@
               Registriert: {{ formatDate(volunteer.created_at) }}
             </p>
           </div>
-          <button class="btn-secondary text-sm flex-shrink-0" @click="openEdit">Bearbeiten</button>
+          <button class="btn-secondary text-sm shrink-0" @click="openEdit">Bearbeiten</button>
         </div>
         <div class="flex gap-4 mt-4 pt-4 border-t border-sand">
           <div class="text-center">
@@ -51,7 +51,7 @@
             <div v-for="r in volunteer.registrations" :key="r.id" class="px-4 py-3">
               <p class="font-medium text-sm text-ink">{{ r.stand }}</p>
               <p class="text-xs text-muted mt-0.5">{{ r.date }} · {{ r.time_range }}</p>
-              <span v-if="r.registered_by_admin" class="inline-block mt-1 text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Admin</span>
+              <span v-if="r.registered_by_admin" class="inline-block mt-1 text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded-sm">Admin</span>
             </div>
           </div>
           <!-- Desktop -->
@@ -72,7 +72,7 @@
                 <td class="px-4 py-3 text-ink/80 whitespace-nowrap">{{ r.time_range }}</td>
                 <td class="px-4 py-3 text-muted whitespace-nowrap">{{ formatDate(r.registered_at) }}</td>
                 <td class="px-4 py-3">
-                  <span v-if="r.registered_by_admin" class="text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Admin</span>
+                  <span v-if="r.registered_by_admin" class="text-xs text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded-sm">Admin</span>
                   <span v-else class="text-xs text-muted">Helfer</span>
                 </td>
               </tr>
@@ -122,7 +122,7 @@
               <p class="font-medium text-sm text-ink">{{ f.food_type }}</p>
               <p class="text-xs text-muted mt-0.5">{{ f.date }}</p>
               <p v-if="f.description" class="text-xs text-ink/80 mt-0.5">{{ f.description }}</p>
-              <span v-if="f.needs_refrigeration" class="inline-block mt-1 text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">Kühlung</span>
+              <span v-if="f.needs_refrigeration" class="inline-block mt-1 text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-sm">Kühlung</span>
             </div>
           </div>
           <!-- Desktop -->
@@ -141,7 +141,7 @@
                 <td class="px-4 py-3 font-medium text-ink">{{ f.food_type }}</td>
                 <td class="px-4 py-3 text-ink/80">{{ f.description || '—' }}</td>
                 <td class="px-4 py-3">
-                  <span v-if="f.needs_refrigeration" class="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">Ja</span>
+                  <span v-if="f.needs_refrigeration" class="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-sm">Ja</span>
                   <span v-else class="text-xs text-muted">Nein</span>
                 </td>
               </tr>

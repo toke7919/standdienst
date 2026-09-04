@@ -55,7 +55,7 @@
       <div class="card space-y-4">
         <h2 class="text-base font-semibold text-ink">Kontaktdaten Plattformbetreiber</h2>
         <p class="text-xs text-muted -mt-2" v-pre>
-          Diese Daten werden als Platzhalter <code class="bg-bg-brand px-1 rounded">{{organisation}}</code> usw. in die Vorlagen eingesetzt, wenn Impressum/Datenschutz ohne Instanz-Kontext (/impressum) aufgerufen wird.
+          Diese Daten werden als Platzhalter <code class="bg-bg-brand px-1 rounded-sm">{{organisation}}</code> usw. in die Vorlagen eingesetzt, wenn Impressum/Datenschutz ohne Instanz-Kontext (/impressum) aufgerufen wird.
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -85,12 +85,12 @@
           <div>
             <label class="label">Ansprechpartner</label>
             <input v-model="form.contact_asp" class="input" placeholder="Erika Musterfrau" />
-            <p class="text-xs text-muted mt-1" v-pre>Platzhalter <code class="bg-bg-brand px-1 rounded">{{asp}}</code></p>
+            <p class="text-xs text-muted mt-1" v-pre>Platzhalter <code class="bg-bg-brand px-1 rounded-sm">{{asp}}</code></p>
           </div>
           <div>
             <label class="label">E-Mail Ansprechpartner</label>
             <input v-model="form.contact_asp_email" class="input" type="email" placeholder="asp@beispiel.de" />
-            <p class="text-xs text-muted mt-1" v-pre>Platzhalter <code class="bg-bg-brand px-1 rounded">{{asp-email}}</code></p>
+            <p class="text-xs text-muted mt-1" v-pre>Platzhalter <code class="bg-bg-brand px-1 rounded-sm">{{asp-email}}</code></p>
           </div>
         </div>
       </div>
@@ -100,17 +100,17 @@
           <div>
             <h2 class="text-base font-semibold text-ink">Impressum-Vorlage (HTML)</h2>
             <p class="text-xs text-muted mt-0.5" v-pre>
-              Platzhalter: <code class="bg-bg-brand px-1 rounded">{{organisation}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{person}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{adresse}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{plz_ort}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{email}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{telefon}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{asp}}</code>
-              <code class="bg-bg-brand px-1 rounded ml-1">{{asp-email}}</code>
+              Platzhalter: <code class="bg-bg-brand px-1 rounded-sm">{{organisation}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{person}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{adresse}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{plz_ort}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{email}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{telefon}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{asp}}</code>
+              <code class="bg-bg-brand px-1 rounded-sm ml-1">{{asp-email}}</code>
             </p>
           </div>
-          <button type="button" class="btn-secondary text-xs py-1 px-2 flex-shrink-0"
+          <button type="button" class="btn-secondary text-xs py-1 px-2 shrink-0"
                   @click="form.impressum_template_html = impressumVorlage">
             Vorlage
           </button>
@@ -125,7 +125,7 @@
             <h2 class="text-base font-semibold text-ink">Datenschutz-Vorlage (HTML)</h2>
             <p class="text-xs text-muted mt-0.5">Gleiche Platzhalter wie Impressum-Vorlage.</p>
           </div>
-          <button type="button" class="btn-secondary text-xs py-1 px-2 flex-shrink-0"
+          <button type="button" class="btn-secondary text-xs py-1 px-2 shrink-0"
                   @click="form.datenschutz_template_html = datenschutzVorlage">
             Vorlage
           </button>

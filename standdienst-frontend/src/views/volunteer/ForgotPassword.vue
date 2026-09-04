@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-b from-primary-800 to-primary-700">
+  <div class="min-h-screen flex flex-col bg-linear-to-b from-primary-800 to-primary-700">
     <!-- Branding -->
-    <div class="flex-shrink-0 pt-16 pb-24 px-6 text-white text-center">
+    <div class="shrink-0 pt-16 pb-24 px-6 text-white text-center">
       <img
         v-if="settings?.logo_filename"
         :src="`/uploads/${settings.logo_filename}`"

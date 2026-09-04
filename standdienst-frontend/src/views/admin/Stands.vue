@@ -14,27 +14,27 @@
         @dragover.prevent="onDragOver(idx)"
         @drop.prevent="onDrop"
         @dragend="onDragEnd"
-        class="group bg-soft rounded-md border border-sand shadow-sm px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
+        class="group bg-soft rounded-md border border-sand shadow-xs px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
         :class="dragOver === idx ? 'border-primary-400 bg-primary-50/50' : ''"
       >
-        <div class="cursor-grab active:cursor-grabbing text-sand hover:text-muted flex-shrink-0 touch-none" title="Ziehen zum Sortieren">
+        <div class="cursor-grab active:cursor-grabbing text-sand hover:text-muted shrink-0 touch-none" title="Ziehen zum Sortieren">
           <Bars3Icon class="w-5 h-5" />
         </div>
-        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
           <BuildingStorefrontIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-semibold text-ink truncate">{{ stand.name }}</p>
           <p v-if="stand.description" class="text-sm text-muted mt-0.5 truncate">{{ stand.description }}</p>
         </div>
-        <div class="flex items-center gap-3 flex-shrink-0">
+        <div class="flex items-center gap-3 shrink-0">
           <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(stand)">Bearbeiten</button>
           <span class="text-sand">|</span>
           <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteStand(stand)">Löschen</button>
         </div>
       </div>
 
-      <div v-if="!stands.length" class="bg-soft rounded-md border border-sand shadow-sm py-16 text-center">
+      <div v-if="!stands.length" class="bg-soft rounded-md border border-sand shadow-xs py-16 text-center">
         <BuildingStorefrontIcon class="w-10 h-10 text-sand mx-auto mb-3" />
         <p class="text-muted text-sm">Noch keine Stände angelegt</p>
       </div>

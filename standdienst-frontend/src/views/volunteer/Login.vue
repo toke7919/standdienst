@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-dvh flex flex-col bg-gradient-to-b from-primary-800 via-primary-700 to-primary-600">
+  <div class="min-h-dvh flex flex-col bg-linear-to-b from-primary-800 via-primary-700 to-primary-600">
 
     <!-- Branding -->
-    <div class="flex-shrink-0 pt-14 pb-32 px-6 text-white text-center">
+    <div class="shrink-0 pt-14 pb-32 px-6 text-white text-center">
       <div class="mb-5">
         <img
           v-if="settings?.logo_filename"
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Card – überlappt den Branding-Bereich -->
-    <div class="flex-1 bg-soft rounded-t-[2rem] shadow-2xl -mt-20 overflow-y-auto">
+    <div class="flex-1 bg-soft rounded-t-4xl shadow-2xl -mt-20 overflow-y-auto">
       <div class="max-w-md mx-auto px-6 pt-8 pb-10">
 
         <!-- Instanz nicht gefunden -->

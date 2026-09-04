@@ -11,18 +11,18 @@
 
     <template v-else>
       <div class="space-y-4">
-        <div v-for="group in groupedShifts" :key="group.date_iso" class="card overflow-hidden !p-0">
+        <div v-for="group in groupedShifts" :key="group.date_iso" class="card overflow-hidden p-0!">
           <div class="h-1 bg-primary-500 rounded-t-md" />
           <div class="px-5 py-4 border-b border-sand flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <CalendarIcon class="w-5 h-5 text-primary-500 flex-shrink-0" />
+              <CalendarIcon class="w-5 h-5 text-primary-500 shrink-0" />
               <h2 class="font-semibold text-ink">{{ group.date }}</h2>
               <span
                 v-if="group.is_draft"
-                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+                class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-amber-100 text-amber-800"
               >Entwurf</span>
             </div>
-            <span class="text-xs text-muted flex-shrink-0">
+            <span class="text-xs text-muted shrink-0">
               {{ group.total }} {{ group.total === 1 ? 'Dienst' : 'Dienste' }}
             </span>
           </div>
@@ -30,7 +30,7 @@
           <div>
             <template v-for="sg in group.standGroups" :key="sg.stand_name">
               <div class="px-5 py-1.5 bg-bg-brand border-b border-sand flex items-center gap-2">
-                <BuildingStorefrontIcon class="w-3.5 h-3.5 text-muted flex-shrink-0" />
+                <BuildingStorefrontIcon class="w-3.5 h-3.5 text-muted shrink-0" />
                 <span class="text-xs font-semibold text-muted">{{ sg.stand_name }}</span>
               </div>
               <div
@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div v-if="!groupedShifts.length" class="bg-soft rounded-md border border-sand shadow-sm py-16 text-center">
+        <div v-if="!groupedShifts.length" class="bg-soft rounded-md border border-sand shadow-xs py-16 text-center">
           <ClockIcon class="w-10 h-10 text-sand mx-auto mb-3" />
           <p class="text-muted text-sm">Noch keine Dienste angelegt</p>
         </div>

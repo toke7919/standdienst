@@ -5,7 +5,7 @@
         type="checkbox"
         :checked="allSelected"
         :indeterminate.prop="someSelected && !allSelected"
-        class="rounded border-sand text-primary-600 focus:ring-primary-500"
+        class="rounded-sm border-sand text-primary-600 focus:ring-primary-500"
         @change="toggleAll"
       />
       <span class="text-sm font-semibold text-ink">Alle auswählen</span>
@@ -16,14 +16,14 @@
           :checked="modelValue.includes(d.id)"
           :value="d.id"
           type="checkbox"
-          class="rounded border-sand text-primary-600 focus:ring-primary-500"
+          class="rounded-sm border-sand text-primary-600 focus:ring-primary-500"
           @change="toggle(d.id, $event)"
         />
         <span class="text-sm text-ink">{{ d.formatted }}</span>
         <span v-if="d.label" class="text-xs text-muted">{{ d.label }}</span>
         <span
           v-if="d.is_draft"
-          class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800"
+          class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[11px] font-medium bg-amber-100 text-amber-800"
         >Entwurf</span>
       </label>
     </div>

@@ -32,7 +32,7 @@
             </div>
             <p v-if="log.details" class="text-xs text-muted truncate">{{ log.details }}</p>
           </div>
-          <span class="text-xs text-sand flex-shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
+          <span class="text-xs text-sand shrink-0 mt-0.5">{{ fmtTime(log.timestamp) }}</span>
         </div>
         <div v-if="!logs.length" class="px-4 py-8 text-center text-muted text-sm">Keine Einträge</div>
       </div>
@@ -90,7 +90,7 @@ const EventBadge = defineComponent({
     return () => {
       const meta = EVENT_META[props.type] || { icon: null, label: props.type, color: 'bg-bg-brand text-ink/80' }
       return h('span', { class: `inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}` }, [
-        meta.icon ? h(meta.icon, { class: 'w-3 h-3 flex-shrink-0' }) : null,
+        meta.icon ? h(meta.icon, { class: 'w-3 h-3 shrink-0' }) : null,
         h('span', meta.label),
       ])
     }

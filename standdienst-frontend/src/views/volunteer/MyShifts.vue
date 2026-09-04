@@ -11,14 +11,14 @@
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-6">
       <div v-for="i in 2" :key="i">
-        <div class="h-3 w-24 bg-sand rounded animate-pulse mb-2 mx-1" />
-        <div class="card overflow-hidden !p-0">
+        <div class="h-3 w-24 bg-sand rounded-sm animate-pulse mb-2 mx-1" />
+        <div class="card overflow-hidden p-0!">
           <div class="h-1 bg-sand rounded-t-md" />
           <div class="divide-y divide-sand">
             <div v-for="j in 3" :key="j" class="flex items-center justify-between px-4 py-3 gap-3">
               <div class="flex-1 space-y-1.5">
-                <div class="h-3.5 w-32 bg-bg-warm rounded animate-pulse" />
-                <div class="h-3 w-20 bg-bg-warm rounded animate-pulse" />
+                <div class="h-3.5 w-32 bg-bg-warm rounded-sm animate-pulse" />
+                <div class="h-3 w-20 bg-bg-warm rounded-sm animate-pulse" />
               </div>
               <div class="h-5 w-5 bg-bg-warm rounded-full animate-pulse" />
             </div>
@@ -32,7 +32,7 @@
       <div v-if="upcomingGroups.length" class="space-y-6">
         <div v-for="group in upcomingGroups" :key="group.date">
           <p class="text-xs font-bold uppercase tracking-wide text-muted mb-2 px-1">{{ group.date }}</p>
-          <div class="card overflow-hidden !p-0">
+          <div class="card overflow-hidden p-0!">
             <div class="h-1 bg-primary-500 rounded-t-md" />
             <div class="divide-y divide-sand">
               <div
@@ -45,7 +45,7 @@
                   <p class="text-xs text-muted mt-0.5">{{ reg.time_range }}</p>
                 </div>
                 <button
-                  class="flex-shrink-0 text-sand hover:text-red-500 transition-colors"
+                  class="shrink-0 text-sand hover:text-red-500 transition-colors"
                   title="Abmelden"
                   @click="cancel(reg)"
                 >
@@ -72,7 +72,7 @@
         <div v-if="showPast" class="space-y-4 opacity-50">
           <div v-for="group in pastGroups" :key="group.date">
             <p class="text-xs font-bold uppercase tracking-wide text-muted mb-2 px-1">{{ group.date }}</p>
-            <div class="card overflow-hidden !p-0">
+            <div class="card overflow-hidden p-0!">
               <div class="h-1 bg-sand rounded-t-md" />
               <div class="divide-y divide-sand">
                 <div

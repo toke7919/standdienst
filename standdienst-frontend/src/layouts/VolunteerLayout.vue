@@ -5,16 +5,16 @@
     :class="bottomPad"
   >
     <!-- ====== HEADER (fixed statt sticky – zuverlässiger auf iOS Safari) ====== -->
-    <header class="bg-primary-600 shadow-sm fixed top-0 inset-x-0 z-20">
+    <header class="bg-primary-600 shadow-xs fixed top-0 inset-x-0 z-20">
       <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <RouterLink :to="`/${slug}`" class="flex items-center gap-2 min-w-0">
           <img
             v-if="settings?.logo_filename"
             :src="`/uploads/${settings.logo_filename}`"
-            class="h-8 object-contain flex-shrink-0"
+            class="h-8 object-contain shrink-0"
             alt="Logo"
           />
-          <img v-else src="/assets/mark-ticket.svg" class="h-8 w-8 flex-shrink-0" alt="Standdienst" />
+          <img v-else src="/assets/mark-ticket.svg" class="h-8 w-8 shrink-0" alt="Standdienst" />
           <span class="font-semibold truncate" :class="headerTextClass">
             {{ settings?.site_title || 'Standdienst' }}
           </span>
@@ -39,7 +39,7 @@
     </header>
 
     <!-- Platzhalter für den fixed Header (h-14 = 3.5rem) -->
-    <div class="h-14 flex-shrink-0" />
+    <div class="h-14 shrink-0" />
 
     <!-- ====== MAIN CONTENT ====== -->
     <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-5">
@@ -58,15 +58,15 @@
       class="lg:hidden fixed bottom-0 inset-x-0 bg-soft border-t border-sand z-40"
       style="padding-bottom: env(safe-area-inset-bottom, 0px)"
     >
-      <div class="flex items-stretch h-[4.25rem]">
+      <div class="flex items-stretch h-17">
         <RouterLink
           v-for="link in bottomLinks"
           :key="link.to"
           :to="link.to"
           class="relative flex-1 flex flex-col items-center justify-center gap-1 text-muted [&.router-link-active]:text-primary-600 transition-all duration-150 active:scale-90"
         >
-          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 scale-x-0 [.router-link-active_&]:scale-x-100 transition-transform duration-200 origin-center" />
-          <component :is="link.icon" class="w-6 h-6 transition-transform duration-150 [.router-link-active_&]:scale-110" />
+          <span class="absolute top-0 inset-x-2 h-[3px] rounded-b-full bg-primary-600 scale-x-0 in-[.router-link-active]:scale-x-100 transition-transform duration-200 origin-center" />
+          <component :is="link.icon" class="w-6 h-6 transition-transform duration-150 in-[.router-link-active]:scale-110" />
           <span class="text-[0.65rem] font-medium leading-none">{{ link.label }}</span>
         </RouterLink>
       </div>

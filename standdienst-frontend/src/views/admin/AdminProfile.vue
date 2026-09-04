@@ -72,7 +72,7 @@
           class="flex items-center justify-between gap-3 cursor-pointer"
         >
           <span class="text-sm text-ink/80">{{ inst.name }}</span>
-          <div class="relative flex-shrink-0">
+          <div class="relative shrink-0">
             <input
               type="checkbox"
               class="sr-only peer"
@@ -80,7 +80,7 @@
               @change="toggleDigest(inst)"
             />
             <div class="w-10 h-6 bg-sand rounded-full peer-checked:bg-primary-600 transition-colors"></div>
-            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4"></div>
           </div>
         </label>
       </div>
@@ -113,7 +113,7 @@
           </div>
           <div>
             <p class="text-sm text-muted mb-1">Oder manuell eingeben:</p>
-            <code class="text-xs bg-bg-brand px-2 py-1 rounded font-mono">{{ twoFaSetupData.secret }}</code>
+            <code class="text-xs bg-bg-brand px-2 py-1 rounded-sm font-mono">{{ twoFaSetupData.secret }}</code>
           </div>
           <form @submit.prevent="confirm2fa" class="space-y-3">
             <div>
@@ -144,7 +144,7 @@
       <div v-if="showBackupCodesModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
         <div class="bg-soft rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
           <div class="flex items-start gap-3">
-            <div class="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+            <div class="shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
               <KeyIcon class="w-5 h-5 text-amber-600" />
             </div>
             <div>
@@ -170,7 +170,7 @@
           </div>
 
           <label class="flex items-start gap-2 cursor-pointer">
-            <input type="checkbox" v-model="codesAcknowledged" class="mt-0.5 rounded border-sand" />
+            <input type="checkbox" v-model="codesAcknowledged" class="mt-0.5 rounded-sm border-sand" />
             <span class="text-sm text-ink/80">Ich habe die Codes sicher gespeichert.</span>
           </label>
 
