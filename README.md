@@ -1,28 +1,28 @@
 # Standdienst
 
-Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden bei Veranstaltungen. Mehrere Organisationen (Instanzen) laufen auf einer gemeinsamen Installation mit eigenem Branding, Datenschutzerklärung und Daten.
+Webanwendung zur Verwaltung von Freiwilligendiensten und Essensspenden bei Veranstaltungen. Mehrere Organisationen (Instanzen) teilen sich eine Installation, jede mit eigenem Slug, Branding, Datenschutzerklärung und getrenntem Datenbestand.
 
 ---
 
-## Features
+## Funktionsumfang
 
-- **Schichtverwaltung** – Stände, Termine, Schichten anlegen; Helfer melden sich selbst an/ab
-- **Essensspenden** – Spendenarten pro Termin, Helfer tragen sich mit Beschreibung ein
-- **Multi-Instanz** – beliebig viele Organisationen auf einer Installation, je mit eigenem Slug + Logo
-- **Rollen** – Global-Admin, Instanz-Admin, Organisator, Volunteer (Self-Service)
-- **Export** – ODS/PDF Dienstplan als Stundenplan-Tabelle, Essensspenden-Listen, iCal
-- **Backup/Restore** – AES-256-GCM-verschlüsselte Backups, Download und Wiederherstellung über Web-UI
-- **E-Mail** – Anmeldebestätigung, Erinnerung (24 h vorher), Welcome-Link, Passwort-Reset
-- **2FA** – TOTP + Backup-Codes für Admins und Organisatoren
-- **Passkeys** – WebAuthn-Anmeldung für Admins und Organisatoren
-- **DSGVO** – Datenexport (Art. 20), Auskunft per Mail (Art. 15), Soft-Delete (Pseudonymisierung)
-- **CAPTCHA** – ALTCHA Proof-of-Work (serverside, keine externen Dienste)
+- Schichtplanung: Stände, Termine und Schichten anlegen, Helfer melden sich selbst an und ab
+- Essensspenden: Spendenarten je Termin, Helfer tragen ihren Beitrag ein
+- Rollen: Global-Admin, Instanz-Admin, Organisator, Helfer
+- Export als PDF, ODS und iCal (Dienstplan, Essensspenden)
+- Verschlüsselte Backups (AES-256-GCM), Download und Wiederherstellung über die Weboberfläche
+- E-Mail: Anmeldebestätigung, Erinnerung 24 Stunden vorher, Einladungs- und Reset-Links
+- Zwei-Faktor-Anmeldung (TOTP mit Backup-Codes) und Passkeys für Admins und Organisatoren
+- DSGVO: Datenexport, Auskunft per Mail, Soft-Delete mit Pseudonymisierung
+- CAPTCHA über ALTCHA, ohne externen Dienst
 
 ---
 
 ## Installation
 
-### Option A: Docker – vollautomatisch (empfohlen)
+Vorausgesetzt wird Debian 12 oder Ubuntu 22.04+ mit root-Zugriff. Docker samt Compose-Plugin installiert das Skript bei Bedarf aus dem offiziellen Docker-Repository.
+
+### Mit Skript
 
 ```bash
 git clone https://github.com/toke7919/standdienst.git
@@ -30,72 +30,50 @@ cd standdienst
 sudo bash install-docker.sh
 ```
 
-Installiert Docker (falls nötig, via offiziellem Docker-apt-Repo), fragt Web-Port und öffentliche URL ab, generiert `SECRET_KEY`/`POSTGRES_PASSWORD` automatisch und startet den Stack **im aktuellen Verzeichnis** (kein Kopieren nach `/opt`). Lokale Anpassungen an der `docker-compose.yml` gehören in die zusätzlich angelegte `docker-compose.override.yml` – die wird von Updates nie überschrieben.
+Das Skript fragt nach Web-Port und öffentlicher URL, legt eine `.env` mit zufälligem `SECRET_KEY` und `POSTGRES_PASSWORD` an und startet die Container. Installiert wird im aktuellen Verzeichnis, nichts wird nach `/opt` kopiert.
 
-Danach im Browser `<öffentliche URL>/setup` aufrufen und die Erstkonfiguration abschließen.
+Eigene Änderungen an der Compose-Konfiguration gehören in die dabei angelegte `docker-compose.override.yml`. Updates lassen diese Datei unberührt.
 
-**Voraussetzungen:** Debian 12 / Ubuntu 22.04+, Root-Zugriff
-
-### Option B: Docker – manuell
+### Von Hand
 
 ```bash
 git clone https://github.com/toke7919/standdienst.git
 cd standdienst
 cp .env.example .env
-# SECRET_KEY generieren und in .env eintragen:
 python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32))" >> .env
 docker compose up --build -d
 ```
 
-Danach im Browser `http://localhost/setup` aufrufen und die Erstkonfiguration abschließen.
+Docker und das Compose-Plugin (v2) müssen dafür bereits installiert sein.
 
-**Voraussetzungen:** Docker + Docker Compose v2
+### Erstkonfiguration
 
-**HTTPS** (mit Reverse Proxy davor):
-In `.env` setzen:
-```bash
+Nach dem Start `http://<öffentliche URL>/setup` im Browser aufrufen und den Assistenten durchlaufen: ersten Admin anlegen, Basis-URL setzen, optional SMTP hinterlegen.
+
+Hinter einem Reverse Proxy mit HTTPS gehört in die `.env`:
+
+```
 FRONTEND_URL=https://deine-domain.de
 SESSION_COOKIE_SECURE=true
-```
-
-### Option C: Bare-Metal (Debian/Ubuntu)
-
-```bash
-git clone https://github.com/toke7919/standdienst.git
-cd standdienst
-sudo bash install.sh
-```
-
-Das Skript fragt nach Installationspfad und Port, richtet PostgreSQL, Redis, Gunicorn (systemd) und Nginx ein. Am Ende öffnest du `/setup` im Browser und schließt die Erstkonfiguration ab.
-
-**Voraussetzungen:** Debian 12 / Ubuntu 22.04+, Root-Zugriff
-
-**HTTPS** (nach der Installation):
-```bash
-certbot --nginx -d <domain>
 ```
 
 ---
 
 ## Update
 
-```bash
-sudo bash update.sh          # interaktiv
-sudo bash update.sh --yes    # ohne Rückfragen
-sudo bash update.sh --check  # nur prüfen, nicht anwenden
-```
+Im Installationsverzeichnis ausführen:
 
-Das Update-Skript erstellt automatisch ein Backup vor dem Update.
-
-Bei Docker (mit `install-docker.sh` installiert) – im Installationsverzeichnis ausführen:
 ```bash
 cd /pfad/zur/installation
-sudo bash update-docker.sh          # interaktiv
-sudo bash update-docker.sh --yes    # ohne Rückfragen
-sudo bash update-docker.sh --check  # nur prüfen, nicht anwenden
+sudo bash update-docker.sh          # mit Rückfrage
+sudo bash update-docker.sh --yes    # ohne Rückfrage
+sudo bash update-docker.sh --check  # nur prüfen, nichts ändern
 ```
 
-Bei Docker (manuell installiert):
+Das Skript lädt das neueste Release, erstellt vorab ein Backup (sofern ein Backup-Passwort gesetzt ist), baut die Images neu und startet die Container. `.env` und `docker-compose.override.yml` bleiben unverändert.
+
+Bei einer Installation von Hand:
+
 ```bash
 git pull
 docker compose up --build -d
@@ -103,37 +81,32 @@ docker compose up --build -d
 
 ---
 
-## Backup & Restore
+## Deinstallation
 
-Backups werden im Admin-Bereich unter **Einstellungen → Backup** erstellt, heruntergeladen und wiederhergestellt. Das Format ist AES-256-GCM-verschlüsselt (`.sdbackup`).
+```bash
+cd /pfad/zur/installation
+docker compose down -v      # -v löscht auch die Datenbank
+cd .. && rm -rf standdienst
+```
 
 ---
 
-## Konfiguration
+## Backup und Wiederherstellung
 
-### Docker (`.env`)
+Backups werden im Admin-Bereich unter **Einstellungen → Backup** erstellt, heruntergeladen und wiederhergestellt. Die Dateien (`.sdbackup`) sind mit AES-256-GCM verschlüsselt; das Passwort wird dort einmalig gesetzt.
 
-| Variable | Pflicht | Beschreibung |
-|----------|---------|--------------|
-| `SECRET_KEY` | ✓ | Flask-Session + JWT (min. 32 Zeichen) |
-| `POSTGRES_PASSWORD` | – | Datenbankpasswort (Standard: `standdienst`) |
-| `FRONTEND_URL` | – | Öffentliche URL für E-Mail-Links (Standard: `http://localhost`) |
-| `FRONTEND_PORT` | – | Port des Frontend-Containers (Standard: `80`) |
-| `SESSION_COOKIE_SECURE` | – | `true` bei HTTPS (Standard: `false`) |
-| `COMPOSE_FILE` | – | Nur von `install-docker.sh` gesetzt: `docker-compose.yml:docker-compose.override.yml` |
+---
 
-### Bare-Metal (`standdienst-api/.env`)
+## Konfiguration (`.env`)
 
-| Variable | Pflicht | Beschreibung |
-|----------|---------|--------------|
-| `SECRET_KEY` | ✓ | Flask-Session + JWT (min. 32 Zeichen) |
-| `DATABASE_URL` | ✓ | `postgresql://user:pass@host:5432/dbname` |
-| `FRONTEND_URL` | – | Basis-URL für E-Mail-Links |
-| `RATELIMIT_STORAGE_URI` | – | Redis: `redis://127.0.0.1:6379/0` |
-| `FAIL2BAN_LOG` | – | Pfad für Login-Fail-Log (Standard: `logs/auth.log`) |
-| `SETUP_ALLOWED_IPS` | – | Kommagetrennte IPs für `/setup`; leer = alle erlaubt |
-| `ALTCHA_MAX_NUMBER` | – | CAPTCHA-Schwierigkeit (Standard: `100000`) |
-| `MAIL_SERVER` | – | SMTP-Host (alternativ über Web-UI konfigurierbar) |
+| Variable | Pflicht | Bedeutung |
+|----------|---------|-----------|
+| `SECRET_KEY` | ja | Schlüssel für Sessions und JWT, mindestens 32 Zeichen |
+| `POSTGRES_PASSWORD` | nein | Datenbankpasswort (Standard `standdienst`). PostgreSQL übernimmt den Wert nur bei der ersten Einrichtung des Datenverzeichnisses. Wird er später geändert, muss das Passwort auch in der laufenden Datenbank angepasst werden (`ALTER USER standdienst PASSWORD …`). |
+| `FRONTEND_URL` | nein | Öffentliche URL, wird für E-Mail-Links verwendet (Standard `http://localhost`) |
+| `FRONTEND_PORT` | nein | Host-Port des Frontend-Containers (Standard `80`) |
+| `SESSION_COOKIE_SECURE` | nein | `true`, sobald die Anwendung über HTTPS läuft (Standard `false`) |
+| `COMPOSE_FILE` | nein | Setzt `install-docker.sh` auf `docker-compose.yml:docker-compose.override.yml` |
 
 ---
 
@@ -146,36 +119,35 @@ export SECRET_KEY="dev-key-32bytes-minimum-!!!!!!" DATABASE_URL="sqlite:///dev.d
 .venv/bin/flask --app wsgi db upgrade
 .venv/bin/flask --app wsgi run --debug
 
-# Frontend (in separatem Terminal)
+# Frontend (zweites Terminal)
 cd standdienst-frontend
 npm install
-npm run dev   # Vite-Dev-Server mit Proxy auf Backend (Port 5173)
+npm run dev   # Vite-Dev-Server auf Port 5173, Proxy auf das Backend
 ```
 
 Tests:
+
 ```bash
-cd standdienst-api
-.venv/bin/pytest                          # alle Tests
-.venv/bin/pytest tests/test_roles.py -v   # einzelne Datei
+cd standdienst-api && .venv/bin/pytest
+cd standdienst-frontend && npm run test
 ```
 
 ---
 
-## Architektur
+## Aufbau
 
 ```
-standdienst-api/        Flask REST-API (Gunicorn, Port 8420)
-standdienst-frontend/   Vue 3 SPA (Vite-Build → api/static/dist/)
-docker-compose.yml      Docker-Setup (db, redis, api, scheduler, frontend)
-install.sh              Bare-Metal-Installationsskript
-update.sh               Update auf neues GitHub-Release
-uninstall.sh            Vollständige Deinstallation
+standdienst-api/        Flask-REST-API (Gunicorn)
+standdienst-frontend/   Vue-3-SPA, Vite-Build nach standdienst-api/static/dist/
+docker-compose.yml      Container: db, redis, api, scheduler, frontend
+install-docker.sh       Installation
+update-docker.sh        Update auf das neueste Release
 ```
 
-Die SPA wird als statische Dateien aus `standdienst-api/static/dist/` serviert. Im Docker-Setup übernimmt nginx (Port 80) das Routing; bei Bare-Metal leitet Nginx Port 80/443 an Gunicorn weiter.
+Die SPA wird als statische Dateien ausgeliefert. Im Container-Setup übernimmt nginx das Routing auf Port 80.
 
 ---
 
 ## Lizenz
 
-[GNU Affero General Public License v3.0](LICENSE) – Quellcode und Weiterentwicklung sind unter den Bedingungen der AGPLv3 erlaubt, einschließlich Netzwerknutzung (SaaS): Wer eine modifizierte Version über ein Netzwerk anbietet, muss den Quellcode der Änderungen offenlegen.
+[GNU Affero General Public License v3.0](LICENSE). Wer eine geänderte Fassung über ein Netzwerk anbietet, muss den Quellcode der Änderungen zugänglich machen.
