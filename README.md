@@ -25,11 +25,12 @@ Webbasierte Plattform zur Verwaltung von Freiwilligendiensten und Essensspenden 
 ### Option A: Docker – vollautomatisch (empfohlen)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/toke7919/standdienst/main/install-docker.sh -o install-docker.sh
+git clone https://github.com/toke7919/standdienst.git
+cd standdienst
 sudo bash install-docker.sh
 ```
 
-Installiert Docker (falls nötig), fragt Installationspfad, Web-Port und öffentliche URL ab, generiert `SECRET_KEY`/`POSTGRES_PASSWORD` automatisch und startet den Stack. Lokale Anpassungen an der `docker-compose.yml` gehören in die zusätzlich angelegte `docker-compose.override.yml` im Installationsverzeichnis (Standard: `/opt/standdienst-docker`) – die wird von Updates nie überschrieben.
+Installiert Docker (falls nötig, via offiziellem Docker-apt-Repo), fragt Web-Port und öffentliche URL ab, generiert `SECRET_KEY`/`POSTGRES_PASSWORD` automatisch und startet den Stack **im aktuellen Verzeichnis** (kein Kopieren nach `/opt`). Lokale Anpassungen an der `docker-compose.yml` gehören in die zusätzlich angelegte `docker-compose.override.yml` – die wird von Updates nie überschrieben.
 
 Danach im Browser `<öffentliche URL>/setup` aufrufen und die Erstkonfiguration abschließen.
 
@@ -86,9 +87,9 @@ sudo bash update.sh --check  # nur prüfen, nicht anwenden
 
 Das Update-Skript erstellt automatisch ein Backup vor dem Update.
 
-Bei Docker (mit `install-docker.sh` installiert):
+Bei Docker (mit `install-docker.sh` installiert) – im Installationsverzeichnis ausführen:
 ```bash
-cd /opt/standdienst-docker
+cd /pfad/zur/installation
 sudo bash update-docker.sh          # interaktiv
 sudo bash update-docker.sh --yes    # ohne Rückfragen
 sudo bash update-docker.sh --check  # nur prüfen, nicht anwenden
