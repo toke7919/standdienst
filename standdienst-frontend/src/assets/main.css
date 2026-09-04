@@ -3,12 +3,12 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-ink: rgb(var(--color-ink-rgb));
-  --color-muted: var(--color-muted);
-  --color-sand: var(--color-sand);
-  --color-bg-brand: var(--color-bg);
-  --color-bg-warm: var(--color-bg-warm);
-  --color-soft: var(--color-soft);
+  --color-ink: rgb(var(--sd-ink-rgb));
+  --color-muted: var(--sd-muted);
+  --color-sand: var(--sd-sand);
+  --color-bg-brand: var(--sd-bg);
+  --color-bg-warm: var(--sd-bg-warm);
+  --color-soft: var(--sd-soft);
 
   --color-primary-50: var(--primary-50);
   --color-primary-100: var(--primary-100);
@@ -144,7 +144,7 @@
 @layer base {
   body {
     @apply bg-bg-brand text-ink antialiased;
-    font-family: var(--font-body);
+    font-family: var(--sd-font-body);
     -webkit-text-size-adjust: 100%;
   }
 
