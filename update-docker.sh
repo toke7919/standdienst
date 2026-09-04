@@ -2,7 +2,9 @@
 # Update-Skript für die Docker-Compose-Installation von Standdienst.
 # Lädt das neueste GitHub-Release, aktualisiert nur den Quellcode
 # (nicht .env / docker-compose.override.yml), baut neu und startet neu.
-# Verwendung: sudo bash update-docker.sh [--check] [--yes] [Installationspfad]
+#
+# Im Installationsverzeichnis ausführen:
+#   cd /pfad/zur/installation && sudo bash update-docker.sh [--check] [--yes]
 #   --check   Nur prüfen, ob ein Update verfügbar ist – nichts verändern
 #   --yes     Keine Rückfragen, direkt anwenden
 set -euo pipefail
@@ -21,42 +23,24 @@ require_root() { [ "$(id -u)" -eq 0 ] || die "Bitte als root ausführen: sudo ba
 # ---------------------------------------------------------------------------
 CHECK_ONLY=false
 ASSUME_YES=false
-INSTALL_DIR=""
 
 for arg in "$@"; do
     case "$arg" in
         --check) CHECK_ONLY=true ;;
         --yes|-y) ASSUME_YES=true ;;
-        -*) die "Unbekannte Option: $arg" ;;
-        *) INSTALL_DIR="$arg" ;;
+        *) die "Unbekannte Option: $arg – das Skript arbeitet immer im aktuellen Verzeichnis, kein Pfad-Argument." ;;
     esac
 done
 
 require_root
 
-# Standard-Installationsverzeichnis bestimmen. install-docker.sh legt dieses
-# Skript als <INSTALL_DIR>/update-docker.sh ab, daher ist das eigene
-# Skriptverzeichnis der zuverlässigste Default – unabhängig davon, welchen
-# Pfad der Nutzer bei der Installation gewählt hat.
-# Priorität: explizites Argument > Skriptverzeichnis (falls Installation) > Legacy-Default.
-SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-if [ -z "$INSTALL_DIR" ]; then
-    if [ -f "$SCRIPT_DIR/docker-compose.yml" ] && [ -f "$SCRIPT_DIR/.env" ]; then
-        INSTALL_DIR="$SCRIPT_DIR"
-    else
-        INSTALL_DIR="/opt/standdienst-docker"
-    fi
-fi
-INSTALL_DIR="${INSTALL_DIR%/}"
+# Immer das aktuelle Verzeichnis. Bitte vorher ins Installationsverzeichnis wechseln.
+INSTALL_DIR="$(pwd)"
 
-[ -d "$INSTALL_DIR" ] || die "Installationsverzeichnis nicht gefunden: $INSTALL_DIR – Pfad explizit angeben: sudo bash update-docker.sh /pfad/zur/installation"
-[ -f "$INSTALL_DIR/.env" ] || die ".env nicht gefunden: $INSTALL_DIR/.env"
-[ -f "$INSTALL_DIR/docker-compose.yml" ] || die "docker-compose.yml nicht gefunden: $INSTALL_DIR/docker-compose.yml"
-[ -f "$INSTALL_DIR/standdienst-api/version.py" ] || die "version.py nicht gefunden – kein gültiges Standdienst-Docker-Verzeichnis"
-
-# Absoluten Pfad auflösen, damit spätere Aufrufe (z.B. nach dem cd weiter unten)
-# nicht versehentlich relativ zum neuen Arbeitsverzeichnis interpretiert werden.
-INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd)"
+_wrong_dir_hint="bitte ins Standdienst-Installationsverzeichnis wechseln (cd /pfad/zur/installation) und erneut ausführen"
+[ -f "$INSTALL_DIR/.env" ] || die ".env nicht gefunden – $_wrong_dir_hint."
+[ -f "$INSTALL_DIR/docker-compose.yml" ] || die "docker-compose.yml nicht gefunden – $_wrong_dir_hint."
+[ -f "$INSTALL_DIR/standdienst-api/version.py" ] || die "standdienst-api/version.py nicht gefunden – $_wrong_dir_hint."
 
 # shellcheck source=/dev/null
 set -o allexport; source "$INSTALL_DIR/.env"; set +o allexport
