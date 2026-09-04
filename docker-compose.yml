@@ -1,5 +1,9 @@
 services:
   db:
+    # postgres:16 bewusst gehalten – Major-Upgrade nicht datenverzeichnis-kompatibel,
+    # bestehende pgdata-Volumes würden nicht mehr starten. PG16 EOL Nov 2028.
+    # Beim Anheben: Migrationspfad in update-docker.sh (pg_dumpall/restore) oder
+    # pgautoupgrade-Image nötig.
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
