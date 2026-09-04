@@ -1,0 +1,20 @@
+# Nur für die lokale Entwicklung. Ergänzt den Stack aus docker-compose.yml um
+# einen Vite-Dev-Server mit Hot-Reload (Port 5173), der gegen den api-Container
+# proxyt. Der reguläre frontend-Container (nginx, gebautes SPA) läuft daneben
+# weiter – bei Bedarf mit `--scale frontend=0` abschalten.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  frontend-dev:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host"
+    volumes:
+      - ./standdienst-frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE: http://api:8420
+    depends_on:
+      - api
