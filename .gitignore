@@ -27,10 +27,7 @@ standdienst-api/logs/
 docker-compose.override.yml
 /data/
 
-# Superpowers-Planungsdateien (interne KI-Artefakte)
 docs/superpowers/plans/
 .superpowers/
 .worktrees/
-
-# KI-Regelwerk – nur noch lokal, nicht im Repo
 CLAUDE.md
