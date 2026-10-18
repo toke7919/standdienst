@@ -2,16 +2,18 @@
 
 Webanwendung zur Verwaltung von Freiwilligendiensten und Essensspenden bei Veranstaltungen. Mehrere Organisationen (Instanzen) teilen sich eine Installation, jede mit eigenem Slug, Branding, Datenschutzerklärung und getrenntem Datenbestand.
 
+Gedacht für Vereine, Feste und Märkte: Helfer tragen sich selbst in Schichten ein und melden Kuchen- oder Salatspenden an, die Organisatoren behalten im Admin-Bereich den Überblick.
+
 ---
 
 ## Funktionsumfang
 
-- Schichtplanung: Stände, Termine und Schichten anlegen, Helfer melden sich selbst an und ab
-- Essensspenden: Spendenarten je Termin, Helfer tragen ihren Beitrag ein
+- Schichtplanung: Stände, Termine und Schichten anlegen, Helfer melden sich selbst an und ab (mit Abmeldefrist und Schutz vor Überbuchung und Zeitüberschneidung)
+- Essensspenden: Spendenarten je Termin mit Lieferzeit und -ort, Helfer tragen ihren Beitrag ein
 - Rollen: Global-Admin, Instanz-Admin, Organisator, Helfer
-- Export als PDF, ODS und iCal (Dienstplan, Essensspenden)
+- Export als PDF, ODS, CSV und iCal (Dienstplan, Essensspenden, Helferliste); Schicht-Import aus CSV, XLSX und ODS
 - Verschlüsselte Backups (AES-256-GCM), Download und Wiederherstellung über die Weboberfläche
-- E-Mail: Anmeldebestätigung, Erinnerung 24 Stunden vorher, Einladungs- und Reset-Links
+- E-Mail: Anmeldebestätigung, Erinnerung am Vortag, tägliche Übersicht für Organisatoren, Einladungs- und Reset-Links
 - Zwei-Faktor-Anmeldung (TOTP mit Backup-Codes) und Passkeys für Admins und Organisatoren
 - DSGVO: Datenexport, Auskunft per Mail, Soft-Delete mit Pseudonymisierung
 - CAPTCHA über ALTCHA, ohne externen Dienst
