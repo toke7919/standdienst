@@ -27,7 +27,7 @@
           </div>
           <div class="flex flex-col items-end gap-1.5 shrink-0">
             <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
-            <button class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
+            <button v-if="isInstanceAdmin" class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
           </div>
         </div>
         <div v-if="!sortedVolunteers.length" class="px-4 py-8 text-center text-muted text-sm">Keine Helfer</div>
@@ -59,7 +59,7 @@
             <td class="px-4 py-3 text-right text-ink/80 tabular-nums">{{ v.food_count ?? 0 }}</td>
             <td class="px-4 py-3 text-right space-x-2">
               <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
-              <button class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
+              <button v-if="isInstanceAdmin" class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
             </td>
           </tr>
         </tbody>
@@ -85,8 +85,11 @@
           <input v-model="form.email" type="email" class="input" />
         </div>
         <div v-if="!editing">
-          <label class="label">Passwort</label>
-          <input v-model="form.password" type="password" class="input" placeholder="Leer lassen = Willkommens-E-Mail" />
+          <!-- Passwort setzen nur für Instanz-Admins / globale Admins -->
+          <template v-if="isInstanceAdmin">
+            <label class="label">Passwort</label>
+            <input v-model="form.password" type="password" class="input" placeholder="Leer lassen = Willkommens-E-Mail" />
+          </template>
           <p v-if="form.email && !form.password" class="text-xs text-muted mt-1">
             Helfer erhält eine Willkommens-E-Mail zum Einrichten des Passworts.
           </p>
@@ -98,7 +101,7 @@
         </div>
 
         <!-- DSGVO-Aktionen (nur für Instanz-Admins / globale Admins) -->
-        <template v-if="editing && (auth.isAdmin || auth.isInstanceAdminFor(route.params.slug))">
+        <template v-if="editing && isInstanceAdmin">
           <hr class="border-sand" />
           <div class="space-y-2">
             <p class="text-xs font-semibold text-muted uppercase tracking-wide">DSGVO</p>
@@ -130,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
@@ -156,6 +159,7 @@ const editing = ref(null)
 const { sortKey: localSortKey, sortDir: localSortDir, sorted: sortedVolunteers, toggleSort: toggleLocalSort } = useSort(volunteers, 'name')
 const form = ref({ first_name: '', last_name: '', email: '', password: '' })
 const saveError = ref('')
+const isInstanceAdmin = computed(() => auth.isInstanceAdminFor(route.params.slug))
 
 onMounted(load)
 watch(search, () => { page.value = 1; load() })

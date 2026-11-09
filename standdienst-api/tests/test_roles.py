@@ -24,7 +24,7 @@ def test_instance_admin_can_update_settings(client, instance, instance_admin_use
 
 
 # ---------------------------------------------------------------------------
-# Einfacher Organisator – kann Site Settings NICHT bearbeiten
+# Einfacher Organisator – darf nur den Bereich „Funktionen“ der Site Settings bearbeiten
 # ---------------------------------------------------------------------------
 
 def test_organizer_cannot_update_settings(client, instance, organizer_user):
@@ -35,10 +35,52 @@ def test_organizer_cannot_update_settings(client, instance, organizer_user):
     assert rv.status_code == 403
 
 
-def test_organizer_cannot_read_settings(client, instance, organizer_user):
+def test_organizer_can_read_settings(client, instance, organizer_user):
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
     rv = client.get(f'/api/admin/{instance.slug}/settings')
+    assert rv.status_code == 200
+
+
+def test_organizer_can_update_function_settings(client, instance, organizer_user):
+    _assign(organizer_user, instance)
+    _login(client, organizer_user.email)
+    rv = client.put(f'/api/admin/{instance.slug}/settings', json={
+        'shifts_enabled': False,
+        'food_donations_enabled': False,
+        'site_locked': True,
+        'lock_message': 'Gesperrt',
+        'registration_deadline': '2027-01-01T12:00:00',
+        'unregister_deadline_hours': 24,
+    })
+    assert rv.status_code == 200
+    data = rv.get_json()['data']
+    assert data['shifts_enabled'] is False
+    assert data['site_locked'] is True
+    assert data['unregister_deadline_hours'] == 24
+
+
+def test_organizer_cannot_mix_general_into_function_settings(client, instance, organizer_user):
+    _assign(organizer_user, instance)
+    _login(client, organizer_user.email)
+    rv = client.put(f'/api/admin/{instance.slug}/settings',
+                    json={'site_locked': True, 'primary_color': '#000000'})
+    assert rv.status_code == 403
+    rv = client.get(f'/api/admin/{instance.slug}/settings')
+    assert rv.get_json()['data']['site_locked'] is False
+
+
+def test_organizer_cannot_upload_logo(client, instance, organizer_user):
+    _assign(organizer_user, instance)
+    _login(client, organizer_user.email)
+    rv = client.delete(f'/api/admin/{instance.slug}/settings/logo')
+    assert rv.status_code == 403
+
+
+def test_organizer_of_other_instance_cannot_update_function_settings(client, instance, other_instance, organizer_user):
+    _assign(organizer_user, other_instance)
+    _login(client, organizer_user.email)
+    rv = client.put(f'/api/admin/{instance.slug}/settings', json={'site_locked': True})
     assert rv.status_code == 403
 
 

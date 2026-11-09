@@ -13,7 +13,7 @@ from ...schemas.instance import (
     MailSettingsSchema, MailSettingsUpdateSchema,
 )
 from ...schemas.settings import SiteSettingsSchema, SiteSettingsUpdateSchema
-from ...utils.auth import require_admin, require_instance_admin
+from ...utils.auth import require_admin, require_staff, require_instance_admin, is_instance_admin
 from ...utils.sanitizer import sanitize_html
 from ...utils.responses import ok, error, optimistic_lock_conflict
 from ...utils.mail import send_mail, is_mail_configured, apply_db_mail_config, get_platform_logo_for_email
@@ -28,22 +28,30 @@ _mail_update = MailSettingsUpdateSchema()
 
 _ALLOWED_LOGO = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+# Bereich „Funktionen“ – auch für Organisatoren ohne Instanz-Admin-Recht änderbar
+_FUNCTION_KEYS = {
+    'shifts_enabled', 'food_donations_enabled', 'site_locked', 'lock_message',
+    'registration_deadline', 'unregister_deadline_hours',
+}
+
 
 @admin_bp.route('/<slug>/settings', methods=['GET'])
-@require_instance_admin
+@require_staff
 def get_site_settings(slug):
     settings = db.first_or_404(select(SiteSettings).filter_by(instance_id=g.instance.id))
     return ok(_site_schema.dump(settings))
 
 
 @admin_bp.route('/<slug>/settings', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_site_settings(slug):
     raw = request.get_json() or {}
     try:
         data = _site_update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
+    if not is_instance_admin() and set(data) - _FUNCTION_KEYS:
+        return error('Instanz-Admin-Berechtigung erforderlich', 403)
 
     settings = db.first_or_404(select(SiteSettings).filter_by(instance_id=g.instance.id))
 

@@ -6,7 +6,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import Volunteer, ActivityLog, GlobalSettings, SiteSettings, Registration, FoodDonation
 from ...schemas.volunteer import VolunteerSchema, VolunteerCreateSchema, VolunteerUpdateSchema
-from ...utils.auth import require_admin, require_staff, require_instance_admin, validate_password_strength
+from ...utils.auth import require_admin, require_staff, require_instance_admin, is_instance_admin, validate_password_strength
 from ...utils.mail import is_mail_configured, send_mail, get_effective_logo_for_email, build_welcome_email, build_daten_auskunft_email
 from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination, optimistic_lock_conflict
 
@@ -58,12 +58,14 @@ def list_volunteers(slug):
 
 
 @admin_bp.route('/<slug>/volunteers', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_volunteer(slug):
     try:
         data = _create.load(request.get_json() or {})
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
+    if data.get('password') and not is_instance_admin():
+        return error('Passwort setzen erfordert Instanz-Admin-Berechtigung', 403)
 
     email = (data.get('email') or '').strip().lower() or None
     if email and db.session.scalars(select(Volunteer).filter_by(instance_id=g.instance.id, email=email)).first():
@@ -147,7 +149,7 @@ def get_volunteer_detail(slug, volunteer_id):
 
 
 @admin_bp.route('/<slug>/volunteers/<int:volunteer_id>', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_volunteer(slug, volunteer_id):
     volunteer = _get_or_404(volunteer_id, g.instance.id)
     raw = request.get_json() or {}
@@ -155,6 +157,8 @@ def update_volunteer(slug, volunteer_id):
         data = _update.load(raw)
     except ValidationError as e:
         return error('Validierungsfehler', 422, e.messages)
+    if data.get('password') and not is_instance_admin():
+        return error('Passwort setzen erfordert Instanz-Admin-Berechtigung', 403)
 
     if optimistic_lock_conflict(volunteer, raw.get('updated_at')):
         return error('Datensatz wurde zwischenzeitlich geändert', 409)
