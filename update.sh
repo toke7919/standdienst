@@ -42,6 +42,10 @@ SERVICE_USER="standdienst"
 DB_NAME="standdienst"
 
 [ -d "$INSTALL_DIR" ] || die "Installationsverzeichnis nicht gefunden: $INSTALL_DIR"
+# Docker-Installation (git-Checkout mit docker-compose.yml) wird über update-docker.sh aktualisiert
+if [ -f "$INSTALL_DIR/docker-compose.yml" ] && [ -f "$INSTALL_DIR/standdienst-api/version.py" ]; then
+    die "Docker-Installation erkannt ($INSTALL_DIR) – bitte stattdessen ausführen: cd $INSTALL_DIR && ./update-docker.sh"
+fi
 [ -f "$INSTALL_DIR/.env" ] || die ".env nicht gefunden: $INSTALL_DIR/.env"
 [ -f "$INSTALL_DIR/version.py" ] || die "version.py nicht gefunden – kein gültiges Standdienst-Verzeichnis"
 
