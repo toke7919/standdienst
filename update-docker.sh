@@ -345,7 +345,10 @@ _migrate_named_volumes
 section "Container neu bauen und starten"
 mkdir -p "$INSTALL_DIR"/data/postgres "$INSTALL_DIR"/data/redis \
          "$INSTALL_DIR"/data/uploads "$INSTALL_DIR"/data/logs "$INSTALL_DIR"/data/backups
-docker compose build
+# --pull: aktuelle Basis-Images (python/node/nginx) inkl. Betriebssystem-Sicherheitsupdates
+docker compose build --pull
+# Fertige Images (postgres, redis) auf den neuesten Stand ihres Tags bringen (kein Major-Wechsel)
+docker compose pull db redis
 docker compose up -d
 
 info "Warte auf Bereitschaft (bis zu 30s)..."
