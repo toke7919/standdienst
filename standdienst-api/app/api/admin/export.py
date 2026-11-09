@@ -73,10 +73,25 @@ def _pdf_branding() -> dict:
     '''
     html = (
         f'<div class="pdf-brand">'
-        f'{logo_tag}Erstellt mit <strong>Standdienst</strong>'
+        f'{logo_tag}Erstellt mit <strong>Standdienst</strong>{_pdf_platform_link()}'
         f'</div>'
     )
     return {'css': css, 'html': html}
+
+
+def _pdf_platform_link() -> str:
+    """Plattform-Adresse als Link für den PDF-Footer; leer, wenn keine Basis-URL konfiguriert ist."""
+    from ..public import _base_url
+    try:
+        url = _base_url()
+    except RuntimeError as e:
+        current_app.logger.warning('PDF-Footer ohne Plattform-Adresse: %s', e)
+        return ''
+    label = url.split('://', 1)[-1]
+    return (
+        f' · <a href="{_html.escape(url)}" style="color:#ffffff;text-decoration:none;">'
+        f'{_html.escape(label)}</a>'
+    )
 
 
 def _build_dienste_pdf_html(days: dict, color: str, brand: dict, instance_name: str,
