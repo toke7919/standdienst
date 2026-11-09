@@ -163,6 +163,42 @@ _latest_release() {
 }
 
 # ---------------------------------------------------------------------------
+# Wartungsmodus (Besucher sehen während des Updates die Wartungsseite)
+# ---------------------------------------------------------------------------
+# Setzt GlobalSettings.maintenance_mode direkt in der DB – funktioniert mit jeder
+# Version im api-Container, unabhängig davon, von welcher Version aus aktualisiert wird.
+_set_maintenance() {  # $1 = True | False
+    docker compose exec -T -e MAINTENANCE="$1" api python3 - <<'PYEOF'
+import os
+from wsgi import app
+with app.app_context():
+    from app.extensions import db
+    from app.models import GlobalSettings
+    gs = GlobalSettings.query.first()
+    if gs is None:
+        raise SystemExit('GlobalSettings nicht gefunden')
+    gs.maintenance_mode = os.environ['MAINTENANCE'] == 'True'
+    db.session.commit()
+PYEOF
+}
+
+MAINTENANCE_ON=false
+TMPDIR_UPDATE=""
+
+# Bei jedem Ende (auch Abbruch): Temp-Verzeichnis löschen und Wartungsmodus wieder ausschalten
+_cleanup() {
+    [ -n "$TMPDIR_UPDATE" ] && rm -rf "$TMPDIR_UPDATE"
+    if $MAINTENANCE_ON; then
+        if _set_maintenance False >/dev/null 2>&1; then
+            warn "Update abgebrochen – Wartungsmodus wieder ausgeschaltet"
+        else
+            warn "Wartungsmodus konnte nicht ausgeschaltet werden – bitte manuell: Admin → Update → Wartungsmodus deaktivieren"
+        fi
+    fi
+}
+trap _cleanup EXIT
+
+# ---------------------------------------------------------------------------
 # Banner
 # ---------------------------------------------------------------------------
 clear
@@ -228,6 +264,17 @@ fi
 cd "$INSTALL_DIR"
 
 # ---------------------------------------------------------------------------
+# Wartungsmodus einschalten
+# ---------------------------------------------------------------------------
+section "Wartungsmodus einschalten"
+if MAINT_OUT="$(_set_maintenance True 2>&1)"; then
+    MAINTENANCE_ON=true
+    info "Wartungsmodus aktiv – Besucher sehen die Wartungsseite"
+else
+    warn "Wartungsmodus konnte nicht eingeschaltet werden – Update wird trotzdem fortgesetzt: $MAINT_OUT"
+fi
+
+# ---------------------------------------------------------------------------
 # Backup erstellen
 # ---------------------------------------------------------------------------
 section "Backup erstellen"
@@ -254,7 +301,6 @@ fi
 # ---------------------------------------------------------------------------
 section "Release herunterladen"
 TMPDIR_UPDATE="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_UPDATE"' EXIT
 curl -fsSL -o "$TMPDIR_UPDATE/release.tar.gz" "$TARBALL_URL"
 tar -xzf "$TMPDIR_UPDATE/release.tar.gz" -C "$TMPDIR_UPDATE"
 EXTRACTED="$(find "$TMPDIR_UPDATE" -mindepth 1 -maxdepth 1 -type d | head -1)"
@@ -276,6 +322,17 @@ rsync -a --delete "$EXTRACTED/standdienst-api/" "$INSTALL_DIR/standdienst-api/"
 rsync -a --delete "$EXTRACTED/standdienst-frontend/" "$INSTALL_DIR/standdienst-frontend/"
 cp "$EXTRACTED/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
 info "Quellcode aktualisiert (.env, docker-compose.override.yml und data/ unangetastet)"
+
+# Skripte im Installationsverzeichnis (update-docker.sh, update.sh, …) mitaktualisieren.
+# Neue Datei schreiben + mv ersetzt nur den Verzeichniseintrag – die laufende Shell
+# liest dieses Skript unverändert aus der alten Datei zu Ende.
+for script in "$EXTRACTED"/*.sh; do
+    [ -f "$script" ] || continue
+    name="$(basename "$script")"
+    install -m 755 "$script" "$INSTALL_DIR/.$name.new"
+    mv -f "$INSTALL_DIR/.$name.new" "$INSTALL_DIR/$name"
+done
+info "Skripte aktualisiert"
 
 # ---------------------------------------------------------------------------
 # Datenmigration (nur beim ersten Update nach der Umstellung auf ./data/)
@@ -305,6 +362,13 @@ if [ "$READY" = true ]; then
     info "Anwendung ist erreichbar (http://localhost:${FRONTEND_PORT}/api/setup/status)"
 else
     die "Anwendung antwortet nach 30s nicht – bitte 'docker compose logs api -n 50' und 'docker compose logs frontend -n 50' prüfen"
+fi
+
+if $MAINTENANCE_ON; then
+    MAINT_OUT="$(_set_maintenance False 2>&1)" \
+        || die "Wartungsmodus konnte nicht ausgeschaltet werden: $MAINT_OUT"
+    MAINTENANCE_ON=false
+    info "Wartungsmodus beendet – Anwendung wieder für alle erreichbar"
 fi
 
 # ---------------------------------------------------------------------------

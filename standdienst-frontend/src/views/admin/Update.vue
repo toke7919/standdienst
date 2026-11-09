@@ -9,7 +9,7 @@
           <p class="font-medium text-ink text-sm">Wartungsmodus</p>
           <p class="text-xs text-muted mt-0.5">
             {{ setup.maintenanceMode
-              ? 'Aktiv – alle öffentlichen Seiten zeigen die Wartungsseite.'
+              ? 'Aktiv – alle sehen die Wartungsseite, nur Global-Admins erreichen den Admin-Bereich.'
               : 'Inaktiv – Anwendung läuft normal.' }}
           </p>
         </div>

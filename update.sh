@@ -137,6 +137,44 @@ _latest_release() {
 }
 
 # ---------------------------------------------------------------------------
+# Wartungsmodus (Besucher sehen während des Updates die Wartungsseite)
+# ---------------------------------------------------------------------------
+# Setzt GlobalSettings.maintenance_mode direkt in der DB – funktioniert mit jeder
+# installierten Version, unabhängig davon, von welcher Version aus aktualisiert wird.
+_set_maintenance() {  # $1 = True | False
+    MAINTENANCE="$1" "${INSTALL_DIR}/.venv/bin/python3" - <<PYEOF
+import os, sys
+os.chdir('${INSTALL_DIR}')
+sys.path.insert(0, '${INSTALL_DIR}')
+from wsgi import app
+with app.app_context():
+    from app.extensions import db
+    from app.models import GlobalSettings
+    gs = GlobalSettings.query.first()
+    if gs is None:
+        raise SystemExit('GlobalSettings nicht gefunden')
+    gs.maintenance_mode = os.environ['MAINTENANCE'] == 'True'
+    db.session.commit()
+PYEOF
+}
+
+MAINTENANCE_ON=false
+TMPDIR_UPDATE=""
+
+# Bei jedem Ende (auch Abbruch): Temp-Verzeichnis löschen und Wartungsmodus wieder ausschalten
+_cleanup() {
+    [ -n "$TMPDIR_UPDATE" ] && rm -rf "$TMPDIR_UPDATE"
+    if $MAINTENANCE_ON; then
+        if _set_maintenance False >/dev/null 2>&1; then
+            warn "Update abgebrochen – Wartungsmodus wieder ausgeschaltet"
+        else
+            warn "Wartungsmodus konnte nicht ausgeschaltet werden – bitte manuell: Admin → Update → Wartungsmodus deaktivieren"
+        fi
+    fi
+}
+trap _cleanup EXIT
+
+# ---------------------------------------------------------------------------
 # Banner
 # ---------------------------------------------------------------------------
 clear
@@ -201,6 +239,17 @@ if ! $ASSUME_YES; then
 fi
 
 # ---------------------------------------------------------------------------
+# Wartungsmodus einschalten
+# ---------------------------------------------------------------------------
+section "Wartungsmodus einschalten"
+if MAINT_OUT="$(_set_maintenance True 2>&1)"; then
+    MAINTENANCE_ON=true
+    info "Wartungsmodus aktiv – Besucher sehen die Wartungsseite"
+else
+    warn "Wartungsmodus konnte nicht eingeschaltet werden – Update wird trotzdem fortgesetzt: $MAINT_OUT"
+fi
+
+# ---------------------------------------------------------------------------
 # Backup erstellen (.sdbackup via Python-Backend)
 # ---------------------------------------------------------------------------
 section "Backup erstellen"
@@ -237,7 +286,6 @@ fi
 # ---------------------------------------------------------------------------
 section "Release herunterladen"
 TMPDIR_UPDATE="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_UPDATE"' EXIT
 
 TAR_PATH="$TMPDIR_UPDATE/release.tar.gz"
 curl -fsSL -o "$TAR_PATH" "$TARBALL_URL"
@@ -312,6 +360,13 @@ if systemctl is-active --quiet standdienst; then
     info "standdienst.service läuft"
 else
     die "standdienst.service konnte nicht gestartet werden – bitte 'journalctl -u standdienst -n 50' prüfen"
+fi
+
+if $MAINTENANCE_ON; then
+    MAINT_OUT="$(_set_maintenance False 2>&1)" \
+        || die "Wartungsmodus konnte nicht ausgeschaltet werden: $MAINT_OUT"
+    MAINTENANCE_ON=false
+    info "Wartungsmodus beendet – Anwendung wieder für alle erreichbar"
 fi
 
 # ---------------------------------------------------------------------------
