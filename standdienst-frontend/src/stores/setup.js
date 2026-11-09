@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { setupApi } from '@/api/setup'
+import { isApiUnavailable } from '@/utils/maintenance'
 
 export const useSetupStore = defineStore('setup', () => {
   const complete = ref(null) // null=unbekannt, true/false=geprüft
@@ -12,8 +13,9 @@ export const useSetupStore = defineStore('setup', () => {
       const res = await setupApi.status()
       complete.value = res.data.data.setup_complete
       maintenanceMode.value = res.data.data.maintenance_mode ?? false
-    } catch {
+    } catch (err) {
       complete.value = true // Im Fehlerfall nicht blockieren
+      if (isApiUnavailable(err)) maintenanceMode.value = true
     }
     return complete.value
   }

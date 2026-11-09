@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isApiUnavailable } from '@/utils/maintenance'
 
 const client = axios.create({
   baseURL: '/api',
@@ -41,6 +42,9 @@ client.interceptors.response.use(
         window.dispatchEvent(new CustomEvent('auth:logout'))
         return Promise.reject(err)
       }
+    }
+    if (isApiUnavailable(err)) {
+      window.dispatchEvent(new CustomEvent('api:unavailable'))
     }
     return Promise.reject(err)
   }

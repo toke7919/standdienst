@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSetupStore } from '@/stores/setup'
 import { resetTheme } from '@/utils/colorPalette'
+import { mayBypassMaintenance } from '@/utils/maintenance'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -146,9 +147,13 @@ router.beforeEach(async (to) => {
   // Alle anderen Seiten: Setup muss zuerst abgeschlossen sein
   if (!setupDone) return '/setup'
 
-  // Wartungsmodus: Nicht-Admin-Routen auf /maintenance umleiten
-  if (setup.maintenanceMode && !to.path.startsWith('/admin') && !to.meta.maintenance) {
-    return '/maintenance'
+  // Wartungsmodus: alles auf /maintenance umleiten – außer Admin-Login und Admin-Bereich für Global-Admins
+  if (setup.maintenanceMode && !to.meta.maintenance) {
+    const auth = useAuthStore()
+    if (to.path.startsWith('/admin') && !auth.isLoggedIn) await auth.fetchMe()
+    if (!mayBypassMaintenance(to.path, auth.isAdmin)) {
+      return { path: '/maintenance', query: { redirect: to.fullPath } }
+    }
   }
   if (!setup.maintenanceMode && to.meta.maintenance) {
     return '/'
