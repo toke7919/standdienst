@@ -36,7 +36,7 @@
           <NavItem :to="`/admin/${selectedSlug}/food`" :icon="ShoppingBagIcon">Essensspenden</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/export`" :icon="ArrowDownTrayIcon">Export</NavItem>
           <NavItem :to="`/admin/${selectedSlug}/import`" :icon="ArrowUpTrayIcon">Import</NavItem>
-          <NavItem v-if="auth.isInstanceAdminFor(selectedSlug)" :to="`/admin/${selectedSlug}/settings`" :icon="CogIcon">Einstellungen</NavItem>
+          <NavItem :to="`/admin/${selectedSlug}/settings`" :icon="CogIcon">Einstellungen</NavItem>
           <NavItem v-if="auth.isInstanceAdminFor(selectedSlug)" :to="`/admin/${selectedSlug}/activity`" :icon="DocumentTextIcon">Protokoll</NavItem>
         </template>
 
@@ -234,7 +234,7 @@
                     <MoreTile :to="`/admin/${mobileSlug}/food`" :icon="ShoppingBagIcon" @nav="moreOpen = false">Essen</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/export`" :icon="ArrowDownTrayIcon" @nav="moreOpen = false">Export</MoreTile>
                     <MoreTile :to="`/admin/${mobileSlug}/import`" :icon="ArrowUpTrayIcon" @nav="moreOpen = false">Import</MoreTile>
-                    <MoreTile v-if="auth.isInstanceAdminFor(mobileSlug)" :to="`/admin/${mobileSlug}/settings`" :icon="CogIcon" @nav="moreOpen = false">Einst.</MoreTile>
+                    <MoreTile :to="`/admin/${mobileSlug}/settings`" :icon="CogIcon" @nav="moreOpen = false">Einst.</MoreTile>
                     <MoreTile v-if="auth.isInstanceAdminFor(mobileSlug)" :to="`/admin/${mobileSlug}/activity`" :icon="DocumentTextIcon" @nav="moreOpen = false">Protokoll</MoreTile>
                   </div>
                 </div>

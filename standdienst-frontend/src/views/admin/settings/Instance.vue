@@ -5,7 +5,8 @@
     <div v-if="loading" class="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
 
     <form v-else @submit.prevent="save" class="space-y-6 max-w-2xl">
-      <div class="card space-y-4">
+      <!-- Allgemein: nur für Instanz-Admins / globale Admins -->
+      <div v-if="isInstanceAdmin" class="card space-y-4">
         <h2 class="text-base font-semibold text-ink">Allgemein</h2>
         <div><label class="label">Seitentitel</label><input v-model="form.site_title" class="input" required /></div>
         <div>
@@ -83,7 +84,7 @@
           <LoadingSpinner v-if="saving" size="sm" />
           Speichern
         </button>
-        <button type="button" class="btn-secondary text-sm" :disabled="saving || resetting" @click="resetSettings">
+        <button v-if="isInstanceAdmin" type="button" class="btn-secondary text-sm" :disabled="saving || resetting" @click="resetSettings">
           <LoadingSpinner v-if="resetting" size="sm" />
           Einstellungen zurücksetzen
         </button>
@@ -109,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
@@ -129,6 +130,21 @@ const resetting = ref(false)
 const saveError = ref('')
 const form = ref({})
 
+const isInstanceAdmin = computed(() => auth.isInstanceAdminFor(route.params.slug))
+
+// Bereich „Funktionen“ – Organisatoren ohne Instanz-Admin-Recht dürfen nur diese Felder senden
+const FUNCTION_KEYS = [
+  'shifts_enabled', 'food_donations_enabled', 'site_locked', 'lock_message',
+  'registration_deadline', 'unregister_deadline_hours',
+]
+
+function savePayload() {
+  if (isInstanceAdmin.value) return form.value
+  const payload = { updated_at: form.value.updated_at }
+  for (const key of FUNCTION_KEYS) payload[key] = form.value[key]
+  return payload
+}
+
 const lockTemplate = 'Die Anmeldung ist derzeit geschlossen. Bitte versuche es später erneut oder wende dich an den Veranstalter.'
 
 onMounted(async () => {
@@ -144,7 +160,7 @@ async function save() {
   saving.value = true
   saveError.value = ''
   try {
-    const res = await adminApi.updateSiteSettings(route.params.slug, form.value)
+    const res = await adminApi.updateSiteSettings(route.params.slug, savePayload())
     form.value.updated_at = res.data.data.updated_at
     instanceStore.invalidateCache()
     if (form.value.primary_color) applyTheme(form.value.primary_color)

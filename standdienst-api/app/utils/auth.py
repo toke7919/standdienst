@@ -109,6 +109,11 @@ def require_instance_admin(fn):
     return wrapper
 
 
+def is_instance_admin() -> bool:
+    """Innerhalb von @require_staff: True für Global-Admins und Instanz-Admins von g.instance."""
+    return g.role == 'admin' or g.current_user.is_admin_for(g.instance.id)
+
+
 def require_volunteer(fn):
     """Volunteer der richtigen Instanz (kein Soft-Delete)."""
     @wraps(fn)
