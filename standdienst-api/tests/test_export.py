@@ -400,15 +400,15 @@ def test_pdf_branding_shows_platform_url_as_link(app, instance):
     assert '>standdienst.example.de</a>' in html
 
 
-def test_pdf_branding_falls_back_to_frontend_url(app, instance):
-    app.config['FRONTEND_URL'] = 'http://localhost:5173'
+def test_pdf_branding_falls_back_to_frontend_url(app, instance, monkeypatch):
+    monkeypatch.setitem(app.config, 'FRONTEND_URL', 'http://localhost:5173')
     html = _branding_html(app, instance)
     assert '<a href="http://localhost:5173"' in html
     assert '>localhost:5173</a>' in html
 
 
-def test_pdf_branding_without_url_still_renders(app, instance):
-    app.config['FRONTEND_URL'] = ''
+def test_pdf_branding_without_url_still_renders(app, instance, monkeypatch):
+    monkeypatch.setitem(app.config, 'FRONTEND_URL', '')
     html = _branding_html(app, instance)
     assert 'Erstellt mit <strong>Standdienst</strong>' in html
     assert '<a ' not in html
