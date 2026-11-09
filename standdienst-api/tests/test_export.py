@@ -373,3 +373,54 @@ def test_pdf_branding_disabled_returns_empty(app, instance):
         _g.instance = instance
         result = _pdf_branding()
     assert result == {'css': '', 'html': ''}
+
+
+# ---------------------------------------------------------------------------
+# _pdf_branding – Plattform-Adresse als Link im Footer
+# ---------------------------------------------------------------------------
+
+def _branding_html(app, instance):
+    from flask import g as _g
+    with app.test_request_context():
+        _g.instance = instance
+        return _pdf_branding()['html']
+
+
+def test_pdf_branding_shows_platform_url_as_link(app, instance):
+    from app.models import GlobalSettings
+    from app.utils.settings_cache import invalidate_global
+    gs = _db.session.query(GlobalSettings).first() or GlobalSettings()
+    gs.base_url = 'https://standdienst.example.de/'
+    _db.session.add(gs)
+    _db.session.commit()
+    invalidate_global()
+    html = _branding_html(app, instance)
+    assert 'Erstellt mit <strong>Standdienst</strong>' in html
+    assert '<a href="https://standdienst.example.de"' in html
+    assert '>standdienst.example.de</a>' in html
+
+
+def test_pdf_branding_falls_back_to_frontend_url(app, instance):
+    app.config['FRONTEND_URL'] = 'http://localhost:5173'
+    html = _branding_html(app, instance)
+    assert '<a href="http://localhost:5173"' in html
+    assert '>localhost:5173</a>' in html
+
+
+def test_pdf_branding_without_url_still_renders(app, instance):
+    app.config['FRONTEND_URL'] = ''
+    html = _branding_html(app, instance)
+    assert 'Erstellt mit <strong>Standdienst</strong>' in html
+    assert '<a ' not in html
+
+
+def test_pdf_branding_escapes_url(app, instance):
+    from app.models import GlobalSettings
+    from app.utils.settings_cache import invalidate_global
+    gs = _db.session.query(GlobalSettings).first() or GlobalSettings()
+    gs.base_url = 'https://x.example/"><script>'
+    _db.session.add(gs)
+    _db.session.commit()
+    invalidate_global()
+    html = _branding_html(app, instance)
+    assert '<script>' not in html
