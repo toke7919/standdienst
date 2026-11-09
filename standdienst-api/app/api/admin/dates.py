@@ -7,7 +7,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import EventDate, Shift, ActivityLog
 from ...schemas.shifts import EventDateSchema, EventDateCreateSchema, EventDateUpdateSchema
-from ...utils.auth import require_staff, require_instance_admin
+from ...utils.auth import require_staff
 from ...utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 
 _schema = EventDateSchema()
@@ -28,7 +28,7 @@ def list_dates(slug):
 
 
 @admin_bp.route('/<slug>/dates', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_date(slug):
     try:
         data = _create.load(request.get_json() or {})
@@ -49,7 +49,7 @@ def create_date(slug):
 
 
 @admin_bp.route('/<slug>/dates/<int:date_id>', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_date(slug, date_id):
     event_date = _get_or_404(date_id, g.instance.id)
     raw = request.get_json() or {}
@@ -70,7 +70,7 @@ def update_date(slug, date_id):
 
 
 @admin_bp.route('/<slug>/dates/<int:date_id>', methods=['DELETE'])
-@require_instance_admin
+@require_staff
 def delete_date(slug, date_id):
     event_date = _get_or_404(date_id, g.instance.id)
     _log(g.instance.id, f'Termin gelöscht: {event_date.date}', g.current_user)
@@ -87,7 +87,7 @@ _duplicate = _DuplicateDateSchema()
 
 
 @admin_bp.route('/<slug>/dates/<int:date_id>/duplicate', methods=['POST'])
-@require_instance_admin
+@require_staff
 def duplicate_date(slug, date_id):
     source = _get_or_404(date_id, g.instance.id)
     try:

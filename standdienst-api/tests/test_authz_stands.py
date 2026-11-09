@@ -1,7 +1,7 @@
 """Autorisierungstests für app/api/admin/stands.py.
 
 list_stands: @require_staff (Organisator darf lesen)
-create/update/delete/reorder: @require_instance_admin (einfacher Organisator darf NICHT schreiben)
+create/update/delete/reorder: @require_staff (Organisator darf schreiben, nur eigene Instanz)
 """
 from app.extensions import db as _db
 from app.models import Stand
@@ -27,35 +27,36 @@ def test_organizer_can_list(client, instance, organizer_user):
     assert rv.status_code == 200
 
 
-def test_organizer_cannot_create(client, instance, organizer_user):
+def test_organizer_can_create(client, instance, organizer_user):
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
-    rv = client.post(f'/api/admin/{instance.slug}/stands', json={'name': 'Hack-Stand'})
-    assert rv.status_code == 403
+    rv = client.post(f'/api/admin/{instance.slug}/stands', json={'name': 'Neuer Stand'})
+    assert rv.status_code == 201
 
 
-def test_organizer_cannot_update(client, instance, organizer_user):
+def test_organizer_can_update(client, instance, organizer_user):
     s = _make_stand(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
-    rv = client.put(f'/api/admin/{instance.slug}/stands/{s.id}', json={'name': 'Hack'})
-    assert rv.status_code == 403
+    rv = client.put(f'/api/admin/{instance.slug}/stands/{s.id}', json={'name': 'Umbenannt', 'updated_at': s.updated_at.isoformat()})
+    assert rv.status_code == 200
+    assert rv.get_json()['data']['name'] == 'Umbenannt'
 
 
-def test_organizer_cannot_delete(client, instance, organizer_user):
+def test_organizer_can_delete(client, instance, organizer_user):
     s = _make_stand(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/stands/{s.id}')
-    assert rv.status_code == 403
+    assert rv.status_code == 204
 
 
-def test_organizer_cannot_reorder(client, instance, organizer_user):
+def test_organizer_can_reorder(client, instance, organizer_user):
     s = _make_stand(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
     rv = client.put(f'/api/admin/{instance.slug}/stands/reorder', json={'order': [s.id]})
-    assert rv.status_code == 403
+    assert rv.status_code == 200
 
 
 def test_instance_admin_can_delete(client, instance, instance_admin_user):
@@ -70,5 +71,20 @@ def test_instance_admin_cannot_access_stand_of_other_instance(client, instance, 
     foreign_stand = _make_stand(other_instance)
     _assign(instance_admin_user, instance)
     _login(client, instance_admin_user.email)
+    rv = client.delete(f'/api/admin/{instance.slug}/stands/{foreign_stand.id}')
+    assert rv.status_code == 404
+
+
+def test_organizer_of_other_instance_cannot_create(client, instance, other_instance, organizer_user):
+    _assign(organizer_user, other_instance)
+    _login(client, organizer_user.email)
+    rv = client.post(f'/api/admin/{instance.slug}/stands', json={'name': 'Fremd'})
+    assert rv.status_code == 403
+
+
+def test_organizer_cannot_access_stand_of_other_instance(client, instance, other_instance, organizer_user):
+    foreign_stand = _make_stand(other_instance)
+    _assign(organizer_user, instance)
+    _login(client, organizer_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/stands/{foreign_stand.id}')
     assert rv.status_code == 404

@@ -10,7 +10,7 @@ from ...schemas.food import (
     FoodDonationTypeSchema, FoodDonationTypeCreateSchema, FoodDonationTypeUpdateSchema,
     FoodDonationSchema, FoodDonationAdminCreateSchema, FoodDonationAdminUpdateSchema,
 )
-from ...utils.auth import require_staff, require_instance_admin
+from ...utils.auth import require_staff
 from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination, optimistic_lock_conflict
 
 _type_schema = FoodDonationTypeSchema()
@@ -44,7 +44,7 @@ def list_food_types(slug):
 
 
 @admin_bp.route('/<slug>/food-types', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_food_type(slug):
     try:
         data = _type_create.load(request.get_json() or {})
@@ -62,7 +62,7 @@ def create_food_type(slug):
 
 
 @admin_bp.route('/<slug>/food-types/<int:type_id>', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_food_type(slug, type_id):
     food_type = db.first_or_404(
         select(FoodDonationType).filter_by(id=type_id, instance_id=g.instance.id)
@@ -84,7 +84,7 @@ def update_food_type(slug, type_id):
 
 
 @admin_bp.route('/<slug>/food-types/<int:type_id>', methods=['DELETE'])
-@require_instance_admin
+@require_staff
 def delete_food_type(slug, type_id):
     food_type = db.first_or_404(
         select(FoodDonationType).filter_by(id=type_id, instance_id=g.instance.id)
@@ -118,7 +118,7 @@ def list_food_donations(slug):
 
 
 @admin_bp.route('/<slug>/food-donations', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_food_donation(slug):
     try:
         data = _don_create.load(request.get_json() or {})
@@ -152,7 +152,7 @@ def create_food_donation(slug):
 
 
 @admin_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_food_donation(slug, donation_id):
     donation = db.first_or_404(
         select(FoodDonation)
@@ -173,7 +173,7 @@ def update_food_donation(slug, donation_id):
 
 
 @admin_bp.route('/<slug>/food-donations/<int:donation_id>', methods=['DELETE'])
-@require_instance_admin
+@require_staff
 def delete_food_donation(slug, donation_id):
     donation = db.first_or_404(
         select(FoodDonation)

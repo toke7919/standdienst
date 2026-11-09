@@ -8,7 +8,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import Registration, Shift, Stand, EventDate, ActivityLog, Volunteer
 from ...schemas.shifts import RegistrationSchema, RegistrationCreateSchema
-from ...utils.auth import require_staff, require_instance_admin
+from ...utils.auth import require_staff
 from ...utils.responses import ok, created, no_content, error, paginated, clamp_pagination
 
 _schema = RegistrationSchema()
@@ -136,7 +136,7 @@ def registration_grid(slug):
 
 
 @admin_bp.route('/<slug>/registrations', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_registration(slug):
     try:
         data = _create.load(request.get_json() or {})
@@ -193,7 +193,7 @@ def create_registration(slug):
 
 
 @admin_bp.route('/<slug>/registrations/<int:reg_id>', methods=['DELETE'])
-@require_instance_admin
+@require_staff
 def delete_registration(slug, reg_id):
     reg = (Registration.query
            .join(Shift).join(Stand)
