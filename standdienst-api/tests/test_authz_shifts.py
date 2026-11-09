@@ -1,7 +1,7 @@
 """Autorisierungstests für app/api/admin/shifts.py.
 
 list_shifts: @require_staff (Organisator darf lesen)
-create/update/delete: @require_instance_admin (einfacher Organisator darf NICHT schreiben)
+create/update/delete: @require_staff (Organisator darf schreiben, nur eigene Instanz)
 """
 from datetime import date as _date, time as _time
 from app.extensions import db as _db
@@ -44,7 +44,7 @@ def test_organizer_can_list(client, instance, organizer_user):
     assert rv.status_code == 200
 
 
-def test_organizer_cannot_create(client, instance, organizer_user):
+def test_organizer_can_create(client, instance, organizer_user):
     stand = _make_stand(instance)
     d = EventDate(instance_id=instance.id, date=_date(2027, 1, 1))
     _db.session.add(d)
@@ -55,23 +55,24 @@ def test_organizer_cannot_create(client, instance, organizer_user):
         'stand_id': stand.id, 'event_date_id': d.id,
         'start_time': '08:00', 'end_time': '12:00', 'max_volunteers': 2,
     })
-    assert rv.status_code == 403
+    assert rv.status_code == 201
 
 
-def test_organizer_cannot_update(client, instance, organizer_user):
+def test_organizer_can_update(client, instance, organizer_user):
     shift = _make_shift(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
-    rv = client.put(f'/api/admin/{instance.slug}/shifts/{shift.id}', json={'max_volunteers': 5})
-    assert rv.status_code == 403
+    rv = client.put(f'/api/admin/{instance.slug}/shifts/{shift.id}', json={'max_volunteers': 5, 'updated_at': shift.updated_at.isoformat()})
+    assert rv.status_code == 200
+    assert rv.get_json()['data']['max_volunteers'] == 5
 
 
-def test_organizer_cannot_delete(client, instance, organizer_user):
+def test_organizer_can_delete(client, instance, organizer_user):
     shift = _make_shift(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/shifts/{shift.id}')
-    assert rv.status_code == 403
+    assert rv.status_code == 204
 
 
 def test_instance_admin_can_delete(client, instance, instance_admin_user):
@@ -86,5 +87,21 @@ def test_instance_admin_cannot_access_shift_of_other_instance(client, instance, 
     foreign_shift = _make_shift(other_instance)
     _assign(instance_admin_user, instance)
     _login(client, instance_admin_user.email)
+    rv = client.delete(f'/api/admin/{instance.slug}/shifts/{foreign_shift.id}')
+    assert rv.status_code == 404
+
+
+def test_organizer_of_other_instance_cannot_delete(client, instance, other_instance, organizer_user):
+    shift = _make_shift(instance)
+    _assign(organizer_user, other_instance)
+    _login(client, organizer_user.email)
+    rv = client.delete(f'/api/admin/{instance.slug}/shifts/{shift.id}')
+    assert rv.status_code == 403
+
+
+def test_organizer_cannot_access_shift_of_other_instance(client, instance, other_instance, organizer_user):
+    foreign_shift = _make_shift(other_instance)
+    _assign(organizer_user, instance)
+    _login(client, organizer_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/shifts/{foreign_shift.id}')
     assert rv.status_code == 404

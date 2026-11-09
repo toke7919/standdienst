@@ -5,7 +5,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import Stand, ActivityLog
 from ...schemas.shifts import StandSchema, StandCreateSchema, StandUpdateSchema, StandReorderSchema
-from ...utils.auth import require_staff, require_instance_admin
+from ...utils.auth import require_staff
 from ...utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 
 _schema = StandSchema()
@@ -23,7 +23,7 @@ def list_stands(slug):
 
 
 @admin_bp.route('/<slug>/stands', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_stand(slug):
     try:
         data = _create.load(request.get_json() or {})
@@ -38,7 +38,7 @@ def create_stand(slug):
 
 
 @admin_bp.route('/<slug>/stands/<int:stand_id>', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_stand(slug, stand_id):
     stand = _get_or_404(stand_id, g.instance.id)
     raw = request.get_json() or {}
@@ -59,7 +59,7 @@ def update_stand(slug, stand_id):
 
 
 @admin_bp.route('/<slug>/stands/<int:stand_id>', methods=['DELETE'])
-@require_instance_admin
+@require_staff
 def delete_stand(slug, stand_id):
     stand = _get_or_404(stand_id, g.instance.id)
     _log(g.instance.id, f'Stand gelöscht: {stand.name}', g.current_user)
@@ -69,7 +69,7 @@ def delete_stand(slug, stand_id):
 
 
 @admin_bp.route('/<slug>/stands/reorder', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def reorder_stands(slug):
     try:
         data = _reorder.load(request.get_json() or {})

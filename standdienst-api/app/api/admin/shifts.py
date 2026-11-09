@@ -6,7 +6,7 @@ from . import admin_bp
 from ...extensions import db
 from ...models import Shift, Stand, EventDate, ActivityLog
 from ...schemas.shifts import ShiftSchema, ShiftCreateSchema, ShiftUpdateSchema
-from ...utils.auth import require_staff, require_instance_admin
+from ...utils.auth import require_staff
 from ...utils.responses import ok, created, no_content, error, optimistic_lock_conflict
 
 _schema = ShiftSchema()
@@ -34,7 +34,7 @@ def list_shifts(slug):
 
 
 @admin_bp.route('/<slug>/shifts', methods=['POST'])
-@require_instance_admin
+@require_staff
 def create_shift(slug):
     try:
         data = _create.load(request.get_json() or {})
@@ -64,7 +64,7 @@ def create_shift(slug):
 
 
 @admin_bp.route('/<slug>/shifts/<int:shift_id>', methods=['PUT'])
-@require_instance_admin
+@require_staff
 def update_shift(slug, shift_id):
     shift = _get_or_404(shift_id, g.instance.id)
     raw = request.get_json() or {}
@@ -92,7 +92,7 @@ def update_shift(slug, shift_id):
 
 
 @admin_bp.route('/<slug>/shifts/<int:shift_id>', methods=['DELETE'])
-@require_instance_admin
+@require_staff
 def delete_shift(slug, shift_id):
     shift = _get_or_404(shift_id, g.instance.id)
     stand_name = shift.stand.name if shift.stand else f'Stand {shift.stand_id}'

@@ -1,7 +1,7 @@
 """Autorisierungstests für app/api/admin/registrations.py.
 
 list/grid: @require_staff (Organisator darf lesen)
-create/delete: @require_instance_admin (einfacher Organisator darf NICHT schreiben)
+create/delete: @require_staff (Organisator darf schreiben, nur eigene Instanz)
 """
 from datetime import date as _date, time as _time
 from app.extensions import db as _db
@@ -50,22 +50,22 @@ def test_organizer_can_view_grid(client, instance, organizer_user):
     assert rv.status_code == 200
 
 
-def test_organizer_cannot_create(client, instance, organizer_user):
+def test_organizer_can_create(client, instance, organizer_user):
     shift = _make_shift(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
     rv = client.post(f'/api/admin/{instance.slug}/registrations', json={
-        'shift_id': shift.id, 'guest_name': 'Hack',
+        'shift_id': shift.id, 'guest_name': 'Gast',
     })
-    assert rv.status_code == 403
+    assert rv.status_code == 201
 
 
-def test_organizer_cannot_delete(client, instance, organizer_user):
+def test_organizer_can_delete(client, instance, organizer_user):
     reg = _make_registration(instance)
     _assign(organizer_user, instance)
     _login(client, organizer_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/registrations/{reg.id}')
-    assert rv.status_code == 403
+    assert rv.status_code == 204
 
 
 def test_instance_admin_can_create(client, instance, instance_admin_user):
@@ -82,5 +82,21 @@ def test_instance_admin_cannot_access_registration_of_other_instance(client, ins
     foreign_reg = _make_registration(other_instance)
     _assign(instance_admin_user, instance)
     _login(client, instance_admin_user.email)
+    rv = client.delete(f'/api/admin/{instance.slug}/registrations/{foreign_reg.id}')
+    assert rv.status_code == 404
+
+
+def test_organizer_of_other_instance_cannot_delete(client, instance, other_instance, organizer_user):
+    reg = _make_registration(instance)
+    _assign(organizer_user, other_instance)
+    _login(client, organizer_user.email)
+    rv = client.delete(f'/api/admin/{instance.slug}/registrations/{reg.id}')
+    assert rv.status_code == 403
+
+
+def test_organizer_cannot_access_registration_of_other_instance(client, instance, other_instance, organizer_user):
+    foreign_reg = _make_registration(other_instance)
+    _assign(organizer_user, instance)
+    _login(client, organizer_user.email)
     rv = client.delete(f'/api/admin/{instance.slug}/registrations/{foreign_reg.id}')
     assert rv.status_code == 404
