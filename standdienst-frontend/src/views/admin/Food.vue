@@ -20,9 +20,9 @@
             <span v-if="t.delivery_location"> · {{ t.delivery_location }}</span>
           </p>
         </div>
-        <div class="flex gap-2">
-          <button class="text-xs text-primary-600 hover:underline" @click="openEditType(t)">Bearbeiten</button>
-          <button class="text-xs text-red-600 hover:underline" @click="deleteType(t)">Löschen</button>
+        <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+          <RowAction action="edit" class="text-xs" @click="openEditType(t)" />
+          <RowAction action="delete" class="text-xs" @click="deleteType(t)" />
         </div>
       </div>
       <p v-if="!foodTypes.length" class="text-center text-muted py-4">Noch keine Kategorien</p>
@@ -73,9 +73,9 @@
                 <p v-if="d.description" class="text-xs text-muted mt-0.5">{{ d.description }}</p>
                 <span v-if="d.needs_refrigeration" class="badge-blue mt-1 inline-flex">Kühlung</span>
               </div>
-              <div class="flex flex-col items-end gap-1.5 shrink-0">
-                <button class="text-xs text-primary-600 hover:underline" @click="openEditDonation(d)">Bearbeiten</button>
-                <button class="text-xs text-red-600 hover:underline" @click="deleteDonation(d)">Entfernen</button>
+              <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+                <RowAction action="edit" class="text-xs" @click="openEditDonation(d)" />
+                <RowAction action="delete" label="Entfernen" class="text-xs" @click="deleteDonation(d)" />
               </div>
             </div>
             <div v-if="!donationsByType(t.id).length" class="px-4 py-5 text-center text-muted text-xs">Keine Spenden</div>
@@ -194,6 +194,7 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
