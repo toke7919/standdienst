@@ -72,5 +72,7 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-80}:80"
+    environment:
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     depends_on:
       - api
