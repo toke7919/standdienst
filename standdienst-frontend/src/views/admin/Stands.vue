@@ -28,23 +28,9 @@
           <p v-if="stand.description" class="text-sm text-muted mt-0.5 break-words sm:truncate">{{ stand.description }}</p>
         </div>
         <div class="flex items-center gap-1 sm:gap-3 shrink-0">
-          <button
-            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-primary-600 hover:text-primary-800 font-medium"
-            aria-label="Bearbeiten"
-            @click="openEdit(stand)"
-          >
-            <PencilSquareIcon class="w-5 h-5 sm:hidden" />
-            <span class="hidden sm:inline">Bearbeiten</span>
-          </button>
+          <RowAction action="edit" class="text-sm" @click="openEdit(stand)" />
           <span class="hidden sm:inline text-sand">|</span>
-          <button
-            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-red-500 hover:text-red-700 font-medium"
-            aria-label="Löschen"
-            @click="deleteStand(stand)"
-          >
-            <TrashIcon class="w-5 h-5 sm:hidden" />
-            <span class="hidden sm:inline">Löschen</span>
-          </button>
+          <RowAction action="delete" class="text-sm" @click="deleteStand(stand)" />
         </div>
       </div>
 
@@ -75,12 +61,13 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { BuildingStorefrontIcon, Bars3Icon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { BuildingStorefrontIcon, Bars3Icon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()

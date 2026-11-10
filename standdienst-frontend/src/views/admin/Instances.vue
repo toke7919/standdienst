@@ -20,9 +20,9 @@
           <span :class="inst.is_active ? 'badge-green' : 'badge-red'">
             {{ inst.is_active ? 'Aktiv' : 'Inaktiv' }}
           </span>
-          <div class="flex gap-3">
-            <button class="text-xs text-primary-600 hover:underline" @click="openEdit(inst)">Bearbeiten</button>
-            <button class="text-xs text-red-600 hover:underline" @click="deleteInst(inst)">Löschen</button>
+          <div class="flex items-center gap-1 sm:gap-3">
+            <RowAction action="edit" class="text-xs" @click="openEdit(inst)" />
+            <RowAction action="delete" class="text-xs" @click="deleteInst(inst)" />
           </div>
         </div>
       </div>
@@ -133,6 +133,7 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
