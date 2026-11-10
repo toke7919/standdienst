@@ -1,4 +1,4 @@
-VERSION = "3.123.1"
+VERSION = "3.123.2"
 VERSION_DATE = "2026-11-10"
 
 # Fest hinterlegtes Upstream-Repository (öffentlich). Single Source of Truth für
