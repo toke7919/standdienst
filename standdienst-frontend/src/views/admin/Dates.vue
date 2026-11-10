@@ -25,32 +25,11 @@
           <p v-if="d.label" class="text-sm text-muted mt-0.5 break-words">{{ d.label }}</p>
         </div>
         <div class="flex items-center gap-1 sm:gap-3 shrink-0">
-          <button
-            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-primary-600 hover:text-primary-800 font-medium"
-            aria-label="Bearbeiten"
-            @click="openEdit(d)"
-          >
-            <PencilSquareIcon class="w-5 h-5 sm:hidden" />
-            <span class="hidden sm:inline">Bearbeiten</span>
-          </button>
+          <RowAction action="edit" class="text-sm" @click="openEdit(d)" />
           <span class="hidden sm:inline text-sand">|</span>
-          <button
-            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-muted hover:text-ink font-medium"
-            aria-label="Duplizieren"
-            @click="openDuplicate(d)"
-          >
-            <DocumentDuplicateIcon class="w-5 h-5 sm:hidden" />
-            <span class="hidden sm:inline">Duplizieren</span>
-          </button>
+          <RowAction action="duplicate" class="text-sm" @click="openDuplicate(d)" />
           <span class="hidden sm:inline text-sand">|</span>
-          <button
-            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-red-500 hover:text-red-700 font-medium"
-            aria-label="Löschen"
-            @click="deleteDate(d)"
-          >
-            <TrashIcon class="w-5 h-5 sm:hidden" />
-            <span class="hidden sm:inline">Löschen</span>
-          </button>
+          <RowAction action="delete" class="text-sm" @click="deleteDate(d)" />
         </div>
       </div>
 
@@ -105,12 +84,13 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { CalendarIcon, PencilSquareIcon, DocumentDuplicateIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()

@@ -43,9 +43,9 @@
                   <span :class="s.is_full ? 'badge-green' : 'badge-red'">
                     {{ s.current_count }}/{{ s.max_volunteers }}
                   </span>
-                  <button class="hidden sm:inline text-xs text-muted hover:text-ink/80 font-medium" @click="openDuplicate(s)">Duplizieren</button>
-                  <button class="text-xs text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(s)">Bearbeiten</button>
-                  <button class="text-xs text-red-500 hover:text-red-700 font-medium" @click="deleteShift(s)">Löschen</button>
+                  <RowAction action="edit" class="text-xs" @click="openEdit(s)" />
+                  <RowAction action="duplicate" class="text-xs" @click="openDuplicate(s)" />
+                  <RowAction action="delete" class="text-xs" @click="deleteShift(s)" />
                 </div>
               </div>
             </template>
@@ -104,6 +104,7 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'

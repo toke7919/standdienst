@@ -25,9 +25,9 @@
               <span class="text-xs text-muted">{{ v.food_count ?? 0 }} Spenden</span>
             </div>
           </div>
-          <div class="flex flex-col items-end gap-1.5 shrink-0">
-            <button class="text-xs text-primary-600 hover:underline" @click="openEdit(v)">Bearbeiten</button>
-            <button v-if="isInstanceAdmin" class="text-xs text-red-600 hover:underline" @click="deleteVol(v)">Löschen</button>
+          <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+            <RowAction action="edit" class="text-xs" @click="openEdit(v)" />
+            <RowAction v-if="isInstanceAdmin" action="delete" class="text-xs" @click="deleteVol(v)" />
           </div>
         </div>
         <div v-if="!sortedVolunteers.length" class="px-4 py-8 text-center text-muted text-sm">Keine Helfer</div>
@@ -133,6 +133,7 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { adminApi } from '@/api/admin'

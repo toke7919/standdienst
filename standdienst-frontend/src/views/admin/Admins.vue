@@ -24,10 +24,15 @@
             </span>
           </div>
         </div>
-        <div class="flex flex-col items-end gap-2 shrink-0">
-          <button class="text-xs text-primary-600 hover:underline" @click="openEdit(a)">Bearbeiten</button>
-          <button v-if="!a.is_primary" class="text-xs text-red-600 hover:underline" @click="deleteAdmin(a)">Löschen</button>
-          <span v-else class="text-xs text-sand" title="Primärer Admin ist löschgeschützt">Löschen</span>
+        <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+          <RowAction action="edit" class="text-xs" @click="openEdit(a)" />
+          <RowAction
+            action="delete"
+            class="text-xs"
+            :disabled="a.is_primary"
+            :title="a.is_primary ? 'Primärer Admin ist löschgeschützt' : ''"
+            @click="deleteAdmin(a)"
+          />
         </div>
       </div>
       <p v-if="!admins.length" class="text-center text-muted text-sm py-8">Keine Admins gefunden</p>
@@ -108,6 +113,7 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'

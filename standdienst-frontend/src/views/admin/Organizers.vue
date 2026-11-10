@@ -29,9 +29,11 @@
             </div>
           </div>
           <div class="flex flex-col items-end gap-1.5 shrink-0">
-            <button class="text-xs text-primary-600 hover:underline" @click="openEdit(o)">Bearbeiten</button>
+            <div class="flex items-center gap-1 sm:gap-3">
+              <RowAction action="edit" class="text-xs" @click="openEdit(o)" />
+              <RowAction action="delete" class="text-xs" @click="deleteOrg(o)" />
+            </div>
             <button v-if="!o.has_login" class="text-xs text-amber-600 hover:underline" @click="resendInvite(o)">Einladung senden</button>
-            <button class="text-xs text-red-600 hover:underline" @click="deleteOrg(o)">Löschen</button>
           </div>
         </div>
         <div v-if="!sorted.length" class="px-4 py-8 text-center text-muted text-sm">Keine Organisatoren</div>
@@ -146,6 +148,7 @@
 </template>
 
 <script setup>
+import RowAction from '@/components/RowAction.vue'
 import { ref, onMounted } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
