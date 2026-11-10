@@ -156,6 +156,8 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 FRONTEND_URL=$FRONTEND_URL
 FRONTEND_PORT=$FRONTEND_PORT
 SESSION_COOKIE_SECURE=$SESSION_COOKIE_SECURE
+# IP/CIDR eines externen Reverse-Proxys (z. B. NPMPlus), kommagetrennt – siehe .env.example
+TRUSTED_PROXIES=
 COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml
 EOF
     chmod 600 "$ENV_FILE"
