@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between gap-3 mb-6">
       <h1 class="text-2xl font-bold text-ink">Stände</h1>
       <button class="btn-primary" @click="openCreate">Neuer Stand</button>
     </div>
@@ -14,23 +14,37 @@
         @dragover.prevent="onDragOver(idx)"
         @drop.prevent="onDrop"
         @dragend="onDragEnd"
-        class="group bg-soft rounded-md border border-sand shadow-xs px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
+        class="group bg-soft rounded-md border border-sand shadow-xs px-3 py-3 sm:px-5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:border-primary-200 transition-colors duration-150"
         :class="dragOver === idx ? 'border-primary-400 bg-primary-50/50' : ''"
       >
         <div class="cursor-grab active:cursor-grabbing text-sand hover:text-muted shrink-0 touch-none" title="Ziehen zum Sortieren">
           <Bars3Icon class="w-5 h-5" />
         </div>
-        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
+        <div class="hidden sm:flex w-10 h-10 rounded-xl bg-primary-100 items-center justify-center shrink-0">
           <BuildingStorefrontIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-ink truncate">{{ stand.name }}</p>
-          <p v-if="stand.description" class="text-sm text-muted mt-0.5 truncate">{{ stand.description }}</p>
+          <p class="font-semibold text-ink break-words sm:truncate">{{ stand.name }}</p>
+          <p v-if="stand.description" class="text-sm text-muted mt-0.5 break-words sm:truncate">{{ stand.description }}</p>
         </div>
-        <div class="flex items-center gap-3 shrink-0">
-          <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(stand)">Bearbeiten</button>
-          <span class="text-sand">|</span>
-          <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteStand(stand)">Löschen</button>
+        <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+          <button
+            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-primary-600 hover:text-primary-800 font-medium"
+            aria-label="Bearbeiten"
+            @click="openEdit(stand)"
+          >
+            <PencilSquareIcon class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline">Bearbeiten</span>
+          </button>
+          <span class="hidden sm:inline text-sand">|</span>
+          <button
+            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-red-500 hover:text-red-700 font-medium"
+            aria-label="Löschen"
+            @click="deleteStand(stand)"
+          >
+            <TrashIcon class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline">Löschen</span>
+          </button>
         </div>
       </div>
 
@@ -66,7 +80,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { BuildingStorefrontIcon, Bars3Icon } from '@heroicons/vue/24/outline'
+import { BuildingStorefrontIcon, Bars3Icon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
