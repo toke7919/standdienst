@@ -87,6 +87,15 @@ class GlobalSettingsUpdateSchema(Schema):
     volunteer_retention_months = fields.Int(validate=validate.Range(min=1, max=120), allow_none=True)
     timezone = fields.Str(validate=validate.Length(max=100))
     ip_whitelist = fields.Str(allow_none=True)
+    trusted_proxies = fields.Str(allow_none=True)
+
+    @validates('trusted_proxies')
+    def _validate_trusted_proxies(self, value, **kwargs):
+        from ..utils.trusted_proxies import parse_networks
+        try:
+            parse_networks(value)
+        except ValueError as e:
+            raise ValidationError(str(e)) from None
 
 
 class MailSettingsSchema(SQLAlchemyAutoSchema):

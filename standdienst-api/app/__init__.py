@@ -9,6 +9,7 @@ from sqlalchemy import select, func
 from .config import Config
 from .extensions import db, migrate, jwt, mail, limiter, cors
 from .utils.logging_setup import init_logging
+from .utils.trusted_proxies import TrustedProxyMiddleware
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +17,10 @@ log = logging.getLogger(__name__)
 def create_app(config_class=Config):
     app = Flask(__name__, static_folder=None)
     app.config.from_object(config_class)
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    # ProxyFix vertraut genau einem Hop (Frontend-/Host-nginx); dahinter löst
+    # TrustedProxyMiddleware weitere, in den globalen Einstellungen eingetragene
+    # Reverse-Proxys (z. B. NPMPlus) zur echten Client-IP auf.
+    app.wsgi_app = ProxyFix(TrustedProxyMiddleware(app.wsgi_app, app), x_for=1, x_proto=1, x_host=1)
 
     _validate_production_config(app)
     init_logging(app)

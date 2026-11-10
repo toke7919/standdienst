@@ -18,6 +18,7 @@ from ...utils.sanitizer import sanitize_html
 from ...utils.responses import ok, error, optimistic_lock_conflict
 from ...utils.mail import send_mail, is_mail_configured, apply_db_mail_config, get_platform_logo_for_email
 from ...utils.settings_cache import invalidate_site, invalidate_global
+from ...utils.trusted_proxies import normalize as normalize_trusted_proxies, invalidate as invalidate_trusted_proxies
 
 _site_schema = SiteSettingsSchema()
 _site_update = SiteSettingsUpdateSchema()
@@ -168,12 +169,16 @@ def update_global_settings():
         if key in data and data[key]:
             data[key] = sanitize_html(data[key])
 
+    if 'trusted_proxies' in data:
+        data['trusted_proxies'] = normalize_trusted_proxies(data['trusted_proxies'])
+
     for key, value in data.items():
         setattr(settings, key, value)
 
     _log(None, 'Globale Einstellungen geändert', g.current_user)
     db.session.commit()
     invalidate_global()
+    invalidate_trusted_proxies()
     return ok(_global_schema.dump(settings))
 
 
