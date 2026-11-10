@@ -393,6 +393,26 @@ def test_permanent_delete_activity_log_mentions_registration_and_donation_count(
     assert '1 Dienst-Anm.' in log.details
 
 
+def test_permanent_delete_removes_own_donations_but_keeps_guest_donations(client, admin_user, instance, volunteer):
+    c = _admin_client(client, admin_user)
+    ed = EventDate(instance_id=instance.id, date=date(2026, 9, 1), is_draft=False)
+    _db.session.add(ed)
+    _db.session.flush()
+    ft = FoodDonationType(instance_id=instance.id, event_date_id=ed.id, name='Kuchen')
+    _db.session.add(ft)
+    _db.session.flush()
+    _db.session.add(FoodDonation(volunteer_id=volunteer.id, food_type_id=ft.id, description='Apfelkuchen'))
+    _db.session.add(FoodDonation(volunteer_id=None, guest_name='Gast', food_type_id=ft.id, description='Zupfkuchen'))
+    _db.session.commit()
+    vid = volunteer.id
+
+    rv = c.delete(f'/api/admin/{instance.slug}/volunteers/{vid}/permanent')
+    assert rv.status_code == 204
+    _db.session.expire_all()
+    assert _db.session.query(FoodDonation).filter_by(volunteer_id=vid).count() == 0
+    assert [d.description for d in _db.session.query(FoodDonation).all()] == ['Zupfkuchen']
+
+
 # ---------------------------------------------------------------------------
 # POST /volunteers/<id>/reset-password
 # ---------------------------------------------------------------------------

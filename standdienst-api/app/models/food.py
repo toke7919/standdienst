@@ -43,8 +43,11 @@ class FoodDonation(db.Model):
     __tablename__ = 'food_donations'
 
     id = db.Column(db.Integer, primary_key=True)
+    # Spenden gehören zum Helfer: permanentes Löschen entfernt sie mit
+    # (DB: CASCADE seit Initial-Migration, ORM: cascade='all, delete-orphan').
+    # nullable für Gast-Spenden ohne Helferkonto (guest_name).
     volunteer_id = db.Column(
-        db.Integer, db.ForeignKey('volunteers.id', ondelete='SET NULL'),
+        db.Integer, db.ForeignKey('volunteers.id', ondelete='CASCADE'),
         nullable=True, index=True,
     )
     food_type_id = db.Column(
