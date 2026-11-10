@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between gap-3 mb-6">
       <h1 class="text-2xl font-bold text-ink">Termine</h1>
       <button class="btn-primary" @click="openCreate">Neuer Termin</button>
     </div>
@@ -9,27 +9,48 @@
       <div
         v-for="d in dates"
         :key="d.id"
-        class="group bg-soft rounded-md border border-sand shadow-xs px-5 py-4 flex items-center gap-4 hover:border-primary-200 transition-colors duration-150"
+        class="group bg-soft rounded-md border border-sand shadow-xs px-3 py-3 sm:px-5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:border-primary-200 transition-colors duration-150"
       >
-        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
+        <div class="hidden sm:flex w-10 h-10 rounded-xl bg-primary-100 items-center justify-center shrink-0">
           <CalendarIcon class="w-5 h-5 text-primary-600" />
         </div>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p class="font-semibold text-ink">{{ d.formatted }}</p>
             <span
               v-if="d.is_draft"
               class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-amber-100 text-amber-800"
             >Entwurf</span>
           </div>
-          <p v-if="d.label" class="text-sm text-muted mt-0.5">{{ d.label }}</p>
+          <p v-if="d.label" class="text-sm text-muted mt-0.5 break-words">{{ d.label }}</p>
         </div>
-        <div class="flex items-center gap-3">
-          <button class="text-sm text-primary-600 hover:text-primary-800 font-medium" @click="openEdit(d)">Bearbeiten</button>
-          <span class="text-sand">|</span>
-          <button class="text-sm text-muted hover:text-ink font-medium" @click="openDuplicate(d)">Duplizieren</button>
-          <span class="text-sand">|</span>
-          <button class="text-sm text-red-500 hover:text-red-700 font-medium" @click="deleteDate(d)">Löschen</button>
+        <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+          <button
+            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-primary-600 hover:text-primary-800 font-medium"
+            aria-label="Bearbeiten"
+            @click="openEdit(d)"
+          >
+            <PencilSquareIcon class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline">Bearbeiten</span>
+          </button>
+          <span class="hidden sm:inline text-sand">|</span>
+          <button
+            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-muted hover:text-ink font-medium"
+            aria-label="Duplizieren"
+            @click="openDuplicate(d)"
+          >
+            <DocumentDuplicateIcon class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline">Duplizieren</span>
+          </button>
+          <span class="hidden sm:inline text-sand">|</span>
+          <button
+            class="p-2 -m-1 sm:p-0 sm:m-0 rounded-md text-sm text-red-500 hover:text-red-700 font-medium"
+            aria-label="Löschen"
+            @click="deleteDate(d)"
+          >
+            <TrashIcon class="w-5 h-5 sm:hidden" />
+            <span class="hidden sm:inline">Löschen</span>
+          </button>
         </div>
       </div>
 
@@ -89,7 +110,7 @@ import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import Modal from '@/components/Modal.vue'
-import { CalendarIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, PencilSquareIcon, DocumentDuplicateIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const ui = useUiStore()
