@@ -70,6 +70,8 @@ class GlobalSettings(db.Model):
     timezone = db.Column(db.String(100), nullable=False, default='Europe/Berlin')
     volunteer_retention_months = db.Column(db.Integer, nullable=True)
     ip_whitelist = db.Column(db.Text, nullable=True)
+    # IP/CIDR externer Reverse-Proxys, deren X-Forwarded-For übernommen wird
+    trusted_proxies = db.Column(db.Text, nullable=True)
     backup_password = db.Column(EncryptedStr(500), nullable=True)
     updated_at = db.Column(
         db.DateTime(timezone=True),

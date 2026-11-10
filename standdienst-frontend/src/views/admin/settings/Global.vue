@@ -43,11 +43,29 @@
             class="input font-mono text-sm"
             rows="3"
             placeholder="Eine IP oder CIDR pro Zeile, z.B.: 192.168.1.0/24, 10.0.0.1"
-            @blur="normalizeWhitelist"
+            @blur="normalizeList('ip_whitelist')"
           />
           <p class="text-xs text-muted mt-1">
             Komma- oder zeilengetrennte IPv4/IPv6-Adressen oder CIDR-Ranges.
             Diese IPs sind von Rate-Limits und Fail2Ban-Logging ausgenommen.
+          </p>
+        </div>
+        <div>
+          <label for="trusted-proxies" class="label">Vertrauenswürdige Reverse-Proxys</label>
+          <textarea
+            id="trusted-proxies"
+            v-model="form.trusted_proxies"
+            class="input font-mono text-sm"
+            rows="2"
+            placeholder="z.B.: 192.168.1.10"
+            @blur="normalizeList('trusted_proxies')"
+          />
+          <p v-if="fieldErrors.trusted_proxies" class="text-xs text-red-600 mt-1">{{ fieldErrors.trusted_proxies }}</p>
+          <p class="text-xs text-muted mt-1">
+            IP oder CIDR eines vorgeschalteten Proxys (z.B. Nginx Proxy Manager/NPMPlus).
+            Nur von diesen Adressen wird die weitergereichte Client-IP (X-Forwarded-For) übernommen –
+            für Aktivitätsprotokoll, Rate-Limit und Fail2Ban. Einzutragen ist die Adresse, die sonst
+            für alle Einträge im Protokoll erscheint. Leer = kein vorgeschalteter Proxy.
           </p>
         </div>
       </div>
@@ -166,6 +184,7 @@ const ui = useUiStore()
 const loading = ref(true)
 const saving = ref(false)
 const saveError = ref('')
+const fieldErrors = ref({})
 const form = ref({})
 
 const timezones = [
@@ -261,9 +280,9 @@ onMounted(async () => {
   }
 })
 
-function normalizeWhitelist() {
-  if (!form.value.ip_whitelist) return
-  form.value.ip_whitelist = form.value.ip_whitelist
+function normalizeList(key) {
+  if (!form.value[key]) return
+  form.value[key] = form.value[key]
     .split(/[\n,]+/)
     .map(s => s.trim())
     .filter(Boolean)
@@ -273,11 +292,16 @@ function normalizeWhitelist() {
 async function save() {
   saving.value = true
   saveError.value = ''
+  fieldErrors.value = {}
   try {
     const res = await adminApi.updateGlobalSettings(form.value)
     form.value.updated_at = res.data.data.updated_at
     ui.success('Gespeichert')
   } catch (e) {
+    const errors = e.response?.data?.errors || {}
+    fieldErrors.value = Object.fromEntries(
+      Object.entries(errors).map(([k, v]) => [k, Array.isArray(v) ? v.join(' ') : String(v)]),
+    )
     saveError.value = e.response?.data?.error || 'Fehler'
   } finally {
     saving.value = false
