@@ -1,5 +1,11 @@
+import base64
+import re
 import time
 import logging
+from email import policy
+from email.headerregistry import Address
+from email.message import EmailMessage
+from email.utils import formatdate, make_msgid, parseaddr
 
 from flask import current_app
 from flask_mail import Message
@@ -52,15 +58,76 @@ def _html_to_text(html: str) -> str:
     return text.strip()
 
 
+_DATA_URI_IMG = re.compile(
+    r'''(src=["'])data:(image/[\w.+-]+);base64,([A-Za-z0-9+/=\s]+)(["'])''', re.IGNORECASE)
+
+
+class _Message(Message):
+    """Flask-Mail-Message mit standardkonformem MIME-Aufbau.
+
+    Flask-Mail verschickt HTML als 8bit ohne Zeilenumbruch; eingebettete
+    Base64-Logos ergeben Zeilen > 998 Zeichen, die Weiterleiter (z. B. Strato)
+    umbrechen – die DKIM-Signatur wird ungültig. EmailMessage wählt
+    quoted-printable/base64 mit kurzen Zeilen, Logos werden zu cid-Bildern in
+    multipart/related. Außerdem: Message-ID mit Absender-Domain, ASCII-Namen
+    im From ohne Encoded-Word.
+    """
+
+    inline_images: list = []
+
+    def _message(self):
+        sender_name, sender_addr = (self.sender if isinstance(self.sender, tuple)
+                                    else parseaddr(self.sender))
+        domain = sender_addr.rpartition('@')[2] or None
+        msg = EmailMessage(policy=policy.SMTP)
+        msg['Subject'] = self.subject
+        msg['From'] = Address(display_name=sender_name, addr_spec=sender_addr)
+        msg['To'] = ', '.join(self.recipients)
+        msg['Date'] = formatdate(self.date, localtime=True)
+        msg['Message-ID'] = make_msgid(domain=domain)
+        msg.set_content(self.body)
+        if self.html is not None:
+            msg.add_alternative(self.html, subtype='html')
+            html_part = msg.get_payload()[-1]
+            for cid, content_type, data in self.inline_images:
+                maintype, subtype = content_type.split('/', 1)
+                html_part.add_related(data, maintype=maintype, subtype=subtype,
+                                      cid=f'<{cid}>', disposition='inline')
+        for att in self.attachments:
+            maintype, subtype = att.content_type.split('/', 1)
+            msg.add_attachment(att.data, maintype=maintype, subtype=subtype,
+                               filename=att.filename)
+        return msg
+
+
+def _extract_inline_images(html: str, domain: str) -> tuple[str, list]:
+    """Ersetzt data:-URI-Bilder durch cid:-Verweise; gleiche Bilder nur einmal."""
+    images: list = []
+    by_payload: dict[str, str] = {}
+
+    def repl(m):
+        payload = re.sub(r'\s+', '', m.group(3))
+        cid = by_payload.get(payload)
+        if cid is None:
+            cid = make_msgid(idstring=f'img{len(images)}', domain=domain or None)[1:-1]
+            by_payload[payload] = cid
+            images.append((cid, m.group(2).lower(), base64.b64decode(payload)))
+        return f'{m.group(1)}cid:{cid}{m.group(4)}'
+
+    return _DATA_URI_IMG.sub(repl, html), images
+
+
 def send_mail(to: str, subject: str, html: str, sender_name: str = None,
               retries: int = 3, plain_text: str = None,
               attachments: list | None = None):
     """Sendet eine E-Mail (HTML + Plain-Text) mit bis zu `retries` Versuchen."""
     default_sender = current_app.config.get('MAIL_DEFAULT_SENDER', '')
     _name = (sender_name or current_app.config.get('MAIL_SENDER_NAME', '')).replace('\r', '').replace('\n', '')
-    sender = f'{_name} <{default_sender}>' if _name else default_sender
+    sender = (_name, default_sender) if _name else default_sender
     body = plain_text or _html_to_text(html)
-    msg = Message(subject=subject, recipients=[to], html=html, body=body, sender=sender)
+    html, inline_images = _extract_inline_images(html, default_sender.rpartition('@')[2])
+    msg = _Message(subject=subject, recipients=[to], html=html, body=body, sender=sender)
+    msg.inline_images = inline_images
     if attachments:
         for filename, content_type, data in attachments:
             msg.attach(filename, content_type, data)

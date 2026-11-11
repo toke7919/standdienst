@@ -1,5 +1,5 @@
-VERSION = "3.123.2"
-VERSION_DATE = "2026-11-10"
+VERSION = "3.123.3"
+VERSION_DATE = "2026-11-11"
 
 # Fest hinterlegtes Upstream-Repository (öffentlich). Single Source of Truth für
 # alle Update-Prozesse – Backend (app/api/admin/update.py) und Shell-Scripts
