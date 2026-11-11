@@ -195,3 +195,112 @@ def test_build_reminder_email_lists_food_items_with_delivery_details():
     assert 'Apfelkuchen' in html
     assert '10:00' in html
     assert 'Küche' in html
+
+
+# ---------------------------------------------------------------------------
+# send_mail – MIME-Aufbau (DKIM-fest bei Weiterleitung, Spamfilter-Hinweise)
+# ---------------------------------------------------------------------------
+
+import base64 as _b64
+import email as _email
+from email import policy as _policy
+
+_BIG_LOGO = _b64.b64encode(b'\x89PNG' + b'x' * 60000).decode()
+_LOGO_HTML = f'<p>Hällo</p><img src="data:image/png;base64,{_BIG_LOGO}" alt="Logo">'
+
+
+def _rendered(mock_send):
+    msg = mock_send.call_args.args[0]
+    raw = msg.as_bytes()
+    return raw, _email.message_from_bytes(raw, policy=_policy.default)
+
+
+@pytest.fixture
+def sender(monkeypatch, app):
+    monkeypatch.setitem(app.config, 'MAIL_DEFAULT_SENDER', 'noreply@kessler.biz')
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_has_no_overlong_lines(mock_send, sender):
+    """Zeilen > 998 Zeichen verletzen RFC 5322 und werden von Weiterleitern
+    umgebrochen – das zerstört die DKIM-Signatur (R_DKIM_REJECT)."""
+    send_mail('empfaenger@test.de', 'Betreff', _LOGO_HTML)
+    raw, _ = _rendered(mock_send)
+    assert max(len(line) for line in raw.split(b'\r\n')) <= 998
+    assert max(len(line) for line in raw.split(b'\n')) <= 998
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_embeds_data_uri_logo_as_cid(mock_send, sender):
+    send_mail('empfaenger@test.de', 'Betreff', _LOGO_HTML)
+    _, parsed = _rendered(mock_send)
+    html_part = parsed.get_body(preferencelist=('html',))
+    html = html_part.get_content()
+    assert 'data:image' not in html
+    images = [p for p in parsed.walk() if p.get_content_type() == 'image/png']
+    assert len(images) == 1
+    cid = images[0]['Content-ID'].strip('<>')
+    assert f'src="cid:{cid}"' in html
+    assert images[0].get_content() == _b64.b64decode(_BIG_LOGO)
+    # Logo und HTML gehören in multipart/related, damit Clients es nicht als Anhang zeigen
+    assert any(p.get_content_type() == 'multipart/related' for p in parsed.walk())
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_dedupes_identical_data_uris(mock_send, sender):
+    send_mail('empfaenger@test.de', 'Betreff', _LOGO_HTML + _LOGO_HTML)
+    _, parsed = _rendered(mock_send)
+    images = [p for p in parsed.walk() if p.get_content_type() == 'image/png']
+    assert len(images) == 1
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_message_id_uses_sender_domain(mock_send, sender):
+    """MID_RHS_NOT_FQDN: im Docker-Container wäre der Hostname eine Container-ID."""
+    send_mail('empfaenger@test.de', 'Betreff', '<p>Hallo</p>')
+    _, parsed = _rendered(mock_send)
+    assert parsed['Message-ID'].strip().endswith('@kessler.biz>')
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_ascii_sender_name_not_encoded(mock_send, sender):
+    """FROM_EXCESS_QP: reine ASCII-Namen nicht als =?utf-8?q?…?= kodieren."""
+    send_mail('empfaenger@test.de', 'Betreff', '<p>Hallo</p>', sender_name='Reitverein Trier e.V.')
+    raw, parsed = _rendered(mock_send)
+    from_line = next(l for l in raw.split(b'\r\n') if l.startswith(b'From:'))
+    assert b'=?' not in from_line
+    assert parsed['From'].addresses[0].display_name == 'Reitverein Trier e.V.'
+    assert parsed['From'].addresses[0].addr_spec == 'noreply@kessler.biz'
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_non_ascii_sender_name_roundtrips(mock_send, sender):
+    send_mail('empfaenger@test.de', 'Betreff ä', '<p>Hallo</p>', sender_name='Schützenverein')
+    _, parsed = _rendered(mock_send)
+    assert parsed['From'].addresses[0].display_name == 'Schützenverein'
+    assert parsed['Subject'] == 'Betreff ä'
+    assert parsed['To'] == 'empfaenger@test.de'
+    assert parsed['Date']
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_rendered_keeps_text_html_and_attachment(mock_send, sender):
+    send_mail('empfaenger@test.de', 'Betreff', '<p>Hällo <b>Welt</b></p>',
+              attachments=[('anhang.pdf', 'application/pdf', b'%PDF-fake')])
+    _, parsed = _rendered(mock_send)
+    assert 'Hällo Welt' in parsed.get_body(preferencelist=('plain',)).get_content()
+    assert '<b>Welt</b>' in parsed.get_body(preferencelist=('html',)).get_content()
+    atts = list(parsed.iter_attachments())
+    assert [a.get_filename() for a in atts] == ['anhang.pdf']
+    assert atts[0].get_content() == b'%PDF-fake'
+
+
+@patch('app.utils.mail.mail.send')
+def test_send_mail_non_ascii_sender_name_encoded_once(mock_send, sender):
+    """Umlaute im Namen genau einmal kodieren (kein Encoded-Word im Encoded-Word)."""
+    send_mail('empfaenger@test.de', 'Betreff', '<p>Hallo</p>', sender_name='Schützenverein')
+    raw, _ = _rendered(mock_send)
+    from_line = next(l for l in raw.split(b'\r\n') if l.startswith(b'From:'))
+    assert b'=?utf-8?q?=3D' not in from_line.lower()
+    assert b'?=?=' not in from_line
+    assert from_line.endswith(b'<noreply@kessler.biz>')
