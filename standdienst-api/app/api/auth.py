@@ -316,9 +316,10 @@ def forgot_password():
     if user:
         raw_token = user.generate_reset_token()
         db.session.commit()
-        base_url = current_app.config.get('FRONTEND_URL', '')
-        reset_url = f'{base_url}/admin/reset-password?token={raw_token}'
         try:
+            from .public import _base_url
+            base_url = _base_url()
+            reset_url = f'{base_url}/admin/reset-password?token={raw_token}'
             from ..models import GlobalSettings
             gs = db.session.scalars(select(GlobalSettings)).first()
             copyright_text = gs.copyright_text if gs else None

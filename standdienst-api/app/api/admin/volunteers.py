@@ -247,7 +247,8 @@ def send_dsgvo_auskunft(slug, volunteer_id):
 
     gs = db.session.scalars(select(GlobalSettings)).first()
     settings = db.session.scalars(select(SiteSettings).filter_by(instance_id=g.instance.id)).first()
-    base_url = current_app.config.get('FRONTEND_URL', '')
+    from ..public import _base_url
+    base_url = _base_url()
     title = (settings.site_title if settings else None) or g.instance.name
     primary_color = settings.primary_color if settings else None
     logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
@@ -312,7 +313,8 @@ def _send_welcome_email(volunteer, raw_token):
     try:
         from ...utils.settings_cache import get_site_settings
         gs = db.session.scalars(select(GlobalSettings)).first()
-        base_url = (gs.base_url or '').rstrip('/') if gs else ''
+        from ..public import _base_url
+        base_url = _base_url()
         setup_url = f'{base_url}/{g.instance.slug}/welcome/{raw_token}'
         settings = get_site_settings(g.instance.id)
         title = settings.site_title if settings else g.instance.name

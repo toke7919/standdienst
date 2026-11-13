@@ -157,7 +157,8 @@ def _send_reminders(app):
                 datetime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, 59)
             ).astimezone(timezone.utc)
 
-            base_url = app.config.get('FRONTEND_URL', '')
+            from ..api.public import _base_url
+            base_url = _base_url()
             copyright_text = gs.copyright_text if gs else None
 
             volunteers = db.session.scalars(
@@ -270,7 +271,8 @@ def _send_organizer_digest(app):
             day_start = tz.localize(datetime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0)).astimezone(timezone.utc)
             day_end = tz.localize(datetime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59)).astimezone(timezone.utc)
 
-            base_url = app.config.get('FRONTEND_URL', '')
+            from ..api.public import _base_url
+            base_url = _base_url()
             copyright_text = gs.copyright_text if gs else None
             date_label = yesterday.strftime('%d.%m.%Y')
             opt_out_url = f'{base_url}/admin/profile'

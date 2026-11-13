@@ -479,7 +479,8 @@ def meine_daten_export(slug):
 
     settings = get_site_settings(g.instance.id)
     title = settings.site_title if settings else g.instance.name
-    base_url = current_app.config.get('FRONTEND_URL', '')
+    from .public import _base_url
+    base_url = _base_url()
     primary_color = settings.primary_color if settings else None
     logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)
     global_settings = get_global_settings()
@@ -607,7 +608,8 @@ def _send_shift_confirmation(volunteer, shift, instance, settings, stand_name=No
     if not (volunteer.email and volunteer.email_confirmation_enabled and is_mail_configured()):
         return
     try:
-        base_url = current_app.config.get('FRONTEND_URL', '')
+        from .public import _base_url
+        base_url = _base_url()
         title = settings.site_title if settings else instance.name
         primary_color = settings.primary_color if settings else None
         logo_url = get_effective_logo_for_email(settings.logo_filename if settings else None, base_url)

@@ -625,7 +625,8 @@ def export_pdf_dienste_post(slug):
     ).all()
     date_summaries = [_date_summary(ed) for ed in event_dates_for_mail]
     sender = _sender_name(g.current_user)
-    frontend_url = current_app.config.get('FRONTEND_URL', '')
+    from ..public import _base_url
+    frontend_url = _base_url()
 
     if email:
         from ...utils.mail import is_mail_configured, send_mail, build_export_email
@@ -738,7 +739,8 @@ def export_pdf_essen_post(slug):
     ).all()
     date_summaries = [_date_summary(ed) for ed in event_dates_for_mail]
     sender = _sender_name(g.current_user)
-    frontend_url = current_app.config.get('FRONTEND_URL', '')
+    from ..public import _base_url
+    frontend_url = _base_url()
 
     if email:
         from ...utils.mail import is_mail_configured, send_mail, build_export_email
