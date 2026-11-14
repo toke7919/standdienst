@@ -54,20 +54,7 @@
           <form @submit.prevent="submit" class="space-y-4">
             <div>
               <label class="label">Passwort</label>
-              <div class="relative">
-                <input
-                  v-model="password"
-                  :type="showPw ? 'text' : 'password'"
-                  class="input pr-10"
-                  required
-                  autocomplete="new-password"
-                  placeholder="Mindestens 8 Zeichen"
-                />
-                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80" @click="showPw = !showPw">
-                  <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
-                  <EyeIcon v-else class="w-4 h-4" />
-                </button>
-              </div>
+              <PasswordInput v-model="password" required placeholder="Mindestens 8 Zeichen" />
               <!-- Passwortstärke -->
               <div v-if="password" class="mt-2 space-y-1">
                 <div class="flex gap-1">
@@ -123,8 +110,9 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/stores/instance'
 import { useAuthStore } from '@/stores/auth'
 import { publicApi } from '@/api/public'
-import { EyeIcon, EyeSlashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const instanceStore = useInstanceStore()
 const auth = useAuthStore()
@@ -143,7 +131,6 @@ const submitting = ref(false)
 const volunteerName = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
-const showPw = ref(false)
 const errorMsg = ref('')
 
 onMounted(async () => {

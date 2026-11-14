@@ -11,6 +11,7 @@ class ActivityLog(db.Model):
     FOOD_UNREGISTER  = 'food_unregister'
     LOGIN_SUCCESS    = 'login_success'
     LOGIN_FAIL       = 'login_fail'
+    PASSWORD_RESET   = 'password_reset'
     VOLUNTEER_REGISTER = 'volunteer_register'
     VOLUNTEER_DELETE           = 'volunteer_delete'
     VOLUNTEER_PERMANENT_DELETE = 'volunteer_permanent_delete'

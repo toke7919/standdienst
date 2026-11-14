@@ -25,22 +25,7 @@
             Neues Passwort
             <span class="text-muted font-normal text-xs">(leer lassen zum Beibehalten)</span>
           </label>
-          <div class="relative">
-            <input
-              v-model="profileForm.password"
-              :type="showPw ? 'text' : 'password'"
-              class="input pr-10"
-              autocomplete="new-password"
-            />
-            <button
-              type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80"
-              @click="showPw = !showPw"
-            >
-              <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
-              <EyeIcon v-else class="w-4 h-4" />
-            </button>
-          </div>
+          <PasswordInput v-model="profileForm.password" />
         </div>
         <div v-if="profileForm.password">
           <label class="label">Passwort bestätigen</label>
@@ -248,8 +233,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { authApi } from '@/api/auth'
 import { adminApi } from '@/api/admin'
-import { EyeIcon, EyeSlashIcon, ShieldCheckIcon, KeyIcon, TrashIcon, ClipboardIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { ShieldCheckIcon, KeyIcon, TrashIcon, ClipboardIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 import { prepareRegistrationOptions, serializeRegistrationCredential } from '@/utils/webauthn'
 
 const auth = useAuthStore()
@@ -312,7 +298,6 @@ const profileForm = ref({
 })
 const profileSaving = ref(false)
 const profileError = ref('')
-const showPw = ref(false)
 
 async function saveProfile() {
   profileError.value = ''

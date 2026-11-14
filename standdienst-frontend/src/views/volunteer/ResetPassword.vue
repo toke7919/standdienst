@@ -21,20 +21,7 @@
           <form @submit.prevent="submit" class="space-y-4">
             <div>
               <label class="label">Neues Passwort</label>
-              <div class="relative">
-                <input
-                  v-model="password"
-                  :type="showPw ? 'text' : 'password'"
-                  class="input pr-10"
-                  required
-                  autocomplete="new-password"
-                  placeholder="Mindestens 8 Zeichen"
-                />
-                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80" @click="showPw = !showPw">
-                  <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
-                  <EyeIcon v-else class="w-4 h-4" />
-                </button>
-              </div>
+              <PasswordInput v-model="password" required placeholder="Mindestens 8 Zeichen" />
             </div>
             <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
             <button type="submit" class="btn-primary w-full" :disabled="loading">
@@ -73,8 +60,8 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useInstanceStore } from '@/stores/instance'
 import { publicApi } from '@/api/public'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const route = useRoute()
 const instanceStore = useInstanceStore()
@@ -82,7 +69,6 @@ const slug = computed(() => route.params.slug)
 const settings = computed(() => instanceStore.current)
 
 const password = ref('')
-const showPw = ref(false)
 const loading = ref(false)
 const done = ref(false)
 const errorMsg = ref('')
