@@ -345,6 +345,15 @@ def volunteer_reset_password(slug):
     volunteer.set_password(new_password)
     volunteer.rotate_jwt()
     volunteer.clear_reset_token()
+    db.session.add(ActivityLog(
+        instance_id=instance.id,
+        event_type=ActivityLog.PASSWORD_RESET,
+        volunteer_name=volunteer.email,
+        volunteer_id=volunteer.id,
+        ip_address=_real_ip(),
+        actor_type='volunteer',
+        user_agent=request.headers.get('User-Agent', '')[:500],
+    ))
     db.session.commit()
     return jsonify(message='Passwort wurde geändert'), 200
 

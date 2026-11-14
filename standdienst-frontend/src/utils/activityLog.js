@@ -3,7 +3,7 @@ import {
   CheckCircleIcon, MinusCircleIcon, ShoppingBagIcon, XCircleIcon,
   ArrowRightOnRectangleIcon, ExclamationCircleIcon,
   UserPlusIcon, UserMinusIcon, TrashIcon,
-  CogIcon, DocumentTextIcon, UserGroupIcon, ShieldCheckIcon,
+  CogIcon, DocumentTextIcon, UserGroupIcon, ShieldCheckIcon, KeyIcon,
 } from '@heroicons/vue/24/outline'
 
 export const EVENT_META = {
@@ -13,6 +13,7 @@ export const EVENT_META = {
   food_unregister:           { icon: XCircleIcon,                  label: 'Spende −',      color: 'bg-orange-100 text-orange-700' },
   login_success:             { icon: ArrowRightOnRectangleIcon,    label: 'Login ✓',       color: 'bg-blue-100 text-blue-700' },
   login_fail:                { icon: ExclamationCircleIcon,        label: 'Login ✗',       color: 'bg-red-100 text-red-700' },
+  password_reset:            { icon: KeyIcon,                      label: 'Passwort-Reset', color: 'bg-blue-100 text-blue-700' },
   volunteer_register:        { icon: UserPlusIcon,                 label: 'Registrierung', color: 'bg-purple-100 text-purple-700' },
   volunteer_delete:          { icon: UserMinusIcon,                label: 'Löschung',      color: 'bg-yellow-100 text-yellow-700' },
   volunteer_permanent_delete:{ icon: TrashIcon,                    label: 'Endlöschung',   color: 'bg-red-100 text-red-700' },
@@ -26,7 +27,7 @@ export const ACTIVITY_CATEGORIES = [
   { key: '',              label: 'Alle',          types: [] },
   { key: 'dienste',       label: 'Dienste',        types: ['shift_register', 'shift_unregister'] },
   { key: 'essensspenden', label: 'Essensspenden',  types: ['food_register', 'food_unregister'] },
-  { key: 'anmeldungen',   label: 'Anmeldungen',    types: ['volunteer_register', 'login_success', 'login_fail'] },
+  { key: 'anmeldungen',   label: 'Anmeldungen',    types: ['volunteer_register', 'login_success', 'login_fail', 'password_reset'] },
   { key: 'loeschungen',   label: 'Löschungen',     types: ['volunteer_delete', 'volunteer_permanent_delete'] },
   { key: 'audit',         label: 'Audit',          types: ['audit_settings', 'audit_data', 'audit_organizer', 'audit_admin'] },
 ]

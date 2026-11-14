@@ -12,22 +12,7 @@
         <div><label class="label">E-Mail</label><input v-model="form.email" type="email" class="input" autocomplete="email" /></div>
         <div>
           <label class="label">Neues Passwort <span class="text-muted font-normal text-xs">(leer lassen zum Beibehalten)</span></label>
-          <div class="relative">
-            <input
-              v-model="form.password"
-              :type="showPw ? 'text' : 'password'"
-              class="input pr-10"
-              autocomplete="new-password"
-            />
-            <button
-              type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink/80"
-              @click="showPw = !showPw"
-            >
-              <EyeSlashIcon v-if="showPw" class="w-4 h-4" />
-              <EyeIcon v-else class="w-4 h-4" />
-            </button>
-          </div>
+          <PasswordInput v-model="form.password" />
         </div>
         <div v-if="form.password">
           <label class="label">Passwort bestätigen</label>
@@ -135,8 +120,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useInstanceStore } from '@/stores/instance'
 import { useUiStore } from '@/stores/ui'
 import { volunteerApi } from '@/api/volunteer'
-import { EyeIcon, EyeSlashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -156,7 +142,6 @@ const form = ref({
   email_confirmation_enabled: auth.user?.email_confirmation_enabled ?? true,
 })
 const saving = ref(false)
-const showPw = ref(false)
 const showDeleteForm = ref(false)
 const deletePassword = ref('')
 const deleteLoading = ref(false)

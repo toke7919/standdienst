@@ -18,7 +18,7 @@ from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 
 from app.extensions import db as _db
-from app.models import GlobalSettings, SiteSettings, Volunteer
+from app.models import ActivityLog, GlobalSettings, SiteSettings, Volunteer
 from tests.test_registration import _altcha_solution
 
 
@@ -352,3 +352,52 @@ def test_reset_password_deleted_volunteer_token_invalid(client, instance, volunt
         'token': raw, 'password': 'SicheresPasswort1',
     })
     assert rv.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# POST /<slug>/reset-password – Protokoll
+# Regression: Ein Reset war im Protokoll nicht sichtbar – ob er vor einem
+# fehlgeschlagenen Login überhaupt durchlief, ließ sich nicht klären.
+# ---------------------------------------------------------------------------
+
+def _set_reset_token(volunteer):
+    raw = secrets.token_urlsafe(32)
+    volunteer.reset_token = hashlib.sha256(raw.encode()).hexdigest()
+    volunteer.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+    _db.session.commit()
+    return raw
+
+
+def _reset_logs():
+    return _db.session.query(ActivityLog).filter_by(event_type=ActivityLog.PASSWORD_RESET).all()
+
+
+def test_reset_password_success_is_logged(client, instance, volunteer):
+    raw = _set_reset_token(volunteer)
+    rv = client.post(f'/api/public/{instance.slug}/reset-password', json={
+        'token': raw, 'password': 'NeuesPasswort1',
+    }, environ_base={'REMOTE_ADDR': '203.0.113.7'})
+    assert rv.status_code == 200
+
+    logs = _reset_logs()
+    assert len(logs) == 1
+    entry = logs[0]
+    assert entry.instance_id == instance.id
+    assert entry.volunteer_id == volunteer.id
+    assert entry.volunteer_name == volunteer.email
+    assert entry.actor_type == 'volunteer'
+    assert entry.ip_address == '203.0.113.7'
+
+    rv = client.post('/api/auth/volunteer-login', json={
+        'slug': instance.slug, 'email': volunteer.email, 'password': 'NeuesPasswort1',
+    })
+    assert rv.status_code == 200
+
+
+def test_reset_password_invalid_token_not_logged(client, instance, volunteer):
+    _set_reset_token(volunteer)
+    rv = client.post(f'/api/public/{instance.slug}/reset-password', json={
+        'token': 'falsch', 'password': 'NeuesPasswort1',
+    })
+    assert rv.status_code == 400
+    assert _reset_logs() == []
